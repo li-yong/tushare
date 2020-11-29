@@ -1,17 +1,19 @@
 开仓模板
 ======================
-- 标的代码:
-- 初始日期:
+- 标的代码: SZ000895 双汇发展
+- 初始日期: 2020/11/29
 - 更新日期:
 
 
 指数市场  大时间周期趋势 TREND BACKGROUND
 ================================
+- 月线向下: 最近4个月无趋势 在往前4个月向上
+- 周线向下: 最近四周向上. macd 蓝 cross over singal. 多的信号.  kdj J 103
+
 - Month/weekly 趋势向上. higer low, higer high
 - Month/weekly 趋势向下. lower low, lower high
 - 波动率ATR 收窄, 增加
-- 成交Vol 收窄, 增加
-
+- 成交Vol 收窄, 增加 <<< NA, 指标tradview里没有vol
 
 
 指数市场 大时间周期阶段 Stage (股票只做long)
@@ -27,10 +29,13 @@ Accumulate Tail(will go up) OR Advancing Head(will burst) Distribution Tail (wil
 
 基本面/扫雷
 ======================
-- PE, PB, ROA
+- PE , PB,
+- ROA (Asset包含贷款负债) 22,
+- ROE (Equity净资产=A - 负债) 32, 
+- MktCap 160B
 - 公司消息(产量新高, 新产品, 新订单)
 - 未来近期是否有财报发布
-- 未来近期是否有股票解禁
+- 未来近期是否有股票解禁: 2021.4 , 2022年大解禁
 - 高管变动
 - 高管卖出股票
 - 天眼查风险
@@ -45,15 +50,23 @@ Accumulate Tail(will go up) OR Advancing Head(will burst) Distribution Tail (wil
 
 个股 大时间周期趋势 TREND BACKGROUND
 ================================
-- Month/weekly 趋势向上. higer low, higer high
+Weekly 向下, monthly 向下
+weekly atr 在高位,线条平稳. 4.47
+daily atr 向下, 1.67
+vol 无趋势
+
+
+- Month/weekly 趋势向上. higer low, higer high 
 - Month/weekly 趋势向下. lower low, lower high
 - 波动率ATR 收窄, 增加
-- 成交Vol 收窄, 增加
+- 成交Vol 收窄, 增加 
 
 
 
 个股 大时间周期阶段 Stage (股票只做long)
 ====================================
+无明显形态. 像高位盘整. 在55ma下,等待信号
+
 - Decline (S): 积极逃,清仓
 - Accumulate (B) 多观望. [逢低(超卖, 跌破支撑)开仓/加仓]  [wait breakout resistance. 开仓/加仓]
 - Advancing (B) 积极开仓. [wait pull back 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖) 开仓/加仓]
@@ -63,29 +76,28 @@ Accumulate Tail(will go up) OR Advancing Head(will burst) Distribution Tail (wil
 
 数据,指标  DATA & Indicator
 ===========================
-- Close:
-- Close是否已经高于过去5个月:
-- Close < MA200: 下降趋势, 当前上升, exp will 大幅下降, 逢高(超买>80) 减仓/清仓
-- Close > MA200: 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖<20) 开仓/加仓
+- Close:47
+- Close是否已经高于过去5个月: No
+- Close < MA200: 下降趋势, 当前上升, exp will 大幅下降, 逢高(超买>80) 减仓/清仓  
+- Close > MA200: 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖<20) 开仓/加仓  <<<< True. MA200 45.75
 - 
-- MA5 
-- MA11
-- MA55
-- MA200 
-- MA200 方向: 向上, 趋于水平, 向下
-- MA200 趋势: 
+- MA5 48.63
+- MA21: 49.69
+- MA55  51.49
+- MA200 45.75
+- MA200 方向: 向上, 趋于水平, 向下.<<< 向上
+
 - 
+- MA是否多头排列: 否
+- MA是否发散:否. 
+- 价格波动ATR趋势: 
 - 
-- MA是否多头排列:
-- MA是否发散:
-- 价格波动ATR趋势:
-- 
-- 价格上升vol放量(看涨): [Yes or No]
+- 价格上升vol放量(看涨): [Yes or No] <<< VOl 没有明显趋势
 - 价格下降vol缩量(看涨): [Yes or No]
-- 
-- RSI: 超买 超卖
-- 
-- KDJ: J>0((价格期待站到MA5以上)  J<0(价格期待回到MA5以下)
+
+- RSI: 超买 超卖  << 39. 之前有几次RSI在40的时候股价升高.
+
+- KDJ: J>0((价格期待站到MA5以上)  J<0(价格期待回到MA5以下)  J -7.2
 - 
 - MACD: MACD MUST_BUY [Yes or No]
 
