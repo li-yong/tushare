@@ -125,7 +125,7 @@ vol 无趋势
 - 十字星, 锤子, 二次测试
 - 指标 MACD Cross
 - 指标 MACD BUY MUST
-
+ 
 
 策略 STRATEGE
 ======================
@@ -142,19 +142,19 @@ vol 无趋势
 
 开仓金额
 ======================
-- 5% of account (max 20 trades)
+- 5% of account (max 20 trades)  = 0.05 * 60 = 3w
 
 
 账户 ACCOUNT
 ============
- - Account: 
- - Risk: 1% * Act
+ - Account: 60 w 
+ - Risk: 1% * Act = 0.01 * 60w = 6 k
 
 
 止损退出 EXIT IF WRONG /EST RISK
 ================================
-- 损失 1% of accout. price= RISK is :
-- 损失 -8p.  price= , RISK is :
+- 损失 1% of accout. price= RISK is : 6k
+- 损失 -8p.  price= , RISK is : 3 w * 0.08 = 0.24 w = 2.4 k
 - 跌破趋势线 3363. price= 3363, RISK :
 - 跌破55ma , price=
 - ma5 cross down ma55 , price= 
