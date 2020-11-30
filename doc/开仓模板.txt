@@ -129,15 +129,15 @@ vol 无趋势
 
 策略 STRATEGE
 ======================
-- capture swing
+- capture swing  <<<< True
 - ride trend
 
 
 开仓点 ENTRY POINT (Limit order)
 ================================
-- 等待价格回调到 MA5 位置. price=
-- 触及低点趋势支撑线(Swing trading, 开仓). price=
-- 突破高点趋势线, 二次回测, 变成了低点支撑趋势线.(开仓). price=
+- 等待价格回调到 MA5 位置. price= 48.63 << Invalid. C < MA5, and J < 0
+- 触及低点趋势支撑线(Swing trading, 开仓). price= 48.03 << Invalid, C < 支撑
+- 突破高点趋势线, 二次回测, 变成了低点支撑趋势线.(开仓). price=  <<<  Invalid
 
 
 开仓金额
@@ -149,15 +149,19 @@ vol 无趋势
 ============
  - Account: 60 w 
  - Risk: 1% * Act = 0.01 * 60w = 6 k
+ 
+ 现在价格 Close
+ ===========
+ 47.49
 
 
 止损退出 EXIT IF WRONG /EST RISK
 ================================
 - 损失 1% of accout. price= RISK is : 6k
 - 损失 -8p.  price= , RISK is : 3 w * 0.08 = 0.24 w = 2.4 k
-- 跌破趋势线 3363. price= 3363, RISK :
-- 跌破55ma , price=
-- ma5 cross down ma55 , price= 
+- 跌破趋势线下底 - 2 ATR,  price= 48.03 - 2 * 1.67 = 44.7, RISK : (44.7 - 47.49)/47.49 = 6p 
+- 跌破55ma , price= 51.49  <<< Invalid
+- ma5 cross down ma55 , price=   <<< Invalid
 
 
 
