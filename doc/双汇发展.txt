@@ -1,0 +1,197 @@
+开仓模板
+======================
+- 标的代码: SZ000895 双汇发展
+- 初始日期: 2020/11/29
+- 更新日期:
+
+
+指数市场  大时间周期趋势 TREND BACKGROUND
+================================
+- 月线向下: 最近4个月无趋势 在往前4个月向上
+- 周线向下: 最近四周向上. macd 蓝 cross over singal. 多的信号.  kdj J 103
+
+- Month/weekly 趋势向上. higer low, higer high
+- Month/weekly 趋势向下. lower low, lower high
+- 波动率ATR 收窄, 增加
+- 成交Vol 收窄, 增加 <<< NA, 指标tradview里没有vol
+
+
+指数市场 大时间周期阶段 Stage (股票只做long)
+====================================
+Accumulate Tail(will go up) OR Advancing Head(will burst) Distribution Tail (will go down)
+
+- Decline (S): 积极逃,清仓
+- Accumulate (B) 多观望. [逢低(超卖, 跌破支撑)开仓/加仓]  [wait breakout resistance. 开仓/加仓]
+- Advancing (B) 积极开仓. [wait pull back 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖) 开仓/加仓]
+- Distribution (S) 观望逃, [wait reversal 下降趋势, 当前上升, exp will 大幅下降, 逢高(超买) 减仓/清仓]
+
+
+
+基本面/扫雷
+======================
+- PE , PB,
+- ROA (Asset包含贷款负债) 22,
+- ROE (Equity净资产=A - 负债) 32, 
+- MktCap 160B
+- 公司消息(产量新高, 新产品, 新订单)
+- 未来近期是否有财报发布
+- 未来近期是否有股票解禁: 2021.4 , 2022年大解禁
+- 高管变动
+- 高管卖出股票
+- 天眼查风险
+- 招商证券扫雷
+- 乌龟量化 ANDROIDINVEST
+- 股票改名
+- 新闻: 评级降低
+- 新闻: 加入/剔除指数编制
+- 新闻: 政策
+- 新闻: 行业
+
+
+个股 大时间周期趋势 TREND BACKGROUND
+================================
+Weekly 向下, monthly 向下
+weekly atr 在高位,线条平稳. 4.47
+daily atr 向下, 1.67
+vol 无趋势
+
+
+- Month/weekly 趋势向上. higer low, higer high 
+- Month/weekly 趋势向下. lower low, lower high
+- 波动率ATR 收窄, 增加
+- 成交Vol 收窄, 增加 
+
+
+
+个股 大时间周期阶段 Stage (股票只做long)
+====================================
+无明显形态. 像高位盘整. 在55ma下,等待信号
+
+- Decline (S): 积极逃,清仓
+- Accumulate (B) 多观望. [逢低(超卖, 跌破支撑)开仓/加仓]  [wait breakout resistance. 开仓/加仓]
+- Advancing (B) 积极开仓. [wait pull back 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖) 开仓/加仓]
+- Distribution (S) 观望逃, [wait reversal 下降趋势, 当前上升, exp will 大幅下降, 逢高(超买) 减仓/清仓]
+
+
+
+数据,指标  DATA & Indicator
+===========================
+- Close:47
+- Close是否已经高于过去5个月: No
+- Close < MA200: 下降趋势, 当前上升, exp will 大幅下降, 逢高(超买>80) 减仓/清仓  
+- Close > MA200: 上升趋势, 当前下降,exp will 大幅上升, 逢低(超卖<20) 开仓/加仓  <<<< True. MA200 45.75
+- 
+- MA5 48.63
+- MA21: 49.69
+- MA55  51.49
+- MA200 45.75
+- MA200 方向: 向上, 趋于水平, 向下.<<< 向上
+
+- 
+- MA是否多头排列: 否
+- MA是否发散:否. 
+- 价格波动ATR趋势: 
+- 
+- 价格上升vol放量(看涨): [Yes or No] <<< VOl 没有明显趋势
+- 价格下降vol缩量(看涨): [Yes or No]
+
+- RSI: 超买 超卖  << 39. 之前有几次RSI在40的时候股价升高.
+
+- KDJ: J>0((价格期待站到MA5以上)  J<0(价格期待回到MA5以下)  J -7.2
+- 
+- MACD: MACD MUST_BUY [Yes or No]
+
+图形模式 PRICE PATTERN
+======================
+- 上升旗形,  ma cross, 
+- 趋势线
+- 通道
+- 双底
+- 头肩
+
+支撑和阻力 SUPPORT RESISTANCE
+============================
+- 阻力. 高点趋势线上沿,  price=
+- 支撑. 支撑趋势线下沿, 3360-3373开仓点 price=
+
+- 阻力.频繁出现的价格 price=
+- 支撑.频繁出现的价格 price=
+
+- 上方压力位 3409, 如果突破压力位, 加仓. price=
+
+
+开仓依据 TRIGGER:
+======================
+- 十字星, 锤子, 二次测试
+- 指标 MACD Cross
+- 指标 MACD BUY MUST
+ 
+
+策略 STRATEGE
+======================
+- capture swing  <<<< True
+- ride trend
+
+
+开仓点 ENTRY POINT (Limit order)
+================================
+- 等待价格回调到 MA5 位置. price= 48.63 << Invalid. C < MA5, and J < 0
+- 触及低点趋势支撑线(Swing trading, 开仓). price= 48.03 << Invalid, C < 支撑
+- 突破高点趋势线, 二次回测, 变成了低点支撑趋势线.(开仓). price=  <<<  Invalid
+
+
+开仓金额
+======================
+- 5% of account (max 20 trades)  = 0.05 * 60 = 3w
+
+
+账户 ACCOUNT
+============
+ - Account: 60 w 
+ - Risk: 1% * Act = 0.01 * 60w = 6 k
+ 
+ 现在价格 Close
+ ===========
+ 47.49
+
+
+止损退出 EXIT IF WRONG /EST RISK
+================================
+- 损失 1% of accout. price= RISK is : 6k
+- 损失 -8p.  price= , RISK is : 3 w * 0.08 = 0.24 w = 2.4 k
+- 跌破趋势线下底 - 2 ATR,  price= 48.03 - 2 * 1.67 = 44.7, RISK : (44.7 - 47.49)/47.49 = 6p 
+- 跌破55ma , price= 51.49  <<< Invalid
+- ma5 cross down ma55 , price=   <<< Invalid
+
+
+
+盈利退出 EXIT IF RIGHT
+======================
+- 盈利快要归零: price=
+- 从最高点回撤8p: price=
+- 指标 (MACD SELL MUST): 
+- 触及高点趋势阻力线(Swing trading, 清仓一半) price=
+- 跌破低点趋势支撑线(Swing trading, 清仓一半) price=
+
+
+预估风险 EST RISK (开仓点 - 止损退出)
+======================================
+- min:  
+- max:
+
+预估收益 EST Profit (盈利退出 - 开仓点)
+=======================================
+- min:
+- max:
+
+
+交易结束总结
+=============
+开仓日期
+清仓日期
+Risk: 1% act
+Enter price:
+Quit price:
+Profit: 
+Risk Reward (performance):  risk/profit 
+
