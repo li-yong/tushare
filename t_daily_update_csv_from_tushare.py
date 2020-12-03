@@ -29,9 +29,9 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
     todayS_s = datetime.strptime(todayS_l, '%Y-%m-%d').strftime('%Y%m%d')
     dump_csv = "/home/ryan/DATA/pickle/daily_update_source/ag_daily_" + todayS_s + ".csv"
 
-    if finlib.Finlib().is_cached(dump_csv, 1):
+    if finlib.Finlib().is_cached(dump_csv, 1) and not add_miss:
         logging.info("csv is updated in 1 day, not fetch. "+dump_csv)
-        return
+    #    return
 
 
     finlib.Finlib().fetch_ag_trading_day()
@@ -197,13 +197,12 @@ def main():
     logging.info(__file__+" "+"pickle_only: " + str(pickle_only))
     logging.info(__file__+" "+"exam_date: " + str(exam_date))
 
-    dump = ''
+    dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"
 
     if exam_date is None:
         exam_date = finlib.Finlib().get_last_trading_day()
         exam_date = datetime.strptime(exam_date, '%Y%m%d').strftime('%Y-%m-%d')
         logging.info(__file__+" "+"exam_date reset to: " + exam_date)
-        dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"
     elif ((not add_miss) and (not os.path.isfile(dump))):
         logging.error("expecting --add_miss.  pickle file " + dump + " does not exist, at this situation --exam_date without --add_miss fetchs wrong data from tushare for date which is the past.")
         exit(0)
