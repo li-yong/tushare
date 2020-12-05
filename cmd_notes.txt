@@ -5,3 +5,7 @@ for i in `ls`; do A="$(cut -d'.' -f1 <<< $i)"; echo $A.csv; mv $i $A.csv;   done
 
 yapf -r -i   --style='{based_on_style: pep8, column_limit:2000, SPLIT_PENALTY_AFTER_OPENING_BRACKET}' *.py
 
+
+#remove the last line
+ for i in `ls`; do sed -i '$ d' $i; done
+
