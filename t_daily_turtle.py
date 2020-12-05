@@ -131,9 +131,13 @@ def _entry(csv_f, period):
     hold_unit=0
     profit = 0
 
+    open_price = 0
+
+
 
     for index, row in df_turtle.iterrows():
         # print(row)
+
 
         if row['max']==True and hold_unit == 0:
             #open 1st persition
@@ -142,8 +146,10 @@ def _entry(csv_f, period):
             #A_Unit_Change = N*row['close']*100 # $ changes in a Day
             unit_to_open = round(0.01*net_cash/A_Unit_Change,0)
 
+            open_price = row['close']
+
             hold_unit += unit_to_open
-            net_cash -=  unit_to_open * a_unit_amt * row['close']
+            net_cash -=  unit_to_open * a_unit_amt * open_price
             logging.info(row['date'].strftime('%Y%m%d')+', open unit '+str(unit_to_open)+", price "+str(row['close']))
 
 
@@ -160,6 +166,14 @@ def _entry(csv_f, period):
             logging.info("profit "+str(profit)+" , profit_perc "+str(profit_perc)+"\n\n")
 
             hold_unit = 0
+
+        p = row['close'] - open_price
+        if hold_unit > 0 and p < 0:
+            #check stop loss or win exit
+
+            if abs(p) > 2 * N:
+                logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'+", price "+str(row['close']))
+                hold_unit = 0
 
 
 
