@@ -197,12 +197,13 @@ def main():
     logging.info(__file__+" "+"pickle_only: " + str(pickle_only))
     logging.info(__file__+" "+"exam_date: " + str(exam_date))
 
-    dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"
+    dump = ''
 
     if exam_date is None:
         exam_date = finlib.Finlib().get_last_trading_day()
         exam_date = datetime.strptime(exam_date, '%Y%m%d').strftime('%Y-%m-%d')
         logging.info(__file__+" "+"exam_date reset to: " + exam_date)
+        dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"
     elif ((not add_miss) and (not os.path.isfile(dump))):
         logging.error("expecting --add_miss.  pickle file " + dump + " does not exist, at this situation --exam_date without --add_miss fetchs wrong data from tushare for date which is the past.")
         exit(0)
