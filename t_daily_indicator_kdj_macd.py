@@ -110,36 +110,36 @@ def _kdj(csv_f, period):
     _j2 = d2.kdjj
 
     if abs(_k1) >= 90:
-        this_reason = "excessive buy, k " + str(round(_k1, 0))
+        this_reason += "excessive buy, k " + str(round(_k1, 0)) + "; "
         this_strength = round(_k1 / 100, 2)
-        this_action = 'SELL'
+        this_action += 'SELL' + "; "
         print('excessive buy. Should sell. ' + csv_f)
     elif abs(_k1) <= 10:
-        this_reason = "excessive sell, k " + str(round(_k1, 0))
+        this_reason += "excessive sell, k " + str(round(_k1, 0)) + "; "
         this_strength = round((1 - _k1 / 100), 2)
-        this_action = 'BUY'
+        this_action = 'BUY' + "; "
         print('excessive sell. Should buy. ' + csv_f)
 
     if (_d2 - _k2) / abs(_d2) >= 0.1:  #d more than 10% of k. Means low price. undervalued
         if _k1 >= _d1:
             this_strength = round((_k1 - _d1) / abs(_d1), 2)
-            this_reason = "K cross over D,  K " + str(_k1) + ", D " + str(_d1) + ", strength " + str(this_strength)
-            this_action = 'BUY'
+            this_reason += "K cross over D,  K " + str(_k1) + ", D " + str(_d1) + ", strength " + str(this_strength) + "; "
+            this_action += 'BUY' + "; "
             print("K cross over D, should buy. " + csv_f)
 
         elif (_d1 - _k1) / abs(_d1) <= 0.05:  # k still less than d, but very close
             t = round((_d1 - _k1) / abs(_d1), 2)
-            this_reason = 'K is less than 5% to D, ' + str(t)
-            this_strength = round((1 - t), 2)
-            this_action = 'BUY_EARLY'
+            this_reason += 'K is less than 5% to D, ' + str(t) + "; "
+            this_strength += round((1 - t), 2)
+            this_action = 'BUY_EARLY' + "; "
             print("K is less than 5% to D, early stage, should buy little " + csv_f)
 
     if (_k2 - _d2) / abs(_k2) >= 0.1:  #k more than 10% of d. Means high price. overvalued
         if (_d1 - _k1) / abs(_d1) >= 0.05:  #k less than d more than 5%
             t = round((_d1 - _k1) / abs(_d1), 2)
-            this_reason = 'K cross down D, K ' + str(_k1) + ", D " + str(_d1) + ", Percent " + str(t)
+            this_reason += 'K cross down D, K ' + str(_k1) + ", D " + str(_d1) + ", Percent " + str(t) + "; "
             this_strength = round(t, 2)
-            this_action = 'SELL'
+            this_action += 'SELL' + "; "
             print("K cross down D, should sell. " + csv_f)
 
         #elif (d1.kdjk - d1.kdjd)/ d1.kdjk <= 0.05: #k more than d, but very close
@@ -364,8 +364,8 @@ def _macd(csv_f, period):
 
     #MA nianlian
     if d1.close > 0  and abs((d1.close_55_sma - d1.close_21_sma)/d1.close) < 0.02:
-        this_reason += constant.MA_55_CLOSE_MA21
-        this_action += constant.BUY_CHECK
+        this_reason += constant.MA_55_CLOSE_MA21 + "; "
+        this_action += constant.BUY_CHECK + "; "
         logging.info(this_reason)
 
 
@@ -565,6 +565,10 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
         "code": [''],
         "date": [''],
         "close": [''],
+        'close_above_ma5_n_days':[''],
+        'close_nearly_above_ma5_n_days':[''],
+        'ma5_near_ma21_days':[''],
+        'ma21_near_ma55_days':[''],
     }
 
     if not os.path.exists(csv_f):
@@ -610,6 +614,48 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
     #ma fast cross over ma slow
     df_ma_cross['ma_fast_cross_over_slow'] = df_ma_cross['close_' + str(period_fast) + '_sma_xu_close_' + str(period_slow) + '_sma']
 
+
+    # close stand upon MA5
+    df_ma_cross['close_stand_upon_ma5'] = df_ma_cross['close'] >= df_ma_cross['close_5_sma']
+
+    # close_stand_upon_ma5_nearly includes close_stand_upon_ma5
+    df_ma_cross['close_stand_upon_ma5_nearly'] = ((df_ma_cross['close'] - df_ma_cross['close_5_sma'])/df_ma_cross['close']) > -0.01
+
+
+    if df_ma_cross.iloc[-1]['close_stand_upon_ma5'] == True and df_ma_cross.index[df_ma_cross['close_stand_upon_ma5']==False].__len__()>0:
+        last_under_ma5 = df_ma_cross.index[df_ma_cross['close_stand_upon_ma5']==False][-1]
+        bars_above_ma5 = str(df_ma_cross.index[-1] - last_under_ma5)
+        logging.info(this_code+" close has been above sma5 for "+bars_above_ma5 + " days")
+        this_reason += constant.CLOSE_ABOVE_MA5_N_DAYS+"_"+bars_above_ma5 + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+        rtn['close_above_ma5_n_days']=bars_above_ma5
+
+
+    if df_ma_cross.iloc[-1]['close_stand_upon_ma5_nearly'] == True and df_ma_cross.index[df_ma_cross['close_stand_upon_ma5_nearly']==False].__len__()>0:
+        last_under_ma5 = df_ma_cross.index[df_ma_cross['close_stand_upon_ma5_nearly']==False][-1]
+        bars_near_ma5 = str(df_ma_cross.index[-1] - last_under_ma5)
+        logging.info(this_code+" close has been nearly (more than -0.01) sma5 for "+bars_near_ma5 + " days")
+        this_reason += constant.CLOSE_NEAR_MA5_N_DAYS+"_"+bars_near_ma5 + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+        rtn['close_nearly_above_ma5_n_days'] = bars_near_ma5
+
+
+    # df_ma_cross['ma21_stand_upon_ma55_nearly'] = ((df_ma_cross['close_21_sma'] - df_ma_cross['close_55_sma'])/df_ma_cross['close_21_sma']) > -0.01
+    df_ma_cross['ma21_stand_upon_ma55_nearly'] = abs((df_ma_cross['close_21_sma'] - df_ma_cross['close_55_sma'])/df_ma_cross['close_21_sma']) < 0.02
+
+    if df_ma_cross.iloc[-1]['ma21_stand_upon_ma55_nearly'] == True and df_ma_cross.index[df_ma_cross['ma21_stand_upon_ma55_nearly']==False].__len__()>0:
+        last_false = df_ma_cross.index[df_ma_cross['ma21_stand_upon_ma55_nearly']==False][-1]
+        bars = str(df_ma_cross.index[-1] - last_false)
+        logging.info(this_code+" ma21 has been nearly (more than -0.01) ma55 for "+bars + " days")
+        this_reason += constant.MA21_NEAR_MA55_N_DAYS+"_"+bars + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+        rtn['ma21_near_ma55_days'] = bars
+
+
+
     if df_ma_cross.__len__() < 2:  # at least two records.
         return (rtn)
 
@@ -619,9 +665,10 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
     c1 = d1.close
 
     if d1['ma_fast_cross_over_slow'] == True:
-        this_reason += constant.SMA21_CROSS_OVER_SMA55 + "; "
+        this_reason += constant.SMA_CROSS_OVER + "_"+period_fast+"_"+period_slow+"; "
         this_action += constant.BUY_CHECK + "; "
         logging.info(this_reason)
+
 
 
     rtn = {
@@ -631,6 +678,7 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
         "code": [this_code],
         "date": [this_date],
         "close": [c1],
+
     }
 
     return(rtn)
@@ -658,6 +706,7 @@ def ma_cross_over(period, period_fast, period_slow, debug=False):
         r = _ma_cross_over(csv_f=csv_f, period=period, period_fast=period_fast, period_slow=period_slow)
 
         if r['action'] != ['']:
+            print(r) #ryan debug
             df = pd.DataFrame(data=r)
             df_rtn = df_rtn.append(df)
 

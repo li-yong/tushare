@@ -43,7 +43,18 @@ MA_55_CLOSE_MA21 = "MA55 CLOSE TO MA21"
 ##############
 # Critical MA fast cross MA slow
 ##############
-SMA21_CROSS_OVER_SMA55 = "SMA21 cross over SMA55"
+SMA_CROSS_OVER = "SMA FAST cross over SMA SlOW"
+
+##############
+# CLOSE above MA5.
+# small number indicates starting stage of burst
+# large number indicates middle stage of burst
+##############
+CLOSE_ABOVE_MA5 = "CLOSE_ABOVE_MA5"
+
+CLOSE_ABOVE_MA5_N_DAYS="CLOSE_ABOVE_MA5_N_DAYS"
+CLOSE_NEAR_MA5_N_DAYS="CLOSE_NEAR_MA5_N_DAYS"
+MA21_NEAR_MA55_N_DAYS="MA21_NEAR_MA55_N_DAYS"
 
 ##############
 #  Criterial MACD
