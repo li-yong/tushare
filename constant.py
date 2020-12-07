@@ -36,6 +36,11 @@ UNDER_SMA60 = "under sma60"
 
 
 ##############
+# MA55 closing to MA21
+##############
+MA_55_CLOSE_MA21 = "MA55 CLOSE TO MA21"
+
+##############
 # Critical MA fast cross MA slow
 ##############
 SMA21_CROSS_OVER_SMA55 = "SMA21 cross over SMA55"
