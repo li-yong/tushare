@@ -102,7 +102,7 @@ def _entry(csv_f, period):
     #df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=12, middle=26, long=60)
     df_period = finlib_indicator.Finlib_indicator().add_tr_atr(df_period, short=5, middle=21, long=55)
 
-    df_period = df_period[-100:]
+    df_period = df_period[-250:]
 
     #the day when close higher than previous N periods
     # df_max=df_period[df_period['close'].rolling(window=20).max() == df_period['close']]
@@ -139,7 +139,8 @@ def _entry(csv_f, period):
         # print(row)
 
 
-        if row['max']==True and hold_unit == 0:
+        # if row['max']==True and hold_unit == 0:
+        if row['max']==True:
             #open 1st persition
             N = row['atr_middle_21']
             A_Unit_Change = N*a_unit_amt  # $ changes in a Day

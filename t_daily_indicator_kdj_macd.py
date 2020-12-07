@@ -367,7 +367,7 @@ def _macd(csv_f, period):
         this_action += constant.SELL_CHECK + "; "
         logging.info(this_reason)
 
-#distance to MA
+#close price distance to MA
     if c1 > 0 and c2 > 0:
         distance_to_sma5_perc = round((c1 - d1.close_5_sma) * 100 /c1, 1)
         distance_to_sma12_perc = round((c1 - d1.close_12_sma) * 100 /c1, 1)
@@ -550,15 +550,132 @@ def macd(period, debug=False):
         logging.info(__file__+" "+"MACD selection saved to " + output_csv + " . len " + str(df_rtn.__len__()))
 
 
-def calculate(indicator, period, debug):
+def _ma_cross_over(csv_f,period, period_fast,period_slow):
+    rtn = {
+        "reason": [''],
+        "strength": [''],
+        "action": [''],
+        "code": [''],
+        "date": [''],
+        "close": [''],
+    }
+
+    if not os.path.exists(csv_f):
+        logging.info('file not exist. ' + csv_f)
+        return (rtn)
+
+    # csv_f = '/home/ryan/DATA/DAY_Global/AG/SH600519.csv' #ryan debug
+    # csv_f = '/home/ryan/DATA/DAY_Global/AG/SZ000008.csv'
+
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+    # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv") ##ryan debug for ag index
+
+    if df.__len__() < 100:
+        logging.info('file less than 100 records. ' + csv_f)
+        return (rtn)
+
+    this_code = df.iloc[0]['code']  # 'SH603999'
+    this_date = ''  # monthly period, end date of the month.
+    this_reason = ''
+    this_strength = 0
+    this_action = ''
+
+    # print(tabulate.tabulate(df[-20:], headers='keys', tablefmt='psql'))  #debug
+    # print(tabulate.tabulate(df_monthly_s[-20:], headers='keys', tablefmt='psql'))
+
+    df = df[-1000:]  # last 4 years.
+
+    if period == "M":
+        df_period = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_monthly']
+    elif period == "W":
+        df_period = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
+    elif period == "D":
+        df['date'] = pd.to_datetime(df['date'], format="%Y-%m-%d")
+        df_period = df
+
+    df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=5, middle=period_fast, long=period_slow)
+    df_period = df_period[-100:]
+
+    # print(tabulate.tabulate(df_period[-10:], headers='keys', tablefmt='psql'))
+
+    df_ma_cross = stockstats.StockDataFrame.retype(df_period).reset_index()
+
+    #ma fast cross over ma slow
+    df_ma_cross['ma_fast_cross_over_slow'] = df_ma_cross['close_' + str(period_fast) + '_sma_xu_close_' + str(period_slow) + '_sma']
+
+    if df_ma_cross.__len__() < 2:  # at least two records.
+        return (rtn)
+
+    d1 = df_ma_cross.iloc[-1]
+
+    this_date = d1.date.strftime("%Y-%m-%d")  # '2019-03-31'
+    c1 = d1.close
+
+    if d1['ma_fast_cross_over_slow'] == True:
+        this_reason += constant.SMA21_CROSS_OVER_SMA55 + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+
+    rtn = {
+        "reason": [this_reason],
+        "strength": [this_strength],
+        "action": [this_action],
+        "code": [this_code],
+        "date": [this_date],
+        "close": [c1],
+    }
+
+    return(rtn)
+
+
+def ma_cross_over(period, period_fast, period_slow, debug=False):
+    output_csv = "/home/ryan/DATA/result/macd_cross_over_selection_" + period_fast+"_"+period_slow + ".csv"  #head: code, name, date, action(b/s), reason, strength.
+
+    df_rtn = pd.DataFrame()
+
+    stock_list = finlib.Finlib().get_A_stock_instrment()
+    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+
+    #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+    if debug:
+        stock_list = stock_list.head(30) #debug
+
+    cnt = stock_list.__len__()
+    i = 0
+    for c in stock_list['code']:
+        i += 1
+        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
+        logging.info(str(i) + " of " + str(cnt) + " " + c)
+
+        r = _ma_cross_over(csv_f=csv_f, period=period, period_fast=period_fast, period_slow=period_slow)
+
+        if r['action'] != ['']:
+            df = pd.DataFrame(data=r)
+            df_rtn = df_rtn.append(df)
+
+    if df_rtn.empty:
+        logging.info("MA cross over no qualified stock found.")
+    else:
+        df_rtn = pd.merge(df_rtn, stock_list, how='inner', on='code')
+        df_rtn = finlib.Finlib().adjust_column(df_rtn, [ 'date','code', 'name', 'close', 'action', 'reason', 'strength'])
+        df_rtn.to_csv(output_csv, encoding='UTF-8', index=False)
+
+        logging.info(__file__+" "+"MA cross over saved to " + output_csv + " . len " + str(df_rtn.__len__()))
+
+
+def calculate(indicator, period,period_fast,period_slow, debug):
     if indicator == 'KDJ':
         kdj(period=period, debug=debug)
 
     if indicator == 'MACD':
         macd(period=period, debug=debug)
 
+    if indicator == 'MA_CROSS_OVER':
+        ma_cross_over(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
+
     if indicator == 'SMA':
-        sma( debug=debug)
+        sma(debug=debug)
     if indicator == 'PriceCounter':
         price_counter( debug=debug)
 
@@ -632,9 +749,11 @@ def main():
 
     parser = OptionParser()
 
-    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|SMA|PriceCounter]")
+    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|SMA|PriceCounter|MA_CROSS_OVER]")
 
     parser.add_option("-p","--period", type="str", dest="period_f", default=None, help="period, one of [M|W|D]")
+    parser.add_option("-f","--period_fast", type="str", dest="period_fast_f", default=None, help="fast period of MA, 21 e.g")
+    parser.add_option("-s","--period_slow", type="str", dest="period_slow_f", default=None, help="slow period of MA, 55 e.g")
 
     parser.add_option("-a", "--analyze", action="store_true", dest="analyze_f", default=False, help="analyze based on [MACD|KDJ] M|W|D result.")
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug")
@@ -643,22 +762,20 @@ def main():
 
     indicator = options.indicator_f
     period = options.period_f
+    period_fast = options.period_fast_f
+    period_slow = options.period_slow_f
     analyze_f = options.analyze_f
     debug = options.debug_f
 
 
 
-
-
-
-
     if indicator == None:
-        print("missing indicator [MACD|KDJ|SMA|PriceCounter]")
+        print("missing indicator [MACD|KDJ|SMA|PriceCounter|MA_CROSS_OVER]")
 
     if analyze_f:
         analyze(indicator=indicator,  debug=debug)
     elif not period == None:
-        calculate(indicator, period,debug)
+        calculate(indicator=indicator, period=period, period_fast=period_fast,period_slow=period_slow,debug=debug)
 
 
 ### MAIN ####

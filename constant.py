@@ -21,7 +21,7 @@ PRICE_HIGH = "price high"
 PRICE_LOW  = "price low"
 
 ##############
-#  Criterial MA
+#  Criterial MA. Close Price CROSS OVER/DOWN
 #############
 CROSS_OVER_SMA5 = "cross over sma5"
 CROSS_OVER_SMA21 = "cross over sma21"
@@ -33,6 +33,12 @@ CROSS_DOWN_SMA60 = "cross down sma60"
 
 ABOVE_SMA60 = "above sma60"
 UNDER_SMA60 = "under sma60"
+
+
+##############
+# Critical MA fast cross MA slow
+##############
+SMA21_CROSS_OVER_SMA55 = "SMA21 cross over SMA55"
 
 ##############
 #  Criterial MACD
