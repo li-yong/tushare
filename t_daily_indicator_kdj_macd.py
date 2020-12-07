@@ -363,7 +363,7 @@ def _macd(csv_f, period):
     ema60_2 = d2.ema_long_60
 
     #MA nianlian
-    if abs((d1.close_55_sma - d1.close_21_sma)/d1.close) < 0.02:
+    if d1.close > 0  and abs((d1.close_55_sma - d1.close_21_sma)/d1.close) < 0.02:
         this_reason += constant.MA_55_CLOSE_MA21
         this_action += constant.BUY_CHECK
         logging.info(this_reason)
