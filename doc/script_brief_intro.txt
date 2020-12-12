@@ -1,0 +1,192 @@
+
+
+t_daily_junxian_barstyle.py : /home/ryan/DATA/result/
+./ag_junxian_barstyle.csv:code,name,date,open,low,high,close,volume,short_period,middle_period,long_period,very_strong_down_trend,very_strong_up_trend,trend_short,trend_short_strength,trend_middle,trend_middle_strength,trend_long,duotou_pailie,duotou_pailie_last_bars,last_kongtou_pailie_date,last_kongtou_pailie_n_days_before,kongtou_pailie,kongtou_pailie_last_bars,last_duotou_pailie_date,last_duotou_pailie_n_days_before,jincha_minor,jincha_minor_strength,jincha_major,jincha_major_strength,sicha_minor,sicha_minor_strength,sicha_major,sicha_major_strength,yunxian_buy,yunxian_sell,guangtou,guangjiao,small_body,cross_star,long_upper_shadow,long_lower_shadow,upper_shadow_len,body_len,lower_shadow_len,sma_short_5,sma_middle_10,sma_long_20,ema_short_5,ema_middle_10,ema_long_20,tr,atr_short_5,atr_middle_10,atr_long_20,price_occurence_sum,l5_price,l4_price,l3_price,l2_price,l1_price,h1_price,h2_price,h3_price,h4_price,h5_price,l5_frequency_percent,l4_frequency_percent,l3_frequency_percent,l2_frequency_percent,l1_frequency_percent,h1_frequency_percent,h2_frequency_percent,h3_frequency_percent,h4_frequency_percent,h5_frequency_percent,l5_occurrence,l4_occurrence,l3_occurrence,l2_occurrence,l1_occurrence,h1_occurrence,h2_occurrence,h3_occurrence,h4_occurrence,h5_occurrence,l5_occurrence_percent,l4_occurrence_percent,l3_occurrence_percent,l2_occurrence_percent,l1_occurrence_percent,h1_occurrence_percent,h2_occurrence_percent,h3_occurrence_percent,h4_occurrence_percent,h5_occurrence_percent,amount,tnv,close_5_sma,close_10_sma,close_20_sma,close_5_ema,close_10_ema,close_20_ema,close_-1_s,tr_5_smma,atr_5,code_x,date_x,close_x,sma_short,sma_middle,sma_long,ema_short,ema_middle,ema_long
+
+	ag_junxian_barstyle.csv  << SMA, price 
+	ag_junxian_barstyle_duotou_pailie.csv
+	ag_junxian_barstyle_jincha_major.csv
+	ag_junxian_barstyle_jincha_minor.csv
+	ag_junxian_barstyle_very_strong_down_trend.csv
+	ag_junxian_barstyle_very_strong_up_trend.csv
+	ag_junxian_barstyle_yunxian_buy.csv
+	ag_junxian_barstyle_yunxian_sell.csv
+	
+	
+	result/Selected:	
+		ag_junxian_barstyle.csv                       
+		ag_junxian_barstyle_duotou_pailie.csv         
+		ag_junxian_barstyle_jincha_major.csv          
+		ag_junxian_barstyle_jincha_minor.csv          
+		ag_junxian_barstyle_very_strong_down_trend.csv
+		ag_junxian_barstyle_very_strong_up_trend.csv  
+		ag_junxian_barstyle_yunxian_buy.csv           
+		ag_junxian_barstyle_yunxian_sell.csv          
+		
+		
+		us_junxian_barstyle.csv
+		us_junxian_barstyle_duotou_pailie.csv
+		us_junxian_barstyle_jincha_major.csv
+		us_junxian_barstyle_jincha_minor.csv
+		us_junxian_barstyle_very_strong_down_trend.cs
+		us_junxian_barstyle_very_strong_up_trend.csv
+		us_junxian_barstyle_yunxian_buy.csv
+		us_junxian_barstyle_yunxian_sell.csv
+
+		hk_junxian_barstyle.csv 
+		hk_junxian_barstyle_jincha_minor.csv          	 
+		hk_junxian_barstyle_very_strong_down_trend.csv	 
+		hk_junxian_barstyle_duotou_pailie.csv 
+		hk_junxian_barstyle_jincha_major.csv 
+
+		hk_junxian_barstyle_very_strong_up_trend.csv  
+		hk_junxian_barstyle_yunxian_buy.csv           
+		hk_junxian_barstyle_yunxian_sell.csv          
+
+
+
+ak_share.py:  /home/ryan/DATA/result/wei_pan_la_sheng/
+	wei_pan_la_sheng_20201125_1430.csv      
+	wei_pan_la_sheng_kcb_20201118_0704.csv 
+
+
+t_daily_indicator_kdj_macd.py
+	macd_cross_over_selection_21_55.csv << 	date,code,name,close,action,reason,strength
+	macd_cross_over_selection_5_21.csv
+	
+	macd_selection_D.csv << 	date,code,name,close,action,reason,strength,dif1,dea1,macd1,dif2,dea2,macd2,sma60_1,ema60_1,distance_to_sma5_perc,distance_to_sma12_perc,distance_to_sma21_perc,distance_to_sma55_perc,distance_to_sma60_perc
+
+	macd_selection_M.csv
+	macd_selection_W.csv
+	
+	kdj_selection.csv  <<< 	code,name,date,action,strength,reason,k1,d1,j1,k2,d2,j2
+
+	kdj_selection_D.csv
+	kdj_selection_M.csv
+	kdj_selection_W.csv
+	
+   
+    Selected:
+	
+	
+
+t_double_bottom.py
+	ag_curve_shape.csv  <<code,name,hit,slop_degree_max_3,slop_degree_min_3,slop_degree_max_2,slop_degree_min_2,y_pol,cur_p,pol_min_right_3,pol_max_right_3,pol_min_right_2,pol_max_right_2,date,slop_max_degree_left_2,slop_degree_min_left_2,pol_max_left_2,pol_min_left_2
+
+	select:  
+		ag_curve_shape.csv  
+		us_fib.csv
+		us_index_fib.csv
+		ag_curve_shape.csv 
+		us_curve_shape.csv
+		hk_curve_shape.csv  
+
+
+t_yearly_beneish.py
+	ag_beneish.csv
+	
+	selected:
+		ag_beneish.csv   	
+
+
+t_daily_cycle_statistic.py 
+	no output , statistic increase by week_of_year, month_of_year, weekday
+
+
+t_daily_adl_trin.py  
+	ag_adl_trin_45d.csv   << code,name,date,net_adv_perc,ADL,ADL_perc,TRIN
+	g_adl_trin_600d.csv   << code,name,date,net_adv_perc,ADL,ADL_perc,vol_perc,amt_perc,net_amt,TRIN
+
+
+	adl
+		adl_perc_top_5_stocks.csv   << code,name,date,net_adv_perc,ADL,ADL_perc,vol_perc,amt_perc,net_amt,TRIN
+
+		adl_trin_plot_ag_index_plot.png
+		ag_adl_trin_14d.csv 
+		ag_index_adl.csv
+		amt_perc_top_5_stocks.csv
+		vol_perc_top_5_stocks.csv
+
+	ag_adl_trin.csv
+
+
+
+t_daily_hsgt.py
+
+
+t_fibonacci.py
+	fib_index.csv
+
+	select:
+		ag_fib.csv             
+		ag_index_fib.csv  
+		hk_fib.csv   		
+		
+	fib_plot/*.png
+
+
+t_top_10_holders.py
+	top_10_holder_detail_full.csv
+	top_10_holder_detail_latest.csv
+	top_10_holder_details.csv
+	top_10_holder_summary.csv
+	top_10_holder_summary_full.csv
+	top_10_holder_summary_latest.csv
+
+
+
+	area_top.csv
+	concept_top.csv
+	high_pb_top30p.csv
+	high_pe_top30p.csv
+	high_ps_top30p.csv
+	high_roe_top30.csv
+	hsgt_top_10_selected.csv
+	industry_top.csv
+	low_pb_top30p.csv
+	low_pe_top30p.csv
+	low_ps_top30p.csv
+
+
+
+
+t_verify_gaodikai_increase_relationship.py
+
+
+
+t_daily_get_key_points.py
+
+t_daily_pattern_Hit_Price_Volume.py
+
+
+
+t_daily_w_shape.py
+
+
+
+t_cycle.py
+
+
+
+
+
+
+
+
+
+==============
+			(base) ryan@haha_brain_2:~/DATA/result$ ls selected/
+		                                         talib_and_pv_no_db_filter_ag.csv
+		                                       talib_and_pv_no_db_filter_hk.csv
+                           talib_and_pv_no_db_filter_us.csv
+
+
+			
+		  key_points_ag.csv                               
+		  key_points_ag_today.csv                         
+		  key_points_ag_today_selected.csv                
+		  key_points_hk.csv                               v
+		  key_points_us.csv                               
+		                            key_points_us_today.csv                        
+		                                   key_points_us_today_selected.csv               
+		                        mf_today_top5_large_amount.csv
