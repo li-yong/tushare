@@ -109,7 +109,11 @@ def wei_pan_la_sheng():
     ########################
     #
     #################
-    b = "/home/ryan/DATA/pickle/Stock_Fundamental/akshare/source"
+    b = "/home/ryan/DATA/result/wei_pan_la_sheng"
+
+    if not os.path.isdir(b):
+        os.mkdir(b)
+
     # f = b + "/" + "stock_zh_a_scr_report_企业社会责任.csv"
 
     # f = b+"/"+"stock_em_jgdy_detail_机构调研-详细.csv"

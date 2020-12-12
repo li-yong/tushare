@@ -163,47 +163,6 @@ def _kdj(csv_f, period):
     return (rtn)
 
 
-def sma():
-
-    stock_list = finlib.Finlib().get_A_stock_instrment()
-    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
-
-    #stock_list = stock_list.head(100) #ryan debug
-
-    cnt = stock_list.__len__()
-    i = 0
-    for c in stock_list['code']:
-        i += 1
-        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
-        logging.info("\n"+str(i) + " of " + str(cnt) + " " + c)
-
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
-        df = df.iloc[-300:].reset_index().drop('index', axis=1)
-
-        finlib_indicator.Finlib_indicator().price_counter()
-
-        df1 = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,5,10,20)
-
-
-def price_counter():
-
-    stock_list = finlib.Finlib().get_A_stock_instrment()
-    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
-
-    #stock_list = stock_list.head(100) #ryan debug
-
-    cnt = stock_list.__len__()
-    i = 0
-    for c in stock_list['code']:
-        i += 1
-        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
-        logging.info("\n"+str(i) + " of " + str(cnt) + " " + c)
-
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
-        df = df.iloc[-300:].reset_index().drop('index', axis=1)
-
-        finlib_indicator.Finlib_indicator().price_counter(df)
-
 
 def kdj(period, debug=False):
     output_csv = "/home/ryan/DATA/result/kdj_selection_" + period + ".csv"  #head: code, name, date, action(b/s), reason, strength.
@@ -730,11 +689,6 @@ def calculate(indicator, period,period_fast,period_slow, debug):
     if indicator == 'MA_CROSS_OVER':
         ma_cross_over(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
 
-    if indicator == 'SMA':
-        sma(debug=debug)
-    if indicator == 'PriceCounter':
-        price_counter( debug=debug)
-
 
 
 
@@ -805,7 +759,7 @@ def main():
 
     parser = OptionParser()
 
-    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|SMA|PriceCounter|MA_CROSS_OVER]")
+    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|MA_CROSS_OVER]")
 
     parser.add_option("-p","--period", type="str", dest="period_f", default=None, help="period, one of [M|W|D]")
     parser.add_option("-f","--period_fast", type="str", dest="period_fast_f", default=None, help="fast period of MA, 21 e.g")
@@ -826,7 +780,7 @@ def main():
 
 
     if indicator == None:
-        print("missing indicator [MACD|KDJ|SMA|PriceCounter|MA_CROSS_OVER]")
+        print("missing indicator [MACD|KDJ|MA_CROSS_OVER]")
 
     if analyze_f:
         analyze(indicator=indicator,  debug=debug)

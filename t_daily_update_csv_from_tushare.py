@@ -197,7 +197,8 @@ def main():
     logging.info(__file__+" "+"pickle_only: " + str(pickle_only))
     logging.info(__file__+" "+"exam_date: " + str(exam_date))
 
-    dump = ''
+    if exam_date is not None:
+        dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"
 
     if exam_date is None:
         exam_date = finlib.Finlib().get_last_trading_day()
