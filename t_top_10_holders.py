@@ -27,9 +27,6 @@ logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', 
 # This script is to analysis top 10 holder of stocks.
 
 #reference
-#top_10_holder_summary_csv = "/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/_summary.csv"
-#top_10_holder_detail_csv = "/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/_detail.csv"
-
 top_10_holder_summary_csv = "/home/ryan/DATA/result/top_10_holder_summary_full.csv"
 top_10_holder_detail_csv = "/home/ryan/DATA/result/top_10_holder_detail_full.csv"
 
@@ -72,8 +69,12 @@ def get_top_10_holder_data(stock_list=None):
 
         df_a_sum = df_a_detail = pd.DataFrame()
 
-        top_10_summary_csv = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/summary_' + str(code) + '.csv'
-        top_10_detail_csv = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/detail_' + str(code) + '.csv'
+        base_dir = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder'
+        if not os.path.isdir(base_dir):
+            os.mkdir(base_dir)
+
+        top_10_summary_csv = base_dir+ '/summary_' + str(code) + '.csv'
+        top_10_detail_csv = base_dir + '/detail_' + str(code) + '.csv'
 
         #if os.path.isfile(top_10_summary_csv) and os.path.isfile(top_10_detail_csv):
         if finlib.Finlib().is_cached(top_10_summary_csv, day=3) and finlib.Finlib().is_cached(top_10_detail_csv, day=3):
@@ -134,10 +135,11 @@ def load_top_10_holder_data(stock_list=None, debug=False):
 
         df_a_sum = df_a_detail = pd.DataFrame()
 
-        top_10_summary_csv = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/summary_' + str(code) + '.csv'
-        top_10_detail_csv = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/detail_' + str(code) + '.csv'
+        base_dir = '/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder'  #source dir
+        top_10_summary_csv = base_dir + '/summary_' + str(code) + '.csv'
+        top_10_detail_csv = base_dir + '/detail_' + str(code) + '.csv'
 
-        if (finlib.Finlib().is_cached(top_10_summary_csv, day=10) and finlib.Finlib().is_cached(top_10_detail_csv, day=10)):
+        if (finlib.Finlib().is_cached(top_10_summary_csv, day=1000) and finlib.Finlib().is_cached(top_10_detail_csv, day=1000)):
             df_a_sum = pd.read_csv(top_10_summary_csv, converters={'code': str})
             df_a_detail = pd.read_csv(top_10_detail_csv, converters={'code': str})
         else:
