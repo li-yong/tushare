@@ -1,5 +1,4 @@
 
-
 t_daily_junxian_barstyle.py : /home/ryan/DATA/result/
 ./ag_junxian_barstyle.csv:code,name,date,open,low,high,close,volume,short_period,middle_period,long_period,very_strong_down_trend,very_strong_up_trend,trend_short,trend_short_strength,trend_middle,trend_middle_strength,trend_long,duotou_pailie,duotou_pailie_last_bars,last_kongtou_pailie_date,last_kongtou_pailie_n_days_before,kongtou_pailie,kongtou_pailie_last_bars,last_duotou_pailie_date,last_duotou_pailie_n_days_before,jincha_minor,jincha_minor_strength,jincha_major,jincha_major_strength,sicha_minor,sicha_minor_strength,sicha_major,sicha_major_strength,yunxian_buy,yunxian_sell,guangtou,guangjiao,small_body,cross_star,long_upper_shadow,long_lower_shadow,upper_shadow_len,body_len,lower_shadow_len,sma_short_5,sma_middle_10,sma_long_20,ema_short_5,ema_middle_10,ema_long_20,tr,atr_short_5,atr_middle_10,atr_long_20,price_occurence_sum,l5_price,l4_price,l3_price,l2_price,l1_price,h1_price,h2_price,h3_price,h4_price,h5_price,l5_frequency_percent,l4_frequency_percent,l3_frequency_percent,l2_frequency_percent,l1_frequency_percent,h1_frequency_percent,h2_frequency_percent,h3_frequency_percent,h4_frequency_percent,h5_frequency_percent,l5_occurrence,l4_occurrence,l3_occurrence,l2_occurrence,l1_occurrence,h1_occurrence,h2_occurrence,h3_occurrence,h4_occurrence,h5_occurrence,l5_occurrence_percent,l4_occurrence_percent,l3_occurrence_percent,l2_occurrence_percent,l1_occurrence_percent,h1_occurrence_percent,h2_occurrence_percent,h3_occurrence_percent,h4_occurrence_percent,h5_occurrence_percent,amount,tnv,close_5_sma,close_10_sma,close_20_sma,close_5_ema,close_10_ema,close_20_ema,close_-1_s,tr_5_smma,atr_5,code_x,date_x,close_x,sma_short,sma_middle,sma_long,ema_short,ema_middle,ema_long
 
@@ -113,6 +112,10 @@ t_daily_adl_trin.py
 
 t_daily_hsgt.py
 
+	selected
+		mf_today_top5_large_amount.csv
+	today
+		mf_today_top5_large_amount.csv   
 
 t_fibonacci.py
 	fib_index.csv
@@ -132,6 +135,20 @@ t_top_10_holders.py
 	top_10_holder_summary.csv
 	top_10_holder_summary_full.csv
 	top_10_holder_summary_latest.csv
+
+
+t_daily_pattern_Hit_Price_Volume_2.py
+	vcp.csv                         
+	pe_top_30p.csv                  
+	pe_bottom_30p.csv               
+	zhang_ting.csv                  
+	die_ting.csv                    
+	volume_ratio_top_20p.csv        
+	volume_ratio_bottom_10p.csv     
+	zhangting_volume_ration_lt_1.csv
+	pocket_pivot.csv                
+	stable_price_volume.csv         
+	die_ting.csv                    
 
 
 t_daily_pe_pb_roe_history.py
@@ -154,38 +171,61 @@ t_verify_gaodikai_increase_relationship.py
 
 
 t_daily_get_key_points.py
+	key_points_ag.csv
+	key_points_ag_today.csv
+	key_points_ag_today_selected.csv << 	code,name,current_date,current_close,delta_to_long_enter,long_enter,long_quit,long_expect_ear_perct,up_p,down_p,up_cnt,down_cnt,day_to_up,day_to_down,up_date,down_date,perc_to_up,perc_to_down,last_is_h_or_l,short_enter,short_quit,short_expect_ear_perct,delta_to_short_enter
+	
+	select:	
+		key_points_ag.csv                               
+		key_points_ag_today.csv                         
+		key_points_ag_today_selected.csv                
+		key_points_hk.csv                               
+		key_points_us.csv                               
+		key_points_us_today.csv                        
+		key_points_us_today_selected.csv               
 
-t_daily_pattern_Hit_Price_Volume.py
+
+
+t_daily_pattern_Hit_Price_Volume.py          
+
+	selected	
+		talib_and_pv_no_db_filter_ag.csv
+		talib_and_pv_no_db_filter_hk.csv
+		talib_and_pv_no_db_filter_us.csv
+		
+	
+	today
+		talib_and_pv_db_buy_filtered_CH.csv
+		talib_and_pv_db_buy_filtered.csv
+		talib_and_pv_db_buy_filtered_HK.csv
+		talib_and_pv_db_buy_filtered_KG.csv
+		talib_and_pv_db_buy_filtered_KH.csv
+		talib_and_pv_db_buy_filtered_MG.csv
+		talib_and_pv_db_buy_filtered_US.csv
+		talib_and_pv_db_sell_filtered_AG.csv
+		talib_and_pv_db_sell_filtered_CH.csv
+		talib_and_pv_db_sell_filtered.csv
+		talib_and_pv_db_sell_filtered_HK.csv
+		talib_and_pv_db_sell_filtered_KG.csv
+		talib_and_pv_db_sell_filtered_KH.csv
+		talib_and_pv_db_sell_filtered_MG.csv
+		talib_and_pv_db_sell_filtered_US.csv
+		talib_and_pv_no_db_filter_AG.csv
+		talib_and_pv_no_db_filter_CH.csv
+		talib_and_pv_no_db_filter.csv
+		talib_and_pv_no_db_filter_KG.csv
+		talib_and_pv_no_db_filter_KH.csv
+		talib_and_pv_no_db_filter_MG.csv
+		talib_and_pv_no_db_filter_US.csv
+
+
 
 
 
 t_daily_w_shape.py
 
 
-
 t_cycle.py
 
+///
 
-
-
-
-
-
-
-
-==============
-			(base) ryan@haha_brain_2:~/DATA/result$ ls selected/
-		                                         talib_and_pv_no_db_filter_ag.csv
-		                                       talib_and_pv_no_db_filter_hk.csv
-                           talib_and_pv_no_db_filter_us.csv
-
-
-			
-		  key_points_ag.csv                               
-		  key_points_ag_today.csv                         
-		  key_points_ag_today_selected.csv                
-		  key_points_hk.csv                               v
-		  key_points_us.csv                               
-		                            key_points_us_today.csv                        
-		                                   key_points_us_today_selected.csv               
-		                        mf_today_top5_large_amount.csv
