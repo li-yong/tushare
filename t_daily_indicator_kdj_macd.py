@@ -221,6 +221,10 @@ def _macd(csv_f, period):
         "distance_to_sma21_perc": 0,
         "distance_to_sma55_perc": 0,
         "distance_to_sma60_perc": 0,
+
+        "MACD_DIF_MAIN_OVER_0_N_DAYS": 0,
+        "MACD_DEA_SIGNAL_OVER_0_N_DAYS": 0,
+        "MACD_HISTOGRAM_OVER_0_N_DAYS": 0,
     }
 
     distance_to_sma5_perc = 0
@@ -229,12 +233,18 @@ def _macd(csv_f, period):
     distance_to_sma55_perc = 0
     distance_to_sma60_perc = 0
 
+    _MACD_DIF_MAIN_OVER_0_N_DAYS  = 0
+    _MACD_DEA_SIGNAL_OVER_0_N_DAYS  = 0
+    _MACD_HISTOGRAM_OVER_0_N_DAYS  = 0
+
+
     if not os.path.exists(csv_f):
         logging.info('file not exist. ' + csv_f)
         return (rtn)
 
     #csv_f = '/home/ryan/DATA/DAY_Global/AG/SH600519.csv' #ryan debug
     #csv_f = '/home/ryan/DATA/DAY_Global/AG/SZ000008.csv'
+    #csv_f = "/home/ryan/DATA/DAY_Global/AG/SZ000039.csv"
 
 
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
@@ -319,7 +329,28 @@ def _macd(csv_f, period):
     macd2 = d2.MACD_histogram
     c2 = d2.close
     sma60_2 = d2.sma_long_60
-    ema60_2 = d2.ema_long_60
+
+    ### MACD basic
+    if d1.DIF_main > 0 and (not df_macd[df_macd['DIF_main'] < 0].empty):
+        _MACD_DIF_MAIN_OVER_0_N_DAYS = d1.name-df_macd[df_macd['DIF_main'] < 0].iloc[-1].name
+        this_reason += constant.MACD_DIF_MAIN_OVER_0_N_DAYS + "_"+ str(_MACD_DIF_MAIN_OVER_0_N_DAYS)+'; '
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+
+    if d1.DEA_signal > 0 and (not df_macd[df_macd['DEA_signal'] < 0].empty):
+        _MACD_DEA_SIGNAL_OVER_0_N_DAYS = d1.name-df_macd[df_macd['DEA_signal'] < 0].iloc[-1].name
+        this_reason += constant.MACD_DEA_SIGNAL_OVER_0_N_DAYS + "_"+ str( _MACD_DEA_SIGNAL_OVER_0_N_DAYS)+'; '
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+    if d1.MACD_histogram > 0 and (not df_macd[df_macd['MACD_histogram'] < 0].empty):
+        _MACD_HISTOGRAM_OVER_0_N_DAYS = d1.name-df_macd[df_macd['MACD_histogram'] < 0].iloc[-1].name
+        this_reason += constant.MACD_HISTOGRAM_OVER_0_N_DAYS + "_"+ str(_MACD_HISTOGRAM_OVER_0_N_DAYS)+'; '
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+
 
     #MA nianlian
     if d1.close > 0  and abs((d1.close_55_sma - d1.close_21_sma)/d1.close) < 0.02:
@@ -474,6 +505,12 @@ def _macd(csv_f, period):
         "distance_to_sma21_perc": [round(distance_to_sma21_perc, 1)],
         "distance_to_sma55_perc": [round(distance_to_sma55_perc, 1)],
         "distance_to_sma60_perc": [round(distance_to_sma60_perc, 1)],
+
+        "MACD_DIF_MAIN_OVER_0_N_DAYS": [round(_MACD_DIF_MAIN_OVER_0_N_DAYS, 1)],
+        "MACD_DEA_SIGNAL_OVER_0_N_DAYS": [round(_MACD_DEA_SIGNAL_OVER_0_N_DAYS, 1)],
+        "MACD_HISTOGRAM_OVER_0_N_DAYS": [round(_MACD_HISTOGRAM_OVER_0_N_DAYS, 1)],
+
+
     }
 
     return (rtn)
