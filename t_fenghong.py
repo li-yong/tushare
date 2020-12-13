@@ -376,8 +376,8 @@ def fetch_data_no_adj(debug=False, force_fetch=False):
             # last date in csv is 7 days ago, most likely the source is not update, so skip this csv.
             # logging.info(__file__+" "+"Next "+next_date.strftime('%Y-%m-%d'))
             # logging.info(__file__+" "+"a week before "+ a_week_before_date.strftime('%Y-%m-%d'))
-            if next_date.strftime('%Y-%m-%d') < a_week_before_date.strftime('%Y-%m-%d'):
-                logging.info(__file__+" "+"file too old to updated, not fetching. " + str(i) + " of " + str(total_len) + ". updated to " + last_date + " " + csv_f)
+            #if next_date.strftime('%Y-%m-%d') < a_week_before_date.strftime('%Y-%m-%d'):
+                #logging.info(__file__+" "+"file too old to updated, not fetching. " + str(i) + " of " + str(total_len) + ". updated to " + last_date + " " + csv_f)
                 #i_cnt += 1
                 #continue
 
