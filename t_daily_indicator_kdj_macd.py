@@ -175,7 +175,8 @@ def kdj(period, debug=False):
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
     #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
 
-    #stock_list = stock_list.head(100) #ryan debug
+    if debug:
+        stock_list = stock_list.head(100) #ryan debug
 
     cnt = stock_list.__len__()
     i = 0
@@ -528,7 +529,7 @@ def macd(period, debug=False):
 
     #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
     if debug:
-        stock_list = stock_list.head(30) #debug
+        stock_list = stock_list.head(100) #debug
 
     cnt = stock_list.__len__()
     i = 0
@@ -681,7 +682,7 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
 
 
 def ma_cross_over(period, period_fast, period_slow, debug=False):
-    output_csv = "/home/ryan/DATA/result/macd_cross_over_selection_" + period_fast+"_"+period_slow + ".csv"  #head: code, name, date, action(b/s), reason, strength.
+    output_csv = "/home/ryan/DATA/result/ma_cross_over_selection_" + period_fast+"_"+period_slow + ".csv"  #head: code, name, date, action(b/s), reason, strength.
 
     df_rtn = pd.DataFrame()
 
@@ -690,7 +691,7 @@ def ma_cross_over(period, period_fast, period_slow, debug=False):
 
     #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
     if debug:
-        stock_list = stock_list.head(30) #debug
+        stock_list = stock_list.head(100) #debug
 
     cnt = stock_list.__len__()
     i = 0
@@ -753,6 +754,9 @@ def analyze(indicator, debug=False):
         input_csv_m = dir + "/kdj_selection_M.csv"
         input_csv_w = dir + "/kdj_selection_W.csv"
         input_csv_d = dir + "/kdj_selection_D.csv"
+
+    if indicator == 'MA_CROSS_OVER':
+        input_csv_d = dir + "/home/ryan/DATA/result/ma_cross_over_selection_5_21.csv"
 
 
     df_m = pd.read_csv(input_csv_m)
