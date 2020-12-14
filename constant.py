@@ -1,5 +1,3 @@
-PI = 3.14
-GRAVITY = 9.8
 
 ##############
 #  Operation
@@ -31,14 +29,14 @@ CROSS_DOWN_SMA5  = "cross down sma5"
 CROSS_DOWN_SMA21 = "cross down sma21"
 CROSS_DOWN_SMA60 = "cross down sma60"
 
-ABOVE_SMA60 = "above sma60"
-UNDER_SMA60 = "under sma60"
+CLOSE_ABOVE_SMA60 = "close above sma60"
+CLOSE_UNDER_SMA60 = "close under sma60"
 
 
 ##############
 # MA55 closing to MA21
 ##############
-MA_55_CLOSE_MA21 = "MA55 CLOSE TO MA21"
+MA55_NEAR_MA21 = "MA55 NEAR MA21"
 
 ##############
 # Critical MA fast cross MA slow
@@ -50,7 +48,6 @@ SMA_CROSS_OVER = "SMA FAST cross over SMA SlOW"
 # small number indicates starting stage of burst
 # large number indicates middle stage of burst
 ##############
-CLOSE_ABOVE_MA5 = "CLOSE_ABOVE_MA5"
 
 CLOSE_ABOVE_MA5_N_DAYS="CLOSE_ABOVE_MA5_N_DAYS"
 CLOSE_NEAR_MA5_N_DAYS="CLOSE_NEAR_MA5_N_DAYS"
@@ -65,6 +62,9 @@ DIF_GT_0 = "dif > 0"
 
 DIF_CROSS_OVER_0 = "dif cross over 0"
 DIF_CROSS_DOWN_0 = "dif cross down 0"
+
+SIG_CROSS_OVER_0 = "sig cross over 0"
+SIG_CROSS_DOWN_0 = "sig cross down 0"
 
 DIF_CROSS_OVER_SIG = "dif cross over sig"
 DIF_CROSS_DOWN_SIG = "dif cross down sig"

@@ -355,13 +355,13 @@ def _macd(csv_f, period):
 
     #MA nianlian
     if d1.close > 0  and abs((d1.close_55_sma - d1.close_21_sma)/d1.close) < 0.02:
-        this_reason += constant.MA_55_CLOSE_MA21 + "; "
+        this_reason += constant.MA55_NEAR_MA21 + "; "
         this_action += constant.BUY_CHECK + "; "
         logging.info(this_reason)
 
 
     if c1 < sma60_1:
-        this_reason += constant.UNDER_SMA60 + "; "
+        this_reason += constant.CLOSE_UNDER_SMA60 + "; "
         this_action += constant.SELL_CHECK + "; "
         logging.info(this_reason)
 
@@ -420,7 +420,7 @@ def _macd(csv_f, period):
 #####################
     #if c2 < sma60_2 and  c1 > sma60_1 and dif1 < 0 : #use this criteria, cross over ensure the curve are up trend.
     if c1 > sma60_1 and dif1 < 0 : #Don't use this criterial
-        this_reason +=  'SELL_MUST,'+ constant.ABOVE_SMA60 + "but "+constant.DIF_LT_0+', price expected to be drop back to under sma60, close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
+        this_reason +=  'SELL_MUST,'+ constant.CLOSE_ABOVE_SMA60 + "but "+constant.DIF_LT_0+', price expected to be drop back to under sma60, close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
         this_strength += 1
         this_action +=  constant.SELL_MUST + "; "
         logging.info(this_reason)
@@ -456,6 +456,43 @@ def _macd(csv_f, period):
         this_action += constant.SELL_CHECK+'; '
         logging.info(this_reason)
 
+    if macd2 > 0  and macd1 < 0:
+        this_reason += constant.MACD_CROSS_DOWN_0 + "; "
+        this_strength += 0
+        this_action += constant.SELL_CHECK+'; '
+        logging.info(this_reason)
+    elif macd2 < 0  and macd1 > 0:
+        this_reason += constant.MACD_CROSS_OVER_0 + "; "
+        this_strength += 0
+        this_action += constant.BUY_CHECK+'; '
+        logging.info(this_reason)
+
+
+    if dif2 > 0  and dif1 < 0:
+        this_reason += constant.DIF_CROSS_DOWN_0 + "; "
+        this_strength += 0
+        this_action += constant.SELL_CHECK+'; '
+        logging.info(this_reason)
+    elif dif2 < 0  and dif1 > 0:
+        this_reason += constant.DIF_CROSS_OVER_0 + "; "
+        this_strength += 0
+        this_action += constant.BUY_CHECK+'; '
+        logging.info(this_reason)
+
+
+    if dea2 > 0  and dea1 < 0:
+        this_reason += constant.SIG_CROSS_DOWN_0 + "; "
+        this_strength += 0
+        this_action += constant.SELL_CHECK+'; '
+        logging.info(this_reason)
+    elif dea2 < 0  and dea1 > 0:
+        this_reason += constant.SIG_CROSS_OVER_0 + "; "
+        this_strength += 0
+        this_action += constant.BUY_CHECK+'; '
+        logging.info(this_reason)
+
+
+
 #####################
 #####################
     if dif1 > 50 and dea1 > 50:
@@ -484,6 +521,9 @@ def _macd(csv_f, period):
             this_strength += 1
             this_action += constant.BUY_MUST+'; '
             logging.info(this_reason)
+######################
+######################
+
 
     rtn = {
         "reason": [this_reason],
@@ -739,16 +779,20 @@ def analyze(indicator, debug=False):
         input_csv_d = dir + "/macd_selection_D.csv"
 
         csv_o = dir + "/under_sma60_M.csv"
-        finlib_indicator.Finlib_indicator().get_under_sma60(period='M').to_csv(csv_o, encoding='UTF-8', index=False)
+        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='M').to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info("Saved "+csv_o)
 
         csv_o = dir + "/under_sma60_W.csv"
-        finlib_indicator.Finlib_indicator().get_under_sma60(period='W').to_csv(csv_o, encoding='UTF-8', index=False)
+        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='W').to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info("Saved " + csv_o)
 
         csv_o = dir + "/under_sma60_D.csv"
-        finlib_indicator.Finlib_indicator().get_under_sma60(period='D').to_csv(csv_o, encoding='UTF-8', index=False)
+        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D').to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info("Saved " + csv_o)
+
+
+        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_CROSS_OVER_0, period='D').to_csv(csv_o, encoding='UTF-8', index=False)
+
 
     if indicator == 'KDJ':
         input_csv_m = dir + "/kdj_selection_M.csv"
