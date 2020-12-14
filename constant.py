@@ -43,6 +43,8 @@ CROSS_DOWN_SMA60 = "cross down sma60"
 
 CLOSE_ABOVE_SMA60 = "close above sma60"
 CLOSE_UNDER_SMA60 = "close under sma60"
+CLOSE_GT_SMA60_5_perc = "close great than 1.05 sma60"
+CLOSE_GT_SMA200_20_perc = "close great than 1.2 sma200"
 
 SMA21_UNDER_SMA60 = "sma21 under sma60"
 

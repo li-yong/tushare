@@ -276,6 +276,7 @@ def _macd(csv_f, period):
 
     df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=5, middle=21, long=55)
     df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=12, middle=26, long=60)
+    df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=90, middle=120, long=200)
 
     df_period = df_period[-100:]
 
@@ -365,10 +366,26 @@ def _macd(csv_f, period):
         this_action += constant.SELL_CHECK + "; "
         logging.info(this_reason)
 
+
     if d1.close_21_sma < sma60_1:
         this_reason += constant.SMA21_UNDER_SMA60 + "; "
         this_action += constant.SELL_CHECK + "; "
         logging.info(this_reason)
+
+
+    if c1 > sma60_1 * 1.05:
+        this_reason += constant.CLOSE_GT_SMA60_5_perc + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+    if c1 > d1.close_200_sma * 1.2:
+        this_reason += constant.CLOSE_GT_SMA200_20_perc + "; "
+        this_action += constant.BUY_CHECK + "; "
+        logging.info(this_reason)
+
+
+
+
 
 #close price distance to MA
     if c1 > 0 and c2 > 0:

@@ -597,34 +597,6 @@ fi
 
 
 
-##############################
-# indicator
-# input: DAY_Global/AG
-# output: ~/DATA/result/macd_selection_M.csv
-#         ~/DATA/result/macd_selection_W.csv
-#         ~/DATA/result/macd_selection_D.csv
-#
-#         ~/DATA/result/kdj_selection_M.csv
-#         ~/DATA/result/kdj_selection_W.csv
-#         ~/DATA/result/kdj_selection_D.csv
-#
-###############################
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period D
-
-python t_daily_indicator_kdj_macd.py --indicator MACD --period M
-python t_daily_indicator_kdj_macd.py --indicator MACD --period W
-python t_daily_indicator_kdj_macd.py --indicator MACD --period D
-
-########################
-# MA 21 cross up MA 55
-# input: DAY_Global/AG
-# output: /home/ryan/DATA/result/macd_cross_over_selection_5_21.csv"
-# output: /home/ryan/DATA/result/macd_cross_over_selection_21_55.csv"
-########################
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D --period_fast 5 --period_slow 14
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D --period_fast 21 --period_slow 55
 
 
 ##############################
