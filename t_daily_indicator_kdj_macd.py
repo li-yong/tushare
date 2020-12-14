@@ -365,6 +365,11 @@ def _macd(csv_f, period):
         this_action += constant.SELL_CHECK + "; "
         logging.info(this_reason)
 
+    if d1.close_21_sma < sma60_1:
+        this_reason += constant.SMA21_UNDER_SMA60 + "; "
+        this_action += constant.SELL_CHECK + "; "
+        logging.info(this_reason)
+
 #close price distance to MA
     if c1 > 0 and c2 > 0:
         distance_to_sma5_perc = round((c1 - d1.close_5_sma) * 100 /c1, 1)

@@ -3,7 +3,7 @@
 import tushare as ts
 import tushare.util.conns as ts_cs
 import tushare.stock.trading as ts_stock_trading
-
+import finlib_indicator
 import talib
 import pickle
 import os
@@ -3193,6 +3193,7 @@ class Finlib:
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
+        df = self._remove_garbage_macd_ma(df)
 
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)
@@ -3311,14 +3312,11 @@ class Finlib:
         csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_audit.csv'
         df_gar = pd.read_csv(csv, converters={'ann_date': str})
 
-
         df_gar = df_gar[df_gar['ann_date'] > (datetime.today() - timedelta(days=n_year * 365)).strftime("%Y%m%d")]
         df_gar = df_gar[df_gar['audit_result'] != "标准无保留意见"]
         df_gar = self.ts_code_to_code(df_gar)
         df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
         logging.info("none standard audit statement " + str(n_year) + " years, len " + str(df_gar.__len__()))
-
-
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
@@ -3328,8 +3326,30 @@ class Finlib:
         return(df)
 
 
+    def _remove_garbage_macd_ma(self,df):
+        df_gar_1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D')
+        df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
+        df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
+        df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
+
+        df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
+
+        if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
+            df = self.add_market_to_code(df)
+
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_1)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_3)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_4)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_5)
+        return(df)
+
+
 
     def _df_sub_by_code(self,df,df_sub):
+        if df.__len__() == 0:
+            logging.info("input df is empty, not able to deduct df_sub.")
+            return(df)
 
         df_init_len = df.__len__()
 

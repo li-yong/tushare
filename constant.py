@@ -32,6 +32,8 @@ CROSS_DOWN_SMA60 = "cross down sma60"
 CLOSE_ABOVE_SMA60 = "close above sma60"
 CLOSE_UNDER_SMA60 = "close under sma60"
 
+SMA21_UNDER_SMA60 = "sma21 under sma60"
+
 ##############
 # CLOSE above MA5.
 # small number indicates starting stage of burst
