@@ -449,10 +449,8 @@ class Finlib:
         df_basic = df_basic.fillna(0)
         df_basic = df_basic[df_basic['timeToMarket'] != 0]
 
-        a = datetime.now() - timedelta(360)
-        b = a.date().strftime('%Y%m%d')  # '20170505'
-        #df_basic = df_basic[df_basic['timeToMarket'] < int(b)]
-        # logging.info(__file__+" "+"after timetoMarket>360, df_basic.__len__() is " + str(df_basic.__len__()))
+        df_basic = df_basic[df_basic['timeToMarket'] < int((datetime.now() - timedelta(30)).date().strftime('%Y%m%d'))]
+        logging.info(__file__+" "+"after timetoMarket>30, df_basic.__len__() is " + str(df_basic.__len__()))
 
         #df_basic = df_basic[df_basic['esp'] > 0]
         # logging.info(__file__+" "+"after esp>0, df_basic.__len__() is " + str(df_basic.__len__()))
@@ -465,10 +463,13 @@ class Finlib:
 
         logging.info(__file__+" "+"input df len " + str(df.__len__()) + ". ")
 
-        d = df_basic['code'].tolist()
-        df = df[df['code'].isin(d)]
+        df = df[df['code'].isin(df_basic['code'].tolist())]
+        #logging.info(__file__+" "+"after filter(timetomarket>30, esp>0, npr>0), df len " + str(df.__len__()))
+        logging.info(__file__+" "+"after filter(timetomarket>30), df len " + str(df.__len__()))
 
-        logging.info(__file__+" "+"after filter(timetomarket>360, esp>0, npr>0), df len " + str(df.__len__()))
+        df = self._remove_garbage_macd_ma(df)
+        logging.info(__file__+" "+"after remove macd ma garbage), df len " + str(df.__len__()))
+
 
         return df
 

@@ -28,6 +28,9 @@ pro = ts.pro_api(token=token)
 
 ts.set_token(token=token)
 
+df = pro.index_weight(index_code='399300.SZ')
+df = pro.index_weight(index_code='399300.SZ', start_date='20180901', end_date='20180930')
+
 df = ts.pro_bar(ts_code='600519.SH', asset='E',freq='1', start_date='20201116', end_date='20201116')
 
 
