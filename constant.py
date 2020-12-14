@@ -1,3 +1,15 @@
+#########
+# Garbage reason
+#########
+
+STOP_PROCESS = "stop process"
+BENEISH_LOW_RATE = "beneish low rate"
+STOCK_CHANGED_NAME = "stock changed name"
+NONE_STANDARD_AUDIT_REPORT = "none standard audit report"
+NAG_PROFIT_RECENT_2_YEARS = "negative profit recent two years"
+DEBIT_GT_ASSETS = "debit great than assets"
+ST_STOCK = "ST stock"
+
 
 ##############
 #  Operation

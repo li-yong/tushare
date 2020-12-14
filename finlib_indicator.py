@@ -579,6 +579,9 @@ class Finlib_indicator:
 
                      constant.CLOSE_ABOVE_SMA60,
                      constant.CLOSE_ABOVE_SMA60,
+
+                     constant.SMA21_UNDER_SMA60,
+
                      ]:
             source_csv = dir + "/macd_selection_"+period+".csv"
         elif  query in [constant.CLOSE_ABOVE_MA5_N_DAYS,

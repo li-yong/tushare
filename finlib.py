@@ -3170,16 +3170,16 @@ class Finlib:
         # on market 5 years, nagtive profit 2 years
         df_gar_1 = df_exam_all[(df_exam_all['net_profit'] < 0) & (df_exam_all['net_profit_year1'] < 0) & (
                     df_exam_all['on_market_days'] > 5 * 365)]
-        df = self._df_sub_by_code(df=df,df_sub=df_gar_1)
+        df = self._df_sub_by_code(df=df,df_sub=df_gar_1, byreason=constant.NAG_PROFIT_RECENT_2_YEARS)
 
         # on market 5 years, debit more than assets
         df_gar_2 = df_exam_all[
             (df_exam_all['on_market_days'] > 5 * 365) & (df_exam_all['total_liab'] > df_exam_all['total_assets'])]
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_2)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2, byreason=constant.DEBIT_GT_ASSETS)
 
         # ST
         df_gar_3 = df_exam_all[df_exam_all['name'].str.contains('ST')]
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_3)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_3, byreason=constant.ST_STOCK)
 
         return(df)
 
@@ -3193,7 +3193,7 @@ class Finlib:
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
-        df = self._remove_garbage_macd_ma(df)
+
 
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)
@@ -3231,7 +3231,7 @@ class Finlib:
         df_garbage = df_garbage[df_garbage['stopProcess'] == 1].reset_index().drop('index', axis=1)
         df_garbage = self.ts_code_to_code(df=df_garbage)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_garbage)
+        df = self._df_sub_by_code(df=df, df_sub=df_garbage, byreason=constant.STOP_PROCESS)
 
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)
@@ -3272,7 +3272,7 @@ class Finlib:
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.BENEISH_LOW_RATE)
 
         return(df)
 
@@ -3298,7 +3298,7 @@ class Finlib:
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.STOCK_CHANGED_NAME)
 
         return(df)
 
@@ -3321,7 +3321,7 @@ class Finlib:
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NONE_STANDARD_AUDIT_REPORT)
 
         return(df)
 
@@ -3331,22 +3331,21 @@ class Finlib:
         df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
         df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
         df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
-
         df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_1)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_2)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_3)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_4)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_5)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_1,byreason=constant.CLOSE_UNDER_SMA60)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.DIF_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.SIG_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.DIF_LT_SIG)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_5,byreason=constant.SMA21_UNDER_SMA60)
         return(df)
 
 
 
-    def _df_sub_by_code(self,df,df_sub):
+    def _df_sub_by_code(self,df,df_sub,byreason=''):
         if df.__len__() == 0:
             logging.info("input df is empty, not able to deduct df_sub.")
             return(df)
@@ -3366,7 +3365,7 @@ class Finlib:
         df = df.reset_index().drop('index', axis=1)
 
         df_len = df.__len__()
-        logging.info(str(df_init_len)+"->"+str(df_len)+", "+str(df_init_len - df_len) + " shares were removed")
+        logging.info(str(df_init_len)+"->"+str(df_len)+", "+str(df_init_len - df_len) + " shares were removed by "+byreason)
         return(df)
 
 

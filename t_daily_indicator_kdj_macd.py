@@ -620,7 +620,7 @@ def macd(period, debug=False):
         logging.info(__file__+" "+"MACD selection saved to " + output_csv + " . len " + str(df_rtn.__len__()))
 
 
-def _ma_cross_over(csv_f,period, period_fast,period_slow):
+def _ma_cross(csv_f,period, period_fast,period_slow):
     rtn = {
         "reason": [''],
         "strength": [''],
@@ -747,7 +747,7 @@ def _ma_cross_over(csv_f,period, period_fast,period_slow):
     return(rtn)
 
 
-def ma_cross_over(period, period_fast, period_slow, debug=False):
+def ma_cross(period, period_fast, period_slow, debug=False):
     output_csv = "/home/ryan/DATA/result/ma_cross_over_selection_" + period_fast+"_"+period_slow + ".csv"  #head: code, name, date, action(b/s), reason, strength.
 
     df_rtn = pd.DataFrame()
@@ -766,7 +766,7 @@ def ma_cross_over(period, period_fast, period_slow, debug=False):
         csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
         logging.info(str(i) + " of " + str(cnt) + " " + c)
 
-        r = _ma_cross_over(csv_f=csv_f, period=period, period_fast=period_fast, period_slow=period_slow)
+        r = _ma_cross(csv_f=csv_f, period=period, period_fast=period_fast, period_slow=period_slow)
 
         if r['action'] != ['']:
             print(r) #ryan debug
@@ -790,14 +790,19 @@ def calculate(indicator, period,period_fast,period_slow, debug):
     if indicator == 'MACD':
         macd(period=period, debug=debug)
 
-    if indicator == 'MA_CROSS_OVER':
-        ma_cross_over(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
+    if indicator == 'MA_CROSS':
+        ma_cross(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
 
 
 
 
 
 def analyze(indicator, debug=False):
+    df = finlib.Finlib().get_A_stock_instrment()
+    df2 = finlib.Finlib()._remove_garbage_macd_ma(df)
+
+
+
     dir = "/home/ryan/DATA/result"
     if indicator == 'MACD':
         input_csv_m = dir + "/macd_selection_M.csv"
@@ -825,7 +830,7 @@ def analyze(indicator, debug=False):
         input_csv_w = dir + "/kdj_selection_W.csv"
         input_csv_d = dir + "/kdj_selection_D.csv"
 
-    if indicator == 'MA_CROSS_OVER':
+    if indicator == 'MA_CROSS':
         input_csv_d = dir + "/home/ryan/DATA/result/ma_cross_over_selection_5_21.csv"
 
 
@@ -870,7 +875,7 @@ def main():
 
     parser = OptionParser()
 
-    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|MA_CROSS_OVER]")
+    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|MA_CROSS]")
 
     parser.add_option("-p","--period", type="str", dest="period_f", default=None, help="period, one of [M|W|D]")
     parser.add_option("-f","--period_fast", type="str", dest="period_fast_f", default=None, help="fast period of MA, 21 e.g")
@@ -891,7 +896,7 @@ def main():
 
 
     if indicator == None:
-        print("missing indicator [MACD|KDJ|MA_CROSS_OVER]")
+        print("missing indicator [MACD|KDJ|MA_CROSS]")
 
     if analyze_f:
         analyze(indicator=indicator,  debug=debug)
