@@ -569,9 +569,14 @@ class Finlib_indicator:
 
                      constant.DIF_CROSS_DOWN_SIG,
                      constant.DIF_CROSS_OVER_SIG,
-                     constant.CLOSE_ABOVE_SMA60,
-                     constant.CLOSE_ABOVE_SMA60,
-                     constant.CLOSE_ABOVE_SMA60,
+
+                     constant.DIF_LT_0,
+                     constant.DIF_GT_0,
+                     constant.SIG_LT_0,
+                     constant.SIG_GT_0,
+                     constant.DIF_LT_SIG,
+                     constant.DIF_GT_SIG,
+
                      constant.CLOSE_ABOVE_SMA60,
                      constant.CLOSE_ABOVE_SMA60,
                      ]:

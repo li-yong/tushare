@@ -492,6 +492,27 @@ def _macd(csv_f, period):
         logging.info(this_reason)
 
 
+    if dif1 < 0:
+       this_reason += constant.DIF_LT_0 + "; "
+    elif dif1 > 0:
+        this_reason += constant.DIF_GT_0 + "; "
+
+
+
+    if dea1 < 0:
+       this_reason += constant.SIG_LT_0 + "; "
+    elif dea1 > 0:
+        this_reason += constant.SIG_GT_0 + "; "
+
+
+
+    if dif1 < dea1:
+       this_reason += constant.DIF_LT_SIG + "; "
+       this_action += constant.SELL_CHECK + '; '
+    elif dif1 > dea1:
+        this_reason += constant.DIF_GT_SIG + "; "
+        this_action += constant.BUY_CHECK+'; '
+
 
 #####################
 #####################
