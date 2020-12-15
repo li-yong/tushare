@@ -79,7 +79,7 @@ def verify_a_stock(df):
     # Get a stock report
     ######################################################
     df_a_stock_report = df_today_bar_style.merge(df_today_junxian_style, left_index=True, right_index=True, suffixes=('', '_x')).merge(df_today_price_dict, left_index=True, right_index=True, suffixes=('', '_x'))
-
+    df_a_stock_report['reason'] = df_a_stock_report['reason']+" " +df_a_stock_report['reason_x']
     ######################################################
     #115 columns. Adjust column sequence
     ######################################################
