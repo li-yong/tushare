@@ -500,10 +500,10 @@ def fetch_pro_fund(fast_fetch=False):
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'balancesheet', query_fields_balancesheet, fetch_period_list)  #资产负债表
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'cashflow', query_fields_cashflow, fetch_period_list)  #现金流量表
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_indicator', query_fields_fina_indicator, fetch_period_list)  # 财务指标数据
-
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list)  #分红送股
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_audit', query_fields_fina_audit, fetch_period_list)  #财务审计意见
+
+        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list)  #分红送股
+        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
 
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
