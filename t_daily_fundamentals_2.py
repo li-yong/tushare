@@ -564,8 +564,8 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             #print(ind_csv)
 
             #if (finlib.Finlib().is_cached(ind_csv, day=3)) and (not force_run_global) :
-            if (finlib.Finlib().is_cached(ind_csv, day=6)):
-                logging.info(__file__ + " " + "file updated in 6 day, not fetch again " + ind_csv)
+            if (finlib.Finlib().is_cached(ind_csv, day=14)):
+                logging.info(__file__ + " " + "file updated in 14 day, not fetch again " + ind_csv)
                 continue
             elif not os.path.exists(ind_csv):
                 open(ind_csv, 'a').close()  #create empty
