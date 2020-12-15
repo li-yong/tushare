@@ -14,6 +14,7 @@ import numpy as np
 import tabulate
 import collections
 import stat
+import constant
 
 # import matplotlib.pyplot as plt
 # from pandas.plotting import register_matplotlib_converters
@@ -125,7 +126,13 @@ class Finlib_indicator:
                                                                  'small_body','cross_star',
                                                                  'long_upper_shadow','long_lower_shadow',
                                                                  ])
+
+        df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
+        df_a = df_a.assign('action', '')
         df = df.merge(df_a, left_index=True, right_index=True)
+
+        df.iloc[i, df.columns.get_loc('reason')] = ''
+        df.iloc[i, df.columns.get_loc('reason')] = ''
 
         threshold_small = 1.0/20
         threshold_large = 5
@@ -141,22 +148,31 @@ class Finlib_indicator:
 
             if body_len / (df.at[i, 'open']+0.001) < 0.001:
                 df.iloc[i, df.columns.get_loc('small_body')] = True
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_SMALL_BODY+'; '
+
                 if  upper_shadow_len > body_len and lower_shadow_len > body_len:
                     df.iloc[i, df.columns.get_loc('cross_star')] = True
+                    df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_CROSS_STAR+'; '
 
             if upper_shadow_len/body_len < threshold_small:
                 df.iloc[i, df.columns.get_loc('guangtou')] = True
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_TOU+'; '
             if lower_shadow_len/body_len < threshold_small:
                 df.iloc[i, df.columns.get_loc('guangjiao')] = True
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_JIAO+'; '
 
             if upper_shadow_len/body_len > threshold_large:
                 df.iloc[i, df.columns.get_loc('long_upper_shadow')] = True
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_UPPER_SHADOW+'; '
             if lower_shadow_len/body_len > threshold_large:
                 df.iloc[i, df.columns.get_loc('long_lower_shadow')] = True
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_LOWER_SHADOW+'; '
 
         #yun xian
 
         df_a = pd.DataFrame( [[False,False]] * df.__len__(), columns=['yunxian_buy','yunxian_sell'])
+        df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
+        df_a = df_a.assign('action', '')
         df = df.merge(df_a, left_index=True, right_index=True)
 
         if df.__len__() < 30:
@@ -180,7 +196,10 @@ class Finlib_indicator:
                                                 if df.iloc[i]['low'] > df.iloc[i-1]['low']:
                                                     if df.iloc[i]['high'] < df.iloc[i-1]['high'] :
                                                         df.iloc[i, df.columns.get_loc('yunxian_buy')] = True
-                                                        print("buy point")
+                                                        df.iloc[i, df.columns.get_loc(
+                                                            'reason')] += constant.BAR_YUNXIAN_BUY+'; '
+
+                                                        logging.info("yunxian buy point")
 
 
             #yunxian_sell: up trend, up_bar large bar.
@@ -194,7 +213,9 @@ class Finlib_indicator:
                                                 if df.iloc[i]['low'] > df.iloc[i-1]['low']:
                                                     if df.iloc[i]['high'] < df.iloc[i-1]['high'] :
                                                         df.iloc[i, df.columns.get_loc('yunxian_sell')] = True
-                                                        print("sell point")
+                                                        df.iloc[i, df.columns.get_loc(
+                                                            'reason')] += constant.BAR_YUNXIAN_SELL+'; '
+                                                        print("yunxian sell point")
 
         return df
 
@@ -281,6 +302,9 @@ class Finlib_indicator:
             'code': None,
             'date': None,
             'close': None,
+            'reason': None,
+            'action': None,
+
             "short_period": short,
             "middle_period": middle,
             "long_period": long,
@@ -348,78 +372,107 @@ class Finlib_indicator:
 
         if ma_short > ma_middle and ma_short_p1 < ma_middle_p1:
             logging.info("short up across middle, jin cha minor")
+            rtn_dict['reason'] += constant.MA_JIN_CHA_MINOR+'; '
             rtn_dict['jincha_minor'] = True
             rtn_dict['jincha_minor_strength'] = round(2 * ((ma_short - ma_middle) / (ma_short + ma_middle) + (ma_middle_p1 - ma_short_p1) / (ma_middle_p1 + ma_short_p1)), 2)
         elif ma_short < ma_middle and ma_short_p1 > ma_middle_p1:
             logging.info("short down across middle, si cha minor")
             rtn_dict['sicha_minor'] = True
+            rtn_dict['reason'] += constant.MA_SI_CHA_MINOR+'; '
+
             rtn_dict['sicha_minor_strength'] = round(2 * ((ma_middle - ma_short) / (ma_short + ma_middle) + (ma_short_p1 - ma_middle_p1) / (ma_middle_p1 + ma_short_p1)), 2)
 
         if ma_middle > ma_long and ma_middle_p1 < ma_long_p1:
             logging.info("middle up across long, jin cha major")
             rtn_dict['jincha_major'] = True
+            rtn_dict['reason'] += constant.MA_JIN_CHA_MAJOR+'; '
+
             rtn_dict['jincha_major_strength'] = round(2 * ((ma_middle - ma_long) / (ma_long + ma_middle) + (ma_long_p1 - ma_middle_p1) / (ma_middle_p1 + ma_long_p1)), 2)
 
         elif ma_middle < ma_long and ma_middle_p1 > ma_long_p1:
             logging.info("middle down across long, si cha major")
             rtn_dict['sicha_major'] = True
+            rtn_dict['reason'] += constant.MA_SI_CHA_MAJOR+'; '
+
             rtn_dict['sicha_major_strength'] = round(2 * ((ma_long - ma_middle) / (ma_long + ma_middle) + (ma_middle_p1 - ma_long_p1) / (ma_middle_p1 + ma_long_p1)), 2)
 
         if ma_short > ma_middle * 1.05:
             trend_short = 'up'
             rtn_dict['trend_short'] = 'up'
+            rtn_dict['reason'] += constant.SHORT_TREND_UP+'; '
+
             rtn_dict['trend_short_strength'] = round(ma_short / ma_middle, 2)
         elif ma_short * 1.05 < ma_middle:
             trend_short = 'down'
             rtn_dict['trend_short'] = 'down'
+            rtn_dict['reason'] += constant.SHORT_TREND_DOWN+'; '
             rtn_dict['trend_short_strength'] = round(ma_middle / ma_short, 2)
 
         if ma_middle > ma_long * 1.05:
             trend_middle = 'up'
             rtn_dict['trend_middle'] = 'up'
+            rtn_dict['reason'] += constant.MIDDLE_TREND_UP+'; '
             rtn_dict['trend_middle_strength'] = round(ma_middle / ma_long, 2)
         elif ma_middle * 1.05 < ma_long:
             trend_middle = 'down'
             rtn_dict['trend_middle'] = 'down'
+            rtn_dict['reason'] += constant.MIDDLE_TREND_DOWN+'; '
             rtn_dict['trend_middle_strength'] = round(ma_long / ma_middle, 2)
 
         if (ma_short > ma_middle > ma_long):
             rtn_dict['duotou_pailie'] = True
+            rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE+'; '
+
             rtn_dict['trend_long'] = 'up'
+            rtn_dict['reason'] += constant.LONG_TREND_UP+'; '
+
             logging.info("duo tou pai lie")
             if df.iloc[-1]['low'] > ma_short:
                 logging.info("verify strong up trend")
                 rtn_dict['very_strong_up_trend'] = True
+                rtn_dict['reason'] += constant.VERY_STONG_UP_TREND+'; '
+
             logging.info("check back last 30 bars")
             for i in range(30):
                 if (df_sma_short.iloc[-i] > df_sma_middle.iloc[-i] > df_sma_long.iloc[-i]):
                     logging.info("duo tou lasts " + str(i) + "days")
                     rtn_dict['duotou_pailie_last_bars'] = i
+                    rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
+
                     continue
 
                 if (df_sma_short.iloc[-i] < df_sma_middle.iloc[-i] < df_sma_long.iloc[-i]):
                     logging.info("latest kong tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
                     rtn_dict['last_kongtou_pailie_n_days_before'] = i
+                    rtn_dict['reason'] += constant.MA_LAST_KONG_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
                     rtn_dict['last_kongtou_pailie_date'] = df.iloc[-i]['date']
                     break
 
         if (ma_short < ma_middle < ma_long):  #more interesting enter when price is up break
             rtn_dict['kongtou_pailie'] = True
+            rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE+'; '
+
             rtn_dict['trend_long'] = 'down'
+            rtn_dict['reason'] += constant.LONG_TREND_DOWN+'; '
+
             logging.info("kong tou pai lie")
             if df.iloc[-1]['high'] < ma_short:
                 logging.info("verify strong down trend")
                 rtn_dict['very_strong_down_trend'] = True
+                rtn_dict['reason'] += constant.VERY_STONG_DOWN_TREND+'; '
+
             logging.info("check back last 30 bars")
             for i in range(30):
                 if (df_sma_short.iloc[-i] < df_sma_middle.iloc[-i] < df_sma_long.iloc[-i]):
                     logging.info("kong tou lasts " + str(i) + "days")
                     rtn_dict['kongtou_pailie_last_bars'] = i
+                    rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
                     continue
 
                 if (df_sma_short.iloc[-i] > df_sma_middle.iloc[-i] > df_sma_long.iloc[-i]):
                     logging.info("latest duo tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
                     rtn_dict['last_duotou_pailie_n_days_before'] = i
+                    rtn_dict['reason'] += constant.MA_LAST_DUO_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
                     rtn_dict['last_duotou_pailie_date'] = df.iloc[-i]['date']
                     break
 
@@ -584,12 +637,14 @@ class Finlib_indicator:
 
                      ]:
             source_csv = dir + "/macd_selection_"+period+".csv"
-        elif  query in [constant.CLOSE_ABOVE_MA5_N_DAYS,
+        elif query in [constant.CLOSE_ABOVE_MA5_N_DAYS,
                         constant.CLOSE_NEAR_MA5_N_DAYS,
                         constant.MA21_NEAR_MA55_N_DAYS,
                         constant.SMA_CROSS_OVER,
                         ]:
             source_csv = dir + "/ma_cross_over_selection_"+str(fastMa)+"_"+str(slowMa)+".csv"
+        elif query in [constant.VERY_STONG_DOWN_TREND]:
+            source_csv = dir+'./ag_junxian_barstyle_very_strong_down_trend.csv'
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)

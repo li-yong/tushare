@@ -10,6 +10,24 @@ NAG_PROFIT_RECENT_2_YEARS = "negative profit recent two years"
 DEBIT_GT_ASSETS = "debit great than assets"
 ST_STOCK = "ST stock"
 
+VERY_STONG_DOWN_TREND = "very strong down trend"
+VERY_STONG_UP_TREND = "very strong up trend"
+
+
+###############
+# Bar style
+###############
+BAR_SMALL_BODY = "bar small body"
+BAR_CROSS_STAR = "bar cross star"
+BAR_GUANG_TOU = "bar guang tou"
+BAR_GUANG_JIAO = "bar guang jiao"
+BAR_LONG_UPPER_SHADOW = "bar long upper shadow"
+BAR_LONG_LOWER_SHADOW = "bar long lower shadow"
+BAR_YUNXIAN_BUY = "bar yunxian buy"
+BAR_YUNXIAN_SELL = "bar yunxian sell"
+
+
+
 
 ##############
 #  Operation
@@ -47,6 +65,35 @@ CLOSE_GT_SMA60_5_perc = "close great than 1.05 sma60"
 CLOSE_GT_SMA200_20_perc = "close great than 1.2 sma200"
 
 SMA21_UNDER_SMA60 = "sma21 under sma60"
+
+
+MA_JIN_CHA_MINOR = "ma jin cha minor"
+MA_JIN_CHA_MAJOR = "ma jin cha major"
+
+MA_SI_CHA_MINOR = "ma si cha minor"
+MA_SI_CHA_MAJOR = "ma si cha major"
+
+
+MA_DUO_TOU_PAI_LIE = "ma duo tou pai lie"
+MA_DUO_TOU_PAI_LIE_N_days = "ma duo tou pai lie n days"
+MA_LAST_KONG_TOU_PAI_LIE_N_days = "current is ma dtpl, last ktpl is n days before "
+
+
+MA_KONG_TOU_PAI_LIE = "ma kong tou pai lie"
+MA_KONG_TOU_PAI_LIE_N_days = "ma kong tou pai lie n days"
+MA_LAST_DUO_TOU_PAI_LIE_N_days = "current is ma ktpl, last dtpl is n days before "
+
+
+
+SHORT_TREND_UP = "short trend up"
+SHORT_TREND_DOWN = "short trend down"
+
+MIDDLE_TREND_UP = "middle trend up"
+MIDDLE_TREND_DOWN = "middle trend down"
+
+LONG_TREND_UP = "long trend up"
+LONG_TREND_DOWN = "long trend down"
+
 
 ##############
 # CLOSE above MA5.

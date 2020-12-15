@@ -255,7 +255,7 @@ def main():
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
-    out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/selected/us_index_fib.csv
+    out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
 
     if show_result_f:
         show_result(file=out_f, dir=out_dir, filebase= stock_global.lower() + "_junxian_barstyle")

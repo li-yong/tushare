@@ -3345,6 +3345,28 @@ class Finlib:
         return(df)
 
 
+    def _remove_garbage_junxian_barstyle(self,df):
+        dir = '/home/ryan/DATA/result'
+        file = dir+'./ag_junxian_barstyle_very_strong_down_trend.csv'
+
+
+        df_gar_1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D')
+        df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
+        df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
+        df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
+        df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
+
+        if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
+            df = self.add_market_to_code(df)
+
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_1,byreason=constant.CLOSE_UNDER_SMA60)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.DIF_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.SIG_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.DIF_LT_SIG)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_5,byreason=constant.SMA21_UNDER_SMA60)
+        return(df)
+
+
 
     def _df_sub_by_code(self,df,df_sub,byreason=''):
         if df.__len__() == 0:

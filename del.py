@@ -28,8 +28,26 @@ pro = ts.pro_api(token=token)
 
 ts.set_token(token=token)
 
-df = pro.index_weight(index_code='399300.SZ')
+df = pro.index_weight(index_code='399300.SZ') #HS300
+df_szcz = pro.index_weight(index_code='399001.SZ') #深证成指
+
+'''
+df_szcz[df_szcz['con_code'].str.contains('300')]
+     index_code   con_code trade_date  weight
+377   399001.SZ  300773.SZ   20200228  0.0440
+378   399001.SZ  300770.SZ   20200228  0.0711
+
+df_szcz[df_szcz['con_code'].str.contains('300001')]
+Out[42]: 
+     index_code   con_code trade_date  weight
+497   399001.SZ  300001.SZ   20200228  0.1392
+591   399001.SZ  300001.SZ   20190830  0.1212
+1118  399001.SZ  300001.SZ   20190731  0.1433
+1614  399001.SZ  300001.SZ   20190628  0.1404
+'''
+
 df = pro.index_weight(index_code='399300.SZ', start_date='20180901', end_date='20180930')
+df = pro.index_basic(market='SZSE')
 
 df = ts.pro_bar(ts_code='600519.SH', asset='E',freq='1', start_date='20201116', end_date='20201116')
 
