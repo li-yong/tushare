@@ -599,8 +599,15 @@ class Finlib_indicator:
     #  python t_daily_indicator_kdj_macd.py --indicator MACD --period D
     #  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D
 
-    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55):
-        dir = "/home/ryan/DATA/result"
+    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,
+                                market='ag', selected=False,
+
+                                ):
+
+        if selected:
+            dir = "/home/ryan/DATA/result/selected"
+        else:
+            dir = "/home/ryan/DATA/result"
 
         if query in [constant.CLOSE_UNDER_SMA60,
                      constant.CLOSE_ABOVE_SMA60,
@@ -641,8 +648,33 @@ class Finlib_indicator:
                         constant.SMA_CROSS_OVER,
                         ]:
             source_csv = dir + "/ma_cross_over_selection_"+str(fastMa)+"_"+str(slowMa)+".csv"
-        elif query in [constant.VERY_STONG_DOWN_TREND]:
-            source_csv = dir+'./ag_junxian_barstyle_very_strong_down_trend.csv'
+        elif query in [constant.BAR_SMALL_BODY,
+                       constant.BAR_CROSS_STAR,
+                       constant.BAR_GUANG_TOU,
+                       constant.BAR_GUANG_JIAO,
+                       constant.BAR_LONG_UPPER_SHADOW,
+                       constant.BAR_LONG_LOWER_SHADOW,
+                       constant.BAR_YUNXIAN_BUY,
+                       constant.BAR_YUNXIAN_SELL,
+
+                       constant.VERY_STONG_DOWN_TREND,
+                       constant.VERY_STONG_UP_TREND,
+                       constant.MA_JIN_CHA_MINOR,
+                       constant.MA_JIN_CHA_MAJOR,
+                       constant.MA_SI_CHA_MINOR,
+                       constant.MA_SI_CHA_MAJOR,
+                       constant.MA_DUO_TOU_PAI_LIE,
+                       constant.MA_KONG_TOU_PAI_LIE,
+                       constant.SHORT_TREND_UP,
+                       constant.SHORT_TREND_DOWN,
+                       constant.MIDDLE_TREND_UP,
+                       constant.MIDDLE_TREND_DOWN,
+                       constant.LONG_TREND_UP,
+                       constant.LONG_TREND_DOWN,
+
+                       ]:
+            source_csv = dir+'/'+market+'_junxian_barstyle_very_strong_down_trend.csv'
+
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)
