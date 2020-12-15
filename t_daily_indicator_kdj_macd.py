@@ -816,8 +816,6 @@ def calculate(indicator, period,period_fast,period_slow, debug):
 
 def analyze(indicator, debug=False):
     df = finlib.Finlib().get_A_stock_instrment()
-    df_gar_6 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.VERY_STONG_DOWN_TREND,
-                                                                           market='ag', selected=True)
 
 
     df2 = finlib.Finlib()._remove_garbage_macd_ma(df)

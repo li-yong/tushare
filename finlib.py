@@ -3334,7 +3334,10 @@ class Finlib:
         df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
         df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
 
-        df_gar_6 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.VERY_STONG_DOWN_TREND, market='ag', selected=False)
+        df_gar_6 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.VERY_STONG_DOWN_TREND,
+                                                                               market='ag', selected=False)
+        df_gar_7 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SELL_MUST, period='D',
+                                                                               market='ag')
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
@@ -3346,6 +3349,7 @@ class Finlib:
         df = self._df_sub_by_code(df=df, df_sub=df_gar_5,byreason=constant.SMA21_UNDER_SMA60)
 
         df = self._df_sub_by_code(df=df, df_sub=df_gar_6,byreason=constant.VERY_STONG_DOWN_TREND)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_7,byreason=constant.SELL_MUST)
         return(df)
 
 
