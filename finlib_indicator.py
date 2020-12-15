@@ -120,19 +120,19 @@ class Finlib_indicator:
     # df.__len__ == 7 recommend
     def upper_body_lower_shadow(self, df):
         ###### Upper_shadow, Body, Lower_shadow ####
-        unit = [[0]*3+[False]*6]
-        df_a = pd.DataFrame( unit * df.__len__(), columns=['upper_shadow_len', 'body_len', 'lower_shadow_len',
+        unit = [['']*2+[0]*3+[False]*6]
+        df_a = pd.DataFrame( unit * df.__len__(), columns=['reason', 'action', 'upper_shadow_len', 'body_len', 'lower_shadow_len',
                                                                  'guangtou','guangjiao',
                                                                  'small_body','cross_star',
                                                                  'long_upper_shadow','long_lower_shadow',
                                                                  ])
 
-        df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
-        df_a = df_a.assign('action', '')
+        # df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
+        # df_a = df_a.assign('action', '')
         df = df.merge(df_a, left_index=True, right_index=True)
 
-        df.iloc[i, df.columns.get_loc('reason')] = ''
-        df.iloc[i, df.columns.get_loc('reason')] = ''
+        # df.iloc[i, df.columns.get_loc('reason')] = ''
+        # df.iloc[i, df.columns.get_loc('reason')] = ''
 
         threshold_small = 1.0/20
         threshold_large = 5
@@ -171,8 +171,6 @@ class Finlib_indicator:
         #yun xian
 
         df_a = pd.DataFrame( [[False,False]] * df.__len__(), columns=['yunxian_buy','yunxian_sell'])
-        df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
-        df_a = df_a.assign('action', '')
         df = df.merge(df_a, left_index=True, right_index=True)
 
         if df.__len__() < 30:
@@ -302,8 +300,8 @@ class Finlib_indicator:
             'code': None,
             'date': None,
             'close': None,
-            'reason': None,
-            'action': None,
+            'reason': '',
+            'action': '',
 
             "short_period": short,
             "middle_period": middle,
