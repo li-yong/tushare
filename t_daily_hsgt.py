@@ -400,7 +400,7 @@ def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, p
     if 'profit' in df_history.columns:
         logging.info(__file__ + " " + "history profit describe:")
         logging.info(__file__ + " " + str(df_history['profit'].describe()))
-        
+
     logging.info(__file__ + " " + "today hit account, len " + str(df_today.__len__()) + " " + csv_out_today)
 
 

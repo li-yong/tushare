@@ -1201,7 +1201,7 @@ def merge_local_bash_basic(output_csv, fast=False):
         logging.info(cmd_content)
         os.system(cmd_content)
 
-        logging.info(__file__ + " " + "merged latest trading date" + last_trade_date + " to " + output_csv)
+        logging.info(__file__ + " " + "merged latest trading date " + last_trade_date + " to " + output_csv)
         return ()
 
     if (not fast):
