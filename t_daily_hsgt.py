@@ -126,12 +126,16 @@ def analyze_hsgt_top_10():
     print("Based on recent " + str(period_days) + " days selected hsgt_top_10 was saved to " + output_csv)
 
 
-def fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=False):
+def fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=False,debug=False):
     ts.set_token(myToken)
     pro = ts.pro_api()
 
     stock_list = finlib.Finlib().get_A_stock_instrment()
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # SH600519
+
+    if debug:
+        stock_list = stock_list[stock_list['code']=='SH600519']
+
 
     i = 0
     csv_dir = "/home/ryan/DATA/DAY_Global/AG_MoneyFlow"
@@ -216,7 +220,7 @@ def describe_std(code, name, df_sub, col_name, mf_ana_date, force_print=False):
     return (rst)
 
 
-def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, prime_stock_list=True, selected=True):
+def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, prime_stock_list=True, selected=True, debug=False):
     ts.set_token(myToken)
 
     if selected:
@@ -229,6 +233,11 @@ def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, p
         stock_list = finlib.Finlib().get_A_stock_instrment()
         stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # SH600519
         stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+
+    if debug:
+        stock_list = finlib.Finlib().get_stock_configuration(selected=selected, stock_global='AG')['stock_list']
+        stock_list = stock_list[stock_list['code']=='SH600519']
+
 
     i = 0
     csv_in_dir = "/home/ryan/DATA/DAY_Global/AG_MoneyFlow"
@@ -388,9 +397,10 @@ def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, p
     df_today_snap.to_csv(csv_out_today_selected)
     logging.info(__file__+" "+"saved today_max_amount to "+csv_out_today_selected+" Len "+str(df_today_snap.__len__()))
 
-
-    logging.info(__file__ + " " + "history profit describe:")
-    logging.info(__file__ + " " + str(df_history['profit'].describe()))
+    if 'profit' in df_history.columns:
+        logging.info(__file__ + " " + "history profit describe:")
+        logging.info(__file__ + " " + str(df_history['profit'].describe()))
+        
     logging.info(__file__ + " " + "today hit account, len " + str(df_today.__len__()) + " " + csv_out_today)
 
 
@@ -459,11 +469,11 @@ if __name__ == '__main__':
     set_global(debug=debug_f, force_run=force_run_f)
 
     if fetch_moneyflow_all_f:
-        fetch_moneyflow(fetch_whole=True, fetch_today=False, force_run=force_run_f)
+        fetch_moneyflow(fetch_whole=True, fetch_today=False, force_run=force_run_f, debug=debug_f)
     elif fetch_hsgt_top_10_f:
         fetch_hsgt_top_10()
     elif fetch_moneyflow_daily_f:
-        fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=force_run_f)
+        fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=force_run_f, debug=debug_f)
     elif analyze_hsgt_f:
         analyze_hsgt_top_10()
     elif analyze_moneyflow_f:
@@ -473,4 +483,5 @@ if __name__ == '__main__':
             mf_ana_test_hold_days=mf_ana_test_hold_days,
             prime_stock_list=mf_ana_prime_stock,
             selected = selected,
+            debug = debug_f,
         )
