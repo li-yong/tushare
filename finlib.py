@@ -326,8 +326,7 @@ class Finlib:
 
 
 
-    #get ts stock basic. No longer work 20201216. 404 Not found.
-    # this function to be removed.
+    #get ts stock basic. updated using tspro only.
     def get_today_stock_basic(self,date_exam_day=None):
         if date_exam_day == None:
             date_exam_day = self.get_last_trading_day()
