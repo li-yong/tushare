@@ -200,7 +200,7 @@ class Finlib:
 
         return rst
 
-    def get_common_fund_df(self):
+    def get_common_fund_df(self): #no longer work. tushare1.
         return(pd.read_csv("/home/ryan/DATA/result/fund_analysis.csv", converters={'code': str}))
 
     def generate_common_fund_df(self):
@@ -213,12 +213,6 @@ class Finlib:
 
         df_exam_all = pd.DataFrame()
 
-        # get on market days
-        # ts_code,symbol,name,area 所在地域,industry 所属行业,list_date 上市日期
-        csv_pro_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_basic.csv"
-        df_omd = self.regular_read_csv_to_stdard_df(data_csv=csv_pro_basic)
-        df_omd['on_market_days'] = df_omd['list_date'].apply(
-            lambda _d: (datetime.today() - datetime.strptime(str(_d), '%Y%m%d')).days)
 
         # get pe
         # ts_code,trade_date,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,total_share,float_share,total_mv,circ_mv
@@ -230,7 +224,6 @@ class Finlib:
         # circ_mv: 流通市值（万元）
 
         df_basic = self.get_today_stock_basic()
-        df_exam_all = pd.merge(df_omd, df_basic, on=['code'], how='inner', suffixes=('', '_x'))
 
         # get ROE, market cap
 
@@ -284,7 +277,7 @@ class Finlib:
 
                                      ]]
 
-        df_exam_all = pd.merge(df_exam_all, df_merge_sub, on=['code'], how='inner', suffixes=('', '_x'))
+        df_exam_all = pd.merge(df_basic, df_merge_sub, on=['code'], how='inner', suffixes=('', '_x'))
         df_exam_all = pd.merge(df_exam_all, df_merge_sub_1, on=['code'], how='inner', suffixes=('', '_year1'))
 
         #600519 netdebt: -2.2e+09
@@ -292,12 +285,12 @@ class Finlib:
         df_exam_all['ev'] = df_exam_all['total_mv']*1e4+df_exam_all['netdebt']
         df_exam_all['ev_ebitda_ratio'] = df_exam_all['ev']/df_exam_all['ebitda']
         df_exam_all['ev_ebitda_ratio_rank'] =  df_exam_all['ev_ebitda_ratio'].rank(pct=True)
-        print(df_exam_all.sort_values(by='ev_ebitda_ratio_rank').head(50)[['code','name','ev_ebitda_ratio','ev_ebitda_ratio_rank']])
+        logging.info(df_exam_all.sort_values(by='ev_ebitda_ratio_rank').head(5)[['code','name','ev_ebitda_ratio','ev_ebitda_ratio_rank']])
 
         #market cap/Net profit after tax
         df_exam_all['total_mv_net_profit_ratio'] = df_exam_all['total_mv']*1e4 / df_exam_all['net_profit']
         df_exam_all['total_mv_net_profit_ratio_rank'] =  df_exam_all['total_mv_net_profit_ratio'].rank(pct=True)  #
-        print(df_exam_all.sort_values(by='total_mv_net_profit_ratio_rank').head(50)[['code','name','total_mv_net_profit_ratio']])
+        logging.info(df_exam_all.sort_values(by='total_mv_net_profit_ratio_rank').head(5)[['code','name','total_mv_net_profit_ratio']])
 
         self.print_mt(df_exam_all)
 
@@ -333,7 +326,8 @@ class Finlib:
 
 
 
-    #merge df daily basic of ts and tspro
+    #get ts stock basic. No longer work 20201216. 404 Not found.
+    # this function to be removed.
     def get_today_stock_basic(self,date_exam_day=None):
         if date_exam_day == None:
             date_exam_day = self.get_last_trading_day()
@@ -356,7 +350,14 @@ class Finlib:
 
         to_csv = dir + "/basic_fund_fund2_" + date_exam_day + ".csv"
 
-        df_daily_basic_1 = self.add_market_to_code(self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/basic_" + date_exam_day + ".csv" ))
+        #df_daily_basic_1 = self.add_market_to_code(self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/basic_" + date_exam_day + ".csv" )) #no longer work. tushare1.
+
+        df_daily_info = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily/info_" + date_exam_day + ".csv" )
+        df_daily_info = self.ts_code_to_code(df_daily_info)
+        df_pro_basic = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_basic.csv")
+        df_pro_basic['on_market_days'] = df_pro_basic['list_date'].apply(lambda _d: (datetime.today() - datetime.strptime(str(_d), '%Y%m%d')).days)
+
+        df_rtn = pd.merge(df_pro_basic, df_daily_info, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
 
 
        # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_20200820.csv
@@ -371,7 +372,8 @@ class Finlib:
         df_daily_stocks_basic['turnover_rate_f_perc_rank'] = df_daily_stocks_basic['turnover_rate_f'].rank(pct=True)  # 换手率（自由流通股）
        # df_daily_stocks_basic['dv_ttm_perc_rank'] = df_daily_stocks_basic['dv_ttm'].rank(pct=True) #股息率（TTM）（%）
 
-        df_rtn = pd.merge(df_daily_stocks_basic, df_daily_basic_1, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+        df_rtn = pd.merge(df_rtn, df_daily_stocks_basic, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+
         df_rtn = self.add_ts_code_to_column(df_rtn)
         df_rtn = df_rtn.reset_index().drop('index', axis=1)
         df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
@@ -404,39 +406,6 @@ class Finlib:
 
         return(df)
 
-
-    # def get_today_stock_basic_zzz(self):
-    #     # todayS = datetime.today().strftime('%Y-%m-%d')
-    #     todayS = self.get_last_trading_day()
-    #
-    #     #todayS = "2020-08-13" #ryan debug
-    #
-    #     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/basic_" + todayS + ".csv"  ##get_stock_basics每天都会更新一次
-    #
-    #     df_basic = pd.DataFrame()
-    #
-    #     if not os.path.isfile(csv_basic):
-    #         logging.info(__file__+" "+"Getting Basic, ts.get_stock_basics of " + todayS)  # 获取沪深上市公司基本情况
-    #         try:
-    #             df_basic = ts.get_stock_basics()
-    #             df_basic = df_basic.reset_index()
-    #             df_basic.code = df_basic.code.astype(str)  # convert the code from numpy.int to string.
-    #             df_basic.reset_index().to_csv(csv_basic, encoding='UTF-8', index=False)
-    #         except:
-    #             logging.info(__file__+" "+"exception in get_today_stock_basic()" + str(e))
-    #         finally:
-    #             if sys.exc_info() == (None, None, None):
-    #                 pass  # no exception
-    #             else:
-    #                 logging.info(str(traceback.print_exception(*sys.exc_info())).encode('utf8'))  # python3
-    #                 # logging.info(unicode(traceback.print_exception(*sys.exc_info())).encode('utf8')) #python2
-    #                 logging.info(sys.exc_value.message)  # print the human readable unincode
-    #                 sys.exc_clear()
-    #     else:
-    #         # logging.info(__file__+" "+"\nLoading Basic")
-    #         df_basic = pandas.read_csv(csv_basic, converters={'code': str})
-    #
-    #     return (df_basic)
 
     def df_filter(self, df):
         # code in df: the code must in format 'SH600xxx' etc
@@ -2831,6 +2800,7 @@ class Finlib:
 
     def is_on_market(self, ts_code, date, basic_df):
         # basic_df passed from invoker, to avoid load csv everytime.
+        # self.get_ts_field(ts_code = ts_code, field = )
 
         if basic_df is None:
             basic_df = self.get_today_stock_basic()
@@ -3943,7 +3913,7 @@ class Finlib:
             rtn_df = pd.read_csv(data_csv_fp, encoding="utf-8")
 
 
-        elif dir =="/home/ryan/DATA/pickle/daily_update_source":
+        elif dir in ["/home/ryan/DATA/pickle/daily_update_source", "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily"]:
             rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str},encoding="utf-8"))
 
         elif data_csv_fp =="/home/ryan/DATA/pickle/instrument_A.csv":
