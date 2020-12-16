@@ -1073,17 +1073,6 @@ class Finlib:
 
         return str(exam_date)
 
-    def fetch_ag_trading_day(self):
-        this_year = datetime.today().strftime("%Y") #2020
-        csv_f = "/home/ryan/DATA/pickle/trading_day_"+this_year+".csv"
-
-        if self.is_cached(csv_f, day=10):
-            ts.trade_cal().to_csv(csv_f, encoding='UTF-8', index=False)
-            logging.info(__file__+" "+" fetching trading days, saved to "+csv_f)
-        else:
-            logging.info(__file__+" "+" file updated in 10 days, not fetch again. "+csv_f)
-
-
     def is_a_trading_day_ag(self, dateS):
 
         this_year = datetime.today().strftime("%Y") #2020
@@ -1120,8 +1109,9 @@ class Finlib:
         return last_trading_day_us
 
     def get_ag_trading_day(self):
-        csvf = "/home/ryan/DATA/pickle/trading_day_2020.csv"
-        df_trade_cal = ts.pro_api().trade_cal(exchange='SSE', start_date='19980101', end_date='20201231')
+        this_year = datetime.today().strftime("%Y")
+        csvf = "/home/ryan/DATA/pickle/trading_day_" +this_year  + ".csv"
+        df_trade_cal = ts.pro_api().trade_cal(exchange='SSE', start_date='19980101', end_date=this_year+'1231')
         df_trade_cal.to_csv(csvf, encoding='UTF-8', index=False)
         logging.info(__file__ + ": " + "trade_cal saved to " + csvf + " , len " + str(df_trade_cal.__len__()))
         return df_trade_cal

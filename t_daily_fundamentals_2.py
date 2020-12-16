@@ -834,7 +834,7 @@ def fetch_basic_daily(fast_fetch=False):
     pro = ts.pro_api()
 
     ##### get daily basic
-    calendar_f = "/home/ryan/DATA/pickle/trading_day_2020.csv"
+    calendar_f = "/home/ryan/DATA/pickle/trading_day_"+str(datetime.datetime.today().year)+".csv"
     if not os.path.isfile(calendar_f):
         logging.error("no such file " + calendar_f)
         exit()
@@ -888,7 +888,7 @@ def fetch_info_daily(fast_fetch=False):
     pro = ts.pro_api()
 
     ##### get daily basic
-    calendar_f = "/home/ryan/DATA/pickle/trading_day_2020.csv"
+    calendar_f = "/home/ryan/DATA/pickle/trading_day_" + str(datetime.datetime.today().year) + ".csv"
     if not os.path.isfile(calendar_f):
         logging.error("no such file " + calendar_f)
         exit()
@@ -3919,6 +3919,7 @@ def concept_top():
 
 
 def main():
+    fetch_basic_daily(fast_fetch=False)
     ########################
     #
     #########################
