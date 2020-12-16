@@ -126,7 +126,7 @@ def analyze_hsgt_top_10():
     print("Based on recent " + str(period_days) + " days selected hsgt_top_10 was saved to " + output_csv)
 
 
-def fetch_moneyflow(fetch_whole=False, fetch_today=True):
+def fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=False):
     ts.set_token(myToken)
     pro = ts.pro_api()
 
@@ -164,8 +164,8 @@ def fetch_moneyflow(fetch_whole=False, fetch_today=True):
             df_new.to_csv(csv_f, encoding='UTF-8', index=False)
             logging.info(__file__ + " " + "saved to " + csv_f + " len " + str(df_new.__len__()))
 
-        elif fetch_whole:
-            if finlib.Finlib().is_cached(csv_f, 3):
+        elif fetch_whole :
+            if finlib.Finlib().is_cached(csv_f, 3) and not force_run:
                 logging.info(__file__+" "+"file has been updated in 3 days. "+csv_f)
                 continue
             df = pro.moneyflow(ts_code=ts_code)
@@ -278,6 +278,10 @@ def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, p
             # b: buy, s:sell, v:volume, m:amount
             # 0: all, 1:extr large, 2:large, 3:middle, 4:small
 
+            if df.__len__() <= 120:
+                logging.info("insufficient days' data, skip. "+str(df.__len__())+ " "+csv_in)
+                continue
+
             df = pd.DataFrame([name] * df.__len__(), columns=['name']).join(df)  # the inserted column on the head
             df = pd.DataFrame([0] * df.__len__(), columns=['bv0']).join(df)  # the inserted column on the head
             df = pd.DataFrame([0] * df.__len__(), columns=['sv0']).join(df)  # the inserted column on the head
@@ -313,10 +317,7 @@ def analyze_moneyflow(mf_ana_date, mf_ana_pre_days=3, mf_ana_test_hold_days=5, p
 
             pre_days = mf_ana_pre_days  #analysis last 100 rows
             for i2 in range(df.__len__() - pre_days, df.__len__()):
-                df_sub = df[i2 - 253:i2]  #compare with previous one year data for each row
-
-                if df_sub.__len__() == 0:
-                    continue
+                df_sub = df[i2 - 120:i2]  #compare with previous one year data for each row
 
                 target = '(bv1+bv2)/bv0'
                 rst = describe_std(code, name, df_sub, col_name=target, mf_ana_date=mf_ana_date, force_print=False)
@@ -458,11 +459,11 @@ if __name__ == '__main__':
     set_global(debug=debug_f, force_run=force_run_f)
 
     if fetch_moneyflow_all_f:
-        fetch_moneyflow(fetch_whole=True, fetch_today=False)
+        fetch_moneyflow(fetch_whole=True, fetch_today=False, force_run=force_run_f)
     elif fetch_hsgt_top_10_f:
         fetch_hsgt_top_10()
     elif fetch_moneyflow_daily_f:
-        fetch_moneyflow(fetch_whole=False, fetch_today=True)
+        fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=force_run_f)
     elif analyze_hsgt_f:
         analyze_hsgt_top_10()
     elif analyze_moneyflow_f:

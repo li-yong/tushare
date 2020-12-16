@@ -67,11 +67,13 @@ python t_daily_hsgt.py --fetch_hsgt_top_10
 
 if [ $full_or_daily == "FULL" ]; then
   rm -f /home/ryan/DATA/DAY_Global/AG_MoneyFlow/*.csv
-  python t_daily_hsgt.py --fetch_moneyflow_all #time consuming
+  python t_daily_hsgt.py --fetch_moneyflow_all --force_run  #time consuming
 fi
 
-python t_daily_hsgt.py --fetch_moneyflow_daily  #time consuming (a little)
 
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_hsgt.py --fetch_moneyflow_daily  #time consuming (a little)
+fi
 
 ######################################
 #

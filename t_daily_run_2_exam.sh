@@ -101,10 +101,6 @@ if [ $full_or_daily == "DAILY" ]; then
 fi
 
 
-#python t_fenghong.py --analyze_one  --force_run #fenhong run on laptop + home only, because it fetches data on public network. <<< NOT TRUE. 20181125
-#python t_fenghong.py --analyze_two  --force_run
-
-
 ######################################################## Step2 FUND2 ################################################
 ################################################
 #input:
