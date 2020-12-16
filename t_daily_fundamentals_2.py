@@ -3919,7 +3919,6 @@ def concept_top():
 
 
 def main():
-    fetch_basic_daily(fast_fetch=False)
     ########################
     #
     #########################
