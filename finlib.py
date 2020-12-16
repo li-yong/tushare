@@ -410,51 +410,12 @@ class Finlib:
         # code in df: the code must in format 'SH600xxx' etc
 
         df_basic = self.get_today_stock_basic()
-        cols = ['code', 'name', 'esp', 'npr', 'timeToMarket']
-        df_basic = df_basic[cols]
-        # logging.info(__file__+" "+"df_basic.__len__() is " + str(df_basic.__len__()))
-
-        df_basic = df_basic.fillna(0)
-        df_basic = df_basic[df_basic['timeToMarket'] != 0]
-
-        df_basic = df_basic[df_basic['timeToMarket'] < int((datetime.now() - timedelta(30)).date().strftime('%Y%m%d'))]
-        logging.info(__file__+" "+"after timetoMarket>30, df_basic.__len__() is " + str(df_basic.__len__()))
-
-        #df_basic = df_basic[df_basic['esp'] > 0]
-        # logging.info(__file__+" "+"after esp>0, df_basic.__len__() is " + str(df_basic.__len__()))
-
-        #df_basic = df_basic[df_basic['npr'] > 0]
-        # logging.info(__file__+" "+"after npr>0, df_basic.__len__() is " + str(df_basic.__len__()))
-
-        # a= pd.merge(df_basic,df, on='code',how='inner')
-        # logging.info(str(a.__len__()))
-
-        logging.info(__file__+" "+"input df len " + str(df.__len__()) + ". ")
-
-        df = df[df['code'].isin(df_basic['code'].tolist())]
-        #logging.info(__file__+" "+"after filter(timetomarket>30, esp>0, npr>0), df len " + str(df.__len__()))
+        df_basic = df_basic[df_basic['on_market_days'] > 30]
         logging.info(__file__+" "+"after filter(timetomarket>30), df len " + str(df.__len__()))
 
         df = self._remove_garbage_macd_ma(df)
-        logging.info(__file__+" "+"after remove macd ma garbage), df len " + str(df.__len__()))
-
-
+        logging.info(__file__+" "+"after remove macd ma garbage, df len " + str(df.__len__()))
         return df
-
-        if False:
-            for i in range(df_basic.__len__()):
-                code = str(df_basic.iloc[i]['code'])
-                timeToMarket = str(df_basic.iloc[i]['timeToMarket'])
-
-                if pd.isnull(timeToMarket):
-                    logging.info(__file__+" "+"code " + code + " timetomarket is " + str(timeToMarket))
-                    continue
-                elif timeToMarket == '0':
-                    logging.info(__file__+" "+"code " + code + " timetomarket is " + str(timeToMarket))
-                    continue
-                elif datetime.strptime(timeToMarket, '%Y%m%d') + timedelta(360) > datetime.now():
-                    logging.info(__file__+" "+"the stock " + str(code) + " is less than 1 year, " + str(timeToMarket))
-                    pass
 
     def get_year_month_quarter(self, year=None, month=None):
         dict_rtn = {}
