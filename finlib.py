@@ -3258,6 +3258,10 @@ class Finlib:
 
 
     def _remove_garbage_macd_ma(self,df):
+        if df.empty:
+            logging.info("df is empty, not to remove macd ma garbage")
+            return(df)
+
         df_gar_1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D')
         df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
         df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
