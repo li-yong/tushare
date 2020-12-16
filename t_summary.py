@@ -1857,7 +1857,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             arr.remove('df_industry_top')
 
         #Treat this is the good candicates, while filter garbage filt the garbage only.
-        df_reduced_quarter_year = pd.merge(df_combined_quarter, df_combined_year, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+        # df_reduced_quarter_year = pd.merge(df_combined_quarter, df_combined_year, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+        df_reduced_quarter_year = pd.merge(df_combined_quarter, df_combined_year, on='code', how='inner', suffixes=('', '_x'))
         df_reduced_quarter_year = df_reduced_quarter_year[['code', 'name']]
         df_reduced_quarter_year = df_reduced_quarter_year.drop_duplicates().reset_index().drop('index', axis=1)
 
