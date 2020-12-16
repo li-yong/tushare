@@ -699,10 +699,12 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
     #perundp_all=df_q_r['perundp']
     #profit_all=df_q_r['profit']
     total_profit_all = df_q_r['total_profit']
-    gpr_all = df_q_r['gpr']
-    npr_all = df_q_r['npr']
-    holders_all = df_q_r['holders']
-    net_profits_all = df_q_r['net_profits']
+    #gpr_all = df_q_r['gpr']
+    gpr_all = df_q_r['grossprofit_margin']
+    #npr_all = df_q_r['npr']
+    npr_all = df_q_r['netprofit_margin']
+    # holders_all = df_q_r['holders']
+    net_profits_all = df_q_r['net_profit']
     business_income_all = df_q_r['business_income']
     bips_all = df_q_r['bips']
     currentasset_turnover_all = df_q_r['currentasset_turnover']
@@ -711,10 +713,13 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
     rateofreturn_all = df_q_r['rateofreturn']
     cashflowratio_all = df_q_r['cashflowratio']
     esp_ratio_all = df_q_r['esp_ratio']
-    totalAssets_all = df_q_r['totalAssets']
+    # totalAssets_all = df_q_r['totalAssets']
+    totalAssets_all = df_q_r['tangible_asset']
 
-    business_income_all = df_q_r['business_income']  #营业收入
-    net_profits_all = df_q_r['net_profits']  #净利润
+    # business_income_all = df_q_r['business_income']  #营业收入
+    business_income_all = df_q_r['revenue']  #营业收入
+    # net_profits_all = df_q_r['net_profits']  #净利润
+    net_profits_all = df_q_r['n_income']  #净利润
 
     #ryan modified on 2018.04.23
     new_value_df = pd.DataFrame({
@@ -759,10 +764,10 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
         #perundp = df_q_r.iloc[i]['perundp']
         #profit = df_q_r.iloc[i]['profit']
         total_profit = df_q_r.iloc[i]['total_profit']
-        gpr = df_q_r.iloc[i]['gpr']
-        npr = df_q_r.iloc[i]['npr']
-        holders = df_q_r.iloc[i]['holders']
-        net_profits = df_q_r.iloc[i]['net_profits']
+        gpr = df_q_r.iloc[i]['grossprofit_margin']
+        npr = df_q_r.iloc[i]['netprofit_margin']
+        # holders = df_q_r.iloc[i]['holders']
+        net_profits = df_q_r.iloc[i]['net_profit']
         business_income = df_q_r.iloc[i]['business_income']
         bips = df_q_r.iloc[i]['bips']
         currentasset_turnover = df_q_r.iloc[i]['currentasset_turnover']
@@ -771,10 +776,10 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
         rateofreturn = df_q_r.iloc[i]['rateofreturn']
         cashflowratio = df_q_r.iloc[i]['cashflowratio']
         esp_ratio = df_q_r.iloc[i]['esp_ratio']
-        totalAssets = df_q_r.iloc[i]['totalAssets']
+        totalAssets = df_q_r.iloc[i]['tangible_asset']
 
-        business_income = df_q_r.iloc[i]['business_income']
-        net_profits = df_q_r.iloc[i]['net_profits']
+        business_income = df_q_r.iloc[i]['revenue']
+        net_profits = df_q_r.iloc[i]['n_income']
 
         pe_perc = 1 - stats.percentileofscore(pe_all, pe) / 100
         pb_perc = 1 - stats.percentileofscore(pb_all, pb) / 100
@@ -786,7 +791,7 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
         profit_perc = stats.percentileofscore(total_profit_all, total_profit) / 100
         gpr_perc = stats.percentileofscore(gpr_all, gpr) / 100
         npr_perc = stats.percentileofscore(npr_all, npr) / 100
-        holders_perc = 1 - (stats.percentileofscore(holders_all, holders) / 100)
+        # holders_perc = 1 - (stats.percentileofscore(holders_all, holders) / 100)
         net_profits_perc = stats.percentileofscore(net_profits_all, net_profits) / 100
         business_income_perc = stats.percentileofscore(business_income_all, business_income) / 100
         bips_perc = stats.percentileofscore(bips_all, bips) / 100
@@ -1322,7 +1327,7 @@ def area_rank(quarterly_fundamental_csv=None):
     return (df_result)
 
 
-def today_fundamental_any(todayS=None):
+def today_fundamental_any(todayS=None):  # no longer work. tushare0
 
     today_fund_csv = ""
     dump_today = ""
@@ -1813,8 +1818,8 @@ def calc_peg(debug=False):
 
 #update the csv dump_csv_q with inserting ps, peg columns. 'ps','peg_1','peg_4','egr_1','egr_4'
 def calc_ps(debug=False):
-    #fund_ps_csv = "/home/ryan/DATA/result/latest_fundamental_peg.csv"  #3505 lines
-    fund_ps_csv = "/home/ryan/DATA/result/fundamental_peg.csv"  #24573 lines
+    # fund_ps_csv = "/home/ryan/DATA/result/latest_fundamental_peg.csv"  #3505 lines
+    # fund_ps_csv = "/home/ryan/DATA/result/fundamental_peg.csv"  #24573 lines
 
     #fund_ps_csv = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/merged/merged_all_20181231.csv"
 

@@ -1128,7 +1128,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         logging.info(__file__+" "+"\t df_moneyflow length " + str(df_moneyflow.__len__()))
 
-        logging.info(__file__+" "+"loading df_fund " + f_fund)
+        logging.info(__file__+" "+"loading df_fund " + f_fund) #f_fund is no longer exist.
         if (os.path.isfile(f_fund) and os.stat(f_fund).st_size >= 10):
             df_fund = finlib.Finlib().regular_read_csv_to_stdard_df(f_fund)
             df_fund = finlib.Finlib().add_market_to_code(df_fund)
@@ -1148,8 +1148,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         else:
             logging.info(__file__+" "+"no such file " + f_fund)
-            logging.info(__file__+" "+"stop and exit")
-            exit(1)
+            # logging.info(__file__+" "+"stop and exit")
+            # exit(1)
 
         logging.info(__file__+" "+"loading df_fund_2, " + f_fund_2)
         if (os.path.isfile(f_fund_2)) and os.stat(f_fund_2).st_size >= 10:  # > 10 bytes
