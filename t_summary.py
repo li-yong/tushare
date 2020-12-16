@@ -65,8 +65,6 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
     cnx = mysql.connector.connect(host=mysql_host, user='root', password='admin888.@_@', database="ryan_stock_db")
     cursor = cnx.cursor()  # setup db connection before for loop.
 
-    #for i in input_df.iterrows():
-
     for i in input_df['code'].unique():
         code = i
         #code = i[1][0]
