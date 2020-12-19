@@ -60,8 +60,9 @@ def _kdj(csv_f, period):
 
     #csv_f = '/home/ryan/DATA/DAY_Global/AG/SH600519.csv' #ryan debug
 
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
 
-    df = pd.read_csv(csv_f, converters={'code': str}, header=None, skiprows=1, names=['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv'])
+    # df = pd.read_csv(csv_f, converters={'code': str}, header=None, skiprows=1, names=['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv'])
 
     if df.__len__() < 100:
         logging.info('file less than 100 records. ' + csv_f)
@@ -70,7 +71,7 @@ def _kdj(csv_f, period):
     this_code = df.iloc[0]['code']  #'SH603999'
     this_date = ''  #monthly period, end date of the month.
     this_reason = ''
-    this_strength = ''
+    this_strength = 0
     this_action = ''
 
     # print(tabulate.tabulate(df[-20:], headers='keys', tablefmt='psql'))  #ryan debug
