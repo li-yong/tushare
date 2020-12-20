@@ -722,29 +722,37 @@ python t_summary.py -x AG --action analyze_report
 # output: ~/DATA/result/macd_selection_M.csv
 #         ~/DATA/result/macd_selection_W.csv
 #         ~/DATA/result/macd_selection_D.csv
+# 	 /home/ryan/DATA/result/MACD_month_week_day_common.csv
 #
 #         ~/DATA/result/kdj_selection_M.csv
 #         ~/DATA/result/kdj_selection_W.csv
 #         ~/DATA/result/kdj_selection_D.csv
+# 	 /home/ryan/DATA/result/KDJ_month_week_day_common.csv
+# 	 /home/ryan/DATA/result/MA_CROSS_month_week_day_common.csv
 #
 ###############################
 python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
 python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
 python t_daily_indicator_kdj_macd.py --indicator KDJ --period D
+python t_daily_indicator_kdj_macd.py --indicator KDJ --analyze
+
 
 python t_daily_indicator_kdj_macd.py --indicator MACD --period M
 python t_daily_indicator_kdj_macd.py --indicator MACD --period W
 python t_daily_indicator_kdj_macd.py --indicator MACD --period D
+python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
 
 ########################
 # MA 21 cross up MA 55
 # input: DAY_Global/AG
-# output: /home/ryan/DATA/result/ma_cross_over_selection_5_21.csv"
+# output: /home/ryan/DATA/result/ma_cross_over_selection_5_10.csv"
+# output: /home/ryan/DATA/result/ma_cross_over_selection_10_20.csv"
 # output: /home/ryan/DATA/result/ma_cross_over_selection_21_55.csv"
 ########################
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 21
+python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 10
+python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
 python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 21 --period_slow 55
-
+python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 
 
 

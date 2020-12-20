@@ -816,45 +816,40 @@ def calculate(indicator, period,period_fast,period_slow, debug):
 
 
 def analyze(indicator, debug=False):
-    df = finlib.Finlib().get_A_stock_instrment()
-
-
-    df2 = finlib.Finlib()._remove_garbage_macd_ma(df)
-
 
 
     dir = "/home/ryan/DATA/result"
+    output_csv = dir+"/"+indicator+"_month_week_day_common.csv"
     if indicator == 'MACD':
         input_csv_m = dir + "/macd_selection_M.csv"
         input_csv_w = dir + "/macd_selection_W.csv"
         input_csv_d = dir + "/macd_selection_D.csv"
 
-        csv_o = dir + "/under_sma60_M.csv"
-        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='M').to_csv(csv_o, encoding='UTF-8', index=False)
-        logging.info("Saved "+csv_o)
-
-        csv_o = dir + "/under_sma60_W.csv"
-        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='W').to_csv(csv_o, encoding='UTF-8', index=False)
-        logging.info("Saved " + csv_o)
-
-        csv_o = dir + "/under_sma60_D.csv"
-        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D').to_csv(csv_o, encoding='UTF-8', index=False)
-        logging.info("Saved " + csv_o)
-
-
-        finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_CROSS_OVER_0, period='D').to_csv(csv_o, encoding='UTF-8', index=False)
-
+        df_d = pd.read_csv(input_csv_d)
+        df_w = pd.read_csv(input_csv_w)
+        df_m = pd.read_csv(input_csv_m)
 
     if indicator == 'KDJ':
         input_csv_m = dir + "/kdj_selection_M.csv"
         input_csv_w = dir + "/kdj_selection_W.csv"
         input_csv_d = dir + "/kdj_selection_D.csv"
 
+        df_d = pd.read_csv(input_csv_d)
+        df_w = pd.read_csv(input_csv_w)
+        df_m = pd.read_csv(input_csv_m)
+
     if indicator == 'MA_CROSS':
-        input_csv_d = dir + "/home/ryan/DATA/result/ma_cross_over_selection_5_21.csv"
+        input_csv_d = dir + "/ma_cross_over_selection_5_10.csv"
+        df_d = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA_CROSS_OVER, fastMa=5, slowMa=10)
+
+        input_csv_w = dir + "/ma_cross_over_selection_10_20.csv"
+        df_w = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA_CROSS_OVER, fastMa=10, slowMa=20)
+
+        input_csv_m = dir + "/ma_cross_over_selection_21_55.csv"
+        df_m = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA_CROSS_OVER, fastMa=21, slowMa=55)
 
 
-    df_m = pd.read_csv(input_csv_m)
+
     df_m.rename(columns={
         'action': 'action_m',
         'date': 'date_m',
@@ -862,7 +857,6 @@ def analyze(indicator, debug=False):
         'strength': 'strength_m',
     }, inplace=True)
 
-    df_w = pd.read_csv(input_csv_w)
     df_w.rename(columns={
         'action': 'action_w',
         'date': 'date_w',
@@ -870,7 +864,6 @@ def analyze(indicator, debug=False):
         'strength': 'strength_w',
     }, inplace=True)
 
-    df_d = pd.read_csv(input_csv_d)
     df_d.rename(columns={
         'action': 'action_d',
         'date': 'date_d',
@@ -878,15 +871,18 @@ def analyze(indicator, debug=False):
         'strength': 'strength_d',
     }, inplace=True)
 
-    df_merge = pd.merge(df_m, df_w, on=['code', 'name'], how='outer')
-    df_merge = pd.merge(df_merge, df_d, on=['code', 'name'], how='outer')
+    df_merge = pd.merge(df_m, df_w, on=['code', 'name'], how='inner')
+    df_merge = pd.merge(df_merge, df_d, on=['code', 'name'], how='inner')
 
     cols = ['code', 'name', 'date_m', 'date_w', 'date_d', 'action_m', 'action_w', 'action_d', 'reason_m', 'reason_w', 'reason_d', 'strength_m', 'strength_w', 'strength_d']
 
     df_merge = df_merge[cols]
-    print(tabulate.tabulate(df_merge[-20:], headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(df_merge[-20:], headers='keys', tablefmt='psql'))
 
-    # df_merge[df_merge.action_d.str.contains(r'BUY.*', na=True)]
+    df_merge.to_csv(output_csv, encoding='UTF-8', index=False)
+    logging.info("saved indicator Month_Week_Day common list to "+output_csv+", len "+str(df_merge.__len__()))
+
+
 
 
 def main():
