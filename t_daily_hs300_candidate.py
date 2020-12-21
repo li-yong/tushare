@@ -46,14 +46,15 @@ def load_hs300():
 
 ### MAIN ####
 if __name__ == '__main__':
+    debug =False
+    ndays = 365
+
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
-    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=365, debug=False)
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=5, debug=True)
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug)
 
-    # df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=365,debug=False)
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=5, debug=True)
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug)
 
     my_hs300 = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),
                                                byreason="daily average amount less than 50% stocks.")
