@@ -36,6 +36,9 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 import warnings
 import constant
 
+from collections import deque
+from io import StringIO
+
 # warnings.filterwarnings("error")
 warnings.filterwarnings("default")
 
@@ -933,7 +936,7 @@ class Finlib:
                 continue
 
             if tspro_format:
-                df.at[index, 'code'] = code_S2
+                df.at[index, 'ts_code'] = code_S2
             else:
                 df.at[index, 'code'] = code_S
 
@@ -4300,6 +4303,74 @@ class Finlib:
         logging.info(api+" finally field count " + str(_d.__len__()))
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
+
+    #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
+    def sort_by_market_cap_since_n_days_avg(self,ndays=5):
+
+        period_end = datetime.today().strftime("%Y%m%d")
+        period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
+
+        basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
+
+        df = pd.DataFrame()
+        for i in range(ndays):
+            date = (datetime.today() - timedelta(days=i)).strftime("%Y%m%d")
+            input_csv = basic_dir + "/basic_" + date + ".csv"
+
+            if self.is_cached(input_csv, day=1000):
+                df_sub = pd.read_csv(input_csv)
+
+                df = df.append(df_sub)
+                logging.info("appended " + input_csv + ", +len " + str(df_sub.__len__()))
+
+        df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
+        df_basic = self.ts_code_to_code(df=df_basic)
+
+        # sort by the total_mv 总市值, decending.
+        df_total_mv_market_cap = df_basic.groupby(by='code').mean().sort_values(by=['total_mv'], ascending=[False],
+                                                                                inplace=False).reset_index()
+        df_total_mv_market_cap = self.add_stock_name_to_df(df=df_total_mv_market_cap, ts_pro_format=False)
+        logging.info("10 biggest average daily MARKET CAP(总市值) stocks in " + str(ndays) + " days:")
+        logging.info(df_total_mv_market_cap.head(10))
+
+        return (df_total_mv_market_cap)
+
+    # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
+    def sort_by_amount_since_n_days_avg(self, ndays=5, debug=False):
+        df = self.get_A_stock_instrment()
+
+        if debug:
+            df = df.head(5)
+
+        df = self.add_market_to_code(df)
+
+        df_amt = pd.DataFrame()
+
+        for index, row in df.iterrows():
+            name, code = row['name'], row['code']
+            csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
+            if not os.path.exists(csv):
+                logging.error("file not exists, " + csv)
+                continue
+
+            with open(csv, 'r') as f:
+                q = deque(f, ndays)  # read tail ndays lines
+
+            df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
+
+            df_amt = df_amt.append(df_sub)
+            logging.info(name + " " + code + ",  append " + str(ndays) + " lines.")
+
+        df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
+        # amount 成交额(元)
+        df_amt = df_amt.groupby(by='code').mean().sort_values(by=['amount'], ascending=[False],
+                                                              inplace=False).reset_index()
+
+        df_amt = self.add_stock_name_to_df(df=df_amt, ts_pro_format=False)
+        logging.info("10 biggest average daily AMOUNT(成交额) Stocks in " + str(ndays) + " days:")
+        logging.info(df_amt.head(10))
+
+        return (df_amt)
 
 
     def add_stock_name_to_df(self, df, ts_pro_format=False):

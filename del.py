@@ -11,13 +11,15 @@ import logging
 import time
 import os
 
+import math
 
 
+df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=365, debug=False)
 
-import akshare as ak
+df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=365)
 
-
-
+my_hs300 = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__()/2)), byreason="daily average amount less than 50% stocks.")
+my_hs300 = my_hs300.head(300)[['code','name','total_mv']]
 
 ##############
 
