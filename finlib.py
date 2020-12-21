@@ -4305,7 +4305,15 @@ class Finlib:
         return (rtn_fields)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays=5):
+    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False):
+        if debug:
+            ndays = 5
+
+        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted.csv"
+
+        if (not debug) and self.is_cached(file_path=mktcap_csv, day=3):
+            logging.info("read result from " + mktcap_csv)
+            return (pd.read_csv(mktcap_csv))
 
         period_end = datetime.today().strftime("%Y%m%d")
         period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
@@ -4330,17 +4338,29 @@ class Finlib:
         df_total_mv_market_cap = df_basic.groupby(by='code').mean().sort_values(by=['total_mv'], ascending=[False],
                                                                                 inplace=False).reset_index()
         df_total_mv_market_cap = self.add_stock_name_to_df(df=df_total_mv_market_cap, ts_pro_format=False)
+        df_total_mv_market_cap.to_csv(mktcap_csv, encoding='UTF-8', index=False)
+        logging.info("saved to "+mktcap_csv)
+
+
         logging.info("10 biggest average daily MARKET CAP(总市值) stocks in " + str(ndays) + " days:")
         logging.info(df_total_mv_market_cap.head(10))
 
         return (df_total_mv_market_cap)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays=5, debug=False):
+    def sort_by_amount_since_n_days_avg(self, ndays, debug=False):
+
+        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted.csv"
+        
+        if (not debug) and self.is_cached(file_path = amt_csv, day = 3):
+            logging.info("read result from "+amt_csv)
+            return(pd.read_csv(amt_csv))
+
         df = self.get_A_stock_instrment()
 
         if debug:
-            df = df.head(5)
+            ndays = 5
+            df = df.head(20)
 
         df = self.add_market_to_code(df)
 
@@ -4362,11 +4382,19 @@ class Finlib:
             logging.info(name + " " + code + ",  append " + str(ndays) + " lines.")
 
         df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
+        df_amt = self.regular_df_date_to_ymd(df_amt)
+        period_end = datetime.today().strftime("%Y%m%d")
+        period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
+        df_amt = df_amt[(df_amt['date'] >= period_begin) & (df_amt['date'] <= period_end)]
+
         # amount 成交额(元)
         df_amt = df_amt.groupby(by='code').mean().sort_values(by=['amount'], ascending=[False],
                                                               inplace=False).reset_index()
 
         df_amt = self.add_stock_name_to_df(df=df_amt, ts_pro_format=False)
+        df_amt.to_csv(amt_csv, encoding='UTF-8', index=False)
+        logging.info("saved to "+amt_csv)
+
         logging.info("10 biggest average daily AMOUNT(成交额) Stocks in " + str(ndays) + " days:")
         logging.info(df_amt.head(10))
 
