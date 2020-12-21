@@ -63,7 +63,14 @@ df_both = df_merged[df_merged['_merge']=="both"]
 len_both = df_both.__len__()
 
 df_myonly = df_merged[df_merged['_merge']=="left_only"]
-len_both = df_both.__len__()
+len_myonly = df_myonly.__len__()
+logging.info(str(len_myonly)+ " out of "+str(len_both)+" in my hs300, they possible will be added to hs300 next time")
+logging.info(finlib.Finlib().pprint(df=df_myonly))
+
+df_hs300only = df_merged[df_merged['_merge']=="right_only"] #possible will be removed from hs300 index next time
+len_hs300only = df_hs300only.__len__()
+logging.info(str(len_hs300only)+ " out of "+str(len_both)+" in offical hs300, they possible will be removed from hs300 next time")
+logging.info(finlib.Finlib().pprint(df=df_hs300only))
 
 
 
