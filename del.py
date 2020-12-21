@@ -45,7 +45,7 @@ def load_hs300():
     return(df_hs300_latest)
 
 df_hs300 = load_hs300()
-
+hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
 # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=365, debug=False)
 df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=5, debug=True)
@@ -57,24 +57,26 @@ my_hs300 = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math
 my_hs300 = my_hs300.head(300)[['code','name','total_mv']]
 
 df_merged = my_hs300.merge(df_hs300,indicator = True, how='outer')
+df_merged.rename(columns={'left_only': 'new_candidate', 'right_only': 'to_be_replaced'}, inplace=True)
 len_merged = df_merged.__len__()
+df_merged.to_csv(hs300_candiate_csv,  encoding='UTF-8', index=False)
+logging.info("saved "+hs300_candiate_csv+" len "+str(len_merged))
 
 df_both = df_merged[df_merged['_merge']=="both"]
 len_both = df_both.__len__()
 
-df_myonly = df_merged[df_merged['_merge']=="left_only"]
+df_myonly = df_merged[df_merged['_merge']=="new_candidate"]
 len_myonly = df_myonly.__len__()
 logging.info(str(len_myonly)+ " out of "+str(len_both)+" in my hs300, they possible will be added to hs300 next time")
 logging.info(finlib.Finlib().pprint(df=df_myonly))
 
-df_hs300only = df_merged[df_merged['_merge']=="right_only"] #possible will be removed from hs300 index next time
+df_hs300only = df_merged[df_merged['_merge']=="to_be_replaced"] #possible will be removed from hs300 index next time
 len_hs300only = df_hs300only.__len__()
 logging.info(str(len_hs300only)+ " out of "+str(len_both)+" in offical hs300, they possible will be removed from hs300 next time")
 logging.info(finlib.Finlib().pprint(df=df_hs300only))
 
 
-
-logging.info(str())
+exit(0)
 
 
 df_szcz = pro.index_weight(index_code='399001.SZ') #深证成指
