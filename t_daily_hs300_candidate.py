@@ -77,14 +77,40 @@ def hs300_on_market_days_filter():
     logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
     return(df_hs300_filted_on_market_days)
 
+
+def get_hs300_total_share_weighted():
+    basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
+    df_basic = pd.read_csv(basic_dir + "/basic_" + finlib.Finlib().get_last_trading_day() + ".csv")
+    df_basic['free_ration'] = round(df_basic['free_share']*100.0/df_basic['total_share'], 4)
+
+    df_basic['weight_calc'] = None
+    df_basic.loc[df_basic['free_ration']<=15, ['weight_calc']] = df_basic['free_ration'].apply(lambda _d: math.ceil(_d) )
+    df_basic.loc[(df_basic['free_ration']>15) & (df_basic['free_ration']<=20) , ['weight_calc']] = 20
+    df_basic.loc[(df_basic['free_ration']>20) & (df_basic['free_ration']<=30) , ['weight_calc']] = 30
+    df_basic.loc[(df_basic['free_ration']>30) & (df_basic['free_ration']<=40) , ['weight_calc']] = 40
+    df_basic.loc[(df_basic['free_ration']>40) & (df_basic['free_ration']<=50) , ['weight_calc']] = 50
+    df_basic.loc[(df_basic['free_ration']>50) & (df_basic['free_ration']<=60) , ['weight_calc']] = 60
+    df_basic.loc[(df_basic['free_ration']>60) & (df_basic['free_ration']<=70) , ['weight_calc']] = 70
+    df_basic.loc[(df_basic['free_ration']>70) & (df_basic['free_ration']<=80) , ['weight_calc']] = 80
+    df_basic.loc[(df_basic['free_ration']>80), ['weight_calc']] = 100
+
+    df_basic['hs300_total_share_weighted']=df_basic['total_share']*df_basic['weight_calc']*0.01
+    df_basic = finlib.Finlib().ts_code_to_code(df=df_basic)
+    df_basic = finlib.Finlib().add_stock_name_to_df(df=df_basic)
+
+    return(df_basic)
+
+
 ### MAIN ####
 if __name__ == '__main__':
+
+
     debug =False
-    debug =True
-    # ndays = 365
-    ndays = 36
-    # force_run = True
-    force_run = False
+    # debug =True
+    ndays = 365
+    # ndays = 36
+    force_run = True
+    # force_run = False
 
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
@@ -99,11 +125,17 @@ if __name__ == '__main__':
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
     df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
+    df_total_share_weighted = get_hs300_total_share_weighted()
+    df_total_share_weighted = df_total_share_weighted[['code','name','hs300_total_share_weighted']]
 
     my_hs300 = df_omd_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
+    my_hs300 = my_hs300.merge(df_total_share_weighted, on='code', how='inner', suffixes=('', '_x'))
+    ## calc weight
+    my_hs300['my_index_weight']=  round(my_hs300['hs300_total_share_weighted'] /my_hs300['hs300_total_share_weighted'].sum(), 4)
+    my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
 
     ####
-    df_merged = my_hs300.merge(df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_merged = pd.merge(my_hs300,df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     #replace with name_x if name is None
     df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
