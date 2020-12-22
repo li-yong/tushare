@@ -109,19 +109,21 @@ if __name__ == '__main__':
     # debug =True
     ndays = 365
     # ndays = 36
-    force_run = True
-    # force_run = False
+    # force_run = True
+    force_run = False
 
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
     df_omd= hs300_on_market_days_filter() #omd: on market days
 
+#output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
     df_amt = df_amt[df_amt['amount_perc']>=0.5]
 
     df_omd_amt = pd.merge(df_amt,df_omd, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
+#output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
     df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
@@ -131,7 +133,7 @@ if __name__ == '__main__':
     my_hs300 = df_omd_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
     my_hs300 = my_hs300.merge(df_total_share_weighted, on='code', how='inner', suffixes=('', '_x'))
     ## calc weight
-    my_hs300['my_index_weight']=  round(my_hs300['hs300_total_share_weighted'] /my_hs300['hs300_total_share_weighted'].sum(), 4)
+    my_hs300['my_index_weight']=  round(my_hs300['hs300_total_share_weighted']*100.0 /my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
 
     ####
