@@ -829,7 +829,7 @@ class Finlib:
         api.login("13651887669", "eyJhbGciOiJIUzI1NiJ9.eyJjcmVhdGVfdGltZSI6IjE1NTE1Mzg0NTQyNjgiLCJpc3MiOiJhdXRoMCIsImlkIjoiMTM2NTE4ODc2NjkifQ.MT6sg03zcLJprsx4NjsCbNqfIX0aYfycTyLZ4BsTh3c")
         return api
 
-    def get_A_stock_instrment(self, today_df=None, debug=False):  # return 3515 records
+    def get_A_stock_instrment(self, today_df=None, debug=False, code_name_only=True):  # return 3515 records
 
         df = pd.DataFrame()
 
@@ -844,7 +844,9 @@ class Finlib:
             print("file not exist. " + instrument_csv)
             exit()
 
-        df = df[['name', 'code']]
+        if code_name_only:
+            df = df[['name', 'code']]
+
         df = df.drop_duplicates()
 
         return df
@@ -4305,7 +4307,7 @@ class Finlib:
         return (rtn_fields)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False):
+    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False, df_parent=None):
         if debug:
             ndays = 5
 
@@ -4334,6 +4336,9 @@ class Finlib:
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
         df_basic = self.ts_code_to_code(df=df_basic)
 
+        if df_parent is not None:
+            df_basic = pd.merge(df_parent, df, on='code', how='inner', suffixes=('', '_x'))
+
         # sort by the total_mv 总市值, decending.
         df_total_mv_market_cap = df_basic.groupby(by='code').mean().sort_values(by=['total_mv'], ascending=[False],
                                                                                 inplace=False).reset_index()
@@ -4348,8 +4353,8 @@ class Finlib:
         return (df_total_mv_market_cap)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays, debug=False):
-
+    def sort_by_amount_since_n_days_avg(self, ndays, debug=False, df_parent = None):
+        # this file contains all the stocks. No filter <<< No.
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted.csv"
         
         if (not debug) and self.is_cached(file_path = amt_csv, day = 3):
@@ -4362,7 +4367,10 @@ class Finlib:
             ndays = 5
             df = df.head(20)
 
-        df = self.add_market_to_code(df)
+        df = self.add_market_to_code(df) #df has all the stocks on market
+
+        if df_parent is not None:
+            df = pd.merge(df_parent,df, on='code', how='inner', suffixes=('', '_x'))
 
         df_amt = pd.DataFrame()
 

@@ -47,17 +47,65 @@ def load_hs300():
 ### MAIN ####
 if __name__ == '__main__':
     debug =False
+    # debug =True
     ndays = 365
 
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug)
+    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug)
 
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug)
+    # df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug)
 
-    my_hs300 = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),
-                                               byreason="daily average amount less than 50% stocks.")
+    # my_hs300_mktcap_amt = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
+
+    #### filter with HS300 critiria
+    df_all = finlib.Finlib().get_A_stock_instrment(code_name_only=False)
+    df_all = finlib.Finlib().add_market_to_code(df_all)
+
+    print("all lens "+str(df_all.__len__()))
+
+    df_hs300_filted_on_market_days=pd.DataFrame()
+
+    mkt = df_all.market.unique()
+    calc_len = 0
+    # Out[6]: array(['主板', '中小板', '创业板', '科创板', 'CDR'], dtype=object)
+    for m in mkt:
+        df_tmp = df_all[df_all['market']==m]
+        # print(m + " "+str(df_tmp.__len__()))
+        len_df_tmp_ori = df_tmp.__len__()
+        calc_len += len_df_tmp_ori
+
+        if m == "科创板": #688xxx
+            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 365]  #科创板证券：上市时间超过一年。
+        elif m == "创业板": #300xxx
+            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 365*3]  #创业板证券：上市时间超过三年
+        elif m == "主板" or  m == "中小板" or m == 'CDR':  # 主板 000xxx, 600xxx,  中小板 002xxx, CDR 689
+            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 90]  #其他证券：上市时间超过一个季度，除非该证券自上市以来日均总市值排在前 30 位。。
+
+        len_removed_for_a_mkt = len_df_tmp_ori - df_tmp.__len__()
+
+        df_hs300_filted_on_market_days = df_hs300_filted_on_market_days.append(df_tmp)
+        logging.info("appended df of "+m+", len removed "+ str(len_df_tmp_ori)+ " - "+str(df_tmp.__len__()) +" = "+str(len_removed_for_a_mkt))
+
+    logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
+
+    # apply amount filter
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug, df_parent=df_hs300_filted_on_market_days)
+    df_hs300_filted_on_market_days_amt = finlib.Finlib()._df_sub_by_code(df=df_hs300_filted_on_market_days, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
+
+    df_hs300_filted_on_market_days_amt_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,df_parent=df_hs300_filted_on_market_days_amt)
+
+
+
+
+    df_space = finlib.Finlib()._df_sub_by_code(df=df_all, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)))
+    my_hs300_amt_mktcap = finlib.Finlib()._df_sub_by_code(df=df_space, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
+
+
+
+    ####
+    my_hs300 = my_hs300_mktcap_amt
     my_hs300 = my_hs300.head(300)[['code']]
 
     df_merged = my_hs300.merge(df_hs300, indicator=True, on='code', how='outer').reset_index().drop('index', axis=1)
