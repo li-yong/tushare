@@ -49,7 +49,8 @@ if __name__ == '__main__':
     debug =False
     # debug =True
     ndays = 365
-    ndays = 36
+    # ndays = 36
+    force_run = True
 
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
@@ -92,40 +93,50 @@ if __name__ == '__main__':
     logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
 
     # apply amount filter
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug, df_parent=df_hs300_filted_on_market_days)
-    df_hs300_filted_on_market_days_amt = finlib.Finlib()._df_sub_by_code(df=df_hs300_filted_on_market_days, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
+    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug, df_parent=df_hs300_filted_on_market_days)
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
+    df_amt = df_amt[df_amt['amount_perc']>=0.5]
 
-    df_hs300_filted_on_market_days_amt_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,df_parent=df_hs300_filted_on_market_days_amt)
+    df_hs300_filted_on_market_days_amt = pd.merge(df_amt,df_hs300_filted_on_market_days, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    # df_space = finlib.Finlib()._df_sub_by_code(df=df_all, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)))
-    # my_hs300_amt_mktcap = finlib.Finlib()._df_sub_by_code(df=df_space, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
+    # df_hs300_filted_on_market_days_amt = finlib.Finlib()._df_sub_by_code(df=df_hs300_filted_on_market_days, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
 
-    my_hs300 = df_hs300_filted_on_market_days_amt_mktcap.head(300)[['code','name']]
+    # df_hs300_filted_on_market_days_amt_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,df_parent=df_hs300_filted_on_market_days_amt)
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
+    df_hs300_filted_on_market_days_amt_mktcap = pd.merge(df_mktcap,df_hs300_filted_on_market_days_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+
+
+    my_hs300 = df_hs300_filted_on_market_days_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
 
     ####
-    # my_hs300 = my_hs300_mktcap_amt
-    # my_hs300 = my_hs300.head(300)[['code']]
-
     df_merged = my_hs300.merge(df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
+
+    #replace with name_x if name is None
+    df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
+    df_merged = df_merged.drop('name_x', axis=1)
+
+    df_merged['predict'] = None
+    df_merged.loc[df_merged['_merge'] == 'both', ['predict']] = 'To_Be_Kept'
+    df_merged.loc[df_merged['_merge'] == 'right_only', ['predict']] = 'To_Be_Removed'
+    df_merged.loc[df_merged['_merge'] == 'left_only', ['predict']] = 'To_Be_Added'
+    df_merged = df_merged.drop('_merge', axis=1)
+
     len_merged = df_merged.__len__()
     df_merged.to_csv(hs300_candiate_csv, encoding='UTF-8', index=False)
     logging.info("saved " + hs300_candiate_csv + " len " + str(len_merged))
 
-    df_both = df_merged[df_merged['_merge'] == "both"]
+    df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
     len_both = df_both.__len__()
     logging.info("\n"+str(len_both) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be keep in the hs300.")
     print(finlib.Finlib().pprint(df=df_both.head(2)))
 
-    df_myonly = df_merged[df_merged['_merge'] == "left_only"].reset_index().drop('index', axis=1)
-    df_myonly['new_candidate'] = True
-
+    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
     len_myonly = df_myonly.__len__()
     logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, they possible will be added to hs300 next time")
     print(finlib.Finlib().pprint(df=df_myonly.head(2)))
 
 
-    df_hs300only = df_merged[df_merged['_merge'] == "right_only"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
-    df_hs300only['to_be_removed'] = True
+    df_hs300only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
     len_hs300only = df_hs300only.__len__()
     logging.info("\n"+str(len_hs300only) + " out of " + str(
         len_merged) + " in offical hs300, they possible will be removed from hs300 next time")

@@ -4308,13 +4308,13 @@ class Finlib:
         return (rtn_fields)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False, df_parent=None):
+    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False, df_parent=None,force_run=False):
         if debug:
             ndays = 5
 
         mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted.csv"
 
-        if (not debug) and self.is_cached(file_path=mktcap_csv, day=3):
+        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=3):
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
 
@@ -4339,15 +4339,22 @@ class Finlib:
         #reduce the rows to ts_code_to_code fast
         df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],
                                                                                 inplace=False).reset_index() #code is in tspro format, 000001.SZ
+
+        total_mv = df_basic['total_mv']
+
+
+        # total_mv_perc: the rank of the total_mv
+        # df_basic['total_mv_perc']=None
+        df_basic['total_mv_perc'] = df_basic['total_mv'].apply(lambda _d: round(stats.percentileofscore(total_mv, _d) / 100, 4))
+
+
         df_basic = self.ts_code_to_code(df=df_basic)
 
         if df_parent is not None:
             df_basic = pd.merge(df_parent, df_basic, on='code', how='inner', suffixes=('', '_x'))
 
         # sort by the total_mv 总市值, decending.
-        df_total_mv_market_cap = df_basic.groupby(by='code').mean().sort_values(by=['total_mv'], ascending=[False],
-                                                                                inplace=False).reset_index()
-        df_total_mv_market_cap = self.add_stock_name_to_df(df=df_total_mv_market_cap, ts_pro_format=False)
+        df_total_mv_market_cap = self.add_stock_name_to_df(df=df_basic, ts_pro_format=False)
         df_total_mv_market_cap.to_csv(mktcap_csv, encoding='UTF-8', index=False)
         logging.info("saved to "+mktcap_csv)
 
@@ -4355,14 +4362,14 @@ class Finlib:
         logging.info("10 biggest average daily MARKET CAP(总市值) stocks in " + str(ndays) + " days:")
         logging.info(df_total_mv_market_cap.head(10))
 
-        return (df_total_mv_market_cap)
+        return(df_total_mv_market_cap)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays, debug=False, df_parent = None):
+    def sort_by_amount_since_n_days_avg(self, ndays, debug=False, df_parent = None,force_run=False):
         # this file contains all the stocks. No filter <<< No.
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted.csv"
         
-        if (not debug) and self.is_cached(file_path = amt_csv, day = 3):
+        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
             logging.info("read result from "+amt_csv)
             return(pd.read_csv(amt_csv))
 
@@ -4403,6 +4410,8 @@ class Finlib:
         # amount 成交额(元)
         df_amt = df_amt.groupby(by='code').mean().sort_values(by=['amount'], ascending=[False],
                                                               inplace=False).reset_index()
+        # amount rank
+        df_amt['amount_perc'] = df_amt['amount'].apply(lambda _d: round(stats.percentileofscore(df_amt['amount'], _d) / 100, 4))
 
         df_amt = self.add_stock_name_to_df(df=df_amt, ts_pro_format=False)
         df_amt.to_csv(amt_csv, encoding='UTF-8', index=False)
@@ -4427,7 +4436,7 @@ class Finlib:
             df = pd.merge(df, name_df, left_on=['ts_code'], right_on=['code'], how="left")
             df = self.adjust_column(df, ['ts_code', 'name'])
         else:
-            df = pd.merge(df, name_df, on=['code'], how="left")
+            df = pd.merge(df, name_df, on=['code'], how="left",suffixes=('','_x'))
             df = self.adjust_column(df, ['code', 'name'])
 
         return(df)
