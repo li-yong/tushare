@@ -995,6 +995,7 @@ class Finlib:
         # rename col name from ts_code  to code
         # change code format from 600000.SH to SH600000
         collist = df.columns.values
+        logging.info("converting ts_code to code, lines to be converted "+str(df.__len__()))
 
         for i in range(collist.__len__()):
             if collist[i] == 'ts_code':
@@ -4334,10 +4335,14 @@ class Finlib:
                 logging.info("appended " + input_csv + ", +len " + str(df_sub.__len__()))
 
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
+        
+        #reduce the rows to ts_code_to_code fast
+        df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],
+                                                                                inplace=False).reset_index() #code is in tspro format, 000001.SZ
         df_basic = self.ts_code_to_code(df=df_basic)
 
         if df_parent is not None:
-            df_basic = pd.merge(df_parent, df, on='code', how='inner', suffixes=('', '_x'))
+            df_basic = pd.merge(df_parent, df_basic, on='code', how='inner', suffixes=('', '_x'))
 
         # sort by the total_mv 总市值, decending.
         df_total_mv_market_cap = df_basic.groupby(by='code').mean().sort_values(by=['total_mv'], ascending=[False],
