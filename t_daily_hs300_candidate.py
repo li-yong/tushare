@@ -44,23 +44,7 @@ def load_hs300():
     logging.info("got hs300 list of period "+str(index_latest_period))
     return(df_hs300_latest)
 
-### MAIN ####
-if __name__ == '__main__':
-    debug =False
-    # debug =True
-    ndays = 365
-    # ndays = 36
-    force_run = True
-
-    df_hs300 = load_hs300()
-    hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
-
-    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug)
-
-    # df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug)
-
-    # my_hs300_mktcap_amt = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
-
+def hs300_on_market_days_filter():
     #### filter with HS300 critiria
     df_all = finlib.Finlib().get_A_stock_instrment(code_name_only=False)
     df_all = finlib.Finlib().add_market_to_code(df_all)
@@ -91,22 +75,32 @@ if __name__ == '__main__':
         logging.info("appended df of "+m+", len removed "+ str(len_df_tmp_ori)+ " - "+str(df_tmp.__len__()) +" = "+str(len_removed_for_a_mkt))
 
     logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
+    return(df_hs300_filted_on_market_days)
 
-    # apply amount filter
-    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug, df_parent=df_hs300_filted_on_market_days)
+### MAIN ####
+if __name__ == '__main__':
+    debug =False
+    debug =True
+    # ndays = 365
+    ndays = 36
+    # force_run = True
+    force_run = False
+
+    df_hs300 = load_hs300()
+    hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
+
+    df_omd= hs300_on_market_days_filter() #omd: on market days
+
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
     df_amt = df_amt[df_amt['amount_perc']>=0.5]
 
-    df_hs300_filted_on_market_days_amt = pd.merge(df_amt,df_hs300_filted_on_market_days, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_omd_amt = pd.merge(df_amt,df_omd, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    # df_hs300_filted_on_market_days_amt = finlib.Finlib()._df_sub_by_code(df=df_hs300_filted_on_market_days, df_sub=df_amt.tail(math.ceil(df_amt.__len__() / 2)),  byreason="daily average amount less than 50% stocks.")
-
-    # df_hs300_filted_on_market_days_amt_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,df_parent=df_hs300_filted_on_market_days_amt)
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
-    df_hs300_filted_on_market_days_amt_mktcap = pd.merge(df_mktcap,df_hs300_filted_on_market_days_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
 
-    my_hs300 = df_hs300_filted_on_market_days_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
+    my_hs300 = df_omd_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
 
     ####
     df_merged = my_hs300.merge(df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
@@ -127,7 +121,7 @@ if __name__ == '__main__':
 
     df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
     len_both = df_both.__len__()
-    logging.info("\n"+str(len_both) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be keep in the hs300.")
+    logging.info("\n"+str(len_both) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the hs300.")
     print(finlib.Finlib().pprint(df=df_both.head(2)))
 
     df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)

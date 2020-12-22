@@ -798,8 +798,8 @@ def fetch_basic_quarterly():
     a = finlib.Finlib().get_year_month_quarter()
     b = a['full_period_list']
 
-    fields = 'ts_code, trade_date, close, turnover_rate, turnover_rate_f, volume_ratio, pe, pe_ttm,pb, ps, ps_ttm'
-    fields += ',total_share,float_share,total_mv,circ_mv '
+    fields = 'ts_code, trade_date, close, turnover_rate, turnover_rate_f, volume_ratio, pe, pe_ttm,pb, ps, ps_ttm,'
+    fields += 'dv_ratio,dv_ttm,total_share,float_share,free_share, total_mv,circ_mv '
 
     dir_q = fund_base_source + "/basic_quarterly"
 
@@ -849,8 +849,8 @@ def fetch_basic_daily(fast_fetch=False):
         trading_days = trading_days[:5]
 
     # the file should keep same between t_daily_update_csv_from_tushare.py and t_daily_fundamentals_2.py
-    fields = 'ts_code, trade_date, close, turnover_rate, turnover_rate_f, volume_ratio, pe, pe_ttm,pb, ps, ps_ttm'
-    fields += ',total_share,float_share,total_mv,circ_mv '
+    fields = 'ts_code, trade_date, close, turnover_rate, turnover_rate_f, volume_ratio, pe, pe_ttm,pb, ps, ps_ttm,'
+    fields += 'dv_ratio,dv_ttm,total_share,float_share,free_share, total_mv,circ_mv '
 
     dir_d = fund_base_source + "/basic_daily"
 
