@@ -50,6 +50,7 @@ rsync -avz   ${source_host}:/home/ryan/no_hup_run_exam_ushk.log  /home/ryan/
 rsync -avz   ${source_host}:/home/ryan/DATA/result/*.csv  /home/ryan/DATA/result/
 rsync -avz   ${source_host}:/home/ryan/DATA/result/*.txt  /home/ryan/DATA/result/
 rsync -az   ${source_host}:/home/ryan/DATA/result/today/  /home/ryan/DATA/result/today/
+rsync -az   ${source_host}:/home/ryan/DATA/result/wei_pan_la_sheng/  /home/ryan/DATA/result/today/wei_pan_la_sheng/
 rsync -az   ${source_host}:/home/ryan/DATA/result/fib_plot/  /home/ryan/DATA/result/fib_plot/
 rsync -az   ${source_host}:/home/ryan/DATA/result/curv_plot/  /home/ryan/DATA/result/curv_plot/
 rsync -az   ${source_host}:/home/ryan/DATA/result/selected/  /home/ryan/DATA/result/selected/
