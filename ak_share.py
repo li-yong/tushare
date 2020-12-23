@@ -227,7 +227,7 @@ def wei_pan_la_sheng():
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
         merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_'+nowS+'.csv', encoding='UTF-8', index=False)
-        logging.info("ag wei_pan_la_sheng output list saved"  )
+        logging.info("ag wei_pan_la_sheng output list saved to "+b+'/wei_pan_la_sheng_'+nowS+'.csv'  )
 
 ### kcb
     if finlib.Finlib().is_cached(ag_kcb_csv_link_old, day=1):
@@ -253,7 +253,7 @@ def wei_pan_la_sheng():
         logging.info("KCB top 10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
         merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_kcb_'+nowS+'.csv', encoding='UTF-8', index=False)
-        logging.info("ag kcb wei_pan_la_sheng output list saved" )
+        logging.info("ag kcb wei_pan_la_sheng output list saved to "+b+'/wei_pan_la_sheng_'+nowS+'.csv' )
 
 
 
