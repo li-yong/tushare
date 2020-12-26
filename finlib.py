@@ -4130,7 +4130,7 @@ class Finlib:
 
     def pprint(self, df):
         str = tabulate.tabulate(df, headers='keys', tablefmt='psql')
-        logging.info(str)
+        #logging.info(str)
         return(str)
 
     def get_stock_configuration(self, selected, stock_global):
