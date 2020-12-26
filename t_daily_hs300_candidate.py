@@ -134,8 +134,6 @@ if __name__ == '__main__':
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
 
-
-
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
@@ -178,21 +176,28 @@ if __name__ == '__main__':
     logging.info("saved " + hs300_candiate_csv + " len " + str(len_merged))
 
     df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
+    df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     len_both = df_both.__len__()
     logging.info("\n"+str(len_both) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the hs300.")
     print(finlib.Finlib().pprint(df=df_both.head(2)))
 
-    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
-    len_myonly = df_myonly.__len__()
-    logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, they possible will be added to hs300 next time")
-    print(finlib.Finlib().pprint(df=df_myonly.head(2)))
 
 
     df_hs300only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
+    df_hs300only = df_hs300only.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     len_hs300only = df_hs300only.__len__()
     logging.info("\n"+str(len_hs300only) + " out of " + str(
         len_merged) + " in offical hs300, they possible will be removed from hs300 next time")
     print(finlib.Finlib().pprint(df=df_hs300only.head(2)))
+
+
+    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
+    df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    len_myonly = df_myonly.__len__()
+    logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, they possible will be added to hs300 next time")
+    print(finlib.Finlib().pprint(df=df_myonly.head(30)))
+
+
 
     logging.info("result saved to " + hs300_candiate_csv + " len " + str(len_merged))
 
