@@ -17,34 +17,6 @@ import sys
 
 
 ##############
-def load_hs300():
-    token = '4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b'
-
-    pro = ts.pro_api()
-    pro = ts.pro_api(token=token)
-
-    ts.set_token(token=token)
-
-    csv_hs300 = "/home/ryan/DATA/pickle/hs300.csv"
-
-    if finlib.Finlib().is_cached(file_path=csv_hs300, day = 7):
-        df_hs300 = pd.read_csv(csv_hs300)
-        logging.info("loading hs300 from "+csv_hs300+" ,len "+str(df_hs300.__len__()))
-    else:
-        df_hs300 = pro.index_weight(index_code='399300.SZ') #HS300
-        df_hs300.to_csv(csv_hs300, encoding='UTF-8', index=False)
-        logging.info("hs300 save to " + csv_hs300 + " ,len " + str(df_hs300.__len__()))
-
-
-    df_hs300.columns = ['index_code', 'code', 'date', 'weight']
-    df_hs300 = df_hs300[['code', 'date', 'weight']]
-    df_hs300 = finlib.Finlib().ts_code_to_code(df=df_hs300)
-    df_hs300 = finlib.Finlib().add_stock_name_to_df(df=df_hs300)
-
-    index_latest_period = df_hs300.date.unique()[0] #'20201201
-    df_hs300_latest = df_hs300[df_hs300['date']==index_latest_period]
-    logging.info("got hs300 list of period "+str(index_latest_period))
-    return(df_hs300_latest)
 
 def hs300_on_market_days_filter():
     #### filter with HS300 critiria
@@ -134,18 +106,17 @@ if __name__ == '__main__':
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
 
-    df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
     df_omd= hs300_on_market_days_filter() #omd: on market days
 
-#output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
     df_amt = df_amt[df_amt['amount_perc']>=0.5]
 
     df_omd_amt = pd.merge(df_amt,df_omd, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-#output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
+    #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
     df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
@@ -157,13 +128,23 @@ if __name__ == '__main__':
     ## calc weight
     my_hs300['my_index_weight']=  round(my_hs300['hs300_total_share_weighted']*100.0 /my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
+    my_hs300 = my_hs300.drop('name_x', axis=1)
 
     ####
+    df_hs300 = finlib.Finlib().load_hs300()
+    df_hs300 = pd.merge(df_hs300,df_omd_amt_mktcap[['code','total_mv_perc','amount_perc','list_date_days_before']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+
     df_merged = pd.merge(my_hs300,df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     #replace with name_x if name is None
     df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
+    df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
+    df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
+    df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
     df_merged = df_merged.drop('name_x', axis=1)
+    df_merged = df_merged.drop('total_mv_perc_x', axis=1)
+    df_merged = df_merged.drop('amount_perc_x', axis=1)
+    df_merged = df_merged.drop('list_date_days_before_x', axis=1)
 
     df_merged['predict'] = None
     df_merged.loc[df_merged['_merge'] == 'both', ['predict']] = 'To_Be_Kept'
@@ -184,18 +165,17 @@ if __name__ == '__main__':
 
 
     df_hs300only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
-    df_hs300only = df_hs300only.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    df_hs300only = df_hs300only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
     len_hs300only = df_hs300only.__len__()
     logging.info("\n"+str(len_hs300only) + " out of " + str(
-        len_merged) + " in offical hs300, they possible will be removed from hs300 next time")
-    print(finlib.Finlib().pprint(df=df_hs300only.head(2)))
-
+        len_merged) + " in offical hs300, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from hs300 next time. Top 32")
+    print(finlib.Finlib().pprint(df=df_hs300only.head(32)))
 
     df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
     df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     len_myonly = df_myonly.__len__()
-    logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, they possible will be added to hs300 next time")
-    print(finlib.Finlib().pprint(df=df_myonly.head(30)))
+    logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to hs300 next time. Top 32")
+    print(finlib.Finlib().pprint(df=df_myonly.head(32)))
 
 
 
