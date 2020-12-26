@@ -118,8 +118,8 @@ if __name__ == '__main__':
     parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("-f", "--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
 
-    parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd")
-    parser.add_option("-n", "--ndays",default=365, dest="ndays", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+    parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
+    parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
 
 
     (options, args) = parser.parse_args()
