@@ -591,10 +591,6 @@ if [ $full_or_daily == "FULL" ]; then
     python t_top_10_holders.py --analyze --stock_global AG
 fi
 
-
-
-
-
 ##############################
 # fibonacci indicator
 # input: DAY_Global/AG,  DAY_Global/AG_INDEX
@@ -662,57 +658,6 @@ python t_daily_junxian_barstyle.py -x AG --show_result
 if [ $full_or_daily == "DAILY" ]; then
     python t_double_bottom.py -x AG --save_fig --min_sample 90
 fi
-
-
-
-#############
-# output: /hdd/DATA/result/report_2019-03-29_AG.txt
-#############
-python t_summary.py -x AG --action generate_report
-
-
-#############
-# output: /home/ryan/DATA/result/report_2019-03-29_AG_short.csv
-#############
-python t_summary.py -x AG --action analyze_report
-
-#Possible good candidates:
-#  df_support_resist_line_today <<  SHORT term. with fund or fund_2 other fundamental indicators (whitehorse, ROE, etc)
-#                                   at lower price, bottom price now?
-
-#  df_low_price_year  <<< SHORT term
-#  df_low_vol_year <<< SHORT term
-#  df_pv_break  <<< SHORT
-#  df_decrease_gap  <<< SHORT
-#  df_disclosure_date_notify <<< SHORT
-
-
-#  df_pe_pb_roe_history <<<  MIDDLE term
-#  df_fund <<<  last Q status, reflect recent.   MIDDLE term
-
-#  df_fund_2  <<<  last Y status, reflect long history. LONG term.
-#  df_freecashflow_price_ratio  <<<< cheap.  LONG term.
-#  df_peg_ps  <<< earn quickly. Price/(EarningsToGrowth) (PEG) Ratio.   LONG term.
-#  df_disclosure_date_notify <<< news is going to announce. SHORT term.
-#  df_reduced_quarter_year  <<< inner merge of df_fund and df_fund_2. standfor good value company.  LONG term.
-#  df_fenghong <<< LONG term, but not as important as df_fund.
-#  df_whitehorse  <<< LONG
-#  df_freecashflow_price_ratio  <<< LONG
-#  df_hen_cow  <<< LONG
-
-
-# The stratage is :  IN LONG term scope,  FIND stocks cheap in SHORT term. ( SELECT SHORT FROM LONG)
-#
-#
-# Example:  find CHEAP stock, and the stock are in SHORT TERM (S) and LONG TERM (L) df.
-#        cat /home/ryan/DATA/result/report_2019-03-08_AG.txt |grep == | grep -vE "0 cheap.*" | grep -v "0s" | grep -v "0l"
-
-
-
-#python t_daily_update_order_tracking_stock.py
-
-
-
 
 
 
@@ -764,56 +709,13 @@ python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 ###############################
 #----------------- selected moved to t_daily_run_2_exam_ushk.sh
 # /home/ryan/DATA/result/selected/ag_index_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --save_fig --min_sample=500 -x AG_INDEX --selected
+python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG_INDEX --selected
 
 # /home/ryan/DATA/result/selected/ag_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --save_fig --min_sample=500 -x AG --selected
+python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG --selected
 
 # /home/ryan/DATA/result/ag_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x AG
-
-
-##############################
-# concept top
-# input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/market/pro_concept.csv
-# output: /home/ryan/DATA/result/concept_top.csv
-###############################
-python t_daily_fundamentals_2.py  --concept_top
-
-################################################
-#run1
-#run2
-#run3
-#run4
-#run5
-#output: /home/ryan/DATA/result/today/talib_and_pv_no_db_filter_ag.csv
-#output: /home/ryan/DATA/result/selected/talib_and_pv_no_db_filter_ag.csv
-################################################
-rm -f /home/ryan/DATA/result/selected/talib_and_pv_no_db_filter_AG.csv
-python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG --selected
-
-
-#######################################
-# output: /home/ryan/DATA/result/ag_junxian_barstyle.csv
-#######################################
-python t_daily_junxian_barstyle.py -x AG
-
-
-#######################################
-# output: /home/ryan/DATA/result/
-#(base) ryan@haha_brain_2:~/DATA/result$ ls *bar*
-#ag_junxian_barstyle.csv                ag_junxian_barstyle_jincha_major.csv  ag_junxian_barstyle_very_strong_down_trend.csv  ag_junxian_barstyle_yunxian_buy.csv
-#ag_junxian_barstyle_duotou_pailie.csv  ag_junxian_barstyle_jincha_minor.csv  ag_junxian_barstyle_very_strong_up_trend.csv    ag_junxian_barstyle_yunxian_sell.csv
-#######################################
-python t_daily_junxian_barstyle.py -x AG --show_result
-
-#rm -f /home/ryan/DATA/result/today/talib_and_pv_no_db_filter_AG.csv
-#python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG
-
-#python t_daily_pattern_Hit_Price_Volume.py -0  -m 30 -x AG  #it was 22 ->222 ->30
-#python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -x AG
-#python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -m 22  #Only run pv test.
-
+python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG
 
 
 ################################
@@ -830,6 +732,9 @@ fi
 # output: /home/ryan/DATA/result/hs300_candidate_list.csv
 ###############################
 python t_daily_hs300_candidate.py
+
+
+
 
 
 #############

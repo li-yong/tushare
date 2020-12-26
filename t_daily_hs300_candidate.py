@@ -12,6 +12,8 @@ import time
 import os
 
 import math
+from optparse import OptionParser
+import sys
 
 
 ##############
@@ -105,12 +107,34 @@ def get_hs300_total_share_weighted():
 if __name__ == '__main__':
 
 
-    debug =False
-    # debug =True
     ndays = 365
-    # ndays = 36
-    # force_run = True
-    force_run = False
+
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+    # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
+    logging.info(__file__+" "+"\n")
+    logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
+
+    parser = OptionParser()
+    parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
+    parser.add_option("-f", "--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
+
+    parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd")
+    parser.add_option("-n", "--ndays",default=365, dest="ndays", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+
+
+    (options, args) = parser.parse_args()
+    debug = options.debug
+    force_run = options.force_run
+    ndays = options.ndays
+    period_end = options.period_end
+
+
+    if period_end is None:
+        period_end = finlib.Finlib().get_last_trading_day()
+        period_end = datetime.datetime.today().strftime("%Y%m%d")
+
+
+
 
     df_hs300 = load_hs300()
     hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
@@ -118,13 +142,13 @@ if __name__ == '__main__':
     df_omd= hs300_on_market_days_filter() #omd: on market days
 
 #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
     df_amt = df_amt[df_amt['amount_perc']>=0.5]
 
     df_omd_amt = pd.merge(df_amt,df_omd, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
 #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays, debug=debug,force_run=force_run)
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
     df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     df_total_share_weighted = get_hs300_total_share_weighted()

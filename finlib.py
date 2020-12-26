@@ -3459,7 +3459,7 @@ class Finlib:
         if 'date' not in df.columns:
             logging.fatal(__file__+" "+"No cloumn date in df")
             logging.warning(__file__+" "+str(df.head(2)))
-            self.pprint(df.head(2))
+            #self.pprint(df.head(2))
 
             #exit(0)
             return (df)
@@ -4308,7 +4308,7 @@ class Finlib:
         return (rtn_fields)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays=5, debug=False, df_parent=None,force_run=False):
+    def sort_by_market_cap_since_n_days_avg(self,ndays,period_end, debug=False, df_parent=None,force_run=False):
         if debug:
             ndays = 5
 
@@ -4318,8 +4318,8 @@ class Finlib:
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
 
-        period_end = datetime.today().strftime("%Y%m%d")
-        period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
+        # period_end = datetime.today().strftime("%Y%m%d")
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
 
@@ -4365,7 +4365,7 @@ class Finlib:
         return(df_total_mv_market_cap)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays, debug=False, df_parent = None,force_run=False):
+    def sort_by_amount_since_n_days_avg(self, ndays,period_end, debug=False, df_parent = None,force_run=False):
         # this file contains all the stocks. No filter <<< No.
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted.csv"
         
@@ -4403,8 +4403,10 @@ class Finlib:
 
         df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
         df_amt = self.regular_df_date_to_ymd(df_amt)
-        period_end = datetime.today().strftime("%Y%m%d")
-        period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
+        # period_end = datetime.today().strftime("%Y%m%d")
+        # period_end = period_end
+        # period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
         df_amt = df_amt[(df_amt['date'] >= period_begin) & (df_amt['date'] <= period_end)]
 
         # amount 成交额(元)

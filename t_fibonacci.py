@@ -187,7 +187,7 @@ def main():
     rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
-    stock_list = rst['stock_list']
+    stock_list = rst['stock_list']  #stock_list has already been removed garbage.
     out_f = out_dir + "/" + stock_global.lower() + "_fib.csv"  #/home/ryan/DATA/result/selected/us_index_fib.csv
 
     if not os.path.isdir(out_dir):

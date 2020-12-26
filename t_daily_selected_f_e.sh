@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+t_fetch_us_hk_bar#!/usr/bin/env bash
 #exam start
 #rm -rf /home/ryan/DATA/result/today.del
 #mv  /home/ryan/DATA/result/today ~/DATA/result/today.del
