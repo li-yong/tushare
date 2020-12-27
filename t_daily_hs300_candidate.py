@@ -92,6 +92,7 @@ if __name__ == '__main__':
 
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="int", help="index name. [hs300|zz100|zz500|szcz]")
     parser.add_option("-g", "--get_hs300", action="store_true", default=False, dest="get_hs300",  help="get hs300 index list, saved to ")
 
 
@@ -99,11 +100,19 @@ if __name__ == '__main__':
     debug = options.debug
     force_run = options.force_run
     ndays = options.ndays
+    index_name = options.index_name
     period_end = options.period_end
     get_hs300 = options.get_hs300
 
+    idict = {
+        'zz100':'000903.SH',
+        'zz200':'000904.SH',
+        'zz500':'000905.SH',
+        'hs300':'000300.SH',
+    }
+
     if get_hs300:
-        finlib.Finlib().load_hs300(force_run=force_run)
+        finlib.Finlib().load_hs300(index_code=index_code,index_name=index_name, force_run=force_run)
         exit()
 
 
