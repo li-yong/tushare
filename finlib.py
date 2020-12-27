@@ -4424,7 +4424,7 @@ class Finlib:
 
         return (df_amt)
 
-    def load_hs300(self):
+    def load_hs300(self,force_run=False):
         token = '4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b'
 
         pro = ts.pro_api()
@@ -4434,22 +4434,29 @@ class Finlib:
 
         csv_hs300 = "/home/ryan/DATA/pickle/hs300.csv"
 
-        if self.is_cached(file_path=csv_hs300, day=7):
+        if self.is_cached(file_path=csv_hs300, day=7) and (not force_run):
             df_hs300 = pd.read_csv(csv_hs300)
-            logging.info("loading hs300 from " + csv_hs300 + " ,len " + str(df_hs300.__len__()))
+            logging.info("loaded hs300 from " + csv_hs300 + " ,len " + str(df_hs300.__len__()))
         else:
-            df_hs300 = pro.index_weight(index_code='399300.SZ')  # HS300
+            df_indices = pro.index_basic() #contains HS100, ZZ100/200/500/700
+
+            df_zz100 = pro.index_weight(index_code='000903.SH')  # ZZ100
+            df_zz200 = pro.index_weight(index_code='000904.SH')  # ZZ200
+            df_zz500 = pro.index_weight(index_code='000905.SH')  # ZZ500
+
+            df_hs300 = pro.index_weight(index_code='000300.SH')  # HS300
+            df_hs300 = self.ts_code_to_code(df=df_hs300)
+            df_hs300 = self.add_stock_name_to_df(df=df_hs300)
             df_hs300.to_csv(csv_hs300, encoding='UTF-8', index=False)
             logging.info("hs300 save to " + csv_hs300 + " ,len " + str(df_hs300.__len__()))
 
-        df_hs300.columns = ['index_code', 'code', 'date', 'weight']
+        df_hs300.columns = ['index_code', 'code', 'date', 'weight'] #rename original df column names
         df_hs300 = df_hs300[['code', 'date', 'weight']]
-        df_hs300 = self.ts_code_to_code(df=df_hs300)
-        df_hs300 = self.add_stock_name_to_df(df=df_hs300)
+
 
         index_latest_period = df_hs300.date.unique()[0]  # '20201201
         df_hs300_latest = df_hs300[df_hs300['date'] == index_latest_period]
-        logging.info("got hs300 list of period " + str(index_latest_period))
+        logging.info("got hs300 list of period " + str(index_latest_period)+ ", len "+str(df_hs300_latest.__len__()))
         return (df_hs300_latest)
 
     def add_stock_name_to_df(self, df, ts_pro_format=False):

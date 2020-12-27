@@ -731,7 +731,7 @@ fi
 # input: /home/ryan/DATA/DAY_Global/AG/*.csv, ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/*.csv
 # output: /home/ryan/DATA/result/hs300_candidate_list.csv
 ###############################
-python t_daily_hs300_candidate.py
+python t_daily_hs300_candidate.py --ndays 365 
 
 
 

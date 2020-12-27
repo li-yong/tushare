@@ -92,6 +92,7 @@ if __name__ == '__main__':
 
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+    parser.add_option("-g", "--get_hs300", action="store_true", default=False, dest="get_hs300",  help="get hs300 index list, saved to ")
 
 
     (options, args) = parser.parse_args()
@@ -99,6 +100,11 @@ if __name__ == '__main__':
     force_run = options.force_run
     ndays = options.ndays
     period_end = options.period_end
+    get_hs300 = options.get_hs300
+
+    if get_hs300:
+        finlib.Finlib().load_hs300(force_run=force_run)
+        exit()
 
 
     if period_end is None:

@@ -53,9 +53,16 @@ python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 ##update SH000001 上证指数.
 #
 ######################################
-
 # python /home/ryan/tushare_ryan/t_get_index.py --fetch_index #script file no longer exist
 
+
+
+######################################
+##update HS300
+# input: None
+# output: /home/ryan/DATA/pickle/hs300.csv
+######################################
+python t_daily_hs300_candidate.py --get_hs300 --force
 
 ######################################
 #
