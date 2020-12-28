@@ -730,9 +730,13 @@ fi
 ################################
 # input: /home/ryan/DATA/DAY_Global/AG/*.csv, ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/*.csv
 # output: /home/ryan/DATA/result/hs300_candidate_list.csv
+#
+# /home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+# /home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
 ###############################
-python t_daily_hs300_candidate.py --ndays 365 
-
+#python t_daily_hs300_candidate.py --ndays 365
+python t_daily_hs300_candidate.py --index hs300 --ndays 365
+python t_daily_hs300_candidate.py --index zz100 --ndays 365
 
 
 

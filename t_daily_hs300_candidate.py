@@ -146,7 +146,7 @@ if __name__ == '__main__':
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz]")
-    parser.add_option("-g", "--get_hs300", action="store_true", default=False, dest="get_hs300",  help="get hs300 index list, saved to ")
+    parser.add_option("-g", "--fetch_index", action="store_true", default=False, dest="fetch_index",  help="fetch index list, saved to DATA/pickle/{index_name}.csv ")
 
 
     (options, args) = parser.parse_args()
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     ndays = options.ndays
     index_name = options.index_name
     period_end = options.period_end
-    get_hs300 = options.get_hs300
+    fetch_index = options.fetch_index
 
     idict = {
         'zz100':'000903.SH',
@@ -164,8 +164,8 @@ if __name__ == '__main__':
         'hs300':'000300.SH',
     }
 
-    if get_hs300:
-        finlib.Finlib().load_hs300(index_code=idict[index_name],index_name=index_name, force_run=force_run)
+    if fetch_index:
+        finlib.Finlib().load_index(index_code=idict[index_name],index_name=index_name, force_run=True)
         exit()
 
 
@@ -175,24 +175,31 @@ if __name__ == '__main__':
 
 
 
-
-    #df_amt len 4117, df_mktcap len 4144, df_total_share_weighted len 4104
+    ###############################
+    # Calc amt, mktcap, weight among entire stock list.
+    # Result df_amt_mktcap_weight is BASE Dataframe.
+    # df_amt len 4117, df_mktcap len 4144, df_total_share_weighted len 4104
+    ###############################
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
     df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'total_mv','total_mv_perc']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    #calc HS300 always
+    ###############################
+    # calc HS300 always
+    ###############################
     # filter by (on_market_date len 3744) and (top 50% daily_amount)
     my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.5], hs300_on_market_days_filter(),
                         on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
     my_hs300 = my_hs300.sort_values(by=['total_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
-    my_hs300['my_index_weight'] = round(
-        my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
+    my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
 
 
+    ###############################
+    # Compare my_index with offical
+    ###############################
     if index_name == 'hs300':
         my_index = my_hs300
 
@@ -200,8 +207,6 @@ if __name__ == '__main__':
         my_index = my_hs300.head(100) #zz100 is top maket cap of hs300
 
 
-
-    ####
     df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)

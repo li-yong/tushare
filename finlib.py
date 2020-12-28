@@ -4312,14 +4312,12 @@ class Finlib:
         if debug:
             ndays = 5
 
-        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted.csv"
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
 
         if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=3):
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
-
-        # period_end = datetime.today().strftime("%Y%m%d")
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
 
@@ -4367,7 +4365,11 @@ class Finlib:
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
     def sort_by_amount_since_n_days_avg(self, ndays,period_end, debug=False, df_parent = None,force_run=False):
         # this file contains all the stocks. No filter <<< No.
-        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted.csv"
+
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+
+
+        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
         
         if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
             logging.info("read result from "+amt_csv)
@@ -4406,7 +4408,6 @@ class Finlib:
         # period_end = datetime.today().strftime("%Y%m%d")
         # period_end = period_end
         # period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
         df_amt = df_amt[(df_amt['date'] >= period_begin) & (df_amt['date'] <= period_end)]
 
         # amount 成交额(元)
@@ -4456,7 +4457,7 @@ class Finlib:
             logging.info("got index "+index_name +" list of period " + str(index_latest_period)+ ", len "+str(df_index_latest.__len__()))
 
             df_index_latest.to_csv(csv_index, encoding='UTF-8', index=False)
-            logging.info("latest index save to " + csv_index + " ,len " + str(df_index.__len__()))
+            logging.info("latest index save to " + csv_index + " ,len " + str(df_index_latest.__len__()))
 
 
         return (df_index_latest)
