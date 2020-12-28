@@ -18,6 +18,59 @@ import sys
 
 ##############
 
+def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
+
+    df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
+
+    #replace with name_x if name is None
+    df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
+    df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
+    df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
+    df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
+    df_merged = df_merged.drop('name_x', axis=1)
+    df_merged = df_merged.drop('total_mv_perc_x', axis=1)
+    df_merged = df_merged.drop('amount_perc_x', axis=1)
+    df_merged = df_merged.drop('list_date_days_before_x', axis=1)
+
+    df_merged = df_merged.drop('date', axis=1)
+    df_merged = df_merged.drop('list_status_x', axis=1)
+    df_merged = df_merged.drop('list_status', axis=1)
+    df_merged = df_merged.drop('amount', axis=1)
+    df_merged = df_merged.drop('total_mv', axis=1)
+
+    df_merged['predict'] = None
+    df_merged.loc[df_merged['_merge'] == 'both', ['predict']] = 'To_Be_Kept'
+    df_merged.loc[df_merged['_merge'] == 'right_only', ['predict']] = 'To_Be_Removed'
+    df_merged.loc[df_merged['_merge'] == 'left_only', ['predict']] = 'To_Be_Added'
+    df_merged = df_merged.drop('_merge', axis=1)
+
+    len_merged = df_merged.__len__()
+    index_candiate_csv = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
+
+    df_merged.to_csv(index_candiate_csv, encoding='UTF-8', index=False)
+    logging.info("saved " + index_candiate_csv + " len " + str(len_merged))
+
+    df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
+    df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    logging.info("\n"+str(df_both.__len__()) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the "+index_name)
+    logging.info(finlib.Finlib().pprint(df=df_both.head(2)))
+
+
+    df_offlical_only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
+    df_offlical_only = df_offlical_only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
+    logging.info("\n"+str(df_offlical_only.__len__()) + " out of " + str(
+        len_merged) + " in offical list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from "+index_name+" next time. Top 32")
+    logging.info(finlib.Finlib().pprint(df=df_offlical_only.head(32)))
+
+    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
+    df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    logging.info("\n"+str(df_myonly.__len__()) + " out of " + str(len_merged) + " in my list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to "+index_name+" next time. Top 32")
+    #print(finlib.Finlib().pprint(df=df_myonly.head(32)))
+    logging.info(finlib.Finlib().pprint(df=df_myonly.head(32)))
+
+    logging.info("result saved to " + index_candiate_csv + " len " + str(len_merged))
+
+
 def hs300_on_market_days_filter():
     #### filter with HS300 critiria
     df_all = finlib.Finlib().get_A_stock_instrment(code_name_only=False)
@@ -49,7 +102,7 @@ def hs300_on_market_days_filter():
         logging.info("appended df of "+m+", len removed "+ str(len_df_tmp_ori)+ " - "+str(df_tmp.__len__()) +" = "+str(len_removed_for_a_mkt))
 
     logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
-    return(df_hs300_filted_on_market_days)
+    return(df_hs300_filted_on_market_days[['code','name','list_status','list_date_days_before']])
 
 
 def get_hs300_total_share_weighted():
@@ -72,7 +125,7 @@ def get_hs300_total_share_weighted():
     df_basic = finlib.Finlib().ts_code_to_code(df=df_basic)
     df_basic = finlib.Finlib().add_stock_name_to_df(df=df_basic)
 
-    return(df_basic)
+    return(df_basic[['code','name','hs300_total_share_weighted']])
 
 
 ### MAIN ####
@@ -92,7 +145,7 @@ if __name__ == '__main__':
 
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
-    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="int", help="index name. [hs300|zz100|zz500|szcz]")
+    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz]")
     parser.add_option("-g", "--get_hs300", action="store_true", default=False, dest="get_hs300",  help="get hs300 index list, saved to ")
 
 
@@ -112,7 +165,7 @@ if __name__ == '__main__':
     }
 
     if get_hs300:
-        finlib.Finlib().load_hs300(index_code=index_code,index_name=index_name, force_run=force_run)
+        finlib.Finlib().load_hs300(index_code=idict[index_name],index_name=index_name, force_run=force_run)
         exit()
 
 
@@ -121,80 +174,28 @@ if __name__ == '__main__':
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
 
-    hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
 
-    df_omd= hs300_on_market_days_filter() #omd: on market days
 
-    #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
-    df_amt = df_amt[df_amt['amount_perc']>=0.5]
-
-    df_omd_amt = pd.merge(df_amt,df_omd, how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
-
-    #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run)
-    df_omd_amt_mktcap = pd.merge(df_mktcap,df_omd_amt,on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
-
+    #df_amt len 4117, df_mktcap len 4144, df_total_share_weighted len 4104
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
-    df_total_share_weighted = df_total_share_weighted[['code','name','hs300_total_share_weighted']]
+    df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'total_mv','total_mv_perc']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    my_hs300 = df_omd_amt_mktcap.head(300)[['code','name','total_mv_perc','amount_perc','list_date_days_before']]
-    my_hs300 = my_hs300.merge(df_total_share_weighted, on='code', how='inner', suffixes=('', '_x'))
-    ## calc weight
-    my_hs300['my_index_weight']=  round(my_hs300['hs300_total_share_weighted']*100.0 /my_hs300['hs300_total_share_weighted'].sum(), 2)
+
+    #filter by (on_market_date len 3744) and (top 50% daily_amount)
+    my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc']>=0.5],hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    my_hs300 = my_hs300.sort_values(by=['total_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
+    my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted']*100.0 /my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
-    my_hs300 = my_hs300.drop('name_x', axis=1)
 
     ####
-    df_hs300 = finlib.Finlib().load_hs300()
-    df_hs300 = pd.merge(df_hs300,df_omd_amt_mktcap[['code','total_mv_perc','amount_perc','list_date_days_before']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
+    df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_offical_index = pd.merge(df_offical_index,hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    df_merged = pd.merge(my_hs300,df_hs300, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
-
-    #replace with name_x if name is None
-    df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
-    df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
-    df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
-    df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
-    df_merged = df_merged.drop('name_x', axis=1)
-    df_merged = df_merged.drop('total_mv_perc_x', axis=1)
-    df_merged = df_merged.drop('amount_perc_x', axis=1)
-    df_merged = df_merged.drop('list_date_days_before_x', axis=1)
-
-    df_merged['predict'] = None
-    df_merged.loc[df_merged['_merge'] == 'both', ['predict']] = 'To_Be_Kept'
-    df_merged.loc[df_merged['_merge'] == 'right_only', ['predict']] = 'To_Be_Removed'
-    df_merged.loc[df_merged['_merge'] == 'left_only', ['predict']] = 'To_Be_Added'
-    df_merged = df_merged.drop('_merge', axis=1)
-
-    len_merged = df_merged.__len__()
-    df_merged.to_csv(hs300_candiate_csv, encoding='UTF-8', index=False)
-    logging.info("saved " + hs300_candiate_csv + " len " + str(len_merged))
-
-    df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
-    df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
-    len_both = df_both.__len__()
-    logging.info("\n"+str(len_both) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the hs300.")
-    print(finlib.Finlib().pprint(df=df_both.head(2)))
-
-
-
-    df_hs300only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
-    df_hs300only = df_hs300only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
-    len_hs300only = df_hs300only.__len__()
-    logging.info("\n"+str(len_hs300only) + " out of " + str(
-        len_merged) + " in offical hs300, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from hs300 next time. Top 32")
-    print(finlib.Finlib().pprint(df=df_hs300only.head(32)))
-
-    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
-    df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
-    len_myonly = df_myonly.__len__()
-    logging.info("\n"+str(len_myonly) + " out of " + str(len_merged) + " in my hs300, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to hs300 next time. Top 32")
-    print(finlib.Finlib().pprint(df=df_myonly.head(32)))
-
-
-
-    logging.info("result saved to " + hs300_candiate_csv + " len " + str(len_merged))
+    compare_with_official_index_list(df_my_index=my_hs300, df_offical_index=df_offical_index, index_name=index_name)
 
 
     exit(0)
