@@ -183,19 +183,30 @@ if __name__ == '__main__':
     df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'total_mv','total_mv_perc']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-
-    #filter by (on_market_date len 3744) and (top 50% daily_amount)
-    my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc']>=0.5],hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    #calc HS300 always
+    # filter by (on_market_date len 3744) and (top 50% daily_amount)
+    my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.5], hs300_on_market_days_filter(),
+                        on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
     my_hs300 = my_hs300.sort_values(by=['total_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
-    my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted']*100.0 /my_hs300['hs300_total_share_weighted'].sum(), 2)
+    my_hs300['my_index_weight'] = round(
+        my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
+
+
+    if index_name == 'hs300':
+        my_index = my_hs300
+
+    elif index_name == 'zz100':
+        my_index = my_hs300.head(100) #zz100 is top maket cap of hs300
+
+
 
     ####
     df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    compare_with_official_index_list(df_my_index=my_hs300, df_offical_index=df_offical_index, index_name=index_name)
+    compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name)
 
 
     exit(0)
