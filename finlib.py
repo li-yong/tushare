@@ -4322,7 +4322,9 @@ class Finlib:
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
 
         df = pd.DataFrame()
+        j = 0
         for i in range(ndays):
+            j += 1
             date = (datetime.today() - timedelta(days=i)).strftime("%Y%m%d")
             input_csv = basic_dir + "/basic_" + date + ".csv"
 
@@ -4330,7 +4332,7 @@ class Finlib:
                 df_sub = pd.read_csv(input_csv)
 
                 df = df.append(df_sub)
-                logging.info("appended " + input_csv + ", +len " + str(df_sub.__len__()))
+                logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
 
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
         

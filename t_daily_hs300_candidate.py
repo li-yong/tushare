@@ -167,6 +167,7 @@ if __name__ == '__main__':
         'zz500':'000905.SH',
         'hs300':'000300.SH',
         'szcz':'399001.SZ', #深圳成指
+        'sz100':'399330.SZ', #深圳100
 
     }
 
@@ -204,6 +205,23 @@ if __name__ == '__main__':
     my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
 
+    ###############################
+    # calc SZCZ always
+    ###############################
+    all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment())
+    all_sz = all[all['code'].str.contains('SZ')]
+    all_st = all[all['name'].str.contains('ST')]
+    my_szcz = finlib.Finlib()._df_sub_by_code(df=all_sz, df_sub=all_st,
+                                              byreason='removing ST(special trade) from SZ mkt')
+
+    # 对入围股票在最近半年的 A 股日均成交金额按从高到低排序，剔除排名后 10%的股票； Approximiately in all stock scope.
+    my_szcz = pd.merge(my_szcz, df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.7],
+                       on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+    # 对选样空间剩余股票按照最近半年的 A 股日均总市值从高到低排序，选取前 500 名股票构成指数样本股
+    my_szcz = my_szcz.sort_values(by=['total_mv'], ascending=[False]).head(500).reset_index().drop('index', axis=1)
+    my_szcz['my_index_weight'] = round(
+        my_szcz['hs300_total_share_weighted'] * 100.0 / my_szcz['hs300_total_share_weighted'].sum(), 2)
+    my_szcz = my_szcz.drop('hs300_total_share_weighted', axis=1)
 
     ###############################
     # Compare my_index with offical
@@ -223,21 +241,9 @@ if __name__ == '__main__':
         my_zz500 = my_zz500.sort_values(by='total_mv_perc', ascending=False).head(500).reset_index().drop('index', axis=1)
         my_index = my_zz500
     elif index_name == 'szcz':#深圳成指. --ndays should be half year. 365/2
-        all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment())
-        all_sz = all[all['code'].str.contains('SZ')]
-        all_st = all[all['name'].str.contains('ST')]
-        my_szcz = finlib.Finlib()._df_sub_by_code(df=all_sz,df_sub=all_st,byreason='removing ST(special trade) from SZ mkt')
-
-        # 对入围股票在最近半年的 A 股日均成交金额按从高到低排序，剔除排名后 10%的股票； Approximiately in all stock scope.
-        my_szcz = pd.merge(my_szcz, df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.7],
-                            on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
-        # 对选样空间剩余股票按照最近半年的 A 股日均总市值从高到低排序，选取前 500 名股票构成指数样本股
-        my_szcz = my_szcz.sort_values(by=['total_mv'], ascending=[False]).head(500).reset_index().drop('index', axis=1)
-        my_szcz['my_index_weight'] = round(my_szcz['hs300_total_share_weighted'] * 100.0 / my_szcz['hs300_total_share_weighted'].sum(), 2)
-        my_szcz = my_szcz.drop('hs300_total_share_weighted', axis=1)
         my_index = my_szcz
-
-
+    elif index_name == 'sz100':
+        my_index = my_szcz.head(100)
 
     df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
