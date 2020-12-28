@@ -60,7 +60,9 @@ python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 ######################################
 ##update index
 # input: None
-# output: /home/ryan/DATA/pickle/hs300.csv, zz100.csv
+# output:
+#   /home/ryan/DATA/pickle/hs300.csv
+#   /home/ryan/DATA/pickle/zz100.csv
 ######################################
 python t_daily_hs300_candidate.py --fetch_index --index_name hs300
 python t_daily_hs300_candidate.py --fetch_index --index_name zz100

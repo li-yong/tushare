@@ -26,15 +26,23 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
     df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
     df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
     df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
-    df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
+
+    if  'list_date_days_before_x' in df_merged.columns:
+        df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
+        df_merged = df_merged.drop('list_date_days_before_x', axis=1)
+
     df_merged = df_merged.drop('name_x', axis=1)
     df_merged = df_merged.drop('total_mv_perc_x', axis=1)
     df_merged = df_merged.drop('amount_perc_x', axis=1)
-    df_merged = df_merged.drop('list_date_days_before_x', axis=1)
 
     df_merged = df_merged.drop('date', axis=1)
-    df_merged = df_merged.drop('list_status_x', axis=1)
-    df_merged = df_merged.drop('list_status', axis=1)
+
+    if 'list_date_days_before_x' in df_merged.columns:
+        df_merged = df_merged.drop('list_status_x', axis=1)
+
+    if 'list_status' in df_merged.columns:
+        df_merged = df_merged.drop('list_status', axis=1)
+
     df_merged = df_merged.drop('amount', axis=1)
     df_merged = df_merged.drop('total_mv', axis=1)
 
@@ -73,8 +81,7 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
 
 def hs300_on_market_days_filter():
     #### filter with HS300 critiria
-    df_all = finlib.Finlib().get_A_stock_instrment(code_name_only=False)
-    df_all = finlib.Finlib().add_market_to_code(df_all)
+    df_all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))
 
     print("all lens "+str(df_all.__len__()))
 
@@ -131,9 +138,6 @@ def get_hs300_total_share_weighted():
 ### MAIN ####
 if __name__ == '__main__':
 
-
-    ndays = 365
-
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
     logging.info(__file__+" "+"\n")
@@ -162,6 +166,8 @@ if __name__ == '__main__':
         'zz200':'000904.SH',
         'zz500':'000905.SH',
         'hs300':'000300.SH',
+        'szcz':'399001.SZ', #深圳成指
+
     }
 
     if fetch_index:
@@ -180,6 +186,8 @@ if __name__ == '__main__':
     # Result df_amt_mktcap_weight is BASE Dataframe.
     # df_amt len 4117, df_mktcap len 4144, df_total_share_weighted len 4104
     ###############################
+    df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','name','list_status','list_date_days_before']]
+
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
@@ -202,14 +210,38 @@ if __name__ == '__main__':
     ###############################
     if index_name == 'hs300':
         my_index = my_hs300
-
     elif index_name == 'zz100':
         my_index = my_hs300.head(100) #zz100 is top maket cap of hs300
+    elif index_name == 'zz500':
+        all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment())
+        reduct_hs300 = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        my_zz500 = finlib.Finlib()._df_sub_by_code(df=all,df_sub=reduct_hs300,byreason='removing stocks in HS300 official list')
+        my_zz500 = finlib.Finlib()._df_sub_by_code(df=my_zz500,df_sub=my_hs300,byreason='removing stocks in my HS300 list')
+        my_zz500 = pd.merge(my_zz500,df_amt_mktcap,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+
+        my_zz500 = my_zz500[my_zz500['amount_perc']>0.8]
+        my_zz500 = my_zz500.sort_values(by='total_mv_perc', ascending=False).head(500).reset_index().drop('index', axis=1)
+        my_index = my_zz500
+    elif index_name == 'szcz':#深圳成指. --ndays should be half year. 365/2
+        all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment())
+        all_sz = all[all['code'].str.contains('SZ')]
+        all_st = all[all['name'].str.contains('ST')]
+        my_szcz = finlib.Finlib()._df_sub_by_code(df=all_sz,df_sub=all_st,byreason='removing ST(special trade) from SZ mkt')
+
+        # 对入围股票在最近半年的 A 股日均成交金额按从高到低排序，剔除排名后 10%的股票； Approximiately in all stock scope.
+        my_szcz = pd.merge(my_szcz, df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.7],
+                            on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+        # 对选样空间剩余股票按照最近半年的 A 股日均总市值从高到低排序，选取前 500 名股票构成指数样本股
+        my_szcz = my_szcz.sort_values(by=['total_mv'], ascending=[False]).head(500).reset_index().drop('index', axis=1)
+        my_szcz['my_index_weight'] = round(my_szcz['hs300_total_share_weighted'] * 100.0 / my_szcz['hs300_total_share_weighted'].sum(), 2)
+        my_szcz = my_szcz.drop('hs300_total_share_weighted', axis=1)
+        my_index = my_szcz
+
 
 
     df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
-    df_offical_index = pd.merge(df_offical_index,hs300_on_market_days_filter(),on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name)
 

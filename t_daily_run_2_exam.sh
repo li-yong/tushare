@@ -737,7 +737,7 @@ fi
 #python t_daily_hs300_candidate.py --ndays 365
 python t_daily_hs300_candidate.py --index hs300 --ndays 365
 python t_daily_hs300_candidate.py --index zz100 --ndays 365
-
+python t_daily_hs300_candidate.py --index szcz --ndays 183
 
 
 

@@ -4388,7 +4388,9 @@ class Finlib:
 
         df_amt = pd.DataFrame()
 
+        i = 0
         for index, row in df.iterrows():
+            i += 1
             name, code = row['name'], row['code']
             csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
             if not os.path.exists(csv):
@@ -4401,7 +4403,8 @@ class Finlib:
             df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
 
             df_amt = df_amt.append(df_sub)
-            logging.info(name + " " + code + ",  append " + str(ndays) + " lines.")
+            logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(ndays) + " lines.")
+
 
         df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
         df_amt = self.regular_df_date_to_ymd(df_amt)
