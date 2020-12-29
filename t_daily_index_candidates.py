@@ -14,7 +14,7 @@ import os
 import math
 from optparse import OptionParser
 import sys
-
+import constant
 
 ##############
 
@@ -58,19 +58,19 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
     df_merged.to_csv(index_candiate_csv, encoding='UTF-8', index=False)
     logging.info("saved " + index_candiate_csv + " len " + str(len_merged))
 
-    df_both = df_merged[df_merged['predict'] == "To_Be_Kept"]
+    df_both = df_merged[df_merged['predict'] == constant.TO_BE_KEPT]
     df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_both.__len__()) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the "+index_name)
     logging.info(finlib.Finlib().pprint(df=df_both.head(2)))
 
 
-    df_offlical_only = df_merged[df_merged['predict'] == "To_Be_Removed"].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
+    df_offlical_only = df_merged[df_merged['predict'] == constant.TO_BE_REMOVED].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
     df_offlical_only = df_offlical_only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_offlical_only.__len__()) + " out of " + str(
         len_merged) + " in offical list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from "+index_name+" next time. Top 32")
     logging.info(finlib.Finlib().pprint(df=df_offlical_only.head(32)))
 
-    df_myonly = df_merged[df_merged['predict'] == "To_Be_Added"].reset_index().drop('index', axis=1)
+    df_myonly = df_merged[df_merged['predict'] == constant.TO_BE_ADDED].reset_index().drop('index', axis=1)
     df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_myonly.__len__()) + " out of " + str(len_merged) + " in my list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to "+index_name+" next time. Top 32")
     #print(finlib.Finlib().pprint(df=df_myonly.head(32)))

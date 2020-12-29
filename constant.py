@@ -153,3 +153,12 @@ DIF_CROSS_DOWN_SIG = "dif cross down sig"
 ##############
 #  Criterial KDJ
 #############
+
+
+
+#####################
+# index candidates
+#####################
+TO_BE_KEPT = "To_Be_Kept"
+TO_BE_REMOVED = "To_Be_Removed"
+TO_BE_ADDED = "To_Be_Added"

@@ -4430,6 +4430,28 @@ class Finlib:
 
         return (df_amt)
 
+
+    def get_index_candidate(self, index_name):
+        # output of t_daily_hs300_candiate.py
+        # hs300_candidate_list.csv  sz100_candidate_list.csv    szcz_candidate_list.csv   zz100_candidate_list.csv
+        csv_f = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
+        if self.is_cached(file_path=csv_f, day=30):
+            logging.error("file not exist, or empty, or not updated in 30days. "+csv_f)
+            exit(0)
+
+        df = pd.read_csv(csv_f)
+        df_keep =  df[df['predict'] == constant.TO_BE_KEPT].reset_index().drop('index', axis=1)
+        df_remove =  df[df['predict'] == constant.TO_BE_REMOVED].reset_index().drop('index', axis=1)
+        df_add =  df[df['predict'] == constant.TO_BE_ADDED].reset_index().drop('index', axis=1)
+        return({
+            "index_name":index_name,
+            "df_keep":df_keep,
+            "df_remove":df_remove,
+            "df_add":df_add,
+        })
+
+
+
     def load_index(self, index_code, index_name, force_run=False):
         token = '4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b'
 
