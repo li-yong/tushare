@@ -26,6 +26,8 @@ BAR_LONG_LOWER_SHADOW = "bar long lower shadow"
 BAR_YUNXIAN_BUY = "bar yunxian buy"
 BAR_YUNXIAN_SELL = "bar yunxian sell"
 
+BAR_STEADY_UP = "bar steady up"
+
 
 
 

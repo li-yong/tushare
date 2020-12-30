@@ -11,10 +11,10 @@ import tabulate
 def verify_a_stock(df):
     #df must have column (code, date, open, low,high,close)
 
-    csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
-    csv_in = "/home/ryan/DATA/DAY_Global/AG/SZ000651.csv"
-    #csv_in = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
-    csv_out = "/home/ryan/DATA/result/tmp/SZ000651_del.csv"
+    # csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
+    # csv_in = "/home/ryan/DATA/DAY_Global/AG/SZ000651.csv"
+    # #csv_in = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
+    # csv_out = "/home/ryan/DATA/result/tmp/SZ000651_del.csv"
 
     #df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_in)
     #df = df.iloc[-300:].reset_index().drop('index', axis=1)

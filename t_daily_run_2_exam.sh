@@ -557,13 +557,13 @@ python t_daily_fundamentals.py --area_rank_f  #<<<  2 sec
 
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/key_points_AG_today_selected.csv
-    python t_daily_get_key_points.py  -x AG  --calc_base --force_run  #  <<< 2 hour, slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
+    python t_daily_get_key_points.py  -x AG  --calc_base --force_run  #  <<< slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
     python t_daily_get_key_points.py  -x AG  --calc_today  --force_run # <<<< 4 min, fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
     python t_daily_get_key_points.py  -x AG  --today_selection --force_run  #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_get_key_points.py  -x AG  --calc_base  #slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
+#    python t_daily_get_key_points.py  -x AG  --calc_base  #slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
     python t_daily_get_key_points.py  -x AG  --calc_today  #fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
     python t_daily_get_key_points.py  -x AG  --today_selection #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
 fi
