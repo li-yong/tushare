@@ -889,30 +889,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             df_low_vol_year = finlib.Finlib().remove_garbage(df_low_vol_year, code_field_name='code', code_format='C2D6')
             logging.info(__file__+" "+"\t df_low_vol_year length " + str(df_low_vol_year.__len__()))
 
-            # ====== 52 week high price
-            '''
-            logging.info(__file__+" "+"loading df_high_price_year")
-            df_high_price_year = df_pv_no_filter[df_pv_no_filter['op_rsn'].str.contains('_pvbreak_hp_year')]
-            #if 'index' in df_high_price_year.columns: df_high_price_year = df_high_price_year.drop('index', axis=1)
-            #if 'level_0' in df_high_price_year.columns: df_high_price_year = df_high_price_year.drop('level_0', axis=1)
-            #if 'Unnamed: 0' in df_high_price_year.columns:  df_high_price_year = df_high_price_year.drop('Unnamed: 0', axis=1)
-            df_high_price_year = df_high_price_year.reset_index()
-            df_high_price_year = refine_df(df_high_price_year, has_db_record=False, force_pass=True, insert_buy_record_to_db=False, debug=debug)
-            df_high_price_year = finlib.Finlib().remove_garbage(df_high_price_year, code_field_name='code', code_format='C2D6')
-            logging.info(__file__+" "+"\t df_high_price_year length "+str(df_high_price_year.__len__()))
 
-
-            #====== 52 week high volume
-            logging.info(__file__+" "+"loading df_high_vol_year")
-            df_high_vol_year = df_pv_no_filter[df_pv_no_filter['op_rsn'].str.contains('_pvbreak_hv_year')]
-            #if 'index' in df_high_vol_year.columns: df_high_vol_year = df_high_vol_year.drop('index', axis=1)
-            #if 'level_0' in df_high_vol_year.columns: df_high_vol_year = df_high_vol_year.drop('level_0', axis=1)
-            #if 'Unnamed: 0' in df_high_vol_year.columns:  df_high_vol_year = df_high_vol_year.drop('Unnamed: 0', axis=1)
-            df_high_vol_year = df_high_vol_year.reset_index()
-            df_high_vol_year = refine_df(df_high_vol_year, has_db_record=False, force_pass=True, insert_buy_record_to_db=False, debug=debug)
-            df_high_vol_year = finlib.Finlib().remove_garbage(df_high_vol_year, code_field_name='code', code_format='C2D6')
-            logging.info(__file__+" "+"\t df_high_vol_year length "+str(df_high_vol_year.__len__()))
-            '''
 
         # common df shared by AG, MG, HK ..
         if 'df_max_daily_increase' in locals():
@@ -921,38 +898,13 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         if 'df_max_daily_decrease' in locals():
             arr.append('df_max_daily_decrease')
 
-        if 'df_pv_break' in locals():
-            arr.append('df_pv_break')
-
-        if 'df_low_price_year' in locals():
-            arr.append('df_low_price_year')
-
-        if 'df_low_vol_year' in locals():
-            arr.append('df_low_vol_year')
-
-        if 'df_high_price_year' in locals():
-            arr.append('df_high_price_year')
-
-        if 'df_high_vol_year' in locals():
-            arr.append('df_high_vol_year')
-
-        if 'df_decrease_gap' in locals():
-            arr.append('df_decrease_gap')
-
-        if 'df_increase_gap' in locals():
-            arr.append('df_increase_gap')
 
         df_fenghong = finlib.Finlib().regular_read_csv_to_stdard_df(f_fenghong)
         df_fenghong = df_fenghong[df_fenghong['score'] >= 0.8]
         df_fenghong = finlib.Finlib().remove_garbage(df_fenghong, code_field_name='code', code_format='C2D6')
         logging.info(__file__+" "+"\t df_fenghong length " + str(df_fenghong.__len__()))
 
-        #df_ann=pd.DataFrame(columns=['code'])  #removed since ann stop working after julang info web adjusted. 20190228
-
-        df_p_m_div = pd.DataFrame(columns=['code'])
         df_moneyflow = pd.DataFrame(columns=['code'])
-
-        df_talib_ptn = pd.DataFrame(columns=['code'])
 
         df_fund = pd.DataFrame(columns=['code'])
         df_fund_2 = pd.DataFrame(columns=['code'])
@@ -963,12 +915,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         df_p_r_div = pd.DataFrame(columns=['code'])
         df_industry_top = pd.DataFrame(columns=['code'])
-
-        #df_lanchou=pd.DataFrame(columns=['code'])
-
-        #df_area_top = finlib.Finlib().regular_read_csv_to_stdard_df(f_area_top ) #removed to make report concise.
-        #df_area_top = finlib.Finlib().remove_garbage(df_area_top, code_field_name='code', code_format='C2D6')
-        #logging.info(__file__+" "+"\t df_area_top length " + str(df_area_top.__len__()))
 
         df_peg_ps = finlib.Finlib().regular_read_csv_to_stdard_df(f_fund_peg_ps)
         df_peg_ps = finlib.Finlib().add_market_to_code(df=df_peg_ps)
@@ -986,130 +932,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         df_disclosure_date_notify = finlib.Finlib().remove_garbage(df_disclosure_date_notify, code_field_name='code', code_format='C2D6')
         logging.info(__file__+" "+"\t df_disclosure_date_notify length " + str(df_disclosure_date_notify.__len__()))
 
-        df_macd_m = finlib.Finlib().regular_read_csv_to_stdard_df(f_macd_m)
-        df_macd_m = df_macd_m[df_macd_m.action.str.contains('BUY')]
-        df_macd_m = finlib.Finlib().remove_garbage(df_macd_m, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_macd_m length " + str(df_macd_m.__len__()))
-
-        df_macd_w = finlib.Finlib().regular_read_csv_to_stdard_df(f_macd_w)
-        df_macd_w = df_macd_w[df_macd_w.action.str.contains('BUY')]
-        df_macd_w = finlib.Finlib().remove_garbage(df_macd_w, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_macd_w length " + str(df_macd_w.__len__()))
-
-        df_macd_d = finlib.Finlib().regular_read_csv_to_stdard_df(f_macd_d)
-        df_macd_d = df_macd_d[df_macd_d.action.str.contains('BUY')]
-        df_macd_d = finlib.Finlib().remove_garbage(df_macd_d, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_macd_d length " + str(df_macd_d.__len__()))
-
-        df_kdj_m = finlib.Finlib().regular_read_csv_to_stdard_df(f_kdj_m)
-        df_kdj_m = df_kdj_m[df_kdj_m.action.str.contains('BUY')]
-        df_kdj_m = finlib.Finlib().remove_garbage(df_kdj_m, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_kdj_m length " + str(df_kdj_m.__len__()))
-
-        df_kdj_w = finlib.Finlib().regular_read_csv_to_stdard_df(f_kdj_w)
-        df_kdj_w = df_kdj_w[df_kdj_w.action.str.contains('BUY')]
-        df_kdj_w = finlib.Finlib().remove_garbage(df_kdj_w, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_kdj_w length " + str(df_kdj_w.__len__()))
-
-        df_kdj_d = finlib.Finlib().regular_read_csv_to_stdard_df(f_kdj_d)
-        df_kdj_d = df_kdj_d[df_kdj_d.action.str.contains('BUY')]
-        df_kdj_d = finlib.Finlib().remove_garbage(df_kdj_d, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_kdj_d length " + str(df_kdj_d.__len__()))
-
-        df_hsgt = finlib.Finlib().regular_read_csv_to_stdard_df(f_hsgt)
-        df_hsgt = finlib.Finlib().remove_garbage(df_hsgt, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_hsgt length " + str(df_hsgt.__len__()))
-
-        df_fib_ag = finlib.Finlib().regular_read_csv_to_stdard_df(f_fib_ag)
-        df_fib_ag = finlib.Finlib().remove_garbage(df_fib_ag, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_fib_ag length " + str(df_fib_ag.__len__()))
-
-        df_fib_ag_selected = finlib.Finlib().regular_read_csv_to_stdard_df(f_fib_ag_selected)
-        df_fib_ag_selected = finlib.Finlib().remove_garbage(df_fib_ag_selected, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_fib_ag_selected length " + str(df_fib_ag_selected.__len__()))
-
-        df_fib_index = finlib.Finlib().regular_read_csv_to_stdard_df(f_fib_index)
-        logging.info(__file__+" "+"\t df_fib_index length " + str(df_fib_index.__len__()))
-
         df_concept_top = finlib.Finlib().regular_read_csv_to_stdard_df(f_concept_top)
         logging.info(__file__+" "+"\t df_concept_top length " + str(df_concept_top.__len__()))
-        '''remove to make result concise
-        dump= "/home/ryan/DATA/pickle/sme.csv"
-        if (not os.path.isfile(dump)):
-            logging.info(__file__+" "+"exit.  file not exist "+dump)
-            exit(1)
-        else:
-            logging.info(__file__+" "+"read csv from "+dump)
-            #df_sme=pd.read_pickle(dump)
-            df_sme=finlib.Finlib().regular_read_csv_to_stdard_df(dump)
-
-        df_sme = df_sme[['code', 'name']]
-        df_sme = finlib.Finlib().remove_garbage(df_sme, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_sme length " + str(df_sme.__len__()))
-
-
-        dump= "/home/ryan/DATA/pickle/gem.csv"
-        if (not os.path.isfile(dump)):
-            logging.info(__file__+" "+"exit.  file not exist "+dump)
-            exit(1)
-        else:
-            logging.info(__file__+" "+"read csv from "+dump)
-            df_gem=finlib.Finlib().regular_read_csv_to_stdard_df(dump)
-        df_gem = df_gem[['code', 'name']]
-        df_gem = finlib.Finlib().remove_garbage(df_gem, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_gem length " + str(df_gem.__len__()))
-
-
-
-        dump= "/home/ryan/DATA/pickle/sz50.csv"
-        if (not os.path.isfile(dump)):
-            logging.info(__file__+" "+"exit.  file not exist "+dump)
-            exit(1)
-        else:
-            logging.info(__file__+" "+"read csv from "+dump)
-            df_sz50=finlib.Finlib().regular_read_csv_to_stdard_df(dump)
-        df_sz50 = df_sz50[['code', 'name']]
-        df_sz50 = finlib.Finlib().remove_garbage(df_sz50, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_sz50 length " + str(df_sz50.__len__()))
-
-
-
-        dump= "/home/ryan/DATA/pickle/hs300.csv"
-        if (not os.path.isfile(dump)):
-            logging.info(__file__+" "+"exit.  file not exist "+dump)
-            exit(1)
-        else:
-            logging.info(__file__+" "+"read csv from "+dump)
-            df_hs300=finlib.Finlib().regular_read_csv_to_stdard_df(dump)
-        df_hs300 = df_hs300[['code', 'name']]
-        df_hs300 = finlib.Finlib().remove_garbage(df_hs300, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_hs300 length " + str(df_hs300.__len__()))
-
-
-
-        dump= "/home/ryan/DATA/pickle/ZZ500.csv"
-        if (not os.path.isfile(dump)):
-            logging.info(__file__+" "+"exit.  file not exist "+dump)
-            exit(1)
-        else:
-            logging.info(__file__+" "+"read csv from "+dump)
-            df_zz500=finlib.Finlib().regular_read_csv_to_stdard_df(dump)
-
-        df_zz500 = df_zz500[['code', 'name']] #elimate date in the df as it is not necessary and not update to date.
-        df_zz500 = finlib.Finlib().remove_garbage(df_zz500, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_zz500 length " + str(df_zz500.__len__()))
-        '''
-        '''
-        logging.info(__file__+" "+"loading df_ann "+f_ann)
-        if (os.path.isfile(f_ann) ):
-            df_ann=finlib.Finlib().regular_read_csv_to_stdard_df(f_ann,dtype=str);
-            df_ann = finlib.Finlib().remove_garbage(df_ann, code_field_name='code', code_format='C2D6')
-            logging.info(__file__+" "+"\t df_ann length " + str(df_ann.__len__()))
-        else:
-            logging.info(__file__+" "+"no such file "+f_ann +". Using Dummy instead")
-            #print("stop and exit")
-            #exit(1)
-        '''
         logging.info(__file__+" "+"loading df_industry_top " + f_industry_top)
         if (os.path.isfile(f_industry_top) and os.stat(f_industry_top).st_size >= 10):
             df_industry_top = finlib.Finlib().regular_read_csv_to_stdard_df(f_industry_top)
@@ -1249,109 +1073,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         else:
             logging.info(__file__+" "+"ERROR: NOT found file " + f_pv_db_sell_filter)
-#====
-
-        f_yunxian_sell = '/home/ryan/DATA/result/ag_junxian_barstyle_yunxian_sell.csv'
-        logging.info(__file__ + " " + "loading f_yunxian_sell, " + f_yunxian_sell)
-        if (os.path.isfile(f_yunxian_sell)) and os.stat(f_yunxian_sell).st_size >= 10:  # > 10 bytes
-            df_yunxian_sell = finlib.Finlib().regular_read_csv_to_stdard_df(f_yunxian_sell)
-
-            df_yunxian_sell = finlib.Finlib().remove_garbage(df_yunxian_sell, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_yunxian_sell length " + str(df_yunxian_sell.__len__()))
-
-            df_yunxian_sell = df_yunxian_sell.drop_duplicates()
-            df_yunxian_sell = df_yunxian_sell.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_yunxian_sell)
-
-
-        f_yunxian_buy = '/home/ryan/DATA/result/ag_junxian_barstyle_yunxian_buy.csv'
-        logging.info(__file__ + " " + "loading f_yunxian_buy, " + f_yunxian_buy)
-        if (os.path.isfile(f_yunxian_buy)) and os.stat(f_yunxian_buy).st_size >= 10:  # > 10 bytes
-            df_yunxian_buy = finlib.Finlib().regular_read_csv_to_stdard_df(f_yunxian_buy)
-
-            df_yunxian_buy = finlib.Finlib().remove_garbage(df_yunxian_buy, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_yunxian_buy length " + str(df_yunxian_buy.__len__()))
-
-            df_yunxian_buy = df_yunxian_buy.drop_duplicates()
-            df_yunxian_buy = df_yunxian_buy.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_yunxian_buy)
-
-    #===
-        f_duotou_pailie = '/home/ryan/DATA/result/ag_junxian_barstyle_duotou_pailie.csv'
-        logging.info(__file__ + " " + "loading f_yunxian_sell, " + f_duotou_pailie)
-        if (os.path.isfile(f_duotou_pailie)) and os.stat(f_duotou_pailie).st_size >= 10:  # > 10 bytes
-            df_duotou_pailie = finlib.Finlib().regular_read_csv_to_stdard_df(f_duotou_pailie)
-
-            df_duotou_pailie = finlib.Finlib().remove_garbage(df_duotou_pailie, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_duotou_pailie length " + str(df_duotou_pailie.__len__()))
-
-            df_duotou_pailie = df_duotou_pailie.drop_duplicates()
-            df_duotou_pailie = df_duotou_pailie.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_duotou_pailie)
-
-
-    #====
-        f_jincha_minor = '/home/ryan/DATA/result/ag_junxian_barstyle_jincha_minor.csv'
-        logging.info(__file__ + " " + "loading f_yunxian_sell, " + f_jincha_minor)
-        if (os.path.isfile(f_jincha_minor)) and os.stat(f_jincha_minor).st_size >= 10:  # > 10 bytes
-            df_jincha_minor = finlib.Finlib().regular_read_csv_to_stdard_df(f_jincha_minor)
-
-            df_jincha_minor = finlib.Finlib().remove_garbage(df_jincha_minor, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_jincha_minor length " + str(df_jincha_minor.__len__()))
-
-            df_jincha_minor = df_jincha_minor.drop_duplicates()
-            df_jincha_minor = df_jincha_minor.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_jincha_minor)
-
-
-    ##===
-        f_jincha_major = '/home/ryan/DATA/result/ag_junxian_barstyle_jincha_major.csv'
-        logging.info(__file__ + " " + "loading f_yunxian_sell, " + f_jincha_major)
-        if (os.path.isfile(f_jincha_major)) and os.stat(f_jincha_major).st_size >= 10:  # > 10 bytes
-            df_jincha_major = finlib.Finlib().regular_read_csv_to_stdard_df(f_jincha_major)
-
-            df_jincha_major = finlib.Finlib().remove_garbage(df_jincha_major, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_jincha_major length " + str(df_jincha_major.__len__()))
-
-            df_jincha_major = df_jincha_major.drop_duplicates()
-            df_jincha_major = df_jincha_major.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_jincha_major)
-
-
-    #====
-        f_very_strong_up_trend = '/home/ryan/DATA/result/ag_junxian_barstyle_very_strong_up_trend.csv'
-        logging.info(__file__ + " " + "loading f_very_strong_up_trend, " + f_very_strong_up_trend)
-        if (os.path.isfile(f_very_strong_up_trend)) and os.stat(f_very_strong_up_trend).st_size >= 10:  # > 10 bytes
-            df_very_strong_up_trend = finlib.Finlib().regular_read_csv_to_stdard_df(f_very_strong_up_trend)
-
-            df_very_strong_up_trend = finlib.Finlib().remove_garbage(df_very_strong_up_trend, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_very_strong_up_trend length " + str(df_very_strong_up_trend.__len__()))
-
-            df_very_strong_up_trend = df_very_strong_up_trend.drop_duplicates()
-            df_very_strong_up_trend = df_very_strong_up_trend.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_very_strong_up_trend)
-
-
-
-    #====
-        f_very_strong_down_trend = '/home/ryan/DATA/result/ag_junxian_barstyle_very_strong_down_trend.csv'
-        logging.info(__file__ + " " + "loading f_very_strong_down_trend, " + f_very_strong_down_trend)
-        if (os.path.isfile(f_very_strong_down_trend)) and os.stat(f_very_strong_down_trend).st_size >= 10:  # > 10 bytes
-            df_very_strong_down_trend = finlib.Finlib().regular_read_csv_to_stdard_df(f_very_strong_down_trend)
-
-            df_very_strong_down_trend = finlib.Finlib().remove_garbage(df_very_strong_down_trend, code_field_name='code', code_format='C2D6')
-            logging.info(__file__ + " " + "\t df_very_strong_down_trend length " + str(df_very_strong_down_trend.__len__()))
-
-            df_very_strong_down_trend = df_very_strong_down_trend.drop_duplicates()
-            df_very_strong_down_trend = df_very_strong_down_trend.reset_index().drop('index', axis=1)
-        else:
-            logging.info(__file__ + " " + "no such file " + f_very_strong_down_trend)
 
     elif stock_global in ['HK', 'KG']:
 
@@ -1425,44 +1146,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             df_pv_no_filter = finlib.Finlib().df_filter(df_pv_no_filter)
             arr.append('df_pv_no_filter')
 
-        # COMMENT dfs  TO SAVE TIME
-        # if 'df_hs300' in locals():  #code already in 'SH/SZ' format
-        #     logging.info(__file__+" "+"filtering df_hs300")
-        #     df_hs300 = finlib.Finlib().df_filter(df_hs300)
-        #     arr.append('df_hs300')
-        #
-        # if 'df_sz50' in locals():  #code already in 'SH/SZ' format
-        #     logging.info(__file__+" "+"filtering df_sz50")
-        #     df_sz50 = finlib.Finlib().df_filter(df_sz50)
-        #     arr.append('df_sz50')
-        #
-        # if 'df_zz500' in locals():  #code already in 'SH/SZ' format
-        #     logging.info(__file__+" "+"filtering df_zz500")
-        #     df_zz500 = finlib.Finlib().df_filter(df_zz500)
-        #     arr.append('df_zz500')
-        #
-        # if 'df_sme' in locals():  #code already in 'SH/SZ' format
-        #     logging.info(__file__+" "+"filtering df_sme")
-        #     df_sme = finlib.Finlib().df_filter(df_sme)
-        #     arr.append('df_sme')
-        #
-        # if 'df_gem' in locals():  #code already in 'SH/SZ' format
-        #     logging.info(__file__+" "+"filtering df_gem")
-        #     df_gem = finlib.Finlib().df_filter(df_gem)
-        #     arr.append('df_gem')
-        #
-        # if 'df_industry_top' in locals():
-        #     logging.info(__file__+" "+"filtering df_industry_top")
-        #     df_industry_top = finlib.Finlib().add_market_to_code(df_industry_top)
-        #     df_industry_top = finlib.Finlib().df_filter(df_industry_top)
-        #     arr.append('df_industry_top')
-        #
-        # if 'df_area_top' in locals():
-        #     logging.info(__file__+" "+"filtering df_area_top")
-        #     df_area_top = finlib.Finlib().add_market_to_code(df_area_top)
-        #     arr.append('df_area_top')
-        #     df_area_top = finlib.Finlib().df_filter(df_area_top)
-
         if 'df_peg_ps' in locals():
             logging.info(__file__+" "+"filtering df_peg_ps")
             df_peg_ps = finlib.Finlib().df_filter(df_peg_ps)  #market code should in code, e.g.  SH600001
@@ -1487,44 +1170,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"filtering df_concept_top")
             df_concept_top = finlib.Finlib().df_filter(df_concept_top)
             arr.append('df_concept_top')
-
-        if 'df_yunxian_sell' in locals():
-            logging.info(__file__+" "+"filtering df_yunxian_sell")
-            df_concept_top = finlib.Finlib().df_filter(df_yunxian_sell)
-            arr.append('df_yunxian_sell')
-
-        if 'df_yunxian_buy' in locals():
-            logging.info(__file__+" "+"filtering df_yunxian_buy")
-            df_concept_top = finlib.Finlib().df_filter(df_yunxian_buy)
-            arr.append('df_yunxian_buy')
-
-        if 'df_duotou_pailie' in locals():
-            logging.info(__file__+" "+"filtering df_duotou_pailie")
-            df_concept_top = finlib.Finlib().df_filter(df_duotou_pailie)
-            arr.append('df_duotou_pailie')
-
-        if 'df_jincha_minor' in locals():
-            logging.info(__file__+" "+"filtering df_jincha_minor")
-            df_concept_top = finlib.Finlib().df_filter(df_jincha_minor)
-            arr.append('df_jincha_minor')
-
-        if 'df_jincha_major' in locals():
-            logging.info(__file__+" "+"filtering df_jincha_major")
-            df_jincha_major = finlib.Finlib().df_filter(df_jincha_major)
-            arr.append('df_jincha_major')
-
-        if 'df_very_strong_up_trend' in locals():
-            logging.info(__file__+" "+"filtering df_very_strong_up_trend")
-            df_concept_top = finlib.Finlib().df_filter(df_very_strong_up_trend)
-            arr.append('df_very_strong_up_trend')
-
-        if 'df_very_strong_down_trend' in locals():
-            logging.info(__file__+" "+"filtering df_very_strong_down_trend")
-            df_concept_top = finlib.Finlib().df_filter(df_very_strong_down_trend)
-            arr.append('df_very_strong_down_trend')
-
-
-
 
 
     ##################################################
