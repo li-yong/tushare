@@ -33,6 +33,7 @@ result = '/home/ryan/DATA/result'
 result_today = result + '/today'
 result_selected = result + '/selected'
 result_wpls = result + '/wei_pan_la_sheng'
+last_trading_day_yyyymmdd = finlib.Finlib().get_last_trading_day()
 
 arr = []
 
@@ -156,7 +157,7 @@ not_selected_dict = {
         # 'df_disclosure_date_notify':{'file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
         # 'df_fib_ag':{'file':result+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
         # 'df_fib_index':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_wei_pan_la_sheng': {'file': result_wpls + '/wei_pan_la_sheng_kcb_20201230_1445.csv', 'column': '', 'kw': '',
+        'df_wei_pan_la_sheng': {'file': result_wpls + '/wei_pan_la_sheng_'+last_trading_day_yyyymmdd+'_1445.csv', 'column': '', 'kw': '',
                                 "term": "SHORT TERM", "price": "NA"},
         'df_hs300_add_candidate': {'file': result + '/' + 'hs300_candidate_list.csv', 'column': 'predict',
                                    'kw': constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
