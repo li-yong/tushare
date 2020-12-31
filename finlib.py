@@ -906,6 +906,7 @@ class Finlib:
     def add_market_to_code(self, df, dot_f=False, tspro_format=False):
 
         # tspro_format : 600000.SH
+        df.code = df.code.astype(str)
 
         dot = ''
 
@@ -914,6 +915,7 @@ class Finlib:
 
         # support the column name in df is 'code'
         for index, row in df.iterrows():
+            # code = str(row['code'])
             code = row['code']
             # print index
             if re.match('^6', code):
@@ -4435,9 +4437,9 @@ class Finlib:
         # output of t_daily_hs300_candiate.py
         # hs300_candidate_list.csv  sz100_candidate_list.csv    szcz_candidate_list.csv   zz100_candidate_list.csv
         csv_f = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
-        if self.is_cached(file_path=csv_f, day=30):
+        if not self.is_cached(file_path=csv_f, day=30):
             logging.error("file not exist, or empty, or not updated in 30days. "+csv_f)
-            exit(0)
+            sys.exit(1)
 
         df = pd.read_csv(csv_f)
         df_keep =  df[df['predict'] == constant.TO_BE_KEPT].reset_index().drop('index', axis=1)

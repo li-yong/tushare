@@ -223,6 +223,8 @@ def wei_pan_la_sheng():
             ['symbol', 'code', 'name', 'trade', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
              'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
+
+        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst)
         logging.info("The top10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
@@ -250,6 +252,8 @@ def wei_pan_la_sheng():
             ['symbol', 'code', 'name', 'trade', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
              'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
+        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst)
+
         logging.info("KCB top 10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
         merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_kcb_'+nowS+'.csv', encoding='UTF-8', index=False)

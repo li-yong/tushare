@@ -20,8 +20,172 @@ from datetime import datetime, timedelta
 from optparse import OptionParser
 import logging
 from tabulate import tabulate
+import constant
 
 global stock_global
+
+pd.set_option("display.max_rows", 9999)
+pd.set_option("display.max_columns", 100)
+pd.set_option('expand_frame_repr', False)
+
+
+result = '/home/ryan/DATA/result'
+result_today = result + '/today'
+result_selected = result + '/selected'
+result_wpls = result + '/wei_pan_la_sheng'
+
+arr = []
+
+selected_dict = {
+    'AG': {
+        'df_very_strong_down_trend_selected': {
+            'file': result_selected + '/ag_junxian_barstyle_very_strong_down_trend.csv', 'column': '', 'kw': '',
+            "term": "SHORT TERM", "price": "NA"},
+        'df_very_strong_up_trend_selected': {'file': result_selected + '/ag_junxian_barstyle_very_strong_up_trend.csv',
+                                             'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_jincha_major_selected': {'file': result_selected + '/ag_junxian_barstyle_jincha_major.csv', 'column': '',
+                                     'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_jincha_minor_selected': {'file': result_selected + '/ag_junxian_barstyle_jincha_minor.csv', 'column': '',
+                                     'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_duotou_pailie_selected': {'file': result_selected + '/ag_junxian_barstyle_duotou_pailie.csv', 'column': '',
+                                      'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_buy_selected': {'file': result_selected + '/ag_junxian_barstyle_yunxian_buy.csv', 'column': '',
+                                    'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_sell_selected': {'file': result_selected + '/ag_junxian_barstyle_yunxian_sell.csv', 'column': '',
+                                     'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_fib_ag_selected': {'file': result_selected + '/key_points_ag_today_selected.csv', 'column': '', 'kw': '',
+                               "term": "SHORT TERM", "price": "NA"},
+        'df_pv_no_filter_ag_selected': {'file': result_selected + '/talib_and_pv_no_db_filter_ag.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_fib_ag_selected': {'file': result_selected + '/ag_fib.csv', 'column': '', 'kw': '', "term": "SHORT TERM",
+                               "price": "NA"},
+        'df_fib_ag_index_selected': {'file': result_selected + '/ag_index_fib.csv', 'column': '', 'kw': '',
+                                     "term": "SHORT TERM", "price": "NA"},
+        'df_moneyflow_top_amt_perc_selected': {'file': result_selected + '/mf_today_top5_large_amount.csv',
+                                               'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'xxxx': {'file': result_selected + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+    },  # end of AG selected
+
+    'US': {
+        'df_jincha_minor_selected_us': {'file': result_selected + '/us_junxian_barstyle_jincha_minor.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_jincha_major_selected_us': {'file': result_selected + '/us_junxian_barstyle_jincha_major.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_very_strong_up_trend_selected_us': {
+            'file': result_selected + '/us_junxian_barstyle_very_strong_up_trend.csv', 'column': '', 'kw': '',
+            "term": "SHORT TERM", "price": "NA"},
+        'df_very_strong_down_trend_selected_us': {
+            'file': result_selected + '/us_junxian_barstyle_very_strong_down_trend.csv', 'column': '', 'kw': '',
+            "term": "SHORT TERM", "price": "NA"},
+        'df_duotou_pailie_selected_us': {'file': result_selected + '/us_junxian_barstyle_duotou_pailie.csv',
+                                         'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_buy_selected_us': {'file': result_selected + '/us_junxian_barstyle_yunxian_buy.csv', 'column': '',
+                                       'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_sell_selected_us': {'file': result_selected + '/us_junxian_barstyle_yunxian_sell.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_fib_us_index_selected': {'file': result_selected + '/us_index_fib.csv', 'column': '', 'kw': '',
+                                     "term": "SHORT TERM", "price": "NA"},
+        'df_fib_us_selected': {'file': result_selected + '/us_fib.csv', 'column': '', 'kw': '', "term": "SHORT TERM",
+                               "price": "NA"},
+        'df_key_points_us_selected': {'file': result_selected + '/key_points_us_today_selected.csv', 'column': '',
+                                      'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_pv_no_filter_us_selected': {'file': result_selected + '/talib_and_pv_no_db_filter_us.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'xxxx': {'file': result_selected + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+
+    },  # end of US select
+    'HK': {
+        'df_key_points_hk_selected': {'file': result_selected + '/key_points_hk_today_selected.csv', 'column': '',
+                                      'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_pv_no_filter_hk_selected': {'file': result_selected + '/talib_and_pv_no_db_filter_hk.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_sell_selected_hk': {'file': result_selected + '/hk_junxian_barstyle_yunxian_sell.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_yunxian_buy_selected_hk': {'file': result_selected + '/hk_junxian_barstyle_yunxian_buy.csv', 'column': '',
+                                       'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_duotou_pailie_selected_hk': {'file': result_selected + '/hk_junxian_barstyle_duotou_pailie.csv',
+                                         'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_jincha_minor_selected_hk': {'file': result_selected + '/hk_junxian_barstyle_jincha_minor.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_jincha_major_selected_hk': {'file': result_selected + '/hk_junxian_barstyle_jincha_major.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_very_strong_up_trend_selected_hk': {
+            'file': result_selected + '/hk_junxian_barstyle_very_strong_up_trend.csv', 'column': '', 'kw': '',
+            "term": "SHORT TERM", "price": "NA"},
+        'df_very_strong_down_trend_selected_hk': {
+            'file': result_selected + '/hk_junxian_barstyle_very_strong_down_trend.csv', 'column': '', 'kw': '',
+            "term": "SHORT TERM", "price": "NA"},
+        'df_key_points_hk_selected': {'file': result_selected + '/key_points_hk_today_selected.csv', 'column': '',
+                                      'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_pv_no_filter_hk_selected': {'file': result_selected + '/talib_and_pv_no_db_filter_hk.csv', 'column': '',
+                                        'kw': '', "term": "SHORT TERM", "price": "NA"},
+        'df_fib_hk_selected': {'file': result_selected + '/hk_fib.csv', 'column': '', 'kw': '', "term": "SHORT TERM",
+                               "price": "NA"},
+        'xxxx': {'file': result_selected + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+    },  # end of HK select
+}
+
+not_selected_dict = {
+    'AG': {
+        # 'df_yunxian_sell':{'file':result+'/ag_junxian_barstyle_yunxian_sell.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_yunxian_buy':{'file':result+'/ag_junxian_barstyle_yunxian_buy.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_duotou_pailie':{'file':result+'/ag_junxian_barstyle_duotou_pailie.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_jincha_minor':{'file':result+'/ag_junxian_barstyle_jincha_minor.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_jincha_major':{'file':result+'/ag_junxian_barstyle_jincha_major.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_very_strong_up_trend':{'file':result+'/ag_junxian_barstyle_very_strong_up_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_very_strong_down_trend':{'file':result+'/ag_junxian_barstyle_very_strong_down_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_pv_no_filter':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_max_daily_increase':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
+        # 'df_max_daily_decrease':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_decrease',"term": "SHORT TERM", "price": "NA" },
+        # 'df_decrease_gap':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_decrease_gap',"term": "SHORT TERM", "price": "NA" },
+        # 'df_increase_gap':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_increase_gap',"term": "SHORT TERM", "price": "NA" },
+        # 'df_low_price_year':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_pvbreak_lv_year',"term": "SHORT TERM", "price": "NA" },
+        # 'df_low_vol_year':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
+        # 'df_max_daily_increase':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
+        # 'df_macd_m':{'file':result+'/macd_selection_M.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_macd_w':{'file':result+'/macd_selection_W.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_macd_d':{'file':result+'/macd_selection_D.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        #
+        #
+        # 'df_kdj_m':{'file':result+'/kdj_selection_M.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_kdj_w':{'file':result+'/kdj_selection_W.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_kdj_d':{'file':result+'/kdj_selection_D.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_hsgt':{'file':result+'/hsgt_top_10_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_moneyflow_top_amt_perc':{'file':result_today+'/mf_today_top5_large_amount.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_support_resist_line_today':{'file':result+"/key_points_" + str(stock_global).lower() + "_today_selected.csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_disclosure_date_notify':{'file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_fib_ag':{'file':result+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        # 'df_fib_index':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
+        'df_wei_pan_la_sheng': {'file': result_wpls + '/wei_pan_la_sheng_kcb_20201230_1445.csv', 'column': '', 'kw': '',
+                                "term": "SHORT TERM", "price": "NA"},
+        'df_hs300_add_candidate': {'file': result + '/' + 'hs300_candidate_list.csv', 'column': 'predict',
+                                   'kw': constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+        'df_hs300_remove_candidate': {'file': result + '/' + 'hs300_candidate_list.csv', 'column': 'predict',
+                                      'kw': constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+        'df_sz100_add_candidate': {'file': result + '/' + 'sz100_candidate_list.csv', 'column': 'predict',
+                                   'kw': constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+        'df_sz100_remove_candidate': {'file': result + '/' + 'sz100_candidate_list.csv', 'column': 'predict',
+                                      'kw': constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+        'df_zz100_add_candidate': {'file': result + '/' + 'zz100_candidate_list.csv', 'column': 'predict',
+                                   'kw': constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+        'df_zz100_remove_candidate': {'file': result + '/' + 'zz100_candidate_list.csv', 'column': 'predict',
+                                      'kw': constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+        'df_szcz_add_candidate': {'file': result + '/' + 'szcz_candidate_list.csv', 'column': 'predict',
+                                  'kw': constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+        'df_szcz_remove_candidate': {'file': result + '/' + 'szcz_candidate_list.csv', 'column': 'predict',
+                                     'kw': constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+
+        # 'xxxx': {'file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+
+    },  # end of AG
+
+    'US': {
+        'xxxx': {'file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+    },  # end of US
+    'HK': {
+        'xxxx': {'file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+    },  # end of HK
+}
 
 
 def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_reason='', insert_buy_record_to_db=False, debug=False):
@@ -448,115 +612,28 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
     logging.info(rst)
 
-    pd.set_option("display.max_rows", 9999)
-    pd.set_option("display.max_columns", 100)
-    pd.set_option('expand_frame_repr', False)
 
-    
-    result =  '/home/ryan/DATA/result'
-    result_today =  result+'/today'
-    result_selected =  result+'/selected'
- 
-  
+    ttdf_hs300_candidate_dict = finlib.Finlib().get_index_candidate('hs300')
+    ttdf__candidate_dict = finlib.Finlib().get_index_candidate('hs300')
 
-    arr = []
+    # mkt_dict = not_selected_dict['AG']
+    mkt_dict = not_selected_dict[stock_global]
 
+    for k in mkt_dict.keys():
+        df = pd.read_csv(mkt_dict[k]['file'])
 
+        _column = mkt_dict[k]['column']
+        _kw = mkt_dict[k]['kw']
+        if not _column == '':
+            df = df[df[_column]==_kw]
+            df = df.reset_index().drop('index', axis=1)
+            # logging.debug("applied filter on df column "+_column+" kw "+_kw)
 
+        exec(k+" = df")
+        logging.info("loaded "+k+" len "+str(df.__len__()))
+        print(finlib.Finlib().pprint(df.head(1)))
 
-    selected_dict = {
-        'AG':{
-        'df_very_strong_down_trend_selected':{'file':result_selected+'/ag_junxian_barstyle_very_strong_down_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_up_trend_selected':{'file':result_selected+'/ag_junxian_barstyle_very_strong_up_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_major_selected':{'file':result_selected+'/ag_junxian_barstyle_jincha_major.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_minor_selected':{'file':result_selected+'/ag_junxian_barstyle_jincha_minor.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_duotou_pailie_selected':{'file':result_selected+'/ag_junxian_barstyle_duotou_pailie.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_buy_selected':{'file':result_selected+'/ag_junxian_barstyle_yunxian_buy.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_sell_selected':{'file':result_selected+'/ag_junxian_barstyle_yunxian_sell.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_ag_selected':{'file':result_selected+'/key_points_ag_today_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_pv_no_filter_ag_selected':{'file':result_selected+'/talib_and_pv_no_db_filter_ag.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_ag_selected':{'file':result_selected+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_ag_index_selected':{'file':result_selected+'/ag_index_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_moneyflow_top_amt_perc_selected':{'file':result_selected+'/mf_today_top5_large_amount.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'xxxx':{'file':result_selected+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        }, #end of AG selected
-
-        'US':{
-        'df_jincha_minor_selected_us':{'file':result_selected+'/us_junxian_barstyle_jincha_minor.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_major_selected_us':{'file':result_selected+'/us_junxian_barstyle_jincha_major.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_up_trend_selected_us':{'file':result_selected+'/us_junxian_barstyle_very_strong_up_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_down_trend_selected_us':{'file':result_selected+'/us_junxian_barstyle_very_strong_down_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_duotou_pailie_selected_us':{'file':result_selected+'/us_junxian_barstyle_duotou_pailie.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_buy_selected_us':{'file':result_selected+'/us_junxian_barstyle_yunxian_buy.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_sell_selected_us':{'file':result_selected+'/us_junxian_barstyle_yunxian_sell.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_us_index_selected':{'file':result_selected+'/us_index_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_us_selected':{'file':result_selected+'/us_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_key_points_us_selected':{'file':result_selected+'/key_points_us_today_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_pv_no_filter_us_selected':{'file':result_selected+'/talib_and_pv_no_db_filter_us.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'xxxx':{'file':result_selected+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-                
-        }, #end of US select
-        'HK':{
-        'df_key_points_hk_selected':{'file':result_selected+'/key_points_hk_today_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_pv_no_filter_hk_selected':{'file':result_selected+'/talib_and_pv_no_db_filter_hk.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_sell_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_yunxian_sell.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_buy_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_yunxian_buy.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_duotou_pailie_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_duotou_pailie.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_minor_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_jincha_minor.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_major_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_jincha_major.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_up_trend_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_very_strong_up_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_down_trend_selected_hk':{'file':result_selected+'/hk_junxian_barstyle_very_strong_down_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_key_points_hk_selected':{'file':result_selected+'/key_points_hk_today_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_pv_no_filter_hk_selected':{'file':result_selected+'/talib_and_pv_no_db_filter_hk.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_hk_selected':{'file':result_selected+'/hk_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'xxxx':{'file':result_selected+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        }, #end of HK select
-    }
-
-
-    not_selected_dict = {
-        'AG':{
-        'df_yunxian_sell':{'file':result+'/ag_junxian_barstyle_yunxian_sell.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_yunxian_buy':{'file':result+'/ag_junxian_barstyle_yunxian_buy.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_duotou_pailie':{'file':result+'/ag_junxian_barstyle_duotou_pailie.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_minor':{'file':result+'/ag_junxian_barstyle_jincha_minor.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_jincha_major':{'file':result+'/ag_junxian_barstyle_jincha_major.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_up_trend':{'file':result+'/ag_junxian_barstyle_very_strong_up_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_very_strong_down_trend':{'file':result+'/ag_junxian_barstyle_very_strong_down_trend.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_pv_no_filter':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_max_daily_increase':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
-        'df_max_daily_decrease':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_decrease',"term": "SHORT TERM", "price": "NA" },
-        'df_decrease_gap':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_decrease_gap',"term": "SHORT TERM", "price": "NA" },
-        'df_increase_gap':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_increase_gap',"term": "SHORT TERM", "price": "NA" },
-        'df_low_price_year':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_pvbreak_lv_year',"term": "SHORT TERM", "price": "NA" },
-        'df_low_vol_year':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
-        'df_max_daily_increase':{'file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
-        'df_macd_m':{'file':result+'/macd_selection_M.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_macd_w':{'file':result+'/macd_selection_W.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_macd_d':{'file':result+'/macd_selection_D.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-
-
-        'df_kdj_m':{'file':result+'/kdj_selection_M.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_kdj_w':{'file':result+'/kdj_selection_W.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_kdj_d':{'file':result+'/kdj_selection_D.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_hsgt':{'file':result+'/hsgt_top_10_selected.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_moneyflow_top_amt_perc':{'file':result_today+'/mf_today_top5_large_amount.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_support_resist_line_today':{'file':result+"/key_points_" + str(stock_global).lower() + "_today_selected.csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_disclosure_date_notify':{'file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_ag':{'file':result+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_fib_index':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'df_disclosure_date_notify':{'file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        'xxxx':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-                
-        }, #end of AG
-
-        'US':{
-        'xxxx':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        }, #end of US
-        'HK':{
-        'xxxx':{'file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-        }, #end of HK
-    }
+        arr.append(k) #k is string
 
 
 
@@ -581,199 +658,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
     ################################################
     # Df properties defination.
     ################################################
-    df_dict = {}
-
-    df_dict["df_reduced_quarter_year"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_fund_2"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_whitehorse"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_freecashflow_price_ratio"] = {"term": "LONG TERM", "price": "CHEAP"}
-    df_dict["df_hen_cow"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_fenghong"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_area_top"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_industry_top"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_hs300"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_sz50"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_zz500"] = {"term": "LONG TERM", "price": "NA"}
-
-    df_dict["df_fund"] = {"term": "MIDDLE TERM", "price": "NA"}
-    df_dict["df_pe_pb_roe_history"] = {"term": "MIDDLE TERM", "price": "CHEAP"}
-    df_dict["df_peg_ps"] = {"term": "MIDDLE TERM", "price": "NA"}  #1q and 4q
-
-    df_dict["df_max_daily_increase"] = {"term": "SHORT TERM", "price": "EXPENSIVE"}
-    df_dict["df_max_daily_decrease"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_pv_break"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_low_price_year"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_low_vol_year"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_high_price_year"] = {"term": "SHORT TERM", "price": "EXPENSIVE"}
-    df_dict["df_high_vol_year"] = {"term": "SHORT TERM", "price": "EXPENSIVE"}
-    df_dict["df_decrease_gap"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_increase_gap"] = {"term": "SHORT TERM", "price": "EXPENSIVE"}
-    df_dict["df_ann"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_pv_db_buy_filter"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_pv_db_sell_filter"] = {"term": "SHORT TERM", "price": "EXPENSIVE"}
-    df_dict["df_pv_no_filter"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_support_resist_line_today"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_disclosure_date_notify"] = {"term": "SHORT TERM", "price": "NA"}
-
-    df_dict["df_macd_m"] = {"term": "LONG TERM", "price": "CHEAP"}  #_m =>Month, is long term for macd.
-    df_dict["df_macd_w"] = {"term": "MIDDLE TERM", "price": "CHEAP"}
-    df_dict["df_macd_d"] = {"term": "SHORT TERM", "price": "CHEAP"}
-
-    df_dict["df_kdj_m"] = {"term": "LONG TERM", "price": "CHEAP"}
-    df_dict["df_kdj_w"] = {"term": "MIDDLE TERM", "price": "CHEAP"}
-    df_dict["df_kdj_d"] = {"term": "SHORT TERM", "price": "CHEAP"}
-
-    df_dict["df_hsgt"] = {"term": "SHORT TERM", "price": "CHEAP"}
-    df_dict["df_fib"] = {"term": "LONG TERM", "price": "CHEAP"}
-    df_dict["df_fib_index"] = {"term": "LONG TERM", "price": "CHEAP"}
-    df_dict["df_concept_top"] = {"term": "MIDDLE TERM", "price": "NA"}
-
-    df_dict["df_sme"] = {"term": "NA", "price": "NA"}
-    df_dict["df_gem"] = {"term": "NA", "price": "NA"}
-    df_dict["df_gem"] = {"term": "NA", "price": "NA"}
-
-    df_dict["df_hkhs_index"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_sp500_index"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_sp400_index"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_nasdqa100_index"] = {"term": "LONG TERM", "price": "NA"}
-    df_dict["df_dow_index"] = {"term": "LONG TERM", "price": "NA"}
-
-    df_dict["df_fib_ag"] = {"term": "NA", "price": "NA"}
-    df_dict["df_fib_ag_index_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_fib_ag_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_fib_us_index_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_key_points_us_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_pv_no_filter_us_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_fib_us_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_key_points_hk_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_pv_no_filter_hk_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_fib_hk_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_pv_no_filter_ag_selected"] = {"term": "NA", "price": "NA"}
-    df_dict["df_key_points_ag_selected"] = {"term": "NA", "price": "NA"}
-
-    df_dict["df_moneyflow_top_amt_perc"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_moneyflow_top_amt_perc_selected"] = {"term": "SHORT TERM", "price": "NA"}
-
-    df_dict["df_yunxian_sell"] = {}
-    df_dict["df_yunxian_buy"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_duotou_pailie"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_minor"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_major"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_up_trend"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_down_trend"] = {"term": "SHORT TERM", "price": "NA"}
-
-    df_dict["df_yunxian_sell_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_yunxian_buy_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_duotou_pailie_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_minor_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_major_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_up_trend_selected"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_down_trend_selected"] = {"term": "SHORT TERM", "price": "NA"}
-
-
-    df_dict["df_yunxian_sell_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_yunxian_buy_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_duotou_pailie_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_minor_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_major_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_up_trend_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_down_trend_selected_hk"] = {"term": "SHORT TERM", "price": "NA"}
-
-
-    df_dict["df_yunxian_sell_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_yunxian_buy_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_duotou_pailie_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_minor_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_jincha_major_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_up_trend_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-    df_dict["df_very_strong_down_trend_selected_us"] = {"term": "SHORT TERM", "price": "NA"}
-
-
-
-
-    #df_dict["df_key_points_ag_selected"] = {"term": "NA", "price": "NA"}
-
-    if (stock_global in ['AG']) and (not full_combination):  #for AG
-
-        df_combined_year = pd.DataFrame()
-        df_reduced_year = pd.DataFrame()
-
-        #gen yearly df
-        if 'df_fund_2' in locals():
-            df_combined_year = df_fund_2
-            df_reduced_year = df_fund_2
-            #arr.remove('df_fund_2')
-        else:
-            logging.info(__file__+" "+"Base df_fund_2 doesn't exists, quit the program.")
-
-        if 'df_whitehorse' in locals() and df_whitehorse.__len__()>0:
-            df_combined_year = pd.concat([df_combined_year, df_whitehorse], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_year = pd.merge(df_reduced_year, df_whitehorse, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_whitehorse, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
-            #arr.remove('df_whitehorse')
-
-        if 'df_hen_cow' in locals() and df_hen_cow.__len__()>0:
-            df_combined_year = pd.concat([df_combined_year, df_hen_cow], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_year = pd.merge(df_reduced_year, df_hen_cow, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_hen_cow, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
-            #arr.remove('df_hen_cow')
-
-        if 'df_fenghong' in locals() and df_fenghong.__len__()>0:
-            df_combined_year = pd.concat([df_combined_year, df_fenghong], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_year = pd.merge(df_reduced_year, df_fenghong, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_fenghong, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
-            #arr.remove('df_fenghong')
-
-        #gen quarterly df
-        df_combined_quarter = pd.DataFrame()
-        df_reduced_quarter = pd.DataFrame()
-
-        if 'df_fund' in locals():
-            df_combined_quarter = df_fund
-            df_reduced_quarter = df_fund
-            #arr.remove('df_fund')
-
-        if 'df_peg_ps' in locals() and df_peg_ps.__len__()>50:
-            df_combined_quarter = pd.concat([df_combined_quarter, df_peg_ps], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_quarter = pd.merge(df_reduced_quarter, df_peg_ps, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_peg_ps, df_combined_quarter " + str(df_combined_quarter.__len__()) + ", df_reduced_quarter " + str(df_reduced_quarter.__len__()))
-            #arr.remove('df_peg_ps')
-
-        if 'df_freecashflow_price_ratio' in locals() and df_freecashflow_price_ratio.__len__()>50:
-            df_combined_quarter = pd.concat([df_combined_quarter, df_freecashflow_price_ratio], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_quarter = pd.merge(df_reduced_quarter, df_freecashflow_price_ratio, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_freecashflow_price_ratio, df_combined_quarter " + str(df_combined_quarter.__len__()) + ", df_reduced_quarter " + str(df_reduced_quarter.__len__()))
-            #arr.remove('df_freecashflow_price_ratio')
-
-        if 'df_industry_top' in locals() and df_industry_top.__len__()>50:
-            df_combined_quarter = pd.concat([df_combined_quarter, df_industry_top], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_quarter = pd.merge(df_reduced_quarter, df_industry_top, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_industry_top, df_combined_quarter " + str(df_combined_quarter.__len__()) + ", df_reduced_quarter " + str(df_reduced_quarter.__len__()))
-            arr.remove('df_industry_top')
-
-        #Treat this is the good candicates, while filter garbage filt the garbage only.
-        # df_reduced_quarter_year = pd.merge(df_combined_quarter, df_combined_year, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-        df_reduced_quarter_year = pd.merge(df_combined_quarter, df_combined_year, on='code', how='inner', suffixes=('', '_x'))
-        df_reduced_quarter_year = df_reduced_quarter_year[['code', 'name']]
-        df_reduced_quarter_year = df_reduced_quarter_year.drop_duplicates().reset_index().drop('index', axis=1)
-
-        #
-        #''' No need to filter every df with df_reduced_quarter_year which are the quarter and yearly good stock
-        for a in arr:
-            logging.info(__file__+" "+"=== Inner Merge  " + a + " with df_reduced_quarter_year ====")
-            #cmd = "pd.merge(" + a + ", df_reduced_quarter_year, on='code',how='inner',suffixes=('','_x')).drop('name_x', axis=1)"
-            cmd = "pd.merge(" + a + ", df_reduced_quarter_year, on='code',how='inner',suffixes=('','_x'))"
-
-            tmp_df = eval(cmd)
-            logging.info(__file__+" "+"length after merge :" + str(tmp_df.__len__()))
-
-            s = a + " = tmp_df"  #df_max_daily_increase = tmp_df
-            exec(s)
-        #'''
-
-        arr.append('df_reduced_quarter_year')
-
-        pass
 
     dict_df = {}
 
@@ -794,9 +678,6 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"empty " + a)
             continue
 
-        if a == 'df_fund_2':
-            pass
-
         if ('date' in tmp.columns):
             tmp = tmp[tmp['date'] >= day_3_before_date_ymd]
 
@@ -813,16 +694,16 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         cheap_cnt = 0
         expensive_cnt = 0
 
-        if df_dict[a]['term'] == "LONG TERM":
+        if mkt_dict[a]['term'] == "LONG TERM": # 'a' is a df name
             long_term += 1
-        elif df_dict[a]['term'] == "MIDDLE TERM":
+        elif mkt_dict[a]['term'] == "MIDDLE TERM":
             middle_term += 1
-        elif df_dict[a]['term'] == "SHORT TERM":
+        elif mkt_dict[a]['term'] == "SHORT TERM":
             short_term += 1
 
-        if df_dict[a]['price'] == "CHEAP":
+        if mkt_dict[a]['price'] == "CHEAP":
             cheap_cnt += 1
-        elif df_dict[a]['price'] == "EXPENSIVE":
+        elif mkt_dict[a]['price'] == "EXPENSIVE":
             expensive_cnt += 1
 
         dict_df[a] = tmp
@@ -860,16 +741,16 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             expensive_cnt = 0
 
             for sub_item in subset:
-                if df_dict[sub_item]['term'] == "LONG TERM":
+                if mkt_dict[sub_item]['term'] == "LONG TERM":
                     long_term += 1
-                elif df_dict[sub_item]['term'] == "MIDDLE TERM":
+                elif mkt_dict[sub_item]['term'] == "MIDDLE TERM":
                     middle_term += 1
-                elif df_dict[sub_item]['term'] == "SHORT TERM":
+                elif mkt_dict[sub_item]['term'] == "SHORT TERM":
                     short_term += 1
 
-                if df_dict[sub_item]['price'] == "CHEAP":
+                if mkt_dict[sub_item]['price'] == "CHEAP":
                     cheap_cnt += 1
-                elif df_dict[sub_item]['price'] == "EXPENSIVE":
+                elif mkt_dict[sub_item]['price'] == "EXPENSIVE":
                     expensive_cnt += 1
 
             comb_df_name = subset[0]
@@ -885,6 +766,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
                 continue
 
             dup_suffix = "_y" + str(subset.__len__() - 2)
+            tmp = finlib.Finlib().add_market_to_code(tmp) #debug
             tmp = eval("pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))")
             tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
@@ -978,7 +860,7 @@ def main():
 
     parser = OptionParser()
 
-    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(A G)|dev(debug)], source is /home/ryan/DATA/DAY_global/xx/")
+    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)], source is /home/ryan/DATA/DAY_global/xx/")
 
     parser.add_option("-f", "--full_combination", action="store_true", default=False, dest="full_combination", help="combine all the df from 2 to 12, Total df 24. Using with -x AG,  Report size could be 6GB ")
 
@@ -988,7 +870,6 @@ def main():
     parser.add_option("--action", dest="action", help="[generate_report|analyze_report] ")
 
     (options, args) = parser.parse_args()
-
     stock_global = options.stock_global
     full_combination = options.full_combination
     debug = options.debug
