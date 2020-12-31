@@ -114,27 +114,9 @@ def wei_pan_la_sheng():
     if not os.path.isdir(b):
         os.mkdir(b)
 
-    # f = b + "/" + "stock_zh_a_scr_report_企业社会责任.csv"
-
-    # f = b+"/"+"stock_em_jgdy_detail_机构调研-详细.csv"
-    # f = b+"/"+"stock_em_gpzy_pledge_ratio_上市公司质押比例.csv"
-    # f = b+"/"+"stock_institute_recommend_机构推荐池-股票综合评级.csv"
-    # f = b+"/"+"stock_em_sy_list_个股商誉明细.csv"
-    # f = b+"/"+"stock_em_sy_jz_list_个股商誉减值明细.csv"
-    # f = b+"/"+""
-
-    # f = b + "/" + "stock_em_jgdy_tj_机构调研-统计.csv"
-    # df = finlib.Finlib().regular_read_akshare_to_stdard_df(data_csv=f, add_market=False)
-    # df['NoticeDate'] = df['NoticeDate'].apply(lambda _d: str(_d).replace('-',''))
-    # df['StartDate'] = df['StartDate'].apply(lambda _d: str(_d).replace('-',''))
-    # df['EndDate'] = df['EndDate'].apply(lambda _d: str(_d).replace('-',''))
-
     nowS = datetime.datetime.now().strftime('%Y%m%d_%H%M')       #'20201117_2003'
 
 
-
-    # 获取 A 股实时行情数据. 单次返回所有 A 股上市公司的实时行情数据
-    # A 股数据是从新浪财经获取的数据, 重复运行本函数会被新浪暂时封 IP, 建议增加时间间隔
     # run at 14:55 (run_time). Find the stocks increase fastly since 14:00 or 14:30 to run_time.
     a_spot_csv = b + "/ag_spot_"+nowS+".csv"
     a_spot_csv_link = b + "/ag_spot_link.csv"
@@ -143,7 +125,17 @@ def wei_pan_la_sheng():
         stock_zh_a_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8")
         logging.info("loading ag spot df from " + a_spot_csv_link)
     else:
+        # 获取 A 股实时行情数据. 单次返回所有 A 股上市公司的实时行情数据
+        # A 股数据是从新浪财经获取的数据, 重复运行本函数会被新浪暂时封 IP, 建议增加时间间隔
         stock_zh_a_spot_df = ak.stock_zh_a_spot().drop_duplicates()
+
+        # 获取科创板实时行情数据. 单次返回所有科创板上市公司的实时行情数据
+        # 从新浪财经获取科创板股票数据
+        stock_zh_kcb_spot_df = ak.stock_zh_kcb_spot().drop_duplicates()
+
+
+        # Merge KCB to AG
+        stock_zh_a_spot_df = pd.concat([stock_zh_a_spot_df, stock_zh_kcb_spot_df]).reset_index().drop('index', axis=1)
         finlib.Finlib().pprint(stock_zh_a_spot_df.head(3))
         stock_zh_a_spot_df.to_csv(a_spot_csv, encoding='UTF-8', index=False)
         logging.info("ag spot saved to " + a_spot_csv)
@@ -160,33 +152,7 @@ def wei_pan_la_sheng():
         os.symlink(a_spot_csv, a_spot_csv_link)
         logging.info(__file__ + ": " + "symbol link created  " + a_spot_csv_link + " -> " + a_spot_csv)
 
-    # 获取科创板实时行情数据. 单次返回所有科创板上市公司的实时行情数据
-    # 从新浪财经获取科创板股票数据
 
-    ag_kcb_csv = b + "/ag_kcb_spot_"+nowS+".csv"
-    ag_kcb_csv_link = b + "/ag_kcb_spot_link.csv"
-    ag_kcb_csv_link_old = b + "/ag_kcb_spot_link_old.csv"
-    if finlib.Finlib().is_cached(file_path=ag_kcb_csv_link, day=1 / 24 / 60 * 1):  # cached in 5 minutes
-        stock_zh_kcb_spot_df = pd.read_csv(ag_kcb_csv_link, encoding="utf-8")
-        logging.info("loading ag kcb df from " + ag_kcb_csv_link)
-
-    else:
-        stock_zh_kcb_spot_df = ak.stock_zh_kcb_spot().drop_duplicates()
-        finlib.Finlib().pprint(stock_zh_kcb_spot_df.head(3))
-        stock_zh_kcb_spot_df.to_csv(ag_kcb_csv, encoding='UTF-8', index=False)
-        logging.info("ag spot saved to " + ag_kcb_csv)
-
-        if os.path.lexists(ag_kcb_csv_link_old):
-            os.unlink(ag_kcb_csv_link_old)
-            logging.info("removed previous old link " + ag_kcb_csv_link_old)
-
-        if os.path.lexists(ag_kcb_csv_link):
-            os.rename(ag_kcb_csv_link, ag_kcb_csv_link_old)
-            logging.info("renamed previous new link to old link, to " + ag_kcb_csv_link_old)
-
-
-        os.symlink(ag_kcb_csv, ag_kcb_csv_link)
-        logging.info(__file__ + ": " + "symbol link created  " + ag_kcb_csv_link + " -> " + ag_kcb_csv)
 
     # find stocks increased at the end of the market time
     # dfmt = stock_zh_a_spot_df[stock_zh_a_spot_df['symbol'] == 'sh600519']
@@ -224,43 +190,12 @@ def wei_pan_la_sheng():
              'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
 
-        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst)
+        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(30)
         logging.info("The top10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
         merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_'+nowS+'.csv', encoding='UTF-8', index=False)
         logging.info("ag wei_pan_la_sheng output list saved to "+b+'/wei_pan_la_sheng_'+nowS+'.csv'  )
-
-### kcb
-    if finlib.Finlib().is_cached(ag_kcb_csv_link_old, day=1):
-        old_df = pd.read_csv(ag_kcb_csv_link_old, encoding="utf-8")
-        old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
-        logging.info(" number of small change df in old " + str(old_df_small_change.__len__()) + ", data at " +
-                     old_df_small_change['ticktime'].iloc[0])
-
-        new_df = pd.read_csv(ag_kcb_csv_link, encoding="utf-8")
-        new_df_large_change = new_df[new_df['changepercent'] > -30]
-        logging.info(" number of large change df in new " + str(new_df_large_change.__len__()) + ", data at " +
-                     new_df_large_change['ticktime'].iloc[0])
-
-        merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='symbol',
-                                right_on='symbol',
-                                suffixes=('_o', '')).drop('name_o', axis=1)
-        merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
-
-        merged_inner_rst = merged_inner[
-            ['symbol', 'code', 'name', 'trade', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
-             'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
-        merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
-        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst)
-
-        logging.info("KCB top 10 Rapid Change Stock List:")
-        finlib.Finlib().pprint(merged_inner_rst.head(10))
-        merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_kcb_'+nowS+'.csv', encoding='UTF-8', index=False)
-        logging.info("ag kcb wei_pan_la_sheng output list saved to "+b+'/wei_pan_la_sheng_'+nowS+'.csv' )
-
-
-
 
 
 def fetch_after_market_close():
