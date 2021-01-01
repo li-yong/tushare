@@ -169,6 +169,7 @@ def main():
         'szcz':'399001.SZ', #深圳成指
         'sz100':'399330.SZ', #深圳100
         'nasdaq100':'nasdaq100', #nasdaq100 source is prepared manually.
+        'spx500':'spx500', #SPX/SP500 source is prepared manually.
 
     }
 
@@ -180,30 +181,37 @@ def main():
     if period_end is None:
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
-    if index_name == 'nasdaq100':
-        #the source files are exported from tv (tradingview.com)
-        f_n100 = '/home/ryan/DATA/pickle/INDEX_US_HK/nasdaq_100_tv.csv'
-        f_nall = '/home/ryan/DATA/pickle/INDEX_US_HK/nasdaq_all_tv.csv'
-        df_n100 = pd.read_csv(f_n100).sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
-        df_nall = pd.read_csv(f_nall).sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
+    if index_name in['nasdaq100','spx500']:
+        #index file is get by t_daily_get_us_index.py from WikiPedia.
+        df_nas100 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
+        df_spx500 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/SNP500.csv')
 
-        df_n100.columns = ['code','total_mv','amount']
-        df_nall.columns = ['code','total_mv','amount']
+        #the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
+        df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_'+datetime.datetime.today().strftime("%Y-%m-%d")+'.csv')
 
-        df_n100['name'] = df_n100['code']
-        df_nall['name'] = df_nall['code']
+        if index_name == 'nasdaq100':
+            df_mkt = df_mkt[df_mkt['Exchange']=='NASDAQ']
+            df_idx = df_nas100
+        elif index_name == 'spx500':
+            df_idx = df_spx500
 
+        df_idx = df_idx.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
+        df_mkt = df_mkt.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
 
+        df_idx.columns = ['code','total_mv','amount']
+        df_mkt.columns = ['code','total_mv','amount']
 
+        df_idx['name'] = df_idx['code']
+        df_mkt['name'] = df_mkt['code']
 
-        df_n100['total_mv_perc'] = df_n100['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_n100['total_mv'], _d) / 100, 4))
-        df_nall['total_mv_perc'] = df_nall['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_nall['total_mv'], _d) / 100, 4))
-        df_n100['amount_perc'] = df_n100['amount'].apply(lambda _d: round(stats.percentileofscore(df_n100['amount'], _d) / 100, 4))
-        df_nall['amount_perc'] = df_nall['amount'].apply(lambda _d: round(stats.percentileofscore(df_nall['amount'], _d) / 100, 4))
+        df_idx['total_mv_perc'] = df_idx['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_idx['total_mv'], _d) / 100, 4))
+        df_mkt['total_mv_perc'] = df_mkt['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_mkt['total_mv'], _d) / 100, 4))
+        df_idx['amount_perc'] = df_idx['amount'].apply(lambda _d: round(stats.percentileofscore(df_idx['amount'], _d) / 100, 4))
+        df_mkt['amount_perc'] = df_mkt['amount'].apply(lambda _d: round(stats.percentileofscore(df_mkt['amount'], _d) / 100, 4))
 
-        a = compare_with_official_index_list(df_my_index=df_nall.head(100), df_offical_index=df_n100, index_name='nasdaq100', period_end=period_end, ndays=ndays)
+        a = compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name, period_end=period_end, ndays=ndays)
 
-        print(1)
+        exit(1)
 
 
 
