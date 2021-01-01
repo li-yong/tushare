@@ -28,7 +28,6 @@ pd.set_option("display.max_rows", 9999)
 pd.set_option("display.max_columns", 100)
 pd.set_option('expand_frame_repr', False)
 
-
 result = '/home/ryan/DATA/result'
 result_today = result + '/today'
 result_selected = result + '/selected'

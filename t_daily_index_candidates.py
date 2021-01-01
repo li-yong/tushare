@@ -15,10 +15,11 @@ import math
 from optparse import OptionParser
 import sys
 import constant
+from scipy import stats
 
 ##############
 
-def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
+def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_end, ndays):
 
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
@@ -35,7 +36,8 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name):
     df_merged = df_merged.drop('total_mv_perc_x', axis=1)
     df_merged = df_merged.drop('amount_perc_x', axis=1)
 
-    df_merged = df_merged.drop('date', axis=1)
+    if 'date' in df_merged.columns:
+        df_merged = df_merged.drop('date', axis=1)
 
     if 'list_date_days_before_x' in df_merged.columns:
         df_merged = df_merged.drop('list_status_x', axis=1)
@@ -134,9 +136,7 @@ def get_hs300_total_share_weighted():
 
     return(df_basic[['code','name','hs300_total_share_weighted']])
 
-
-### MAIN ####
-if __name__ == '__main__':
+def main():
 
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
@@ -168,6 +168,7 @@ if __name__ == '__main__':
         'hs300':'000300.SH',
         'szcz':'399001.SZ', #深圳成指
         'sz100':'399330.SZ', #深圳100
+        'nasdaq100':'nasdaq100', #nasdaq100 source is prepared manually.
 
     }
 
@@ -177,8 +178,32 @@ if __name__ == '__main__':
 
 
     if period_end is None:
-        period_end = finlib.Finlib().get_last_trading_day()
         period_end = datetime.datetime.today().strftime("%Y%m%d")
+
+    if index_name == 'nasdaq100':
+        #the source files are exported from tv (tradingview.com)
+        f_n100 = '/home/ryan/DATA/pickle/INDEX_US_HK/nasdaq_100_tv.csv'
+        f_nall = '/home/ryan/DATA/pickle/INDEX_US_HK/nasdaq_all_tv.csv'
+        df_n100 = pd.read_csv(f_n100).sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
+        df_nall = pd.read_csv(f_nall).sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
+
+        df_n100.columns = ['code','total_mv','amount']
+        df_nall.columns = ['code','total_mv','amount']
+
+        df_n100['name'] = df_n100['code']
+        df_nall['name'] = df_nall['code']
+
+
+
+
+        df_n100['total_mv_perc'] = df_n100['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_n100['total_mv'], _d) / 100, 4))
+        df_nall['total_mv_perc'] = df_nall['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_nall['total_mv'], _d) / 100, 4))
+        df_n100['amount_perc'] = df_n100['amount'].apply(lambda _d: round(stats.percentileofscore(df_n100['amount'], _d) / 100, 4))
+        df_nall['amount_perc'] = df_nall['amount'].apply(lambda _d: round(stats.percentileofscore(df_nall['amount'], _d) / 100, 4))
+
+        a = compare_with_official_index_list(df_my_index=df_nall.head(100), df_offical_index=df_n100, index_name='nasdaq100', period_end=period_end, ndays=ndays)
+
+        print(1)
 
 
 
@@ -249,7 +274,11 @@ if __name__ == '__main__':
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name)
+    compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name, period_end=period_end, ndays=ndays)
 
 
     exit(0)
+
+### MAIN ####
+if __name__ == '__main__':
+    main()
