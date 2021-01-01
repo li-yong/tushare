@@ -24,17 +24,22 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     #replace with name_x if name is None
-    df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
-    df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
-    df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
+    if 'name_x' in df_merged.columns:
+        df_merged.loc[df_merged['name'].isna(), ['name']] = df_merged['name_x']
+        df_merged = df_merged.drop('name_x', axis=1)
+
+    if 'total_mv_perc_x' in df_merged.columns:
+        df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
+        df_merged = df_merged.drop('total_mv_perc_x', axis=1)
+
+    if 'amount_perc_x' in df_merged.columns:
+        df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
+        df_merged = df_merged.drop('amount_perc_x', axis=1)
 
     if  'list_date_days_before_x' in df_merged.columns:
         df_merged.loc[df_merged['list_date_days_before'].isna(), ['list_date_days_before']] = df_merged['list_date_days_before_x']
         df_merged = df_merged.drop('list_date_days_before_x', axis=1)
 
-    df_merged = df_merged.drop('name_x', axis=1)
-    df_merged = df_merged.drop('total_mv_perc_x', axis=1)
-    df_merged = df_merged.drop('amount_perc_x', axis=1)
 
     if 'date' in df_merged.columns:
         df_merged = df_merged.drop('date', axis=1)
@@ -184,10 +189,11 @@ def main():
     if index_name in['nasdaq100','spx500']:
         #index file is get by t_daily_get_us_index.py from WikiPedia.
         df_nas100 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
-        df_spx500 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/SNP500.csv')
+        df_spx500 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
 
         #the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
-        df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_'+datetime.datetime.today().strftime("%Y-%m-%d")+'.csv')
+        df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_latest.csv')
+        # df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_'+datetime.datetime.today().strftime("%Y-%m-%d")+'.csv')
 
         if index_name == 'nasdaq100':
             df_mkt = df_mkt[df_mkt['Exchange']=='NASDAQ']
@@ -195,18 +201,13 @@ def main():
         elif index_name == 'spx500':
             df_idx = df_spx500
 
-        df_idx = df_idx.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
+        # df_idx = df_idx.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
         df_mkt = df_mkt.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
 
-        df_idx.columns = ['code','total_mv','amount']
         df_mkt.columns = ['code','total_mv','amount']
 
-        df_idx['name'] = df_idx['code']
         df_mkt['name'] = df_mkt['code']
-
-        df_idx['total_mv_perc'] = df_idx['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_idx['total_mv'], _d) / 100, 4))
         df_mkt['total_mv_perc'] = df_mkt['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_mkt['total_mv'], _d) / 100, 4))
-        df_idx['amount_perc'] = df_idx['amount'].apply(lambda _d: round(stats.percentileofscore(df_idx['amount'], _d) / 100, 4))
         df_mkt['amount_perc'] = df_mkt['amount'].apply(lambda _d: round(stats.percentileofscore(df_mkt['amount'], _d) / 100, 4))
 
         a = compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name, period_end=period_end, ndays=ndays)

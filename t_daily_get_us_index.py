@@ -26,7 +26,7 @@ output_csv_base = '~/DATA/pickle/INDEX_US_HK'
 #this code is stable as long as the following addresses are not being changed and thier structure not change
 urls = {
     'nasdqa100': 'https://en.wikipedia.org/wiki/NASDAQ-100',
-    'SNP500': 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies',
+    'sp500': 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies',
     'sp400': 'https://en.wikipedia.org/wiki/List_of_S%26P_400_companies',
     'dow': 'https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average',
 }
@@ -62,15 +62,14 @@ for url in urls:
         elif url == 'dow':
             df = df[['Symbol', 'Company']]
             df.columns = ['code', 'name']
-        elif url == 'SNP500':
-            #df = df[['Ticker symbol', 'Security', 'CIK']]
+        elif url == 'sp500':
             df = df[['Symbol', 'Security', 'CIK', 'Founded']]
             df.columns = ['code', 'name', 'cik', 'founded']
-        else:  #SP400
+        elif url == 'sp400':
             df = df[['Ticker symbol', 'Security']]
             df.columns = ['code', 'name']
 
-    df = df.rename(columns={'Symbol': 'code', 'Name': 'name'})
+    # df = df.rename(columns={'Symbol': 'code', 'Name': 'name'})
     df.to_csv(output_csv_base + "/" + url + '.csv', index=False, encoding='utf-8')
     logging.info("saved " + output_csv_base + "/" + url + '.csv')
     indices[url] = df.reset_index(drop=True)

@@ -28,6 +28,7 @@ fi
 ######################################
 #rsync -avz   /home/ryan/tushare_ryan/  haha_data_source:/home/ryan/tushare_ryan/
 ssh haha_data_source "cd ~/tushare_ryan;  git pull"
+rsync -avz /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/pickle/INDEX_US_HK
 #rsync -avz /home/ryan/DATA/result/*.csv ${source_host}:/home/ryan/DATA/result/
 #rsync -avz /home/ryan/DATA/result/*.txt ${source_host}:/home/ryan/DATA/result/
 #rsync -avz /home/ryan/DATA/result/today ${source_host}:/home/ryan/DATA/result/
