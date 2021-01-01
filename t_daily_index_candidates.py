@@ -68,7 +68,7 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     df_both = df_merged[df_merged['predict'] == constant.TO_BE_KEPT]
     df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_both.__len__()) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the "+index_name)
-    logging.info(finlib.Finlib().pprint(df=df_both.head(2)))
+    logging.info(finlib.Finlib().pprint(df=df_both.head(32)))
 
 
     df_offlical_only = df_merged[df_merged['predict'] == constant.TO_BE_REMOVED].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
