@@ -210,6 +210,9 @@ def main():
         df_mkt['total_mv_perc'] = df_mkt['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_mkt['total_mv'], _d) / 100, 4))
         df_mkt['amount_perc'] = df_mkt['amount'].apply(lambda _d: round(stats.percentileofscore(df_mkt['amount'], _d) / 100, 4))
 
+        df_idx = df_idx.merge(df_mkt, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+
+
         a = compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name, period_end=period_end, ndays=ndays)
 
         exit(1)
