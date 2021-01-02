@@ -600,8 +600,7 @@ class Finlib_indicator:
     #  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D
     #  python t_daily_junxian_barstyle.py -x AG --selected
 
-    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,
-                                market='ag', selected=False,
+    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,market='ag', selected=False,
 
                                 ):
 
