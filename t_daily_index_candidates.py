@@ -19,6 +19,53 @@ from scipy import stats
 
 ##############
 
+def tv_source(index_name,idict,period_end, ndays):
+    # index file is get by t_daily_get_us_index.py from WikiPedia.
+    df_nas100 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
+    df_spx500 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
+
+    # the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
+    df_mkt_us = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_latest.csv').sort_values(
+        by='Market Capitalization', ascending=False)
+    df_mkt_cn = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/china_latest.csv',converters={'Ticker': str}).sort_values(
+        by='Market Capitalization', ascending=False)
+
+    if index_name == 'nasdaq100':
+        df_mkt = df_mkt_us[df_mkt_us['Exchange'] == 'NASDAQ']
+        df_idx = df_nas100
+    elif index_name == 'spx500':
+        df_idx = df_spx500
+        df_mkt = df_mkt_us
+    elif index_name == 'cn_sse':
+        df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        df_mkt = df_mkt_cn[df_mkt_cn['Exchange'] == 'SSE']
+    elif index_name == 'cn_szse':
+        df_idx = finlib.Finlib().load_index(index_code=idict['szcz'], index_name='szcz')
+        df_mkt = df_mkt_cn[df_mkt_cn['Exchange'] == 'SZSE']
+    elif index_name == 'cn':
+        df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        df_mkt = df_mkt_cn
+
+    df_mkt = df_mkt[['Ticker', 'Market Capitalization', 'Volume*Price']]
+    df_mkt.columns = ['code', 'total_mv', 'amount']
+
+    if index_name in ['cn_sse', 'cn_szse', 'cn']:
+        df_mkt = finlib.Finlib().add_market_to_code(df_mkt)
+        df_mkt = finlib.Finlib().add_stock_name_to_df(df_mkt)
+    else:
+        df_mkt['name'] = df_mkt['code']
+    df_mkt['total_mv_perc'] = df_mkt['total_mv'].apply(
+        lambda _d: round(stats.percentileofscore(df_mkt['total_mv'], _d) / 100, 4))
+    df_mkt['amount_perc'] = df_mkt['amount'].apply(
+        lambda _d: round(stats.percentileofscore(df_mkt['amount'], _d) / 100, 4))
+
+    df_idx = df_idx.merge(df_mkt, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+
+    compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name,
+                                     period_end=period_end, ndays=ndays)
+
+
+
 def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_end, ndays):
 
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
@@ -49,6 +96,18 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
 
     if 'list_status' in df_merged.columns:
         df_merged = df_merged.drop('list_status', axis=1)
+
+    if 'total_mv_x' in df_merged.columns:
+        df_merged = df_merged.drop('total_mv_x', axis=1)
+
+    if 'amount_x' in df_merged.columns:
+        df_merged = df_merged.drop('amount_x', axis=1)
+
+    if 'founded' in df_merged.columns:
+        df_merged = df_merged.drop('founded', axis=1)
+
+    if 'cik' in df_merged.columns:
+        df_merged = df_merged.drop('cik', axis=1)
 
     df_merged = df_merged.drop('amount', axis=1)
     df_merged = df_merged.drop('total_mv', axis=1)
@@ -154,7 +213,7 @@ def main():
 
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
-    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz]")
+    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-g", "--fetch_index", action="store_true", default=False, dest="fetch_index",  help="fetch index list, saved to DATA/pickle/{index_name}.csv ")
 
 
@@ -186,38 +245,17 @@ def main():
     if period_end is None:
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
-    if index_name in['nasdaq100','spx500']:
-        #index file is get by t_daily_get_us_index.py from WikiPedia.
-        df_nas100 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
-        df_spx500 =pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
-
-        #the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
-        df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_latest.csv')
-        # df_mkt = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_'+datetime.datetime.today().strftime("%Y-%m-%d")+'.csv')
-
-        if index_name == 'nasdaq100':
-            df_mkt = df_mkt[df_mkt['Exchange']=='NASDAQ']
-            df_idx = df_nas100
-        elif index_name == 'spx500':
-            df_idx = df_spx500
-
-        # df_idx = df_idx.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
-        df_mkt = df_mkt.sort_values(by='Market Capitalization', ascending=False)[['Ticker','Market Capitalization','Volume*Price']]
-
-        df_mkt.columns = ['code','total_mv','amount']
-
-        df_mkt['name'] = df_mkt['code']
-        df_mkt['total_mv_perc'] = df_mkt['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_mkt['total_mv'], _d) / 100, 4))
-        df_mkt['amount_perc'] = df_mkt['amount'].apply(lambda _d: round(stats.percentileofscore(df_mkt['amount'], _d) / 100, 4))
-
-        df_idx = df_idx.merge(df_mkt, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+    # Handling with TradingView source for US and AG(by different index_name).
+    if index_name in ['nasdaq100','spx500','cn_sse','cn_szse','cn']:
+        logging.info("using tradingview source to check index "+index_name)
+        tv_source(index_name,idict,period_end, ndays)
+        exit(0)
+    elif index_name not in ['zz100','zz200','zz500','hs300','sz100']:
+        logging.error("unsupported index_name "+index_name)
+        exit(0)
 
 
-        a = compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name, period_end=period_end, ndays=ndays)
-
-        exit(1)
-
-
+    # Following Handling with tushare source for AG
 
     ###############################
     # Calc amt, mktcap, weight among entire stock list.
