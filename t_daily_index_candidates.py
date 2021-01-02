@@ -46,8 +46,13 @@ def tv_source(index_name,idict,period_end, ndays):
         df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
         df_mkt = df_mkt_cn
 
-    df_mkt = df_mkt[['Ticker', 'Market Capitalization', 'Volume*Price']]
-    df_mkt.columns = ['code', 'total_mv', 'amount']
+    df_mkt = df_mkt[['Ticker', 'Market Capitalization', 'Volume*Price','Simple Moving Average (10)','Average Volume (10 day)']]
+    df_mkt.columns = ['code', 'total_mv', 'amount','sma10','vol_avg10']
+
+    #using 10 days average value.  instead of the day's Volume*Price.
+    df_mkt['amount'] = df_mkt['sma10']*df_mkt['vol_avg10']
+    df_mkt = df_mkt.drop('sma10', axis=1)
+    df_mkt = df_mkt.drop('vol_avg10', axis=1)
 
     if index_name in ['cn_sse', 'cn_szse', 'cn']:
         df_mkt = finlib.Finlib().add_market_to_code(df_mkt)
