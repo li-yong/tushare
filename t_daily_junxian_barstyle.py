@@ -186,6 +186,8 @@ def show_result(file, dir, filebase):
     logging.info("\ndf_duotou_pailie")
     logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE).head(5), headers='keys', tablefmt='psql'))
 
+    exit(0)
+
 
 
 
@@ -201,12 +203,6 @@ def main():
 
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
-    parser.add_option("--save_fig", action="store_true", dest="save_fig_f", default=False, help="save the matplot figure ")
-
-    parser.add_option("--show_fig", action="store_true", dest="show_fig_f", default=False, help="display the matplot figure ")
-
-    parser.add_option("--log_price", action="store_true", dest="log_price_f", default=False, help="log for y-axis price ")
-
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)], source is /home/ryan/DATA/DAY_global/xx/")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
@@ -217,10 +213,7 @@ def main():
     (options, args) = parser.parse_args()
     debug_f = options.debug_f
     show_result_f = options.show_result_f
-    show_fig_f = options.show_fig_f
-    save_fig_f = options.save_fig_f
     min_sample_f = options.min_sample_f
-    log_price_f = options.log_price_f
     selected = options.selected
     stock_global = options.stock_global
 

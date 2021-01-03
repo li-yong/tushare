@@ -431,20 +431,25 @@ class Finlib_indicator:
                 rtn_dict['reason'] += constant.VERY_STONG_UP_TREND+'; '
 
             logging.info("check back last 30 bars")
+
+            rtn_dict['duotou_pailie_last_bars'] = 0
+            rtn_dict['last_kongtou_pailie_n_days_before'] = 0
             for i in range(30):
                 if (df_sma_short.iloc[-i] > df_sma_middle.iloc[-i] > df_sma_long.iloc[-i]):
                     logging.info("duo tou lasts " + str(i) + "days")
+                    n_ma_dtpl_days = i
                     rtn_dict['duotou_pailie_last_bars'] = i
-                    rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
-
                     continue
 
                 if (df_sma_short.iloc[-i] < df_sma_middle.iloc[-i] < df_sma_long.iloc[-i]):
                     logging.info("latest kong tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
+                    n_last_ma_dtpl_days = i
                     rtn_dict['last_kongtou_pailie_n_days_before'] = i
-                    rtn_dict['reason'] += constant.MA_LAST_KONG_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
                     rtn_dict['last_kongtou_pailie_date'] = df.iloc[-i]['date']
                     break
+
+            rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE_N_days + "_" + str(rtn_dict['duotou_pailie_last_bars']) + '; '
+            rtn_dict['reason'] += constant.MA_LAST_KONG_TOU_PAI_LIE_N_days + "_" + str(rtn_dict['last_kongtou_pailie_n_days_before']) + '; '
 
         if (ma_short < ma_middle < ma_long):  #more interesting enter when price is up break
             rtn_dict['kongtou_pailie'] = True

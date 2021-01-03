@@ -92,16 +92,20 @@ def define_global(stock_global):
 
     not_selected_dict = {
         "AG": {
-            "df_yunxian_sell": {"op": "S", "file": result + "/ag_junxian_barstyle_yunxian_sell.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            # "df_yunxian_buy": {"op": "B", "file": result + "/ag_junxian_barstyle_yunxian_buy.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_minor": {"op": "B",'api:': 'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY)',"term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_buy": {"op": "B",'file': 'API','api': 'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY)',"term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_sell": {"op": "B",'file': 'API','api': 'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_SELL)',"term": "SHORT TERM", "price": "NA"},
 
-            # "df_duotou_pailie": {"op": "B", "file": result + "/ag_junxian_barstyle_duotou_pailie.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_duotou_pailie": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)',"term": "SHORT TERM", "price": "NA"},
-            "df_jincha_minor": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)',"term": "SHORT TERM", "price": "NA"},
-            "df_jincha_major": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)',"term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_up_trend": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)',"term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_down_trend": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)',"term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)',"term": "SHORT TERM", "price": "NA"},
+            "df_jincha_minor": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)',"term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major": {"op": "B", 'file': 'API','api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)',"term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_up_trend": {"op": "B", 'file': 'API','api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)',"term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_down_trend": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)',"term": "SHORT TERM", "price": "NA"},
+
+            "df_BAR_GUANGTOU_GUANGTOU": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_TOU)',"term": "SHORT TERM", "price": "NA"},
+            "df_BAR_GUANGTOU_GUANGJIAO": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_JIAO)',"term": "SHORT TERM", "price": "NA"},
+            "df_SMA_CROSS_OVER": {"op": "B",'file': 'API', 'api':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SMA_CROSS_OVER)',"term": "SHORT TERM", "price": "NA"},
+
+
             # 'df_pv_no_filter':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             "df_max_daily_increase": {"op": "B", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_increase", "term": "SHORT TERM", "price": "NA"},
             "df_max_daily_decrease": {"op": "S", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_decrease", "term": "SHORT TERM", "price": "NA"},
@@ -132,10 +136,6 @@ def define_global(stock_global):
             "df_zz100_remove_candidate": {"op": "S", "file": result + "/" + "zz100_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
             "df_szcz_add_candidate": {"op": "B", "file": result + "/" + "szcz_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
             "df_szcz_remove_candidate": {"op": "S", "file": result + "/" + "szcz_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
-            "df_SMA_CROSS_OVER": {"op": "B", "file": "API", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            # 'df_BAR_GUANG_TOU':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
-            # 'df_BAR_GUANG_JIAO':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
-            "df_BAR_GUANGTOU_GUANGJIAO": {"op": "B", "file": "API", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
         "US": {
@@ -605,7 +605,14 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             logging.info("skip " + k + " as its operation " + mkt_dict[k]["op"] + " is not the requested " + operation)
             continue
 
-        if mkt_dict[k]["file"] == "API":
+        if mkt_dict[k]["file"] == "API" and 'api' in  mkt_dict[k].keys():
+            tmp_df = eval(mkt_dict[k]['api'])
+            cmd_assign=k+" = tmp_df"
+            exec(cmd_assign)
+            arr.append(k)
+            continue
+
+        if mkt_dict[k]["file"] == "CODE":
             logging.info("Append " + k)
             arr.append(k)
             continue
@@ -757,7 +764,9 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
                 continue
 
             dup_suffix = "_y" + str(subset.__len__() - 2)
-            tmp = finlib.Finlib().add_market_to_code(tmp)  # debug
+            logging.info("\n\ntmp is "+str(tmp.columns))
+            logging.info(finlib.Finlib().pprint(tmp.head(2)))
+            # tmp = finlib.Finlib().add_market_to_code(tmp)  # debug
             tmp = eval("pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))")
             tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
