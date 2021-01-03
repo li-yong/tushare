@@ -607,6 +607,15 @@ class Finlib_indicator:
 
     def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,market='ag', selected=False):
 
+        # if query == constant.HS300_INDEX_BUY_CANDIDATE:
+        #     print('debug stop')
+
+        #column name for the query, default is 'reason'. The index candidate csv is 'predict'
+        column_name = 'reason'
+
+        #how many top records be returned.  The index candidate is about 10% of the index capacity.
+        top_n = 0
+
         if selected:
             dir = "/home/ryan/DATA/result/selected"
         else:
@@ -681,13 +690,79 @@ class Finlib_indicator:
                        ]:
             source_csv = dir+'/'+market+'_junxian_barstyle.csv'
 
+        elif query in [constant.HS300_INDEX_BUY_CANDIDATE,
+                       ]:
+            source_csv = dir+'/hs300_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_ADDED
+
+        elif query in [constant.HS300_INDEX_SELL_CANDIDATE,
+                       ]:
+            source_csv = dir+'/hs300_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_REMOVED
+
+
+
+        elif query in [constant.SZ100_INDEX_BUY_CANDIDATE,
+                       ]:
+            source_csv = dir+'/sz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_ADDED
+
+        elif query in [constant.SZ100_INDEX_SELL_CANDIDATE,
+                       ]:
+            source_csv = dir+'/sz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_REMOVED
+
+
+        elif query in [constant.ZZ100_INDEX_BUY_CANDIDATE,
+                       ]:
+            source_csv = dir+'/zz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_ADDED
+
+        elif query in [constant.ZZ100_INDEX_SELL_CANDIDATE,
+                       ]:
+            source_csv = dir+'/zz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_REMOVED
+
+
+        elif query in [constant.SZCZ_INDEX_BUY_CANDIDATE,
+                       ]:
+            source_csv = dir+'/szcz_candidate_list.csv'
+            column_name='predict'
+            top_n = 32
+            query = constant.TO_BE_ADDED
+
+        elif query in [constant.SZCZ_INDEX_SELL_CANDIDATE,
+                       ]:
+            source_csv = dir+'/szcz_candidate_list.csv'
+            column_name='predict'
+            top_n = 32
+            query = constant.TO_BE_REMOVED
+
+
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)
 
 
         df = pd.read_csv(source_csv, encoding="utf-8")
-        df_match = df[df['reason'].str.contains(query)].reset_index()
+
+        df_match = df[df[column_name].str.contains(query)].reset_index()
+
+        if top_n > 0:
+            df_match = df_match.head(top_n)
+
 
         if 'index' in df_match.columns:
             df_match = df_match.drop('index', axis=1)

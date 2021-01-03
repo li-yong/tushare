@@ -4,8 +4,19 @@ for i in {46..1}; do X=`date -d "-$i day" '+%Y-%m-%d'`; python t_daily_update_cs
 for i in `ls`; do A="$(cut -d'.' -f1 <<< $i)"; echo $A.csv; mv $i $A.csv;   done
 
 yapf -r -i   --style='{based_on_style: pep8, column_limit:2000, SPLIT_PENALTY_AFTER_OPENING_BRACKET}' *.py
-
+black -l 2000 t_summary_new_dev.py
 
 #remove the last line
  for i in `ls`; do sed -i '$ d' $i; done
+
+
+
+
+t_summary_new_dev.py
+
+Problem: too late to buy, or the price is already at the highest when the stock be spotted.
+
+Solution: 1. combine a ma cross df       2. candidate expand scope (top 50 etc)
+
+df_hs300_add_candidate, df_jincha_minor
 
