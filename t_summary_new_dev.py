@@ -45,194 +45,104 @@ def define_global(stock_global):
 
     selected_dict = {
         "AG": {
-            "df_very_strong_down_trend_selected": {'op': 'B',
-                                                   'file': result_selected + "/ag_junxian_barstyle_very_strong_down_trend.csv",
-                                                   "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_up_trend_selected": {'op': 'B',
-                                                 'file': result_selected + "/ag_junxian_barstyle_very_strong_up_trend.csv",
-                                                 "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_major_selected": {'op': 'B', 'file': result_selected + "/ag_junxian_barstyle_jincha_major.csv",
-                                         "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_minor_selected": {'op': 'B', 'file': result_selected + "/ag_junxian_barstyle_jincha_minor.csv",
-                                         "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_duotou_pailie_selected": {'op': 'B', 'file': result_selected + "/ag_junxian_barstyle_duotou_pailie.csv",
-                                          "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_buy_selected": {'op': 'B', 'file': result_selected + "/ag_junxian_barstyle_yunxian_buy.csv",
-                                        "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_sell_selected": {'op': 'S', 'file': result_selected + "/ag_junxian_barstyle_yunxian_sell.csv",
-                                         "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_fib_ag_selected": {'op': 'B', 'file': result_selected + "/key_points_ag_today_selected.csv",
-                                   "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_pv_no_filter_ag_selected": {'op': 'B', 'file': result_selected + "/talib_and_pv_no_db_filter_ag.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_fib_ag_selected": {'op': 'B', 'file': result_selected + "/ag_fib.csv", "column": "", "kw": "",
-                                   "term": "SHORT TERM", "price": "NA"},
-            "df_fib_ag_index_selected": {'op': 'B', 'file': result_selected + "/ag_index_fib.csv", "column": "",
-                                         "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_moneyflow_top_amt_perc_selected": {'op': 'B',
-                                                   'file': result_selected + "/mf_today_top5_large_amount.csv",
-                                                   "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "xxxx": {'op': 'B', 'file': result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM",
-                     "price": "NA"},
+            "df_very_strong_down_trend_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_very_strong_down_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_up_trend_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_very_strong_up_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_jincha_major.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_minor_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_jincha_minor.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_duotou_pailie.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_buy_selected": {"op": "B", "file": result_selected + "/ag_junxian_barstyle_yunxian_buy.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_sell_selected": {"op": "S", "file": result_selected + "/ag_junxian_barstyle_yunxian_sell.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_ag_selected": {"op": "B", "file": result_selected + "/key_points_ag_today_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_pv_no_filter_ag_selected": {"op": "B", "file": result_selected + "/talib_and_pv_no_db_filter_ag.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_ag_selected": {"op": "B", "file": result_selected + "/ag_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_ag_index_selected": {"op": "B", "file": result_selected + "/ag_index_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_moneyflow_top_amt_perc_selected": {"op": "B", "file": result_selected + "/mf_today_top5_large_amount.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "xxxx": {"op": "B", "file": result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of AG selected
         "US": {
-            "df_jincha_minor_selected_us": {'op': 'B',
-                                            'file': result_selected + "/us_junxian_barstyle_jincha_minor.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_major_selected_us": {'op': 'B',
-                                            'file': result_selected + "/us_junxian_barstyle_jincha_major.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_up_trend_selected_us": {'op': 'B',
-                                                    'file': result_selected + "/us_junxian_barstyle_very_strong_up_trend.csv",
-                                                    "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_down_trend_selected_us": {'op': 'B',
-                                                      'file': result_selected + "/us_junxian_barstyle_very_strong_down_trend.csv",
-                                                      "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_duotou_pailie_selected_us": {'op': 'B',
-                                             'file': result_selected + "/us_junxian_barstyle_duotou_pailie.csv",
-                                             "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_buy_selected_us": {'op': 'B', 'file': result_selected + "/us_junxian_barstyle_yunxian_buy.csv",
-                                           "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_sell_selected_us": {'op': 'S',
-                                            'file': result_selected + "/us_junxian_barstyle_yunxian_sell.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_fib_us_index_selected": {'op': 'B', 'file': result_selected + "/us_index_fib.csv", "column": "",
-                                         "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_fib_us_selected": {'op': 'B', 'file': result_selected + "/us_fib.csv", "column": "", "kw": "",
-                                   "term": "SHORT TERM", "price": "NA"},
-            "df_key_points_us_selected": {'op': 'B', 'file': result_selected + "/key_points_us_today_selected.csv",
-                                          "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_pv_no_filter_us_selected": {'op': 'B', 'file': result_selected + "/talib_and_pv_no_db_filter_us.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "xxxx": {'op': 'B', 'file': result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM",
-                     "price": "NA"},
+            "df_jincha_minor_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_jincha_minor.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_jincha_major.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_up_trend_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_very_strong_up_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_down_trend_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_very_strong_down_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_duotou_pailie.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_buy_selected_us": {"op": "B", "file": result_selected + "/us_junxian_barstyle_yunxian_buy.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_sell_selected_us": {"op": "S", "file": result_selected + "/us_junxian_barstyle_yunxian_sell.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_us_index_selected": {"op": "B", "file": result_selected + "/us_index_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_us_selected": {"op": "B", "file": result_selected + "/us_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_key_points_us_selected": {"op": "B", "file": result_selected + "/key_points_us_today_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_pv_no_filter_us_selected": {"op": "B", "file": result_selected + "/talib_and_pv_no_db_filter_us.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "xxxx": {"op": "B", "file": result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of US select
         "HK": {
-            "df_key_points_hk_selected": {'op': 'B', 'file': result_selected + "/key_points_hk_today_selected.csv",
-                                          "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_pv_no_filter_hk_selected": {'op': 'B', 'file': result_selected + "/talib_and_pv_no_db_filter_hk.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_sell_selected_hk": {'op': 'B',
-                                            'file': result_selected + "/hk_junxian_barstyle_yunxian_sell.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_yunxian_buy_selected_hk": {'op': 'B', 'file': result_selected + "/hk_junxian_barstyle_yunxian_buy.csv",
-                                           "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_duotou_pailie_selected_hk": {'op': 'B',
-                                             'file': result_selected + "/hk_junxian_barstyle_duotou_pailie.csv",
-                                             "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_minor_selected_hk": {'op': 'B',
-                                            'file': result_selected + "/hk_junxian_barstyle_jincha_minor.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_major_selected_hk": {'op': 'B',
-                                            'file': result_selected + "/hk_junxian_barstyle_jincha_major.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_up_trend_selected_hk": {'op': 'B',
-                                                    'file': result_selected + "/hk_junxian_barstyle_very_strong_up_trend.csv",
-                                                    "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_down_trend_selected_hk": {'op': 'B',
-                                                      'file': result_selected + "/hk_junxian_barstyle_very_strong_down_trend.csv",
-                                                      "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_key_points_hk_selected": {'op': 'B', 'file': result_selected + "/key_points_hk_today_selected.csv",
-                                          "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_pv_no_filter_hk_selected": {'op': 'B', 'file': result_selected + "/talib_and_pv_no_db_filter_hk.csv",
-                                            "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_fib_hk_selected": {'op': 'B', 'file': result_selected + "/hk_fib.csv", "column": "", "kw": "",
-                                   "term": "SHORT TERM", "price": "NA"},
-            "xxxx": {'op': 'B', 'file': result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM",
-                     "price": "NA"},
+            "df_key_points_hk_selected": {"op": "B", "file": result_selected + "/key_points_hk_today_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_pv_no_filter_hk_selected": {"op": "B", "file": result_selected + "/talib_and_pv_no_db_filter_hk.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_sell_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_yunxian_sell.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_buy_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_yunxian_buy.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_duotou_pailie.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_minor_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_jincha_minor.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_jincha_major.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_up_trend_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_very_strong_up_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_down_trend_selected_hk": {"op": "B", "file": result_selected + "/hk_junxian_barstyle_very_strong_down_trend.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_key_points_hk_selected": {"op": "B", "file": result_selected + "/key_points_hk_today_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_pv_no_filter_hk_selected": {"op": "B", "file": result_selected + "/talib_and_pv_no_db_filter_hk.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_fib_hk_selected": {"op": "B", "file": result_selected + "/hk_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "xxxx": {"op": "B", "file": result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of HK select
     }
 
     not_selected_dict = {
         "AG": {
-            'df_yunxian_sell': {'op': 'S', 'file': result + '/ag_junxian_barstyle_yunxian_sell.csv', 'column': '',
-                                'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_yunxian_buy': {'op': 'B', 'file': result + '/ag_junxian_barstyle_yunxian_buy.csv', 'column': '',
-                               'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_duotou_pailie': {'op': 'B', 'file': result + '/ag_junxian_barstyle_duotou_pailie.csv', 'column': '',
-                                 'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_jincha_minor': {'op': 'B', 'file': result + '/ag_junxian_barstyle_jincha_minor.csv', 'column': '',
-                                'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_jincha_major': {'op': 'B', 'file': result + '/ag_junxian_barstyle_jincha_major.csv', 'column': '',
-                                'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_very_strong_up_trend': {'op': 'B', 'file': result + '/ag_junxian_barstyle_very_strong_up_trend.csv',
-                                        'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_very_strong_down_trend': {'op': 'S', 'file': result + '/ag_junxian_barstyle_very_strong_down_trend.csv',
-                                          'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+            "df_yunxian_sell": {"op": "S", "file": result + "/ag_junxian_barstyle_yunxian_sell.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            # "df_yunxian_buy": {"op": "B", "file": result + "/ag_junxian_barstyle_yunxian_buy.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_minor": {"op": "B",'api:': 'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY)',"term": "SHORT TERM", "price": "NA"},
+
+            # "df_duotou_pailie": {"op": "B", "file": result + "/ag_junxian_barstyle_duotou_pailie.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)',"term": "SHORT TERM", "price": "NA"},
+            "df_jincha_minor": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)',"term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)',"term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_up_trend": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)',"term": "SHORT TERM", "price": "NA"},
+            "df_very_strong_down_trend": {"op": "B", 'api:':'finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)',"term": "SHORT TERM", "price": "NA"},
             # 'df_pv_no_filter':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-            'df_max_daily_increase': {'op': 'B',
-                                      'file': result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",
-                                      'column': 'op_rsn', 'kw': '_max_daily_increase', "term": "SHORT TERM",
-                                      "price": "NA"},
-            'df_max_daily_decrease': {'op': 'S',
-                                      'file': result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",
-                                      'column': 'op_rsn', 'kw': '_max_daily_decrease', "term": "SHORT TERM",
-                                      "price": "NA"},
+            "df_max_daily_increase": {"op": "B", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_increase", "term": "SHORT TERM", "price": "NA"},
+            "df_max_daily_decrease": {"op": "S", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_decrease", "term": "SHORT TERM", "price": "NA"},
             # 'df_decrease_gap':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_decrease_gap',"term": "SHORT TERM", "price": "NA" },
             # 'df_increase_gap':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_increase_gap',"term": "SHORT TERM", "price": "NA" },
             # 'df_low_price_year':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_pvbreak_lv_year',"term": "SHORT TERM", "price": "NA" },
             # 'df_low_vol_year':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
-            'df_macd_m': {'op': 'B', 'file': result + '/macd_selection_M.csv', 'column': 'reason', 'kw': constant.MACD_CROSS_OVER_0,
-                          "term": "SHORT TERM", "price": "NA"},
-            'df_macd_w': {'op': 'B', 'file': result + '/macd_selection_W.csv', 'column': 'reason', 'kw': constant.SIG_CROSS_OVER_0,
-                          "term": "SHORT TERM", "price": "NA"},
-            'df_macd_d': {'op': 'B', 'file': result + '/macd_selection_D.csv', 'column': 'reason', 'kw': constant.MACD_DIF_MAIN_OVER_0_N_DAYS,
-                          "term": "SHORT TERM", "price": "NA"},
+            # "df_macd_m": {"op": "B", "file": result + "/macd_selection_M.csv", "column": "reason", "kw": constant.MACD_CROSS_OVER_0, "term": "SHORT TERM", "price": "NA"},
+            # "df_macd_w": {"op": "B", "file": result + "/macd_selection_W.csv", "column": "reason", "kw": constant.SIG_CROSS_OVER_0, "term": "SHORT TERM", "price": "NA"},
+            # "df_macd_d": {"op": "B", "file": result + "/macd_selection_D.csv", "column": "reason", "kw": constant.MACD_DIF_MAIN_OVER_0_N_DAYS, "term": "SHORT TERM", "price": "NA"},
             #
             #
-            'df_kdj_m': {'op': 'B', 'file': result + '/kdj_selection_M.csv', 'column': '', 'kw': '',
-                         "term": "SHORT TERM", "price": "NA"},
-            'df_kdj_w': {'op': 'B', 'file': result + '/kdj_selection_W.csv', 'column': '', 'kw': '',
-                         "term": "SHORT TERM", "price": "NA"},
-            'df_kdj_d': {'op': 'B', 'file': result + '/kdj_selection_D.csv', 'column': '', 'kw': '',
-                         "term": "SHORT TERM", "price": "NA"},
-            'df_hsgt': {'op': 'B', 'file': result + '/hsgt_top_10_selected.csv', 'column': '', 'kw': '',
-                        "term": "SHORT TERM", "price": "NA"},
-            'df_moneyflow_top_amt_perc': {'op': 'B', 'file': result_today + '/mf_today_top5_large_amount.csv',
-                                          'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+            # "df_kdj_m": {"op": "B", "file": result + "/kdj_selection_M.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            # "df_kdj_w": {"op": "B", "file": result + "/kdj_selection_W.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            # "df_kdj_d": {"op": "B", "file": result + "/kdj_selection_D.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_hsgt": {"op": "B", "file": result + "/hsgt_top_10_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_moneyflow_top_amt_perc": {"op": "B", "file": result_today + "/mf_today_top5_large_amount.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # 'df_support_resist_line_today':{'op':'B','file':result+"/key_points_" + str(stock_global).lower() + "_today_selected.csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_disclosure_date_notify':{'op':'B','file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_fib_ag':{'op':'B','file':result+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_fib_index':{'op':'B','file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-            "df_wei_pan_la_sheng": {'op': 'B',
-                                    'file': result_wpls + "/wei_pan_la_sheng_" + last_trading_day_yyyymmdd + "_1445.csv",
-                                    "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
-            "df_hs300_add_candidate": {'op': 'B', 'file': result + "/" + "hs300_candidate_list.csv",
-                                       "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM",
-                                       "price": "NA"},
-            "df_hs300_remove_candidate": {'op': 'S', 'file': result + "/" + "hs300_candidate_list.csv",
-                                          "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM",
-                                          "price": "NA"},
-            "df_sz100_add_candidate": {'op': 'B', 'file': result + "/" + "sz100_candidate_list.csv",
-                                       "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM",
-                                       "price": "NA"},
-            "df_sz100_remove_candidate": {'op': 'S', 'file': result + "/" + "sz100_candidate_list.csv",
-                                          "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM",
-                                          "price": "NA"},
-            "df_zz100_add_candidate": {'op': 'B', 'file': result + "/" + "zz100_candidate_list.csv",
-                                       "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM",
-                                       "price": "NA"},
-            "df_zz100_remove_candidate": {'op': 'S', 'file': result + "/" + "zz100_candidate_list.csv",
-                                          "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM",
-                                          "price": "NA"},
-            "df_szcz_add_candidate": {'op': 'B', 'file': result + "/" + "szcz_candidate_list.csv", "column": "predict",
-                                      "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
-            "df_szcz_remove_candidate": {'op': 'S', 'file': result + "/" + "szcz_candidate_list.csv",
-                                         "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM",
-                                         "price": "NA"},
-            'df_SMA_CROSS_OVER':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+            "df_wei_pan_la_sheng": {"op": "B", "file": result_wpls + "/wei_pan_la_sheng_" + last_trading_day_yyyymmdd + "_1445.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_hs300_add_candidate": {"op": "B", "file": result + "/" + "hs300_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+            "df_hs300_remove_candidate": {"op": "S", "file": result + "/" + "hs300_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+            "df_sz100_add_candidate": {"op": "B", "file": result + "/" + "sz100_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+            "df_sz100_remove_candidate": {"op": "S", "file": result + "/" + "sz100_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+            "df_zz100_add_candidate": {"op": "B", "file": result + "/" + "zz100_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+            "df_zz100_remove_candidate": {"op": "S", "file": result + "/" + "zz100_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+            "df_szcz_add_candidate": {"op": "B", "file": result + "/" + "szcz_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_ADDED, "term": "SHORT TERM", "price": "NA"},
+            "df_szcz_remove_candidate": {"op": "S", "file": result + "/" + "szcz_candidate_list.csv", "column": "predict", "kw": constant.TO_BE_REMOVED, "term": "SHORT TERM", "price": "NA"},
+            "df_SMA_CROSS_OVER": {"op": "B", "file": "API", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # 'df_BAR_GUANG_TOU':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
             # 'df_BAR_GUANG_JIAO':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
-            'df_BAR_GUANGTOU_GUANGJIAO':{'op':'B','file': 'API', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
+            "df_BAR_GUANGTOU_GUANGJIAO": {"op": "B", "file": "API", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
         "US": {
-            "xxxx": {'op': 'S', 'file': result + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM",
-                     "price": "NA"},
+            "xxxx": {"op": "S", "file": result + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of US
         "HK": {
-            "xxxx": {'op': 'S', 'file': result + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM",
-                     "price": "NA"},
+            "xxxx": {"op": "S", "file": result + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of HK
     }
 
@@ -649,7 +559,7 @@ def combin_filter(df, post_combine=False, debug=False):
     return df
 
 
-def generate_result_csv(full_combination=False, select=True, operation='B',debug=False):
+def generate_result_csv(full_combination=False, select=True, operation="B", debug=False):
     today_d = datetime.today().strftime("%d")
 
     exam_date = finlib.Finlib().get_last_trading_day()
@@ -673,27 +583,35 @@ def generate_result_csv(full_combination=False, select=True, operation='B',debug
     #########################
     # df that get from API
     #########################
-    df_SMA_CROSS_OVER =  finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA_CROSS_OVER, period='D', fastMa=21, slowMa=55,market='ag',)
-    df_BAR_GUANG_TOU =  finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU, period='D',market='ag')
-    df_BAR_GUANG_JIAO =  finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_JIAO, period='D',market='ag')
+    df_SMA_CROSS_OVER = finlib_indicator.Finlib_indicator().get_indicator_critirial(
+        query=constant.SMA_CROSS_OVER,
+        period="D",
+        fastMa=21,
+        slowMa=55,
+        market="ag",
+    )
+    df_BAR_GUANG_TOU = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU, period="D", market="ag")
+    df_BAR_GUANG_JIAO = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_JIAO, period="D", market="ag")
 
-    df_BAR_GUANGTOU_GUANGJIAO = df_BAR_GUANG_TOU.merge(df_BAR_GUANG_JIAO, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+    df_BAR_GUANGTOU_GUANGJIAO = df_BAR_GUANG_TOU.merge(df_BAR_GUANG_JIAO, on="code", how="inner", suffixes=("", "_x")).drop("name_x", axis=1)
     #########################
     # df that get from Files
     #########################
     for k in mkt_dict.keys():
+        # if k == 'df_hsgt':
+        #     print("debug stop")
 
-        if mkt_dict[k]['op'] != operation:
-            logging.info("skip "+k+" as its operation "+mkt_dict[k]['op']+" is not the requested "+operation)
+        if mkt_dict[k]["op"] != operation:
+            logging.info("skip " + k + " as its operation " + mkt_dict[k]["op"] + " is not the requested " + operation)
             continue
 
-        if mkt_dict[k]['file'] == 'API':
-            logging.info("Append "+k)
+        if mkt_dict[k]["file"] == "API":
+            logging.info("Append " + k)
             arr.append(k)
             continue
 
-        if not finlib.Finlib().is_cached(mkt_dict[k]["file"], 999):
-            logging.warning("file not exist or empty "+mkt_dict[k]["file"])
+        if not os.path.exists(mkt_dict[k]["file"]):
+            logging.warning("file not exist or empty " + mkt_dict[k]["file"])
             continue
 
         df = pd.read_csv(mkt_dict[k]["file"])
@@ -752,7 +670,7 @@ def generate_result_csv(full_combination=False, select=True, operation='B',debug
             continue
 
         if "date" in tmp.columns:
-            tmp = tmp[tmp["date"].astype('str') >= day_3_before_date_ymd]
+            tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
 
         logging.info(__file__ + " " + "sorting " + a)
         tmp = my_sort(tmp, debug=debug)
@@ -844,7 +762,7 @@ def generate_result_csv(full_combination=False, select=True, operation='B',debug
             tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
             if "date" in tmp.columns:
-                tmp = tmp[tmp["date"].astype('str') >= day_3_before_date_ymd]
+                tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
             tmp = my_sort(tmp, debug=debug)
 
             comb_df_name = comb_df_name + "_" + subset[subset.__len__() - 1]
@@ -933,7 +851,7 @@ def main():
     parser.add_option("-f", "--full_combination", action="store_true", default=False, dest="full_combination", help="combine all the df from 2 to 12, Total df 24. Using with -x AG,  Report size could be 6GB ")
 
     parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="skip refine_df sub, ")
-    parser.add_option("--operation", dest="operation", default='B', help="[B|S] check which operation, Buy or Sell")
+    parser.add_option("--operation", dest="operation", default="B", help="[B|S] check which operation, Buy or Sell")
     parser.add_option("--select", action="store_true", default=False, dest="select", help="Analyze selected stocks only")
 
     parser.add_option("--action", dest="action", help="[generate_report|analyze_report] ")

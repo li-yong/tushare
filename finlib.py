@@ -4203,6 +4203,17 @@ class Finlib:
 
         return (rtn)
 
+    #keep columns in the col_name_list_kept
+    def keep_column(self, df, col_name_list_kept):
+        cols = df.columns.tolist()
+
+        for i in col_name_list_kept:
+            if i not in cols:
+                col_name_list_kept.remove(i)
+
+        return(df[col_name_list_kept])
+
+    #adjust columns order in a df
     def adjust_column(self, df, col_name_list):
         # adjust column sequence here
         #col_name_list = ['code', 'trade_date']

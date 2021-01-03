@@ -5,7 +5,7 @@ import os
 import logging
 from optparse import OptionParser
 import tabulate
-
+import constant
 
 
 def verify_a_stock(df):
@@ -168,53 +168,24 @@ def verify_a_stock(df):
 
 
 def show_result(file, dir, filebase):
-    #file = "/home/ryan/DATA/result/selected/ag_junxian_barstyle.csv"
-    #file = "/home/ryan/DATA/result/ag_junxian_barstyle.csv"
-
-    df = pd.read_csv(file,converters={'code': str}, encoding="utf-8")
-
-    col = ['code','name', 'date', 'close', 'duotou_pailie', 'jincha_minor','jincha_major']
-    col.extend(['yunxian_buy','yunxian_sell','very_strong_up_trend','very_strong_down_trend'])
-
-    df_1 = df[col]
-
-    df_yunxian_sell = df_1[df_1['yunxian_sell']==True].reset_index().drop('index', axis=1)
-    df_yunxian_sell.to_csv(dir+"/"+filebase+"_yunxian_sell.csv", encoding='UTF-8', index=False)
-
-    df_yunxian_buy = df_1[df_1['yunxian_buy']==True].reset_index().drop('index', axis=1)
-    df_yunxian_buy.to_csv(dir+"/"+filebase+"_yunxian_buy.csv", encoding='UTF-8', index=False)
-
-    df_duotou_pailie = df_1[df_1['duotou_pailie']==True].reset_index().drop('index', axis=1)
-    df_duotou_pailie.to_csv(dir+"/"+filebase+"_duotou_pailie.csv", encoding='UTF-8', index=False)
-
-    df_jincha_minor = df_1[df_1['jincha_minor']==True].reset_index().drop('index', axis=1)
-    df_jincha_minor.to_csv(dir+"/"+filebase+"_jincha_minor.csv", encoding='UTF-8', index=False)
-
-    df_jincha_major = df_1[df_1['jincha_major']==True].reset_index().drop('index', axis=1)
-    df_jincha_major.to_csv(dir+"/"+filebase+"_jincha_major.csv", encoding='UTF-8', index=False)
-
-    df_very_strong_up_trend = df_1[df_1['very_strong_up_trend']==True].reset_index().drop('index', axis=1)
-    df_very_strong_up_trend.to_csv(dir+"/"+filebase+"_very_strong_up_trend.csv", encoding='UTF-8', index=False)
-
-    df_very_strong_down_trend = df_1[df_1['very_strong_down_trend']==True].reset_index().drop('index', axis=1)
-    df_very_strong_down_trend.to_csv(dir+"/"+filebase+"_very_strong_down_trend.csv", encoding='UTF-8', index=False)
-
-
     logging.info("\ndf_yunxian_sell")
-    logging.info(tabulate.tabulate(df_yunxian_sell, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_SELL).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_yunxian_buy")
-    logging.info(tabulate.tabulate(df_yunxian_buy, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY).head(5), headers='keys', tablefmt='psql'))
+
     logging.info("\ndf_jincha_minor")
-    logging.info(tabulate.tabulate(df_jincha_minor, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR).head(5), headers='keys', tablefmt='psql'))
+
     logging.info("\ndf_jincha_major")
-    logging.info(tabulate.tabulate(df_jincha_major, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_very_strong_up_trend")
-    logging.info(tabulate.tabulate(df_very_strong_up_trend, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_duotou_pailie")
-    logging.info(tabulate.tabulate(df_duotou_pailie, headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE).head(5), headers='keys', tablefmt='psql'))
+
 
 
 
@@ -305,8 +276,8 @@ def main():
             df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
 
     df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-    print(df_rtn)
-    print("output saved to " + out_f)
+    # print(df_rtn)
+    logging.info("output saved to " + out_f)
 
     exit(0)
 

@@ -600,9 +600,7 @@ class Finlib_indicator:
     #  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D
     #  python t_daily_junxian_barstyle.py -x AG --selected
 
-    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,market='ag', selected=False,
-
-                                ):
+    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,market='ag', selected=False):
 
         if selected:
             dir = "/home/ryan/DATA/result/selected"
@@ -684,10 +682,18 @@ class Finlib_indicator:
 
 
         df = pd.read_csv(source_csv, encoding="utf-8")
-        df_match = df[df['reason'].str.contains(query)]
+        df_match = df[df['reason'].str.contains(query)].reset_index()
+
+        if 'index' in df_match.columns:
+            df_match = df_match.drop('index', axis=1)
+
         perc = round(df_match.__len__()*100/df.__len__(), 2)
         logging.info("Period: "+period+", Query: "+query+", "+str(df_match.__len__())+" of "+str(df.__len__())+", perc "+str(perc))
         finlib.Finlib().pprint(df_match.head(2))
+
+        col = ['code', 'name', 'date', 'close', 'action','strength','reason','operation', ]
+        df_match = finlib.Finlib().keep_column(df_match, col)
+
         return(df_match)
 
 
