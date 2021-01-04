@@ -28,7 +28,12 @@ fi
 ######################################
 #rsync -avz   /home/ryan/tushare_ryan/  haha_data_source:/home/ryan/tushare_ryan/
 ssh haha_data_source "cd ~/tushare_ryan;  git pull"
+
+#us hk indices are get from WikiPedia. Download to haha_brain, then sync to haha_power
 rsync -avz /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/pickle/INDEX_US_HK
+
+#TradingView are download to haha_brain manually on Chrome.
+rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/TradingView ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/TradingView
 #rsync -avz /home/ryan/DATA/result/*.csv ${source_host}:/home/ryan/DATA/result/
 #rsync -avz /home/ryan/DATA/result/*.txt ${source_host}:/home/ryan/DATA/result/
 #rsync -avz /home/ryan/DATA/result/today ${source_host}:/home/ryan/DATA/result/

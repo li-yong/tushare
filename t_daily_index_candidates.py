@@ -25,9 +25,9 @@ def tv_source(index_name,idict,period_end, ndays):
     df_spx500 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
 
     # the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
-    df_mkt_us = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/america_latest.csv').sort_values(
+    df_mkt_us = pd.read_csv('/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/america_latest.csv').sort_values(
         by='Market Capitalization', ascending=False)
-    df_mkt_cn = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/TradingView/china_latest.csv',converters={'Ticker': str}).sort_values(
+    df_mkt_cn = pd.read_csv('/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest.csv',converters={'Ticker': str}).sort_values(
         by='Market Capitalization', ascending=False)
 
     if index_name == 'nasdaq100':
