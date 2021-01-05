@@ -206,6 +206,8 @@ def get_hs300_total_share_weighted():
     return(df_basic[['code','name','hs300_total_share_weighted']])
 
 def index_weight_wg(index_name):
+    #files are manually downloaded from https://androidinvest.com/chinaindicesdown/SH000300/
+
     wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
 
     wg_index_dict = {
