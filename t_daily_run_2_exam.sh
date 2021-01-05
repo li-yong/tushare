@@ -737,10 +737,12 @@ fi
 #       /home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
 #       /home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
 ###############################
-python t_daily_index_candidates.py --index hs300 --ndays 365
-python t_daily_index_candidates.py --index zz100 --ndays 365
-python t_daily_index_candidates.py --index szcz --ndays 183
-python t_daily_index_candidates.py --index sz100 --ndays 183
+python t_daily_index_candidates.py --index_name hs300 --ndays 365 --index_source wugui --force_run
+python t_daily_index_candidates.py --index_name zz100 --ndays 365 --index_source wugui --force_run
+python t_daily_index_candidates.py --index_name szcz --ndays 365 --index_source wugui --force_run
+python t_daily_index_candidates.py --index_name sz100 --ndays 365 --index_source wugui --force_run
+
+
 #python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20200430
 #python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20201031
 
