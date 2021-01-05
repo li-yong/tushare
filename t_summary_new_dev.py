@@ -94,14 +94,14 @@ def define_global(stock_global):
         "AG": {
             "df_yunxian_buy": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY)", "term": "SHORT TERM", "price": "NA"},
             "df_yunxian_sell": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_SELL)", "term": "SHORT TERM", "price": "NA"},
-            "df_duotou_pailie": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)", "term": "SHORT TERM", "price": "NA"},
+            "df_duotou_pailie": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)", "term": "MIDDLE TERM", "price": "NA"},
             "df_jincha_minor": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)", "term": "SHORT TERM", "price": "NA"},
-            "df_jincha_major": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_up_trend": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)", "term": "SHORT TERM", "price": "NA"},
-            "df_very_strong_down_trend": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)", "term": "SHORT TERM", "price": "NA"},
+            "df_jincha_major": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_very_strong_up_trend": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_very_strong_down_trend": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)", "term": "MIDDLE TERM", "price": "NA"},
             # "df_BAR_GUANGTOU": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_TOU)", "term": "SHORT TERM", "price": "NA"},
             # "df_BAR_GUANGJIAO": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_JIAO)", "term": "SHORT TERM", "price": "NA"},
-            "df_SMA_CROSS_OVER": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SMA_CROSS_OVER)", "term": "SHORT TERM", "price": "NA"},
+            "df_SMA_CROSS_OVER": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SMA_CROSS_OVER)", "term": "MIDDLE TERM", "price": "NA"},
             # 'df_pv_no_filter':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             "df_max_daily_increase": {"op": "B", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_increase", "term": "SHORT TERM", "price": "NA"},
             "df_max_daily_decrease": {"op": "S", "file": result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv", "column": "op_rsn", "kw": "_max_daily_decrease", "term": "SHORT TERM", "price": "NA"},
@@ -125,17 +125,17 @@ def define_global(stock_global):
             # 'df_fib_index':{'op':'B','file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             "df_wei_pan_la_sheng": {"op": "B", "file": result_wpls + "/wei_pan_la_sheng_" + last_trading_day_yyyymmdd + "_1445.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
 
-            "df_hs300_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_BUY_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
-            "df_hs300_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_SELL_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
+            "df_hs300_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_hs300_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 
-            "df_sz100_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZ100_INDEX_BUY_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
-            "df_sz100_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZ100_INDEX_SELL_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
+            "df_sz100_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZ100_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_sz100_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZ100_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 
-            "df_zz100_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.ZZ100_INDEX_BUY_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
-            "df_zz100_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.ZZ100_INDEX_SELL_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
+            "df_zz100_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.ZZ100_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_zz100_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.ZZ100_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 
-            "df_szcz_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
-            "df_szcz_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_SELL_CANDIDATE)", "term": "SHORT TERM", "price": "NA"},
+            "df_szcz_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_szcz_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
@@ -566,9 +566,9 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     exam_date = finlib.Finlib().get_last_trading_day()
 
     if select:
-        rpt = "/home/ryan/DATA/result/report_" + exam_date + "_selected.txt"
+        rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_selected.txt"
     else:
-        rpt = "/home/ryan/DATA/result/report_" + exam_date + "_" + stock_global + ".txt"
+        rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + ".txt"
     rst = "\nGetting today's summary report " + exam_date + "\n\n"  # the string contains the report content.
     fh = open(rpt, "w")
     fh.write(rst)
@@ -766,8 +766,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
             dup_suffix = "_y" + str(subset.__len__() - 2)
 
-            logging.info("\n\ntmp is " + str(tmp.columns) + " combi " + str(combi))
-            logging.info(finlib.Finlib().pprint(tmp.head(2)))
+            # logging.info("\n\ntmp is " + str(tmp.columns) + " combi " + str(combi))
+            # logging.info(finlib.Finlib().pprint(tmp.head(2)))
             tmp = finlib.Finlib().keep_column(df=tmp, col_keep=["code", "name", "close"])
 
             tmp = finlib.Finlib().add_market_to_code(tmp)  # debug
@@ -797,11 +797,11 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     os._exit(0)
 
 
-def ana_result():
+def ana_result(operation):
     exam_date = finlib.Finlib().get_last_trading_day()
-    input_f = "/home/ryan/DATA/result/report_" + exam_date + "_" + stock_global + ".txt"
+    input_f = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + ".txt"
 
-    output_f = "/home/ryan/DATA/result/report_" + exam_date + "_" + stock_global + "_short.csv"
+    output_f = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + "_short.csv"
     df_rpt_short = pd.DataFrame(columns=["code", "name", "cnt"])
     dict = {}
 
@@ -893,7 +893,7 @@ def main():
     if action == "generate_report":
         generate_result_csv(full_combination=full_combination, select=select, operation=operation, debug=debug)
     elif action == "analyze_report":
-        ana_result()
+        ana_result(operation=operation)
 
 
 ### MAIN ####

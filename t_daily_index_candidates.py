@@ -205,6 +205,36 @@ def get_hs300_total_share_weighted():
 
     return(df_basic[['code','name','hs300_total_share_weighted']])
 
+def index_weight_wg(index_name):
+    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+
+    wg_index_dict = {
+        'hs300': {'f': wg_d + '/SH000300.xls', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
+        'zz100': {'f': wg_d + '/SH000903.xls', 'sheet': '中证100的成分股', },  # 中证100的历史估值和成分股估值权重下载
+        'zz500': {'f': wg_d + '/SH000905.xls', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
+        'szcz': {'f': wg_d + '/SZ399001.xls', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
+        'sz100': {'f': wg_d + '/SZ399330.xls', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
+
+    }
+
+    # for k in wg_index_dict:
+    logging.info("loading index from wugui, " + index_name)
+    df = pd.read_excel(wg_index_dict[index_name]['f'], sheet_name=wg_index_dict[index_name]['sheet'])
+
+    df_rtn = df.rename(columns={
+        '股票代码': 'code',
+        '股票名': 'name',
+        '日期': 'date',
+        '收盘价_前复权': 'close',
+        'A股市值(亿)': 'mkt_cap',
+        '权重%': 'weight', })
+
+    df_rtn = df_rtn[['code', 'name', 'date', 'close', 'mkt_cap', 'weight', ]]
+
+    print(finlib.Finlib().pprint(df_rtn.head(2)))
+    return(df_rtn)
+
+
 def main():
 
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
@@ -219,19 +249,21 @@ def main():
     parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
+    parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
     parser.add_option("-g", "--fetch_index", action="store_true", default=False, dest="fetch_index",  help="fetch index list, saved to DATA/pickle/{index_name}.csv ")
 
 
     (options, args) = parser.parse_args()
     debug = options.debug
     force_run = options.force_run
-    ndays = options.ndays
+    index_source = options.index_source
     index_name = options.index_name
     period_end = options.period_end
+    ndays = options.ndays
     fetch_index = options.fetch_index
 
     idict = {
-        'zz100':'000903.SH',
+        'zz100':'000903.SH', #zhong zheng 100
         'zz200':'000904.SH',
         'zz500':'000905.SH',
         'hs300':'000300.SH',
@@ -325,7 +357,11 @@ def main():
     elif index_name == 'sz100':
         my_index = my_szcz.head(100)
 
-    df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
+    if index_source == 'wugui':
+        df_offical_index = index_weight_wg(index_name = index_name)
+    else:
+        df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
+
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 

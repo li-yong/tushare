@@ -4486,15 +4486,21 @@ class Finlib:
             # # df_zz200 = pro.index_weight(index_code='000904.SH')  # ZZ200
             # # df_zz500 = pro.index_weight(index_code='000905.SH')  # ZZ500
             # # df_hs300 = pro.index_weight(index_code='000300.SH')  # HS300
+            logging.info("fetching index_weight from tushare, index_code "+index_code)
             df_index = pro.index_weight(index_code=index_code)  # HS300
+
             df_index.columns = ['index_code', 'code', 'date', 'weight']  # rename original df column names
             df_index = df_index[['code', 'date', 'weight']]
-            df_index = self.ts_code_to_code(df=df_index)
-            df_index = self.add_stock_name_to_df(df=df_index)
+
 
             index_latest_period = df_index.date.unique()[0]  # '20201201
             df_index_latest = df_index[df_index['date'] == index_latest_period]
             df_index_latest = df_index_latest.sort_values(by=['weight'], ascending=[False], inplace=False).reset_index().drop('index', axis=1)
+
+            df_index_latest = self.ts_code_to_code(df=df_index_latest)
+            df_index_latest = self.add_stock_name_to_df(df=df_index_latest)
+
+            print(self.pprint(df_index_latest.head(2)))
             logging.info("got index "+index_name +" list of period " + str(index_latest_period)+ ", len "+str(df_index_latest.__len__()))
 
             df_index_latest.to_csv(csv_index, encoding='UTF-8', index=False)
