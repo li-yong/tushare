@@ -4503,7 +4503,7 @@ class Finlib:
             df_index = df_index[['code', 'date', 'weight']]
 
 
-            index_latest_period = df_index.date.unique()[0]  # '20201201
+            index_latest_period = str(df_index.date.unique().max())  # '20201201
             df_index_latest = df_index[df_index['date'] == index_latest_period]
             df_index_latest = df_index_latest.sort_values(by=['weight'], ascending=[False], inplace=False).reset_index().drop('index', axis=1)
 
