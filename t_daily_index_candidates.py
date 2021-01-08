@@ -66,6 +66,9 @@ def tv_source(index_name,idict,period_end, ndays):
 
     df_idx = df_idx.merge(df_mkt, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
 
+    df_mkt['date']=str(finlib.Finlib().get_last_trading_day())
+
+
     compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name,
                                      period_end=period_end, ndays=ndays)
 

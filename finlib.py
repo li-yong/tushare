@@ -4487,7 +4487,7 @@ class Finlib:
 
 
         if self.is_cached(file_path=csv_index, day=7) and (not force_run):
-            df_index_latest = pd.read_csv(csv_index)
+            df_index_latest = pd.read_csv(csv_index, converters={'code': str, 'date': str})
             logging.info("loaded index from " + csv_index + " ,len " + str(df_index_latest.__len__()))
         else:
             # df_indices = pro.index_basic() #contains HS100, ZZ100/200/500/700
