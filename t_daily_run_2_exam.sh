@@ -747,11 +747,11 @@ python t_daily_index_candidates.py --index_name sz100 --ndays 365 --index_source
 #python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20201031
 
 #using tradingview source
-python t_daily_index_candidates.py --index nasdaq100
-python t_daily_index_candidates.py --index spx500
-python t_daily_index_candidates.py --index cn
-python t_daily_index_candidates.py --index cn_sse
-python t_daily_index_candidates.py --index cn_szse
+python t_daily_index_candidates.py --index_name nasdaq100
+python t_daily_index_candidates.py --index_name spx500
+python t_daily_index_candidates.py --index_name cn
+python t_daily_index_candidates.py --index_name cn_sse
+python t_daily_index_candidates.py --index_name cn_szse
 
 
 

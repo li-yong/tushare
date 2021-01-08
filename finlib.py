@@ -4348,6 +4348,8 @@ class Finlib:
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
 
+        the_latest_date = df['trade_date'].unique().max() #'20210107'
+
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
         
         #reduce the rows to ts_code_to_code fast
@@ -4363,6 +4365,9 @@ class Finlib:
 
 
         df_basic = self.ts_code_to_code(df=df_basic)
+        df_basic['date'] = str(the_latest_date)
+        df_basic = df_basic.drop('trade_date', axis=1)
+
 
         if df_parent is not None:
             df_basic = pd.merge(df_parent, df_basic, on='code', how='inner', suffixes=('', '_x'))
@@ -4424,6 +4429,8 @@ class Finlib:
 
         df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
         df_amt = self.regular_df_date_to_ymd(df_amt)
+
+        the_latest_date = df_amt['date'].unique().max() #'20210107'
         # period_end = datetime.today().strftime("%Y%m%d")
         # period_end = period_end
         # period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
@@ -4432,8 +4439,11 @@ class Finlib:
         # amount 成交额(元)
         df_amt = df_amt.groupby(by='code').mean().sort_values(by=['amount'], ascending=[False],
                                                               inplace=False).reset_index()
+
         # amount rank
         df_amt['amount_perc'] = df_amt['amount'].apply(lambda _d: round(stats.percentileofscore(df_amt['amount'], _d) / 100, 4))
+
+        df_amt['date']=str(the_latest_date)
 
         df_amt = self.add_stock_name_to_df(df=df_amt, ts_pro_format=False)
         df_amt.to_csv(amt_csv, encoding='UTF-8', index=False)
@@ -4442,7 +4452,7 @@ class Finlib:
         logging.info("10 biggest average daily AMOUNT(成交额) Stocks in " + str(ndays) + " days:")
         logging.info(df_amt.head(10))
 
-        return (df_amt)
+        return(df_amt)
 
 
     def get_index_candidate(self, index_name):
