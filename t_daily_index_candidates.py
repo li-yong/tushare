@@ -289,7 +289,7 @@ def main():
         logging.info("using tradingview source to check index "+index_name)
         tv_source(index_name,idict,period_end, ndays)
         exit(0)
-    elif index_name not in ['zz100','zz200','zz500','hs300','sz100']:
+    elif index_name not in ['zz100','zz200','zz500','hs300','sz100','szcz', 'nsadaq100', 'spx500','cn','cn_sse','cn_szse']:
         logging.error("unsupported index_name "+index_name)
         exit(0)
 
