@@ -309,16 +309,8 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 
-######################### beneish
-#input: daily price
-#output: /home/ryan/DATA/result/selected/ag_curve_shape.csv
-#########################
-if [ $full_or_daily == "FULL" ]; then
-  python t_double_bottom.py --save_fig  -x AG  --min_sample 90
-fi
 
 
-python t_double_bottom.py --save_fig  -x AG  --min_sample 90 --selected
 
 
 ######################### analyze
@@ -591,21 +583,7 @@ if [ $full_or_daily == "FULL" ]; then
     python t_top_10_holders.py --analyze --stock_global AG
 fi
 
-##############################
-# fibonacci indicator
-# input: DAY_Global/AG,  DAY_Global/AG_INDEX
-# output: ~/DATA/result/fib.csv
-# 	  ~/DATA/result/selected/ag_index_fib.csv
-###############################
-#----------------- selected moved to t_daily_run_2_exam_ushk.sh
-# /home/ryan/DATA/result/selected/ag_index_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --save_fig --min_sample=500 -x AG_INDEX --selected
 
-# /home/ryan/DATA/result/selected/ag_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --save_fig --min_sample=500 -x AG --selected
-
-# /home/ryan/DATA/result/ag_fib.csv
-python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x AG
 
 
 ##############################
@@ -650,17 +628,6 @@ python t_daily_junxian_barstyle.py -x AG --show_result
 #python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -m 22  #Only run pv test.
 
 
-
-################################
-#
-#
-###############################
-if [ $full_or_daily == "DAILY" ]; then
-    python t_double_bottom.py -x AG --save_fig --min_sample 90
-fi
-
-
-
 ##############################
 # indicator
 # input: DAY_Global/AG
@@ -676,14 +643,15 @@ fi
 # 	 /home/ryan/DATA/result/MA_CROSS_month_week_day_common.csv
 #
 ###############################
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
+  python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
+  python t_daily_indicator_kdj_macd.py --indicator MACD --period M
+  python t_daily_indicator_kdj_macd.py --indicator MACD --period W
+fi
+
 python t_daily_indicator_kdj_macd.py --indicator KDJ --period D
 python t_daily_indicator_kdj_macd.py --indicator KDJ --analyze
-
-
-python t_daily_indicator_kdj_macd.py --indicator MACD --period M
-python t_daily_indicator_kdj_macd.py --indicator MACD --period W
 python t_daily_indicator_kdj_macd.py --indicator MACD --period D
 python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
 
@@ -694,8 +662,11 @@ python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
 # output: /home/ryan/DATA/result/ma_cross_over_selection_10_20.csv"
 # output: /home/ryan/DATA/result/ma_cross_over_selection_21_55.csv"
 ########################
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 10
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 10
+  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
+fi
+
 python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 21 --period_slow 55
 python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 
@@ -714,17 +685,21 @@ python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG
 # /home/ryan/DATA/result/selected/ag_fib.csv
 python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG --selected
 
-# /home/ryan/DATA/result/ag_fib.csv
-python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG
+if [ $full_or_daily == "FULL" ]; then
+  # /home/ryan/DATA/result/ag_fib.csv
+  python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG
+fi
 
 
-################################
-#
-#
-###############################
-if [ $full_or_daily == "DAILY" ]; then
+#########################
+#input: daily price
+#output: /home/ryan/DATA/result/selected/ag_curve_shape.csv
+#########################
+if [ $full_or_daily == "FULL" ]; then
     python t_double_bottom.py -x AG --save_fig --min_sample 90
 fi
+
+python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 
 
 ################################

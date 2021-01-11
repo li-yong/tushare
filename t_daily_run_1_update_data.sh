@@ -69,7 +69,8 @@ python t_daily_index_candidates.py --fetch_index_ts --index_name zz100
 python t_daily_index_candidates.py --fetch_index_ts --index_name szcz
 python t_daily_index_candidates.py --fetch_index_ts --index_name sz100
 
-python t_daily_index_candidates.py --fetch_index_wg
+env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+
 
 
 ######################################
