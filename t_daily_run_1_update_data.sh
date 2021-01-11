@@ -64,10 +64,13 @@ python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 #   /home/ryan/DATA/pickle/hs300.csv
 #   /home/ryan/DATA/pickle/zz100.csv
 ######################################
-python t_daily_index_candidates.py --fetch_index --index_name hs300
-python t_daily_index_candidates.py --fetch_index --index_name zz100
-python t_daily_index_candidates.py --fetch_index --index_name szcz
-python t_daily_index_candidates.py --fetch_index --index_name sz100
+python t_daily_index_candidates.py --fetch_index_ts --index_name hs300
+python t_daily_index_candidates.py --fetch_index_ts --index_name zz100
+python t_daily_index_candidates.py --fetch_index_ts --index_name szcz
+python t_daily_index_candidates.py --fetch_index_ts --index_name sz100
+
+python t_daily_index_candidates.py --fetch_index_wg
+
 
 ######################################
 #

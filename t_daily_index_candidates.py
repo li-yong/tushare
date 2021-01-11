@@ -17,6 +17,14 @@ import sys
 import constant
 from scipy import stats
 
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+import shutil
 ##############
 
 def tv_source(index_name,idict,period_end, ndays):
@@ -37,13 +45,16 @@ def tv_source(index_name,idict,period_end, ndays):
         df_idx = df_spx500
         df_mkt = df_mkt_us
     elif index_name == 'cn_sse':
-        df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        # df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        df_idx = index_weight_wg(index_name = 'hs300')
         df_mkt = df_mkt_cn[df_mkt_cn['Exchange'] == 'SSE']
     elif index_name == 'cn_szse':
-        df_idx = finlib.Finlib().load_index(index_code=idict['szcz'], index_name='szcz')
+        # df_idx = finlib.Finlib().load_index(index_code=idict['szcz'], index_name='szcz')
+        df_idx = index_weight_wg(index_name = 'szcz')
         df_mkt = df_mkt_cn[df_mkt_cn['Exchange'] == 'SZSE']
     elif index_name == 'cn':
-        df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        # df_idx = finlib.Finlib().load_index(index_code=idict['hs300'], index_name='hs300')
+        df_idx = index_weight_wg(index_name = 'hs300')
         df_mkt = df_mkt_cn
 
     df_mkt = df_mkt[['Ticker', 'Market Capitalization', 'Volume*Price','Simple Moving Average (10)','Average Volume (10 day)']]
@@ -215,6 +226,69 @@ def get_hs300_total_share_weighted():
 
     return(df_basic[['code','name','hs300_total_share_weighted']])
 
+
+############
+def fetch_index_wugui_selenium():
+
+    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+
+    wg_index_dict = {
+        'hs300': {'c':'SH000300', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
+        'zz100': {'c':'SH000903', 'sheet': '中证100的成分股', },  # 中证100的历史估值和成分股估值权重下载
+        'zz500': {'c': 'SH000905', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
+        'szcz': {'c': 'SZ399001', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
+        'sz100': {'c': 'SZ399330', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
+    }
+
+    opts = Options()
+    browser = Chrome(options=opts)
+    browser.get('https://androidinvest.com/auth/login/')
+
+    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
+    login_link = browser.find_element_by_partial_link_text('账号密码')
+    login_link.click()
+
+    usr_box =  browser.find_element_by_id('login_user_name')
+    pwd_box =  browser.find_element_by_id('login_user_pwd')
+    sub_btn = browser.find_element_by_id('btnLogin')
+
+    usr_box.send_keys('13651887669')
+    pwd_box.send_keys('fav@Apple!')
+
+    sub_btn.click()
+    # time.sleep(5)
+
+    #wait maximum 10seconds to login
+    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+
+    for index_name in wg_index_dict.keys():
+        code = wg_index_dict[index_name]['c']
+        u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
+        f = "/home/ryan/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+        f2 = wg_d+"/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+        f_sl = wg_d+"/"+code+".xls"
+        logging.info("Download from wugui, index_name "+index_name+", url "+u)
+        browser.get(u)
+
+        #20210111_IndexData_SH000300.xls
+        while not os.path.exists(f):
+            logging.info("waiting download complete")
+            time.sleep(1)
+
+        shutil.move(f,f2)
+        logging.info(index_name+" downloaded. "+f)
+
+        if os.path.exists(f_sl):
+            os.unlink(f_sl)
+
+        os.symlink(f2, f_sl)
+        logging.info(index_name+",symbol link created. "+f_sl+" --> "+f2)
+
+
+    print("end of webdriver wugui index download.")
+    browser.quit()
+
+
 def index_weight_wg(index_name):
     #files are manually downloaded from https://androidinvest.com/chinaindicesdown/SH000300/
 
@@ -249,6 +323,7 @@ def index_weight_wg(index_name):
 
 def main():
 
+
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
     logging.info(__file__+" "+"\n")
@@ -262,7 +337,8 @@ def main():
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
-    parser.add_option("-g", "--fetch_index", action="store_true", default=False, dest="fetch_index",  help="fetch index list, saved to DATA/pickle/{index_name}.csv ")
+    parser.add_option("-g", "--fetch_index_ts", action="store_true", default=False, dest="fetch_index_ts",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
+    parser.add_option("-g", "--fetch_index_wugui", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
 
     (options, args) = parser.parse_args()
@@ -272,7 +348,11 @@ def main():
     index_name = options.index_name
     period_end = options.period_end
     ndays = options.ndays
-    fetch_index = options.fetch_index
+    fetch_index_ts = options.fetch_index_ts
+    fetch_index_wg = options.fetch_index_wg
+
+
+
 
     idict = {
         'zz100':'000903.SH', #zhong zheng 100
@@ -286,10 +366,13 @@ def main():
 
     }
 
-    if fetch_index:
+    if fetch_index_ts:
         finlib.Finlib().load_index(index_code=idict[index_name],index_name=index_name, force_run=True)
         exit()
 
+    if fetch_index_wg:
+        fetch_index_wugui_selenium()
+        exit()
 
     if period_end is None:
         period_end = datetime.datetime.today().strftime("%Y%m%d")

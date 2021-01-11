@@ -13,95 +13,101 @@ import os
 
 import math
 
+#########################
+import requests
 
-##############
-def load_hs300():
-    token = '4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b'
+login_url = 'https://androidinvest.com/Auth/DoLogin/'
 
-    pro = ts.pro_api()
-    pro = ts.pro_api(token=token)
-
-    ts.set_token(token=token)
-
-    csv_hs300 = "/home/ryan/DATA/pickle/hs300.csv"
-
-    if finlib.Finlib().is_cached(file_path=csv_hs300, day = 7):
-        df_hs300 = pd.read_csv(csv_hs300)
-        logging.info("loading hs300 from "+csv_hs300+" ,len "+str(df_hs300.__len__()))
-    else:
-        df_hs300 = pro.index_weight(index_code='399300.SZ') #HS300
-        df_hs300.to_csv(csv_hs300, encoding='UTF-8', index=False)
-        logging.info("hs300 save to " + csv_hs300 + " ,len " + str(df_hs300.__len__()))
+hs300_download_url = 'https://androidinvest.com/chinaindicesdodown/sh000300/'
+wg_dir = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
 
 
-    df_hs300.columns = ['index_code', 'code', 'date', 'weight']
-    df_hs300 = df_hs300[['code', 'date', 'weight']]
-    df_hs300 = finlib.Finlib().ts_code_to_code(df=df_hs300)
-    df_hs300 = finlib.Finlib().add_stock_name_to_df(df=df_hs300)
-
-    index_latest_period = df_hs300.date.unique()[0] #'20201201
-    df_hs300_latest = df_hs300[df_hs300['date']==index_latest_period]
-    logging.info("got hs300 list of period "+str(index_latest_period))
-    return(df_hs300_latest)
-
-df_hs300 = load_hs300()
-hs300_candiate_csv = "/home/ryan/DATA/result/hs300_candidate_list.csv"
-
-# df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=365, debug=False)
-df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=5, debug=True)
-
-# df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=365,debug=False)
-df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=5, debug=True)
-
-my_hs300 = finlib.Finlib()._df_sub_by_code(df=df_mktcap, df_sub=df_amt.tail(math.ceil(df_amt.__len__()/2)), byreason="daily average amount less than 50% stocks.")
-my_hs300 = my_hs300.head(300)[['code','name','total_mv']]
-
-df_merged = my_hs300.merge(df_hs300,indicator = True, how='outer')
-df_merged.rename(columns={'left_only': 'new_candidate', 'right_only': 'to_be_replaced'}, inplace=True)
-len_merged = df_merged.__len__()
-df_merged.to_csv(hs300_candiate_csv,  encoding='UTF-8', index=False)
-logging.info("saved "+hs300_candiate_csv+" len "+str(len_merged))
-
-df_both = df_merged[df_merged['_merge']=="both"]
-len_both = df_both.__len__()
-
-df_myonly = df_merged[df_merged['_merge']=="new_candidate"]
-len_myonly = df_myonly.__len__()
-logging.info(str(len_myonly)+ " out of "+str(len_both)+" in my hs300, they possible will be added to hs300 next time")
-logging.info(finlib.Finlib().pprint(df=df_myonly))
-
-df_hs300only = df_merged[df_merged['_merge']=="to_be_replaced"] #possible will be removed from hs300 index next time
-len_hs300only = df_hs300only.__len__()
-logging.info(str(len_hs300only)+ " out of "+str(len_both)+" in offical hs300, they possible will be removed from hs300 next time")
-logging.info(finlib.Finlib().pprint(df=df_hs300only))
+# Fill in your details here to be posted to the login form.
+payload = {
+    'username': '13651887669',
+    'password': 'fav@Apple!',
+    # 'password': 'fav%40Apple!',
+}
 
 
-exit(0)
+###########
+def wugui_http_request_html():
+    from requests_html import HTMLSession
+
+    session = HTMLSession()
+
+    r = session.get('https://androidinvest.com/auth/login/', verify=False)
+
+    r.html.render()  # this call executes the js in the page
 
 
-df_szcz = pro.index_weight(index_code='399001.SZ') #深证成指
 
-'''
-df_szcz[df_szcz['con_code'].str.contains('300')]
-     index_code   con_code trade_date  weight
-377   399001.SZ  300773.SZ   20200228  0.0440
-378   399001.SZ  300770.SZ   20200228  0.0711
+############
+def wugui_selenium():
+    from selenium.webdriver import Chrome
+    from selenium.webdriver.chrome.options import Options
+    opts = Options()
+    browser = Chrome(options=opts)
+    browser.get('https://androidinvest.com/auth/login/')
 
-df_szcz[df_szcz['con_code'].str.contains('300001')]
-Out[42]: 
-     index_code   con_code trade_date  weight
-497   399001.SZ  300001.SZ   20200228  0.1392
-591   399001.SZ  300001.SZ   20190830  0.1212
-1118  399001.SZ  300001.SZ   20190731  0.1433
-1614  399001.SZ  300001.SZ   20190628  0.1404
-'''
+    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
+    login_link = browser.find_element_by_partial_link_text('账号密码')
+    login_link.click()
 
-df = pro.index_weight(index_code='399300.SZ', start_date='20180901', end_date='20180930')
-df = pro.index_basic(market='SZSE')
+    usr_box =  browser.find_element_by_id('login_user_name')
+    pwd_box =  browser.find_element_by_id('login_user_pwd')
+    sub_btn = browser.find_element_by_id('btnLogin')
 
-df = ts.pro_bar(ts_code='600519.SH', asset='E',freq='1', start_date='20201116', end_date='20201116')
+    usr_box.send_keys('13651887669')
+    pwd_box.send_keys('fav@Apple!')
+
+    sub_btn.click()
+
+    browser.get('https://androidinvest.com/chinaindicesdodown/sh000300/')  # HS300
+    browser.get('https://androidinvest.com/chinaindicesdodown/SH000903/') ## 中证100
+    browser.get('https://androidinvest.com/chinaindicesdodown/SH000905/') ## 中证500
+    browser.get('https://androidinvest.com/chinaindicesdodown/SZ399001/') ## 深证成指
+    browser.get('https://androidinvest.com/chinaindicesdodown/SZ399330/')  # 深证100的历史估值和成分股估值权重下载
 
 
+
+print("end of webdriver")
+
+############
+
+
+############
+
+
+
+def request_wugui():
+    # Use 'with' to ensure the session context is closed after use.
+    with requests.Session() as s:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',
+            'Referer':"https://androidinvest.com/auth/login/"
+        }
+
+        r1 = s.get('https://androidinvest.com/auth/login/',headers=headers)
+        print(r1.content.decode())
+
+        # p = s.post(login_url, data=payload,cookies=r1.cookies)
+        headers['x-csrftoken'] = r1.cookies['csrftoken']
+        headers['x-requested-with'] = 'XMLHttpRequest'
+        headers[''] = 'XMLHttpRequest'
+
+        p = s.post('https://androidinvest.com/Auth/DoLogin/', data={'username': '13651887669','password': 'fav@Apple!'},cookies=r1.cookies,headers=headers)
+
+        # print the html returned or something more intelligent to see if it's a successful login page.
+        print(p.text)
+
+        # An authorised request.
+        r = s.get(hs300_download_url,cookies=r1.cookies)
+        with open(wg_dir+'/SH000300.xls', 'wb') as f:
+            f.write(r.content)
+
+        # print r.text
+        print('hha')
 
 print(1)
 
