@@ -771,7 +771,12 @@ class Finlib_indicator:
         logging.info("Period: "+period+", Query: "+query+", "+str(df_match.__len__())+" of "+str(df.__len__())+", perc "+str(perc))
         finlib.Finlib().pprint(df_match.head(2))
 
-        col = ['code', 'name', 'date', 'close', 'action','strength','reason','operation', ]
+        col = ['code', 'name', 'date', 'close', 'action','strength','reason','operation',"total_mv_perc","amount_perc",
+        "my_index_weight",
+        "weight",
+        "mkt_cap",
+        "predict",
+        ]
         df_match = finlib.Finlib().keep_column(df_match, col)
 
         return(df_match)

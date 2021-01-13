@@ -86,7 +86,6 @@ def tv_source(index_name,idict,period_end, ndays):
 
 
 def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_end, ndays):
-
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     #replace with name_x if name is None
@@ -284,6 +283,104 @@ def fetch_index_wugui_selenium():
         os.symlink(f2, f_sl)
         logging.info(index_name+",symbol link created. "+f_sl+" --> "+f2)
 
+        #### save the sheet to csv
+        logging.info("loading index from wugui, " + index_name)
+        df = pd.read_excel(f2, sheet_name=wg_index_dict[index_name]['sheet'])
+
+        df_rtn = df.rename(columns={
+            '股票代码': 'code',
+            '股票名': 'name',
+            '日期': 'date',
+            '收盘价_前复权': 'close',
+            'A股市值(亿)': 'mkt_cap',
+            '权重%': 'weight', })
+
+        df_rtn = df_rtn[['code', 'name', 'date', 'close', 'mkt_cap', 'weight', ]]
+        df_rtn.to_csv(wg_d+"/"+code+".csv", encoding='UTF-8', index=False)
+        logging.info("extracted the index "+index_name+" to csv. "+wg_d+"/"+code+".csv")
+
+        print(finlib.Finlib().pprint(df_rtn.head(2)))
+        #### save the sheet to csv
+
+    print("end of webdriver wugui index download.")
+    browser.quit()
+
+
+############
+def fetch_index_tradingview_selenium():
+
+    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+
+    wg_index_dict = {
+        'hs300': {'c':'SH000300', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
+        'zz100': {'c':'SH000903', 'sheet': '中证100的成分股', },  # 中证100的历史估值和成分股估值权重下载
+        'zz500': {'c': 'SH000905', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
+        'szcz': {'c': 'SZ399001', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
+        'sz100': {'c': 'SZ399330', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
+    }
+
+    opts = Options()
+    browser = Chrome(options=opts)
+    browser.get('https://androidinvest.com/auth/login/')
+
+    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
+    login_link = browser.find_element_by_partial_link_text('账号密码')
+    login_link.click()
+
+    usr_box =  browser.find_element_by_id('login_user_name')
+    pwd_box =  browser.find_element_by_id('login_user_pwd')
+    sub_btn = browser.find_element_by_id('btnLogin')
+
+    usr_box.send_keys('13651887669')
+    pwd_box.send_keys('fav@Apple!')
+
+    sub_btn.click()
+    # time.sleep(5)
+
+    #wait maximum 10seconds to login
+    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+
+    for index_name in wg_index_dict.keys():
+        code = wg_index_dict[index_name]['c']
+        u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
+        f = "/home/ryan/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+        f2 = wg_d+"/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+        f_sl = wg_d+"/"+code+".xls"
+        logging.info("Download from wugui, index_name "+index_name+", url "+u)
+        browser.get(u)
+
+        #20210111_IndexData_SH000300.xls
+        while not os.path.exists(f):
+            logging.info("waiting download complete")
+            time.sleep(1)
+
+        shutil.move(f,f2)
+        logging.info(index_name+" downloaded. "+f)
+
+        if os.path.exists(f_sl):
+            os.unlink(f_sl)
+
+        os.symlink(f2, f_sl)
+        logging.info(index_name+",symbol link created. "+f_sl+" --> "+f2)
+
+        #### save the sheet to csv
+        logging.info("loading index from wugui, " + index_name)
+        df = pd.read_excel(f2, sheet_name=wg_index_dict[index_name]['sheet'])
+
+        df_rtn = df.rename(columns={
+            '股票代码': 'code',
+            '股票名': 'name',
+            '日期': 'date',
+            '收盘价_前复权': 'close',
+            'A股市值(亿)': 'mkt_cap',
+            '权重%': 'weight', })
+
+        df_rtn = df_rtn[['code', 'name', 'date', 'close', 'mkt_cap', 'weight', ]]
+        df_rtn.to_csv(wg_d+"/"+code+".csv", encoding='UTF-8', index=False)
+        logging.info("extracted the index "+index_name+" to csv. "+wg_d+"/"+code+".csv")
+
+        print(finlib.Finlib().pprint(df_rtn.head(2)))
+        #### save the sheet to csv
 
     print("end of webdriver wugui index download.")
     browser.quit()
@@ -295,30 +392,13 @@ def index_weight_wg(index_name):
     wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
 
     wg_index_dict = {
-        'hs300': {'f': wg_d + '/SH000300.xls', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
-        'zz100': {'f': wg_d + '/SH000903.xls', 'sheet': '中证100的成分股', },  # 中证100的历史估值和成分股估值权重下载
-        'zz500': {'f': wg_d + '/SH000905.xls', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
-        'szcz': {'f': wg_d + '/SZ399001.xls', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
-        'sz100': {'f': wg_d + '/SZ399330.xls', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
-
+        'hs300': {'f': wg_d + '/SH000300.csv' },  # 沪深300的历史估值和成分股估值权重下载
+        'zz100': {'f': wg_d + '/SH000903.csv'  },  # 中证100的历史估值和成分股估值权重下载
+        'zz500': {'f': wg_d + '/SH000905.csv'  },  # 中证500的历史估值和成分股估值权重下载
+        'szcz': {'f': wg_d + '/SZ399001.csv'  },  # 深证成指的历史估值和成分股估值权重下载
+        'sz100': {'f': wg_d + '/SZ399330.csv' },  # 深证100的历史估值和成分股估值权重下载
     }
-
-    # for k in wg_index_dict:
-    logging.info("loading index from wugui, " + index_name)
-    df = pd.read_excel(wg_index_dict[index_name]['f'], sheet_name=wg_index_dict[index_name]['sheet'])
-
-    df_rtn = df.rename(columns={
-        '股票代码': 'code',
-        '股票名': 'name',
-        '日期': 'date',
-        '收盘价_前复权': 'close',
-        'A股市值(亿)': 'mkt_cap',
-        '权重%': 'weight', })
-
-    df_rtn = df_rtn[['code', 'name', 'date', 'close', 'mkt_cap', 'weight', ]]
-
-    print(finlib.Finlib().pprint(df_rtn.head(2)))
-    return(df_rtn)
+    return(pd.read_csv(wg_index_dict[index_name]['f']))
 
 
 def main():
@@ -462,7 +542,7 @@ def main():
         df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
 
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
-    df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name, period_end=period_end, ndays=ndays)
 

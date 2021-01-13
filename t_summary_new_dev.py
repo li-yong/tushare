@@ -537,6 +537,15 @@ def combin_filter(df, post_combine=False, debug=False):
         "c_cnt",
         "p_max",
         "p_min",
+
+
+        "total_mv_perc",
+        "amount_perc",
+        "my_index_weight",
+        "weight",
+        "mkt_cap",
+        "predict",
+        "close",
     ]
 
     for col in df.columns:
@@ -600,7 +609,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     #########################
     for k in mkt_dict.keys():
         # if k == 'df_hs300_add_candidate':
-        #     print("debug stop")
+        if k == 'df_sz100_add_candidate':
+            print("debug stop")
 
         if mkt_dict[k]["op"] != operation:
             logging.info("skip " + k + " as its operation " + mkt_dict[k]["op"] + " is not the requested " + operation)
@@ -663,7 +673,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     logging.info(__file__ + " " + "------ Combination 1 -------")
     for a in arr:
         logging.info(__file__ + " " + "=== " + a + " ====")
-        if a in ("df_zz500", "df_sme", "df_hs300", "df_gem", "sz50"):
+        if a in ("sz50"):
             logging.info(__file__ + " " + "skip list set: " + a)
             continue
 
@@ -768,10 +778,21 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
             # logging.info("\n\ntmp is " + str(tmp.columns) + " combi " + str(combi))
             # logging.info(finlib.Finlib().pprint(tmp.head(2)))
-            tmp = finlib.Finlib().keep_column(df=tmp, col_keep=["code", "name", "close"])
+            tmp = finlib.Finlib().keep_column(df=tmp, col_keep=["code",
+                                                                "name",
+                                                                "close",
+                                                                "total_mv_perc",
+                                                                "amount_perc",
+                                                                "my_index_weight",
+                                                                "weight",
+                                                                "mkt_cap",
+                                                                "predict",
+                                                                ])
 
             tmp = finlib.Finlib().add_market_to_code(tmp)  # debug
-            tmp = eval("pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))")
+            cmd_tmp = "pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))"
+            print("tmp is "+comb_df_name+", "+cmd_tmp)
+            tmp = eval(cmd_tmp)
             tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
             if "date" in tmp.columns:

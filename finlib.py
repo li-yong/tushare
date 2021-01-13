@@ -917,7 +917,7 @@ class Finlib:
         for index, row in df.iterrows():
             # code = str(row['code'])
             code = row['code']
-            # print index
+            # print(row)
             if re.match('^6', code):
                 code_S = "SH" + dot + code
                 code_S2 = code + dot + "SH"

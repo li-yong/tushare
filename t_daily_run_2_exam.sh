@@ -738,13 +738,6 @@ python t_summary_new_dev.py -x AG --operation B --action generate_report
 python t_summary_new_dev.py -x AG --operation S --action generate_report
 
 
-#############
-# output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG_short.csv
-#         /home/ryan/DATA/result/report_new_dev_S_20210105_AG_short.csv
-#############
-python t_summary_new_dev.py -x AG --operation B --action analyze_report
-python t_summary_new_dev.py -x AG --operation S --action analyze_report
-
 
 #############
 # output: /hdd/DATA/result/report_2019-03-29_AG.txt
