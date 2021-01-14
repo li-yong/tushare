@@ -1,3 +1,6 @@
+# coding: utf-8
+# encoding= utf-8
+
 import pandas as pd
 import finlib
 
@@ -10,6 +13,7 @@ import talib
 import logging
 import time
 import os
+import re
 
 import math
 
@@ -48,7 +52,53 @@ def wugui_selenium():
     from selenium.webdriver.chrome.options import Options
     opts = Options()
     browser = Chrome(options=opts)
-    browser.get('https://androidinvest.com/auth/login/')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    browser.get('https://mojim.com/cnh100951-A1.htm')
+    e = browser.find_element_by_class_name("ha0")
+    links = e.find_elements_by_xpath("//a[@href]")
+    # p = re.compile(u'歌词', re.UNICODE)
+
+    link_array = []
+    for l in links[5:]:
+        t1 = l.get_attribute('title')
+        if ' 歌词' in t1:
+            print(t1)
+            l2 = l.get_attribute('href')
+            print(l2)
+            link_array.append(l2)
+
+
+    for l2 in link_array:
+        # browser.get('https://mojim.com/cny220440x3x1.htm')
+        browser.get(l2)
+
+        t = browser.title.split(" ")[0]
+        e = browser.find_element_by_id("fsZx1")
+        lyric = e.get_attribute("innerText")
+
+        path = "/home/ryan/lyric/"+t+".txt"
+        f = open(path, "w")
+        f.write(lyric)
+        f.close()
+        logging.info("wrote to "+path)
+
 
     # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
     login_link = browser.find_element_by_partial_link_text('账号密码')
@@ -78,7 +128,7 @@ print("end of webdriver")
 
 ############
 
-
+wugui_selenium()
 
 def request_wugui():
     # Use 'with' to ensure the session context is closed after use.
