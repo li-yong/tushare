@@ -53,24 +53,8 @@ def wugui_selenium():
     opts = Options()
     browser = Chrome(options=opts)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    browser.get('https://mojim.com/cnh100951-A1.htm')
+    # browser.get('https://mojim.com/cnh100951-A1.htm') #zhou jie lun
+    browser.get('https://mojim.com/cnh100095-A2.htm') #liang jing ru
     e = browser.find_element_by_class_name("ha0")
     links = e.find_elements_by_xpath("//a[@href]")
     # p = re.compile(u'歌词', re.UNICODE)

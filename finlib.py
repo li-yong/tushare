@@ -129,7 +129,7 @@ class Finlib:
     def load_all_ts_pro(self, debug=False, overwrite=False):
         # return ()  # ryan debug
 
-        output_pickle = "/home/ryan/DATA/result/jaqs/ts_all.pickle"
+        output_pickle = "/home/ryan/DATA/result/ts_all.pickle"
 
         logging.info(__file__+" "+"consolidate ts_pro to a df requires lots of memory, > 500M will be consumed.")
 

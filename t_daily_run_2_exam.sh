@@ -730,7 +730,7 @@ python t_daily_index_candidates.py --index_name cn_szse
 
 
 
-#############
+#############--calc_base
 # output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt
 #         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
 #############
