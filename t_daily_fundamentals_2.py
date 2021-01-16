@@ -1749,9 +1749,6 @@ def _analyze_step_1(end_date):
 
     df_on_market_date = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv = "/home/ryan/DATA/pickle/instrument_A.csv")
     df_on_market_date = finlib.Finlib().add_market_to_code(df=df_on_market_date, dot_f=True, tspro_format=True)
-    df_on_market_date = df_on_market_date.rename(columns={"code": "ts_code"}, inplace=False)
-
-
 
     f = fund_base_merged + "/" + "merged_all_" + end_date + ".csv"
 
@@ -1770,8 +1767,6 @@ def _analyze_step_1(end_date):
     #df = df[~df.name.str.contains("ST")] #remove ST
 
     if debug_global:  #ryan debug
-    #if debug_global:
-        #df = df[df['ts_code'] == '600519.SH'].reset_index().drop('index', axis=1)
         df = df[df['ts_code'] == '600743.SH'].reset_index().drop('index', axis=1)
 
     #ryan_debug start

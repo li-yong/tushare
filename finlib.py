@@ -3123,11 +3123,12 @@ class Finlib:
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
 
-
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)
-            df = self.add_market_to_code(df=df,dot_f=True,tspro_format=True )
-            df = df.rename(columns={"code": "ts_code"}, inplace=False)
+            df = self.add_market_to_code(df=df,dot_f=True,tspro_format=True)
+
+            if 'code' in df.columns:
+                df = df.drop('code', axis=1)
 
         return(df)
 
