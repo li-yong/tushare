@@ -3375,6 +3375,7 @@ def analyze(fully_a=False, daily_a=True, fast=True):
             period_list = [finlib.Finlib().get_report_publish_status()['completed_year_rpt_date']]  #@2019.03.10, it is 20171231
         else:
             period_list = time_map['full_period_list_yearly']
+            period_list.extend([time_map['ann_date_1q_before'],time_map['ann_date_2q_before'],time_map['ann_date_3q_before']])
     elif daily_a:
         #pass
         #print("Have not decide which period to check daily")
