@@ -1914,7 +1914,7 @@ def _analyze_step_1(end_date):
         audit_result = df.iloc[i]['audit_result']
         audit_result = str(audit_result)
 
-        if not (audit_result == "标准无保留意见" or audit_result == '0'):
+        if not (audit_result == "标准无保留意见" or audit_result == '0' or audit_result == '0.0'):
             garbageReason += "audit_result:" + audit_result + ". "
             garbageCnt += 1
             df.iloc[i, df.columns.get_loc('stopProcess')] = 1
