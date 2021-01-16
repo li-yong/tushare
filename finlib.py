@@ -3156,6 +3156,11 @@ class Finlib:
         stable_report_perid = self.get_year_month_quarter()['stable_report_perid']
 
         f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/step1/rpt_" + stable_report_perid + ".csv"
+
+        if not os.path.exists(f):
+            logging.warning("remove garbage fail, file not exists "+f)
+            return(df)
+
         df_garbage = pd.read_csv(f, converters={'end_date': str})
         df_garbage = df_garbage[['stopProcess', 'ts_code', 'name', 'end_date']]
         df_garbage = df_garbage[df_garbage['stopProcess'] == 1].reset_index().drop('index', axis=1)
