@@ -3397,17 +3397,21 @@ def analyze(fully_a=False, daily_a=True, fast=True):
     #_analyze_step_8() #ryan debug
     #exit()
 
+    last_year_1231 = str(datetime.datetime.today().year -1)+"1231"
+    if datetime.datetime.today().month <= 3:
+        if last_year_1231 in period_list:
+            period_list.remove(last_year_1231)
 
 
 
     for e in period_list:
        # logging.info(__file__ + " " + "e is " + str(e))
-        if e <= '20151231' and daily_a:
-            logging.info(__file__ + " " + "not process date before 2015 in daily analysis" + str(e))
+        if e <= '20191231' and daily_a:
+            logging.info(__file__ + " " + "not process date before 2019 in daily analysis" + str(e))
             continue
 
-        if e <= '20101231':
-            logging.info(__file__ + " " + "not process date before 2010" + str(e))
+        if e <= '20171231':
+            logging.info(__file__ + " " + "not process date before 2017" + str(e))
             continue
 
         #logging.info(__file__+" "+"end_date " + e + ". ")
