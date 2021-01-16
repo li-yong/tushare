@@ -75,7 +75,7 @@ def verify_file_exist_update(hide_pass=True, print_len=True):
     finlib.Finlib().file_verify(base_rst + "/industry_top.csv", day=3, hide_pass=hide_pass, print_len=print_len)
     finlib.Finlib().file_verify(base_rst + "/area_top.csv", day=3, hide_pass=hide_pass, print_len=print_len)
     finlib.Finlib().file_verify(base_rst + "/jaqs/jaqs_all.pickle", day=3, hide_pass=hide_pass, print_len=print_len)
-    finlib.Finlib().file_verify(base_rst + "/jaqs/ts_all.pickle", day=3, hide_pass=hide_pass, print_len=print_len)
+    finlib.Finlib().file_verify(base_rst + "/ts_all.pickle", day=3, hide_pass=hide_pass, print_len=print_len)
 
     print("====  " + base_fund_2 + " ====")
     #finlib.Finlib().file_verify(base_fund_2 + "/individual_per_stock/*.csv", day=3, hide_pass=hide_pass, print_len=print_len)
