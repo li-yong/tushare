@@ -3384,8 +3384,8 @@ def analyze(fully_a=False, daily_a=True, fast=True):
         #period_list = [finlib.Finlib().get_report_publish_status()['completed_year_rpt_date']] #@2019.03.10, it is 20171231
 
     period_list = list(set(period_list))
-    #period_list.sort(reverse=False)
-    period_list.sort(reverse=True)  #check from new to old. 20181231-->20001231
+    period_list.sort(reverse=False)  #run new latest, so lastest_symbol_link points to the latest period. 20210117
+    # period_list.sort(reverse=True)  #check from new to old. 20181231-->20001231
 
     #if debug_global:
     #    period_list=["20171231"]
