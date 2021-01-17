@@ -2902,6 +2902,7 @@ def _analyze_step_4():
 
 
 def _analyze_step_5():
+    logging.info(__file__ + " " + "=== analyze step 5 ===")
 
     csv_input = fund_base_report + "/step4/multiple_years_score.csv"
 
@@ -2917,7 +2918,6 @@ def _analyze_step_5():
 
     df = pd.DataFrame()
 
-    logging.info(__file__ + " " + "=== analyze step 5 ===")
 
     #logging.info(__file__+" "+"loading "+csv_input)
     df = pd.read_csv(csv_input)
@@ -3298,6 +3298,8 @@ def _analyze_step_7():
 
 
 def _analyze_step_8():
+    logging.info(__file__ + " " + "=== analyze step 8 ===")
+
     #csv_input_1 = fund_base_report + "/step6/multiple_years_score_selected.csv" #scoreA>90, V_C_P >0.65
     csv_input_1 = fund_base_report + "/step6/multiple_years_score_selected.csv"
     csv_input_2 = fund_base_report + "/step7/verify_fund_increase.csv"
@@ -3319,7 +3321,6 @@ def _analyze_step_8():
 
     df = pd.DataFrame()
 
-    logging.info(__file__ + " " + "=== analyze step 8 ===")
 
     #stock_code = "SZ000402"
 
