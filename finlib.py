@@ -4359,10 +4359,11 @@ class Finlib:
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
         
         #reduce the rows to ts_code_to_code fast
-        df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],
-                                                                                inplace=False).reset_index() #code is in tspro format, 000001.SZ
+        # df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],  inplace=False).reset_index() #code is in tspro format, 000001.SZ
+        df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['circ_mv'], ascending=[False],  inplace=False).reset_index() #code is in tspro format, 000001.SZ
 
-        total_mv = df_basic['total_mv']
+        # total_mv = df_basic['total_mv']
+        total_mv = df_basic['circ_mv']
 
 
         # total_mv_perc: the rank of the total_mv
@@ -4384,7 +4385,7 @@ class Finlib:
         logging.info("saved to "+mktcap_csv)
 
 
-        logging.info("10 biggest average daily MARKET CAP(总市值) stocks in " + str(ndays) + " days:")
+        logging.info("10 biggest average daily CIRC MARKET CAP(流通总市值) stocks in " + str(ndays) + " days:")
         logging.info(df_total_mv_market_cap.head(10))
 
         return(df_total_mv_market_cap)

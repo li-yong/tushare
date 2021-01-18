@@ -209,7 +209,12 @@ def hs300_on_market_days_filter():
 def get_hs300_total_share_weighted():
     basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
     df_basic = pd.read_csv(basic_dir + "/basic_" + finlib.Finlib().get_last_trading_day() + ".csv")
+
+    #free_share 自由流通股本 （万）.   自由流通量 =样本总股本 - 非自由流通股本
+    #total_share  总股本 （万股）
+    #free_ration 自由流通比例 = 自由流通量 /样本总股本
     df_basic['free_ration'] = round(df_basic['free_share']*100.0/df_basic['total_share'], 4)
+
 
     df_basic['weight_calc'] = None
     df_basic.loc[df_basic['free_ration']<=15, ['weight_calc']] = df_basic['free_ration'].apply(lambda _d: math.ceil(_d) )
@@ -222,6 +227,9 @@ def get_hs300_total_share_weighted():
     df_basic.loc[(df_basic['free_ration']>70) & (df_basic['free_ration']<=80) , ['weight_calc']] = 80
     df_basic.loc[(df_basic['free_ration']>80), ['weight_calc']] = 100
 
+    # hs300_total_share_weighted approximatly equal free_share 自由流通股本 （万). Has nothing related to Price.
+    # hs300_total_share_weighted: means 'total share after weighter' 调整股本数, used by 调整市值 = ∑(证券价格×调整股本数)。
+    # 调整股本数 = 样本总股本× 加权比例
     df_basic['hs300_total_share_weighted']=df_basic['total_share']*df_basic['weight_calc']*0.01
     df_basic = finlib.Finlib().ts_code_to_code(df=df_basic)
     df_basic = finlib.Finlib().add_stock_name_to_df(df=df_basic)
