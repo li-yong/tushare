@@ -119,6 +119,9 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     if 'list_status' in df_merged.columns:
         df_merged = df_merged.drop('list_status', axis=1)
 
+    if 'list_status_x' in df_merged.columns:
+        df_merged = df_merged.drop('list_status_x', axis=1)
+
     if 'total_mv_x' in df_merged.columns:
         df_merged = df_merged.drop('total_mv_x', axis=1)
 
@@ -207,6 +210,7 @@ def hs300_on_market_days_filter():
 
 
 def get_hs300_total_share_weighted():
+    #沪深300指数是按照自由流通量加权计算指数，样本股在指数中的权重由其自由流通量决定
     basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
     df_basic = pd.read_csv(basic_dir + "/basic_" + finlib.Finlib().get_last_trading_day() + ".csv")
 
@@ -494,7 +498,7 @@ def main():
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
-    df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'total_mv','total_mv_perc','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'total_mv','total_mv_perc','total_mv_perc_portition','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     ###############################
@@ -504,6 +508,8 @@ def main():
     my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.5], hs300_on_market_days_filter(),
                         on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
     my_hs300 = my_hs300.sort_values(by=['total_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
+
+    # 沪深300指数是按照自由流通量加权计算指数，样本股在指数中的权重由其自由流通量决定
     my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
     my_hs300 = my_hs300.drop('hs300_total_share_weighted', axis=1)
 

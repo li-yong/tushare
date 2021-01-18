@@ -4369,6 +4369,7 @@ class Finlib:
         # total_mv_perc: the rank of the total_mv
         # df_basic['total_mv_perc']=None
         df_basic['total_mv_perc'] = df_basic['total_mv'].apply(lambda _d: round(stats.percentileofscore(total_mv, _d) / 100, 4))
+        df_basic['total_mv_perc_portition'] = df_basic['total_mv'].apply(lambda _d: round(_d*100.0/df_basic['circ_mv'].sum(), 4))
 
 
         df_basic = self.ts_code_to_code(df=df_basic)
