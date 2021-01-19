@@ -100,6 +100,10 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
         df_merged.loc[df_merged['circ_mv_perc'].isna(), ['circ_mv_perc']] = df_merged['circ_mv_perc_x']
         df_merged = df_merged.drop('circ_mv_perc_x', axis=1)
 
+    if 'total_mv_perc_x' in df_merged.columns:
+        df_merged.loc[df_merged['total_mv_perc'].isna(), ['total_mv_perc']] = df_merged['total_mv_perc_x']
+        df_merged = df_merged.drop('total_mv_perc_x', axis=1)
+
     if 'amount_perc_x' in df_merged.columns:
         df_merged.loc[df_merged['amount_perc'].isna(), ['amount_perc']] = df_merged['amount_perc_x']
         df_merged = df_merged.drop('amount_perc_x', axis=1)
@@ -125,6 +129,9 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     if 'circ_mv_x' in df_merged.columns:
         df_merged = df_merged.drop('circ_mv_x', axis=1)
 
+    if 'total_mv_x' in df_merged.columns:
+        df_merged = df_merged.drop('total_mv_x', axis=1)
+
     if 'amount_x' in df_merged.columns:
         df_merged = df_merged.drop('amount_x', axis=1)
 
@@ -134,8 +141,8 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     if 'cik' in df_merged.columns:
         df_merged = df_merged.drop('cik', axis=1)
 
-    df_merged = df_merged.drop('amount', axis=1)
-    df_merged = df_merged.drop('circ_mv', axis=1)
+    # df_merged = df_merged.drop('amount', axis=1)
+    # df_merged = df_merged.drop('circ_mv', axis=1)
 
     df_merged['predict'] = None
     df_merged.loc[df_merged['_merge'] == 'both', ['predict']] = 'To_Be_Kept'
@@ -144,7 +151,7 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     df_merged = df_merged.drop('_merge', axis=1)
 
     df_merged = finlib.Finlib().adjust_column(df=df_merged, col_name_list=['code','name','date','close',
-                                                                           'amount_perc','circ_mv_perc',
+                                                                           'total_mv_perc','circ_mv_perc','amount_perc',
                                                                            'my_index_weight','weight','mkt_cap',
                                                                            'list_date_days_before','predict'
                                                                            ])
@@ -156,19 +163,19 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     logging.info("saved " + index_candiate_csv + " len " + str(len_merged))
 
     df_both = df_merged[df_merged['predict'] == constant.TO_BE_KEPT]
-    df_both = df_both.sort_values(by="circ_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    df_both = df_both.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_both.__len__()) + " out of " + str(len_merged) + " in both myhs300 and officalhs300, they should will be kept in the "+index_name)
     logging.info(finlib.Finlib().pprint(df=df_both.head(32)))
 
 
     df_offlical_only = df_merged[df_merged['predict'] == constant.TO_BE_REMOVED].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
-    df_offlical_only = df_offlical_only.sort_values(by="circ_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
+    df_offlical_only = df_offlical_only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_offlical_only.__len__()) + " out of " + str(
         len_merged) + " in offical list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from "+index_name+" next time. Top 32")
     logging.info(finlib.Finlib().pprint(df=df_offlical_only.head(32)))
 
     df_myonly = df_merged[df_merged['predict'] == constant.TO_BE_ADDED].reset_index().drop('index', axis=1)
-    df_myonly = df_myonly.sort_values(by="circ_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
+    df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_myonly.__len__()) + " out of " + str(len_merged) + " in my list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to "+index_name+" next time. Top 32")
     #print(finlib.Finlib().pprint(df=df_myonly.head(32)))
     logging.info(finlib.Finlib().pprint(df=df_myonly.head(32)))
@@ -493,12 +500,13 @@ def main():
     # Result df_amt_mktcap_weight is BASE Dataframe.
     # df_amt len 4117, df_mktcap len 4144, df_total_share_weighted len 4104
     ###############################
-    df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','name','list_status','list_date_days_before']]
+    # df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','name','list_status','list_date_days_before']]
+    df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','list_status','list_date_days_before']]
 
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
-    df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'circ_mv','circ_mv_perc','circ_mv_portion','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'circ_mv','circ_mv_perc','circ_mv_portion','total_mv','total_mv_perc','total_mv_portion','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     ###############################
@@ -507,7 +515,11 @@ def main():
     # filter by (on_market_date len 3744) and (top 50% daily_amount)
     my_hs300 = pd.merge(df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.5], hs300_on_market_days_filter(),
                         on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
-    my_hs300 = my_hs300.sort_values(by=['circ_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
+
+    #对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
+    my_hs300_circ_mv = my_hs300.sort_values(by=['circ_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
+    my_hs300_total_mv = my_hs300.sort_values(by=['total_mv'], ascending=[False]).head(300).reset_index().drop('index', axis=1)
+    my_hs300 = my_hs300_total_mv
 
     # 沪深300指数是按照自由流通量加权计算指数，样本股在指数中的权重由其自由流通量决定
     my_hs300['my_index_weight'] = round(my_hs300['hs300_total_share_weighted'] * 100.0 / my_hs300['hs300_total_share_weighted'].sum(), 2)
@@ -546,7 +558,7 @@ def main():
         my_zz500 = pd.merge(my_zz500,df_amt_mktcap,on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
         my_zz500 = my_zz500[my_zz500['amount_perc']>0.8]
-        my_zz500 = my_zz500.sort_values(by='circ_mv_perc', ascending=False).head(500).reset_index().drop('index', axis=1)
+        my_zz500 = my_zz500.sort_values(by='total_mv_perc', ascending=False).head(500).reset_index().drop('index', axis=1)
         my_index = my_zz500
     elif index_name == 'szcz':#深圳成指. --ndays should be half year. 365/2
         my_index = my_szcz
@@ -558,7 +570,7 @@ def main():
     else:
         df_offical_index = finlib.Finlib().load_index(index_code=idict[index_name], index_name=index_name)
 
-    df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','circ_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
+    df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','circ_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name, period_end=period_end, ndays=ndays)

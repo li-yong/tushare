@@ -4374,13 +4374,15 @@ class Finlib:
         # df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],  inplace=False).reset_index() #code is in tspro format, 000001.SZ
         df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['circ_mv'], ascending=[False],  inplace=False).reset_index() #code is in tspro format, 000001.SZ
 
-        # total_mv = df_basic['total_mv']
-        # circ_mv = df_basic['circ_mv']
-
+        df_basic['total_mv'] = df_basic['total_mv'].apply(lambda _d: round(_d*10000,0))
+        df_basic['circ_mv'] = df_basic['circ_mv'].apply(lambda _d: round(_d*10000,0))
 
         # total_mv_perc: the rank of the total_mv
         df_basic['circ_mv_perc'] = df_basic['circ_mv'].apply(lambda _d: round(stats.percentileofscore(df_basic['circ_mv'], _d) / 100, 4))
         df_basic['circ_mv_portion'] = df_basic['circ_mv'].apply(lambda _d: round(_d*100.0/df_basic['circ_mv'].sum(), 2))
+
+        df_basic['total_mv_perc'] = df_basic['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_basic['total_mv'], _d) / 100, 4))
+        df_basic['total_mv_portion'] = df_basic['total_mv'].apply(lambda _d: round(_d*100.0/df_basic['total_mv'].sum(), 2))
 
 
         df_basic = self.ts_code_to_code(df=df_basic)
@@ -4474,6 +4476,9 @@ class Finlib:
 
         # amount rank
         df_amt['amount_perc'] = df_amt['amount'].apply(lambda _d: round(stats.percentileofscore(df_amt['amount'], _d) / 100, 4))
+
+        df_amt['amount'] = df_amt['amount'].apply(lambda _d: round(_d,0))
+
 
         df_amt['date']=str(the_latest_date)
 
