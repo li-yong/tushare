@@ -4327,19 +4327,14 @@ class Finlib:
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
 
-    #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays,period_end, debug=False, df_parent=None,force_run=False):
-        if debug:
-            ndays = 5
-
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
-        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
-
-        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=3):
-            logging.info("read result from " + mktcap_csv)
-            return (pd.read_csv(mktcap_csv))
+    def get_last_n_days_daily_basic(self,ndays=365):
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
+        out_csv = "/home/ryan/DATA/result/daily_basic_"+str(ndays)+"_days.csv"
+
+        if self.is_cached(file_path=out_csv, day=1):
+            logging.info("loading cached file "+out_csv)
+            return(pd.read_csv(out_csv))
 
         df = pd.DataFrame()
         j = 0
@@ -4354,6 +4349,23 @@ class Finlib:
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
 
+        df.to_csv(out_csv, encoding='UTF-8', index=False)
+        return(df)
+
+    #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
+    def sort_by_market_cap_since_n_days_avg(self,ndays,period_end, debug=False, df_parent=None,force_run=False):
+        if debug:
+            ndays = 5
+
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+
+        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=3):
+            logging.info("read result from " + mktcap_csv)
+            return (pd.read_csv(mktcap_csv))
+
+        df = self.get_last_n_days_daily_basic(ndays=ndays)
+
         the_latest_date = df['trade_date'].unique().max() #'20210107'
 
         df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
@@ -4367,8 +4379,8 @@ class Finlib:
 
 
         # total_mv_perc: the rank of the total_mv
-        df_basic['circ_mv_perc'] = df_basic['total_mv'].apply(lambda _d: round(stats.percentileofscore(df_basic['circ_mv'], _d) / 100, 4))
-        df_basic['circ_mv_portion'] = df_basic['total_mv'].apply(lambda _d: round(_d*100.0/df_basic['circ_mv'].sum(), 2))
+        df_basic['circ_mv_perc'] = df_basic['circ_mv'].apply(lambda _d: round(stats.percentileofscore(df_basic['circ_mv'], _d) / 100, 4))
+        df_basic['circ_mv_portion'] = df_basic['circ_mv'].apply(lambda _d: round(_d*100.0/df_basic['circ_mv'].sum(), 2))
 
 
         df_basic = self.ts_code_to_code(df=df_basic)
@@ -4390,29 +4402,17 @@ class Finlib:
 
         return(df_circ_mv_market_cap)
 
-    # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays,period_end, debug=False, df_parent = None,force_run=False):
-        # this file contains all the stocks. No filter <<< No.
 
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+    def get_last_n_days_stocks_amount(self,ndays=365):
+        out_csv = "/home/ryan/DATA/result/stocks_amount_"+str(ndays)+"_days.csv"
 
-
-        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
-        
-        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
-            logging.info("read result from "+amt_csv)
-            return(pd.read_csv(amt_csv))
+        if self.is_cached(file_path=out_csv, day=1):
+            logging.info("loading cached file "+out_csv)
+            return(pd.read_csv(out_csv))
 
         df = self.get_A_stock_instrment()
-
-        if debug:
-            ndays = 5
-            df = df.head(20)
-
         df = self.add_market_to_code(df) #df has all the stocks on market
 
-        if df_parent is not None:
-            df = pd.merge(df_parent,df, on='code', how='inner', suffixes=('', '_x'))
 
         df_amt = pd.DataFrame()
 
@@ -4435,7 +4435,32 @@ class Finlib:
 
 
         df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
+        df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
+
+        return(df_amt)
+
+    # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
+    def sort_by_amount_since_n_days_avg(self, ndays,period_end, debug=False, df_parent = None,force_run=False):
+        # this file contains all the stocks. No filter <<< No.
+
+        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+
+
+        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+        
+        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
+            logging.info("read result from "+amt_csv)
+            return(pd.read_csv(amt_csv))
+
+        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays)
         df_amt = self.regular_df_date_to_ymd(df_amt)
+
+        if debug:
+            ndays = 5
+            df_amt = df_amt.head(20)
+
+        if df_parent is not None:
+            df_amt = pd.merge(df_parent,df_amt, on='code', how='inner', suffixes=('', '_x'))
 
         the_latest_date = df_amt['date'].unique().max() #'20210107'
         # period_end = datetime.today().strftime("%Y%m%d")
