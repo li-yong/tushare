@@ -2806,9 +2806,9 @@ def _analyze_step_4():
 
     logging.info(__file__ + " " + "=== analyze step 4 ===")
 
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
-        logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
-        return
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
+    #     logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
+    #     return
 
     df = df_result = pd.DataFrame()
 
@@ -2912,9 +2912,9 @@ def _analyze_step_5():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
-        logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
-        return
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
+    #     logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
+    #     return
 
     df = pd.DataFrame()
 
@@ -2969,9 +2969,9 @@ def _analyze_step_6():
         logging.info(__file__ + " " + "file has been updated in 6 days, will not calculate. " + csv_output)
         return
 
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_selected_output, day=6):
-        logging.info(__file__ + " " + "file has been updated in 6 days, will not calculate. " + csv_selected_output)
-        return
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_selected_output, day=6):
+    #     logging.info(__file__ + " " + "file has been updated in 6 days, will not calculate. " + csv_selected_output)
+    #     return
 
     df = pd.DataFrame()
 
@@ -3167,9 +3167,9 @@ def _analyze_step_7():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
-        logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
-        return
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
+    #     logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
+    #     return
 
     csv_input = fund_base_report + "/step4/multiple_years_score.csv"
     df_input = pd.read_csv(csv_input, converters={'end_date': str})
@@ -3311,13 +3311,13 @@ def _analyze_step_8():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
-        logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
-        return
-
-    if (not force_run_global) and finlib.Finlib().is_cached(csv_output_selected, day=1):
-        logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output_selected)
-        return
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_output, day=1):
+    #     logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output)
+    #     return
+    #
+    # if (not force_run_global) and finlib.Finlib().is_cached(csv_output_selected, day=1):
+    #     logging.info(__file__ + " " + "file has been updated in 1 days, will not calculate. " + csv_output_selected)
+    #     return
 
     df = pd.DataFrame()
 

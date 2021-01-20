@@ -33,6 +33,24 @@ payload = {
     # 'password': 'fav%40Apple!',
 }
 
+##########################
+
+rst = finlib.Finlib().get_stock_configuration(selected=True, stock_global="AG")
+out_dir = rst['out_dir']
+csv_dir = rst['csv_dir']
+stock_list = rst['stock_list']
+
+# df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_dir+"/"+stock_list.iloc[0].code+".csv", add_market=False)
+df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_dir+"/SZ300569.csv", add_market=False)
+
+df_ma = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=5, middle=21, long=55)
+
+print(finlib.Finlib().pprint(df_ma.tail(1)))
+
+print(1)
+##########################
+
+
 
 ###########
 def wugui_http_request_html():

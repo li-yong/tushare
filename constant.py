@@ -61,13 +61,22 @@ CROSS_DOWN_SMA5  = "cross down sma5"
 CROSS_DOWN_SMA21 = "cross down sma21"
 CROSS_DOWN_SMA60 = "cross down sma60"
 
+#Price vs MA DiKou
+CLOSE_ABOVE_MA5_DIKOU = "close above ma5 dikou"
+CLOSE_ABOVE_MA21_DIKOU = "close above ma21 dikou"
+CLOSE_ABOVE_MA60_DIKOU = "close above ma60 dikou"
+
+CLOSE_BELOW_MA5_DIKOU = "close below ma5 dikou"
+CLOSE_BELOW_MA21_DIKOU = "close below ma21 dikou"
+CLOSE_BELOW_MA60_DIKOU = "close below ma60 dikou"
+
+#Price vs SMA
 CLOSE_ABOVE_SMA60 = "close above sma60"
 CLOSE_UNDER_SMA60 = "close under sma60"
 CLOSE_GT_SMA60_5_perc = "close great than 1.05 sma60"
 CLOSE_GT_SMA200_20_perc = "close great than 1.2 sma200"
 
 SMA21_UNDER_SMA60 = "sma21 under sma60"
-
 
 MA_JIN_CHA_MINOR = "ma jin cha minor"
 MA_JIN_CHA_MAJOR = "ma jin cha major"
