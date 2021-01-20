@@ -4332,7 +4332,7 @@ class Finlib:
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
         out_csv = "/home/ryan/DATA/result/daily_basic_"+str(ndays)+"_days.csv"
 
-        if self.is_cached(file_path=out_csv, day=1):
+        if self.is_cached(file_path=out_csv, day=0.5):
             logging.info("loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
@@ -4408,7 +4408,7 @@ class Finlib:
     def get_last_n_days_stocks_amount(self,ndays=365):
         out_csv = "/home/ryan/DATA/result/stocks_amount_"+str(ndays)+"_days.csv"
 
-        if self.is_cached(file_path=out_csv, day=1):
+        if self.is_cached(file_path=out_csv, day=0.5):
             logging.info("loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
@@ -4496,8 +4496,8 @@ class Finlib:
         # output of t_daily_hs300_candiate.py
         # hs300_candidate_list.csv  sz100_candidate_list.csv    szcz_candidate_list.csv   zz100_candidate_list.csv
         csv_f = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
-        if not self.is_cached(file_path=csv_f, day=30):
-            logging.error("file not exist, or empty, or not updated in 30days. "+csv_f)
+        if not self.is_cached(file_path=csv_f, day=7):
+            logging.error("file not exist, or empty, or not updated in 7 days. "+csv_f)
             sys.exit(1)
 
         df = pd.read_csv(csv_f)
