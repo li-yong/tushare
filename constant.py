@@ -66,9 +66,9 @@ CLOSE_ABOVE_MA5_DIKOU = "close above ma5 dikou"
 CLOSE_ABOVE_MA21_DIKOU = "close above ma21 dikou"
 CLOSE_ABOVE_MA60_DIKOU = "close above ma60 dikou"
 
-CLOSE_BELOW_MA5_DIKOU = "close below ma5 dikou"
-CLOSE_BELOW_MA21_DIKOU = "close below ma21 dikou"
-CLOSE_BELOW_MA60_DIKOU = "close below ma60 dikou"
+CLOSE_UNDER_MA5_DIKOU = "close under ma5 dikou"
+CLOSE_UNDER_MA21_DIKOU = "close under ma21 dikou"
+CLOSE_UNDER_MA60_DIKOU = "close under ma60 dikou"
 
 #Price vs SMA
 CLOSE_ABOVE_SMA60 = "close above sma60"
