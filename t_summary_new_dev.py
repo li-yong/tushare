@@ -97,8 +97,19 @@ def define_global(stock_global):
             "df_duotou_pailie": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE)", "term": "MIDDLE TERM", "price": "NA"},
             "df_jincha_minor": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)", "term": "SHORT TERM", "price": "NA"},
             "df_jincha_major": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)", "term": "MIDDLE TERM", "price": "NA"},
+
             "df_very_strong_up_trend": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)", "term": "MIDDLE TERM", "price": "NA"},
             "df_very_strong_down_trend": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)", "term": "MIDDLE TERM", "price": "NA"},
+
+            "df_ma5_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            "df_ma5_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+
+            "df_ma21_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            "df_ma21_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+
+            "df_ma55_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            "df_ma55_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+
             # "df_BAR_GUANGTOU": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_TOU)", "term": "SHORT TERM", "price": "NA"},
             # "df_BAR_GUANGJIAO": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_JIAO)", "term": "SHORT TERM", "price": "NA"},
             "df_SMA_CROSS_OVER": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SMA_CROSS_OVER)", "term": "MIDDLE TERM", "price": "NA"},
