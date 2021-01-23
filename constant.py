@@ -62,13 +62,21 @@ CROSS_DOWN_SMA21 = "cross down sma21"
 CROSS_DOWN_SMA60 = "cross down sma60"
 
 #Price vs MA DiKou
-CLOSE_ABOVE_MA5_DIKOU = "close above ma5 dikou"
-CLOSE_ABOVE_MA21_DIKOU = "close above ma21 dikou"
-CLOSE_ABOVE_MA60_DIKOU = "close above ma60 dikou"
+CLOSE_ABOVE_MA5_KOUDI = "close above ma5 koudi"
+CLOSE_ABOVE_MA21_KOUDI = "close above ma21 koudi"
+CLOSE_ABOVE_MA60_KOUDI = "close above ma60 koudi"
 
-CLOSE_UNDER_MA5_DIKOU = "close under ma5 dikou"
-CLOSE_UNDER_MA21_DIKOU = "close under ma21 dikou"
-CLOSE_UNDER_MA60_DIKOU = "close under ma60 dikou"
+CLOSE_UNDER_MA5_KOUDI = "close under ma5 koudi"
+CLOSE_UNDER_MA21_KOUDI = "close under ma21 koudi"
+CLOSE_UNDER_MA60_KOUDI = "close under ma60 koudi"
+
+MA5_UP_KOUDI_DISTANCE_GT_5 = "ma5 up koudi gt 5 perc"
+MA21_UP_KOUDI_DISTANCE_GT_5 = "ma21 up koudi gt 5 perc"
+MA55_UP_KOUDI_DISTANCE_GT_5 = "ma55 up koudi gt 5 perc"
+
+MA5_UP_KOUDI_DISTANCE_LT_1 = "ma5 up koudi lt 1 perc"
+MA21_UP_KOUDI_DISTANCE_LT_1 = "ma21 up koudi lt 1 perc"
+MA55_UP_KOUDI_DISTANCE_LT_1 = " ma55 up koudi lt 1 perc"
 
 #Price vs SMA
 CLOSE_ABOVE_SMA60 = "close above sma60"

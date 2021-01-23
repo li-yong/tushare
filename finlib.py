@@ -3122,6 +3122,7 @@ class Finlib:
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
+        df = self._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
 
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)
@@ -3239,6 +3240,16 @@ class Finlib:
 
 
     #input: df['code',...]
+    def _remove_garbage_ma_up_koudi_gt_5(self,df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5):
+        if df.__len__()==0:
+            logging.warning("empty df")
+            return(df)
+
+        df_gar = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=reason)
+
+        return(df)
+
     def _remove_garbage_none_standard_audit_statement(self, df, n_year=5):
         if df.__len__()==0:
             logging.warning("empty df")
@@ -4491,9 +4502,21 @@ class Finlib:
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up'] = round(((df_ma_koudi['p_ma_dikou_5'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up'] = round(((df_ma_koudi['p_ma_dikou_21'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up'] = round(((df_ma_koudi['p_ma_dikou_55'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
+            df_ma_koudi['reason'] = ';'
+
+            df_ma_koudi.loc[df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up']>5, ['reason']] += constant.MA5_UP_KOUDI_DISTANCE_GT_5+";"
+            df_ma_koudi.loc[df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up']>5, ['reason']] += constant.MA21_UP_KOUDI_DISTANCE_GT_5+";"
+            df_ma_koudi.loc[df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up']>5, ['reason']] += constant.MA55_UP_KOUDI_DISTANCE_GT_5+";"
+
+
+            df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up']<=1), ['reason']] += constant.MA5_UP_KOUDI_DISTANCE_LT_1+";"
+            df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up']<=1), ['reason']] += constant.MA21_UP_KOUDI_DISTANCE_LT_1+";"
+            df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up']<=1), ['reason']] += constant.MA55_UP_KOUDI_DISTANCE_LT_1+";"
+
+
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
             df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
-            logging.info("the latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
+            logging.info("\nThe latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
 
 
 

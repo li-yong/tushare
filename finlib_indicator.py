@@ -755,6 +755,18 @@ class Finlib_indicator:
             query = constant.TO_BE_REMOVED
 
 
+        elif query in [constant.MA5_UP_KOUDI_DISTANCE_GT_5,
+                       constant.MA21_UP_KOUDI_DISTANCE_GT_5,
+                       constant.MA55_UP_KOUDI_DISTANCE_GT_5,
+
+                       constant.MA5_UP_KOUDI_DISTANCE_LT_1,
+                       constant.MA21_UP_KOUDI_DISTANCE_LT_1,
+                       constant.MA55_UP_KOUDI_DISTANCE_LT_1,
+
+                       ]:
+            source_csv = dir+'/latest_ma_koudi.csv'
+            column_name='reason'
+
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)
@@ -762,6 +774,7 @@ class Finlib_indicator:
 
         df = pd.read_csv(source_csv, encoding="utf-8")
 
+        df[column_name] = df[column_name].fillna('')
         df_match = df[df[column_name].str.contains(query)].reset_index()
 
         if top_n > 0:

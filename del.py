@@ -14,9 +14,15 @@ import logging
 import time
 import os
 import re
-
+import constant
 import math
 
+
+df = finlib.Finlib().get_A_stock_instrment()
+df = finlib.Finlib().add_market_to_code(df=df)
+df2 = finlib.Finlib()._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+
+exit(0)
 this_year = datetime.datetime.today().year
 last_year = this_year - 1
 
@@ -28,6 +34,9 @@ if this_month <= 6:
     # finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
 
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=None, debug=True,force_run=True) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+
+    a = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+
     exit(0)
 
 if this_month >6:
