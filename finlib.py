@@ -4338,20 +4338,41 @@ class Finlib:
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
 
-    def get_last_n_days_daily_basic(self,ndays=365):
+    def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=True,debug=False):
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
-        out_csv = "/home/ryan/DATA/result/daily_basic_"+str(ndays)+"_days.csv"
 
-        if self.is_cached(file_path=out_csv, day=0.5):
+        # logic for dayS and dayE:
+        if (dayS is not None) and (dayE is not None):
+            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
+            logging.info("get_last_n_days_daily_basic, using specifed dayS and dayE, ingore ndays. Use caculated ndays "+str(ndays))
+        elif (dayE is not None) and (ndays is not None):
+            dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
+        elif (dayS is None) and (dayE is None) and (ndays is not None):
+            dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
+            dayE = datetime.today().strftime("%Y%m%d")
+        else:
+            logging.fatal("unsupported input parameter. exit")
+            sys.exit(1)
+
+        if daily_update:
+            sl_out_csv = "/home/ryan/DATA/result/latest_daily_basic_" + str(ndays) + "_days.csv"  # symbol link
+
+        out_csv = "/home/ryan/DATA/result/daily_basic_"+dayS+"_"+dayE+".csv"
+
+        if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
             logging.info("loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
+
+
+        if debug:
+            ndays=3
 
         df = pd.DataFrame()
         j = 0
         for i in range(ndays):
             j += 1
-            date = (datetime.today() - timedelta(days=i)).strftime("%Y%m%d")
+            date = (datetime.strptime(dayE, "%Y%m%d")  - timedelta(days=i)).strftime("%Y%m%d")
             input_csv = basic_dir + "/basic_" + date + ".csv"
 
             if self.is_cached(input_csv, day=1000):
@@ -4360,26 +4381,38 @@ class Finlib:
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
 
+
         df.to_csv(out_csv, encoding='UTF-8', index=False)
+
+        # daily update, check every day.
+        if daily_update:
+            if os.path.exists(sl_out_csv):
+                os.unlink(sl_out_csv)
+
+            os.symlink(out_csv, sl_out_csv)
+            logging.info("\nsymbol link created. " + sl_out_csv + " --> " + out_csv)
+
         return(df)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays,period_end, debug=False, df_parent=None,force_run=False):
+    def sort_by_market_cap_since_n_days_avg(self,ndays=None,period_start=None,period_end=None, debug=False, df_parent=None,force_run=False):
         if debug:
             ndays = 5
 
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
-        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+        if period_start is None:
+            period_start = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
 
-        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=3):
+        mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
+
+        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
 
-        df = self.get_last_n_days_daily_basic(ndays=ndays)
+        df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=True,debug=debug)
 
         the_latest_date = df['trade_date'].unique().max() #'20210107'
 
-        df_basic = df[(df['trade_date'] >= int(period_begin)) & (df['trade_date'] <= int(period_end))]
+        df_basic = df[(df['trade_date'] >= int(period_start)) & (df['trade_date'] <= int(period_end))]
         
         #reduce the rows to ts_code_to_code fast
         # df_basic = df_basic.groupby(by='ts_code').mean().sort_values(by=['total_mv'], ascending=[False],  inplace=False).reset_index() #code is in tspro format, 000001.SZ
@@ -4407,7 +4440,7 @@ class Finlib:
         # sort by the total_mv 总市值, decending.
         df_circ_mv_market_cap = self.add_stock_name_to_df(df=df_basic, ts_pro_format=False)
         df_circ_mv_market_cap.to_csv(mktcap_csv, encoding='UTF-8', index=False)
-        logging.info("saved to "+mktcap_csv)
+        logging.info("\nsaved to "+mktcap_csv)
 
 
         logging.info("10 biggest average daily CIRC MARKET CAP(流通总市值) stocks in " + str(ndays) + " days:")
@@ -4422,8 +4455,8 @@ class Finlib:
 
         #logic for dayS and dayE:
         if (dayS is not None ) and (dayE is not None):
-            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days
-            logging.info("using specifed dayS and dayE, ingore ndays")
+            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
+            logging.info("get_last_n_days_stocks_amount, using specifed dayS and dayE, ingore ndays. Use calculated ndays "+str(ndays))
         elif (dayE is not None) and (ndays is not None):
             dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
         elif (dayS is None) and (dayE is None) and (ndays is not None):
@@ -4448,7 +4481,7 @@ class Finlib:
 
         out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
 
-        if self.is_cached(file_path=out_csv, day=0.5) and (not debug):
+        if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
             logging.info("loading cached file " + out_csv)
             return (pd.read_csv(out_csv))
 
@@ -4496,7 +4529,7 @@ class Finlib:
                 os.unlink(sl_out_csv)
 
             os.symlink(out_csv, sl_out_csv)
-            logging.info("symbol link created. "+sl_out_csv+" --> "+out_csv)
+            logging.info("\nsymbol link created. "+sl_out_csv+" --> "+out_csv)
 
             df_ma_koudi = df_amt[df_amt['date'] == df_amt['date'].max()].reset_index().drop('index', axis=1)
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up'] = round(((df_ma_koudi['p_ma_dikou_5'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
@@ -4535,7 +4568,7 @@ class Finlib:
 
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
         
-        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
+        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
             logging.info("read result from "+amt_csv)
             return(pd.read_csv(amt_csv))
 

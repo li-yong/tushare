@@ -17,11 +17,22 @@ import re
 import constant
 import math
 
-finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031')  # HS300
-finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')  # SHEN_ZHEN
 
+
+
+
+
+#Year 2020
+# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031', debug=True)
+# exit(0)
+# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')
+
+#Year 2021
 finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430')  # HS300
+exit(0)
 finlib.Finlib().get_last_n_days_stocks_amount(dayS='20201101', dayE='20210430')  # SHEN_ZHEN
+
+
 
 exit(0)
 

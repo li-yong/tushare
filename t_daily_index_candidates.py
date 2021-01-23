@@ -434,8 +434,10 @@ def main():
     parser = OptionParser()
     parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("-f", "--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
+    parser.add_option( "--daily_update", action="store_true", default=False, dest="force_run", help="update the symbol link to the latest day, only use at daily running.")
 
-    parser.add_option("-e", "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
+    parser.add_option( "--period_start", dest="period_start", help="the start date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
+    parser.add_option( "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
@@ -448,6 +450,7 @@ def main():
     force_run = options.force_run
     index_source = options.index_source
     index_name = options.index_name
+    period_start = options.period_start
     period_end = options.period_end
     ndays = options.ndays
     fetch_index_ts = options.fetch_index_ts
@@ -503,8 +506,10 @@ def main():
     # df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','name','list_status','list_date_days_before']]
     df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','list_status','list_date_days_before']]
 
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
+    # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    # df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
     df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'circ_mv','circ_mv_perc','circ_mv_portion','total_mv','total_mv_perc','total_mv_portion','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
