@@ -4405,14 +4405,47 @@ class Finlib:
         return(df_circ_mv_market_cap)
 
 
-    def get_last_n_days_stocks_amount(self,ndays=365):
-        out_csv = "/home/ryan/DATA/result/stocks_amount_"+str(ndays)+"_days.csv"
+    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=True,debug=False):
+    # def get_last_n_days_stocks_amount(self,ndays=365):
 
-        if self.is_cached(file_path=out_csv, day=0.5):
-            logging.info("loading cached file "+out_csv)
-            return(pd.read_csv(out_csv))
+
+        #logic for dayS and dayE:
+        if (dayS is not None ) and (dayE is not None):
+            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days
+            logging.info("using specifed dayS and dayE, ingore ndays")
+        elif (dayE is not None) and (ndays is not None):
+            dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
+        elif (dayS is None) and (dayE is None) and (ndays is not None):
+            dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
+            dayE = datetime.today().strftime("%Y%m%d")
+        else:
+            logging.fatal("unsupported input parameter. exit")
+            sys.exit(1)
+
+        if daily_update:
+            sl_out_csv = "/home/ryan/DATA/result/stocks_amount_" + str(ndays) + "_days.csv" #symbol link
+            daily_ma_koudi_csv = "/home/ryan/DATA/result/latest_ma_koudi.csv"
+
+
+
+
+        logging.info("dayS "+dayS+", dayE "+ dayE+", ndays "+str(ndays))
+
+        if ndays < 60: #because we need calculate 60 MA/ 60 koudi later.
+            logging.info("Ndays must great than 60")
+            sys.exit(1)
+
+        out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
+
+        if self.is_cached(file_path=out_csv, day=0.5) and (not debug):
+            logging.info("loading cached file " + out_csv)
+            return (pd.read_csv(out_csv))
 
         df = self.get_A_stock_instrment()
+
+        if debug:
+            df = df.head(3)
+
         df = self.add_market_to_code(df) #df has all the stocks on market
 
 
@@ -4427,34 +4460,63 @@ class Finlib:
                 logging.error("file not exists, " + csv)
                 continue
 
-            with open(csv, 'r') as f:
-                q = deque(f, ndays)  # read tail ndays lines
 
-            df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
+
+            # with open(csv, 'r') as f:
+            #     q = deque(f, ndays)  # read tail ndays lines
+            #
+            # df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
+
+            df_sub = self.regular_read_csv_to_stdard_df(csv)
+            df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] < dayE)]
+
+            df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
 
             df_amt = df_amt.append(df_sub)
-            logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(ndays) + " lines.")
+            logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
 
 
-        df_amt.columns = ['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv']
         df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
+        logging.info("df_amt saved to " + out_csv + ", len " + str(df_amt.__len__()))
+
+    # daily update, check every day.
+        if daily_update:
+            if os.path.exists(sl_out_csv):
+                os.unlink(sl_out_csv)
+
+            os.symlink(out_csv, sl_out_csv)
+            logging.info("symbol link created. "+sl_out_csv+" --> "+out_csv)
+
+            df_ma_koudi = df_amt[df_amt['date'] == df_amt['date'].max()].reset_index().drop('index', axis=1)
+            df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up'] = round(((df_ma_koudi['p_ma_dikou_5'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
+            df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up'] = round(((df_ma_koudi['p_ma_dikou_21'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
+            df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up'] = round(((df_ma_koudi['p_ma_dikou_55'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
+            df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
+            df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
+            logging.info("the latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
+
+
 
         return(df_amt)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays,period_end, debug=False, df_parent = None,force_run=False):
+    def sort_by_amount_since_n_days_avg(self, ndays=None, period_start=None, period_end=None, debug=False, df_parent = None,force_run=False):
         # this file contains all the stocks. No filter <<< No.
 
-        period_begin = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
+        if period_end is None:
+            period_end = datetime.today().strftime("%Y%m%d")
+
+        if period_start is None:
+            period_start = (datetime.strptime(period_end,"%Y%m%d") - timedelta(days=ndays)).strftime("%Y%m%d")
 
 
-        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+        amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
         
         if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 3):
             logging.info("read result from "+amt_csv)
             return(pd.read_csv(amt_csv))
 
-        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays)
+        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=True, debug=debug)
         df_amt = self.regular_df_date_to_ymd(df_amt)
 
         if debug:
@@ -4464,11 +4526,9 @@ class Finlib:
         if df_parent is not None:
             df_amt = pd.merge(df_parent,df_amt, on='code', how='inner', suffixes=('', '_x'))
 
-        the_latest_date = df_amt['date'].unique().max() #'20210107'
-        # period_end = datetime.today().strftime("%Y%m%d")
-        # period_end = period_end
-        # period_begin = (datetime.today() - timedelta(days=ndays)).strftime("%Y%m%d")
-        df_amt = df_amt[(df_amt['date'] >= period_begin) & (df_amt['date'] <= period_end)]
+        the_latest_date = df_amt['date'].unique().max() # the latest date, e.g '20210107'
+
+        # df_amt = df_amt[(df_amt['date'] >= period_start) & (df_amt['date'] <= period_end)] #Can be removed
 
         # amount 成交额(元)
         df_amt = df_amt.groupby(by='code').mean().sort_values(by=['amount'], ascending=[False],

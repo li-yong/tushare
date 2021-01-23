@@ -17,151 +17,26 @@ import re
 
 import math
 
-#########################
-import requests
+this_year = datetime.datetime.today().year
+last_year = this_year - 1
 
-login_url = 'https://androidinvest.com/Auth/DoLogin/'
+this_month = datetime.datetime.today().month
+ndays = 365
 
-hs300_download_url = 'https://androidinvest.com/chinaindicesdodown/sh000300/'
-wg_dir = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+if this_month <= 6:
+    # finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '0501', dayE=str(this_year) + '0430') # HS300
+    # finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
 
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=None, debug=True,force_run=True) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    exit(0)
 
-# Fill in your details here to be posted to the login form.
-payload = {
-    'username': '13651887669',
-    'password': 'fav@Apple!',
-    # 'password': 'fav%40Apple!',
-}
-
-##########################
-
-rst = finlib.Finlib().get_stock_configuration(selected=True, stock_global="AG")
-out_dir = rst['out_dir']
-csv_dir = rst['csv_dir']
-stock_list = rst['stock_list']
-
-# df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_dir+"/"+stock_list.iloc[0].code+".csv", add_market=False)
-df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_dir+"/SZ300569.csv", add_market=False)
-
-df_ma = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=5, middle=21, long=55)
-
-print(finlib.Finlib().pprint(df_ma.tail(1)))
-
-print(1)
-##########################
+if this_month >6:
+    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '1031') # HS300
+    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(this_year) + '0501', dayE=str(this_year) + '1031') # SHEN_ZHEN
 
 
+finlib.Finlib().get_last_n_days_stocks_amount(ndays=365)
 
-###########
-def wugui_http_request_html():
-    from requests_html import HTMLSession
-
-    session = HTMLSession()
-
-    r = session.get('https://androidinvest.com/auth/login/', verify=False)
-
-    r.html.render()  # this call executes the js in the page
-
-
-
-############
-def wugui_selenium():
-    from selenium.webdriver import Chrome
-    from selenium.webdriver.chrome.options import Options
-    opts = Options()
-    browser = Chrome(options=opts)
-
-    # browser.get('https://mojim.com/cnh100951-A1.htm') #zhou jie lun
-    browser.get('https://mojim.com/cnh100095-A2.htm') #liang jing ru
-    e = browser.find_element_by_class_name("ha0")
-    links = e.find_elements_by_xpath("//a[@href]")
-    # p = re.compile(u'歌词', re.UNICODE)
-
-    link_array = []
-    for l in links[5:]:
-        t1 = l.get_attribute('title')
-        if ' 歌词' in t1:
-            print(t1)
-            l2 = l.get_attribute('href')
-            print(l2)
-            link_array.append(l2)
-
-
-    for l2 in link_array:
-        # browser.get('https://mojim.com/cny220440x3x1.htm')
-        browser.get(l2)
-
-        t = browser.title.split(" ")[0]
-        e = browser.find_element_by_id("fsZx1")
-        lyric = e.get_attribute("innerText")
-
-        path = "/home/ryan/lyric/"+t+".txt"
-        f = open(path, "w")
-        f.write(lyric)
-        f.close()
-        logging.info("wrote to "+path)
-
-
-    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    login_link = browser.find_element_by_partial_link_text('账号密码')
-    login_link.click()
-
-    usr_box =  browser.find_element_by_id('login_user_name')
-    pwd_box =  browser.find_element_by_id('login_user_pwd')
-    sub_btn = browser.find_element_by_id('btnLogin')
-
-    usr_box.send_keys('13651887669')
-    pwd_box.send_keys('fav@Apple!')
-
-    sub_btn.click()
-
-    browser.get('https://androidinvest.com/chinaindicesdodown/sh000300/')  # HS300
-    browser.get('https://androidinvest.com/chinaindicesdodown/SH000903/') ## 中证100
-    browser.get('https://androidinvest.com/chinaindicesdodown/SH000905/') ## 中证500
-    browser.get('https://androidinvest.com/chinaindicesdodown/SZ399001/') ## 深证成指
-    browser.get('https://androidinvest.com/chinaindicesdodown/SZ399330/')  # 深证100的历史估值和成分股估值权重下载
-
-
-
-print("end of webdriver")
-
-############
-
-
-############
-
-wugui_selenium()
-
-def request_wugui():
-    # Use 'with' to ensure the session context is closed after use.
-    with requests.Session() as s:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',
-            'Referer':"https://androidinvest.com/auth/login/"
-        }
-
-        r1 = s.get('https://androidinvest.com/auth/login/',headers=headers)
-        print(r1.content.decode())
-
-        # p = s.post(login_url, data=payload,cookies=r1.cookies)
-        headers['x-csrftoken'] = r1.cookies['csrftoken']
-        headers['x-requested-with'] = 'XMLHttpRequest'
-        headers[''] = 'XMLHttpRequest'
-
-        p = s.post('https://androidinvest.com/Auth/DoLogin/', data={'username': '13651887669','password': 'fav@Apple!'},cookies=r1.cookies,headers=headers)
-
-        # print the html returned or something more intelligent to see if it's a successful login page.
-        print(p.text)
-
-        # An authorised request.
-        r = s.get(hs300_download_url,cookies=r1.cookies)
-        with open(wg_dir+'/SH000300.xls', 'wb') as f:
-            f.write(r.content)
-
-        # print r.text
-        print('hha')
-
-print(1)
 
 exit(0)
 
