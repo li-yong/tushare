@@ -20,7 +20,7 @@ import math
 
 df = finlib.Finlib().get_A_stock_instrment()
 df = finlib.Finlib().add_market_to_code(df=df)
-df2 = finlib.Finlib()._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+df2 = finlib.Finlib()._remove_garbage_must(df)
 
 exit(0)
 this_year = datetime.datetime.today().year
