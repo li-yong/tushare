@@ -721,10 +721,10 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 
-python t_daily_index_candidates.py --index_name hs300 --period_start '20200501' --period_end '20210430' --index_source wugui --force_run
-python t_daily_index_candidates.py --index_name zz100 --period_start '20200501' --period_end '20210430' --index_source wugui --force_run
-python t_daily_index_candidates.py --index_name szcz  --period_start '20201101' --period_end '20210430' --index_source wugui --force_run
-python t_daily_index_candidates.py --index_name sz100 --period_start '20201101' --period_end '20210430' --index_source wugui --force_run
+python t_daily_index_candidates.py --index_name hs300 --period_start '20200501' --period_end '20210430' --index_source wugui --force_run --daily_update
+python t_daily_index_candidates.py --index_name zz100 --period_start '20200501' --period_end '20210430' --index_source wugui --force_run --daily_update
+python t_daily_index_candidates.py --index_name szcz  --period_start '20201101' --period_end '20210430' --index_source wugui --force_run --daily_update
+python t_daily_index_candidates.py --index_name sz100 --period_start '20201101' --period_end '20210430' --index_source wugui --force_run --daily_update
 
 #
 #python t_daily_index_candidates.py --index_name hs300 --ndays 365 --index_source wugui --force_run

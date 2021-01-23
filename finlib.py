@@ -4360,7 +4360,8 @@ class Finlib:
 
         out_csv = "/home/ryan/DATA/result/daily_basic_"+dayS+"_"+dayE+".csv"
 
-        if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
+        # if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
+        if (not debug) and self.is_cached(file_path=out_csv, day=0.5):
             logging.info("loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
@@ -4481,7 +4482,8 @@ class Finlib:
 
         out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
 
-        if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
+        # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
+        if self.is_cached(file_path=out_csv, day=0.5) and (not debug):
             logging.info("loading cached file " + out_csv)
             return (pd.read_csv(out_csv))
 
