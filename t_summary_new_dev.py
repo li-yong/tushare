@@ -107,8 +107,9 @@ def define_global(stock_global):
             "df_ma21_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
             "df_ma21_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
 
-            "df_ma55_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
-            "df_ma55_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+            # MA55 koudi does not work well, not a good indicator for short term
+            # "df_ma55_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            # "df_ma55_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
 
             # "df_BAR_GUANGTOU": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_TOU)", "term": "SHORT TERM", "price": "NA"},
             # "df_BAR_GUANGJIAO": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_GUANG_JIAO)", "term": "SHORT TERM", "price": "NA"},
