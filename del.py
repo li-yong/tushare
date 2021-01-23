@@ -17,21 +17,30 @@ import re
 import constant
 import math
 
+finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031')  # HS300
+finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')  # SHEN_ZHEN
 
-df = finlib.Finlib().get_A_stock_instrment()
-df = finlib.Finlib().add_market_to_code(df=df)
-df2 = finlib.Finlib()._remove_garbage_must(df)
+finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430')  # HS300
+finlib.Finlib().get_last_n_days_stocks_amount(dayS='20201101', dayE='20210430')  # SHEN_ZHEN
 
 exit(0)
-this_year = datetime.datetime.today().year
-last_year = this_year - 1
 
+
+
+
+this_year = datetime.datetime.today().year
+
+this_year = 2020
+this_month = 2
+
+
+last_year = this_year - 1
 this_month = datetime.datetime.today().month
 ndays = 365
 
 if this_month <= 6:
-    # finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '0501', dayE=str(this_year) + '0430') # HS300
-    # finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
+    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '0501', dayE=str(this_year) + '0430') # HS300
+    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
 
     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=None, debug=True,force_run=True) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
 
