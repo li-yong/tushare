@@ -711,6 +711,9 @@ python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 #
 #       /home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
 #       /home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_begin)+"_"+str(period_end)+".csv"
+# 	/home/ryan/DATA/result/latest_ma_koudi.csv
+# 	/home/ryan/DATA/result/stocks_amount_20200124_20210123.csv 
+# 	/home/ryan/DATA/result/stocks_amount_365_days.csv  << symbol link to stocks_amount_20200124_20210123.csv
 ###############################
 python t_daily_index_candidates.py --index_name hs300 --ndays 365 --index_source wugui --force_run
 python t_daily_index_candidates.py --index_name zz100 --ndays 365 --index_source wugui --force_run
