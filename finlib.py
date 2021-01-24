@@ -4362,7 +4362,7 @@ class Finlib:
 
         # if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
         if (not debug) and self.is_cached(file_path=out_csv, day=7) and (not force_run):
-            logging.info("loading cached file "+out_csv)
+            logging.info("get_last_n_days_daily_basic loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
 
@@ -4485,7 +4485,7 @@ class Finlib:
 
         # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
         if self.is_cached(file_path=out_csv, day=7) and (not debug) and (not force_run):
-            logging.info("loading cached file " + out_csv)
+            logging.info("get_last_n_days_stocks_amount, loading cached file " + out_csv)
             return (pd.read_csv(out_csv))
 
         df = self.get_A_stock_instrment()
@@ -4578,7 +4578,7 @@ class Finlib:
             logging.info("read result from "+amt_csv)
             return(pd.read_csv(amt_csv))
 
-        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=True, debug=debug)
+        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=True, debug=debug, force_run=force_run)
         df_amt = self.regular_df_date_to_ymd(df_amt)
 
         if debug:
