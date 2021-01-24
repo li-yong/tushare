@@ -4473,8 +4473,6 @@ class Finlib:
             daily_ma_koudi_csv = "/home/ryan/DATA/result/latest_ma_koudi.csv"
 
 
-
-
         logging.info("dayS "+dayS+", dayE "+ dayE+", ndays "+str(ndays))
 
         if ndays < 60: #because we need calculate 60 MA/ 60 koudi later.
@@ -4486,43 +4484,40 @@ class Finlib:
         # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
         if self.is_cached(file_path=out_csv, day=7) and (not debug) and (not force_run):
             logging.info("get_last_n_days_stocks_amount, loading cached file " + out_csv)
-            return (pd.read_csv(out_csv))
+            df_amt = pd.read_csv(out_csv)
+        else:
+            df_amt = pd.DataFrame()
+            df = self.get_A_stock_instrment()
 
-        df = self.get_A_stock_instrment()
+            if debug:
+                df = df.head(3)
 
-        if debug:
-            df = df.head(3)
+            df = self.add_market_to_code(df) #df has all the stocks on market
 
-        df = self.add_market_to_code(df) #df has all the stocks on market
+            i = 0
+            for index, row in df.iterrows():
+                i += 1
+                name, code = row['name'], row['code']
+                csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
+                if not os.path.exists(csv):
+                    logging.error("file not exists, " + csv)
+                    continue
 
+                # with open(csv, 'r') as f:
+                #     q = deque(f, ndays)  # read tail ndays lines
+                #
+                # df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
 
-        df_amt = pd.DataFrame()
+                df_sub = self.regular_read_csv_to_stdard_df(csv)
+                df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] < dayE)]
 
-        i = 0
-        for index, row in df.iterrows():
-            i += 1
-            name, code = row['name'], row['code']
-            csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
-            if not os.path.exists(csv):
-                logging.error("file not exists, " + csv)
-                continue
-                
-            # with open(csv, 'r') as f:
-            #     q = deque(f, ndays)  # read tail ndays lines
-            #
-            # df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
+                df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
 
-            df_sub = self.regular_read_csv_to_stdard_df(csv)
-            df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] < dayE)]
+                df_amt = df_amt.append(df_sub)
+                logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
 
-            df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
-
-            df_amt = df_amt.append(df_sub)
-            logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
-
-
-        df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
-        logging.info("df_amt saved to " + out_csv + ", len " + str(df_amt.__len__()))
+            df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
+            logging.info("df_amt saved to " + out_csv + ", len " + str(df_amt.__len__()))
 
     # daily update, check every day.
         if daily_update:
@@ -4549,15 +4544,13 @@ class Finlib:
 
 
             df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_5']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_5_LT_3+";"
-            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_21']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_21_LT_3+";"
-            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_55']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_55_LT_3+";"
+            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_middle_21']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_21_LT_3+";"
+            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_long_55']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_55_LT_3+";"
 
 
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
             df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
             logging.info("\nThe latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
-
-
 
         return(df_amt)
 
