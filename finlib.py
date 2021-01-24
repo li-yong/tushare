@@ -4405,10 +4405,9 @@ class Finlib:
 
         mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
 
-        # if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
-        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7):
-            logging.info("read result from " + mktcap_csv)
-            return (pd.read_csv(mktcap_csv))
+        # if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7):
+        #     logging.info("read result from " + mktcap_csv)
+        #     return (pd.read_csv(mktcap_csv))
 
         df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=daily_update,debug=debug,force_run=force_run)
 
@@ -4453,7 +4452,6 @@ class Finlib:
 
     def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
-
 
         #logic for dayS and dayE:
         if (dayS is not None ) and (dayE is not None):
@@ -4559,7 +4557,7 @@ class Finlib:
             os.symlink(daily_ma_koudi_csv, sl_daily_ma_koudi_csv)
             logging.info("\nthe latest koudi symbol link created. " + sl_daily_ma_koudi_csv + " --> " + daily_ma_koudi_csv)
 
-    return(df_amt)
+        return(df_amt)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
     def sort_by_amount_since_n_days_avg(self, ndays=None, period_start=None, period_end=None, debug=False, df_parent=None, daily_update=False,force_run=False):
@@ -4574,9 +4572,9 @@ class Finlib:
 
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
         
-        if (not force_run) and self.is_cached(file_path = amt_csv, day = 7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
-            logging.info("read result from "+amt_csv)
-            return(pd.read_csv(amt_csv))
+        # if (not force_run) and self.is_cached(file_path = amt_csv, day = 7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
+        #     logging.info("read result from "+amt_csv)
+        #     return(pd.read_csv(amt_csv))
 
         df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=daily_update, debug=debug, force_run=force_run)
         df_amt = self.regular_df_date_to_ymd(df_amt)
@@ -4608,7 +4606,7 @@ class Finlib:
         df_amt.to_csv(amt_csv, encoding='UTF-8', index=False)
         logging.info("saved to "+amt_csv)
 
-        logging.info("10 biggest average daily AMOUNT(成交额) Stocks in " + str(ndays) + " days:")
+        logging.info("10 biggest average daily AMOUNT(成交额) Stocks in " + str(ndays) + " days, dayS "+period_start+" dayE "+period_end+" :")
         logging.info(df_amt.head(10))
 
         return(df_amt)
