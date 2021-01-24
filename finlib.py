@@ -4338,7 +4338,7 @@ class Finlib:
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
 
-    def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=True,debug=False, force_run=False):
+    def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False):
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
 
@@ -4361,7 +4361,7 @@ class Finlib:
         out_csv = "/home/ryan/DATA/result/daily_basic_"+dayS+"_"+dayE+".csv"
 
         # if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
-        if (not debug) and self.is_cached(file_path=out_csv, day=7) and (not force_run):
+        if self.is_cached(file_path=out_csv, day=7) and (not force_run):
             logging.info("get_last_n_days_daily_basic loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
@@ -4396,7 +4396,7 @@ class Finlib:
         return(df)
 
     #  对样本空间内剩余证券，按照过去一年的日均总市值由高到低排名，选取前 300 名的证券作为指数样本。
-    def sort_by_market_cap_since_n_days_avg(self,ndays=None,period_start=None,period_end=None, debug=False, df_parent=None,force_run=False):
+    def sort_by_market_cap_since_n_days_avg(self,ndays=None,period_start=None,period_end=None, daily_update=False,debug=False, df_parent=None,force_run=False):
         if debug:
             ndays = 5
 
@@ -4410,7 +4410,7 @@ class Finlib:
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
 
-        df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=True,debug=debug,force_run=force_run)
+        df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=daily_update,debug=debug,force_run=force_run)
 
         the_latest_date = df['trade_date'].unique().max() #'20210107'
 
@@ -4451,7 +4451,7 @@ class Finlib:
         return(df_circ_mv_market_cap)
 
 
-    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=True,debug=False, force_run=False):
+    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
 
 
@@ -4482,7 +4482,7 @@ class Finlib:
         out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
 
         # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
-        if self.is_cached(file_path=out_csv, day=7) and (not debug) and (not force_run):
+        if self.is_cached(file_path=out_csv, day=7) and (not force_run):
             logging.info("get_last_n_days_stocks_amount, loading cached file " + out_csv)
             df_amt = pd.read_csv(out_csv)
         else:
@@ -4555,7 +4555,7 @@ class Finlib:
         return(df_amt)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
-    def sort_by_amount_since_n_days_avg(self, ndays=None, period_start=None, period_end=None, debug=False, df_parent = None,force_run=False):
+    def sort_by_amount_since_n_days_avg(self, ndays=None, period_start=None, period_end=None, debug=False, df_parent=None, daily_update=False,force_run=False):
         # this file contains all the stocks. No filter <<< No.
 
         if period_end is None:
@@ -4567,11 +4567,11 @@ class Finlib:
 
         amt_csv = "/home/ryan/DATA/result/average_daily_amount_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
         
-        if (not debug)  and (not force_run) and self.is_cached(file_path = amt_csv, day = 7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
+        if (not force_run) and self.is_cached(file_path = amt_csv, day = 7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
             logging.info("read result from "+amt_csv)
             return(pd.read_csv(amt_csv))
 
-        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=True, debug=debug, force_run=force_run)
+        df_amt = self.get_last_n_days_stocks_amount(ndays=ndays, dayS=period_start, dayE=period_end, daily_update=daily_update, debug=debug, force_run=force_run)
         df_amt = self.regular_df_date_to_ymd(df_amt)
 
         if debug:

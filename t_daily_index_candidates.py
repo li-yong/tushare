@@ -432,9 +432,9 @@ def main():
     logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
 
     parser = OptionParser()
-    parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
-    parser.add_option("-f", "--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
-    parser.add_option( "--daily_update", action="store_true", default=False, dest="force_run", help="update the symbol link to the latest day, only use at daily running.")
+    parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
+    parser.add_option("--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
+    parser.add_option("--daily_update", action="store_true", default=False, dest="daily_update", help="update the symbol link to the latest day, only use at daily running.")
 
     parser.add_option( "--period_start", dest="period_start", help="the start date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option( "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
