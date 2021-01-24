@@ -258,13 +258,13 @@ class Finlib_indicator:
         # df['std_sma_long_' + str(long)] = df['sma_long_' + str(long)].rolling(window=long).std()
 
         _df_tmp = df['sma_short_' + str(short)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_short_'+ str(short)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+        df['two_week_fluctuation_sma_short_'+ str(short)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
 
         _df_tmp = df['sma_middle_' + str(middle)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_middle_'+ str(middle)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+        df['two_week_fluctuation_sma_middle_'+ str(middle)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
 
         _df_tmp = df['sma_long_' + str(long)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_long_'+ str(long)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+        df['two_week_fluctuation_sma_long_'+ str(long)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
 
 
 

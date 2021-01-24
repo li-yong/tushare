@@ -4366,8 +4366,6 @@ class Finlib:
             return(pd.read_csv(out_csv))
 
 
-        if debug:
-            ndays=3
 
         df = pd.DataFrame()
         j = 0
@@ -4381,6 +4379,8 @@ class Finlib:
 
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
+            else:
+                logging.warnning("no such file "+input_csv)
 
 
         df.to_csv(out_csv, encoding='UTF-8', index=False)
@@ -4489,7 +4489,7 @@ class Finlib:
             df = self.get_A_stock_instrment()
 
             if debug:
-                df = df.head(3)
+                df = df.head(50)
 
             df = self.add_market_to_code(df) #df has all the stocks on market
 
@@ -4549,7 +4549,7 @@ class Finlib:
 
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
 
-            col_name_list = ['date', 'code name',	 'close', 'reason',
+            col_name_list = ['date', 'code', 'name','close', 'reason',
                         'Tmr_Min_Inc_To_Get_MA5_Up',	'Tmr_Min_Inc_To_Get_MA21_Up',	'Tmr_Min_Inc_To_Get_MA55_Up',
                         'two_week_fluctuation_sma_short_5',	'two_week_fluctuation_sma_middle_21',	'two_week_fluctuation_sma_long_55',
                         'close_5_sma',		'close_21_sma',		'close_55_sma',
@@ -4589,8 +4589,8 @@ class Finlib:
         df_amt = self.regular_df_date_to_ymd(df_amt)
 
         if debug:
-            ndays = 5
-            df_amt = df_amt.head(20)
+            # ndays = 30
+            df_amt = df_amt.head(50)
 
         if df_parent is not None:
             df_amt = pd.merge(df_parent,df_amt, on='code', how='inner', suffixes=('', '_x'))
