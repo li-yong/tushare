@@ -4470,7 +4470,8 @@ class Finlib:
 
         if daily_update:
             sl_out_csv = "/home/ryan/DATA/result/stocks_amount_" + str(ndays) + "_days.csv" #symbol link
-            daily_ma_koudi_csv = "/home/ryan/DATA/result/latest_ma_koudi.csv"
+            sl_daily_ma_koudi_csv = "/home/ryan/DATA/result/latest_ma_koudi.csv"
+            daily_ma_koudi_csv = "/home/ryan/DATA/result/ma_koudi_" + dayS + '_' + dayE + ".csv"
 
 
         logging.info("dayS "+dayS+", dayE "+ dayE+", ndays "+str(ndays))
@@ -4552,7 +4553,13 @@ class Finlib:
             df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
             logging.info("\nThe latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
 
-        return(df_amt)
+            if os.path.exists(sl_daily_ma_koudi_csv):
+                os.unlink(sl_daily_ma_koudi_csv)
+
+            os.symlink(daily_ma_koudi_csv, sl_daily_ma_koudi_csv)
+            logging.info("\nthe latest koudi symbol link created. " + sl_daily_ma_koudi_csv + " --> " + daily_ma_koudi_csv)
+
+    return(df_amt)
 
     # 对样本空间内证券按照过去一年的日均成交金额由高到低排名
     def sort_by_amount_since_n_days_avg(self, ndays=None, period_start=None, period_end=None, debug=False, df_parent=None, daily_update=False,force_run=False):

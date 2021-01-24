@@ -716,14 +716,15 @@ python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 # 	/home/ryan/DATA/result/stocks_amount_365_days.csv  << symbol link to stocks_amount_20200124_20210123.csv
 ###############################
 if [ $full_or_daily == "FULL" ]; then
+  python t_daily_index_candidates.py --index_name hs300 --period_start '20181101' --period_end '20191031'  --index_source wugui --force_run  # HS300
   python t_daily_index_candidates.py --index_name hs300 --period_start '20191101' --period_end '20201031'  --index_source wugui --force_run  # HS300
   python t_daily_index_candidates.py --index_name szcz --period_start '20200501' --period_end '20201031'  --index_source wugui --force_run  # SHEN_ZHEN
 fi
 
 
-python t_daily_index_candidates.py --index_name hs300 --period_start '20200501' --period_end '20210430' --index_source wugui --force_run --daily_update
+python t_daily_index_candidates.py --index_name hs300 --period_start '20200501' --period_end '20210430' --index_source wugui  --daily_update --force_run
 python t_daily_index_candidates.py --index_name zz100 --period_start '20200501' --period_end '20210430' --index_source wugui  --daily_update
-python t_daily_index_candidates.py --index_name szcz  --period_start '20201101' --period_end '20210430' --index_source wugui  --daily_update
+python t_daily_index_candidates.py --index_name szcz  --period_start '20201101' --period_end '20210430' --index_source wugui  --daily_update --force_run
 python t_daily_index_candidates.py --index_name sz100 --period_start '20201101' --period_end '20210430' --index_source wugui  --daily_update
 
 #
