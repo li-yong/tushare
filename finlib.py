@@ -4548,6 +4548,15 @@ class Finlib:
 
 
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
+
+            col_name_list = ['date', 'code name',	 'close', 'reason',
+                        'Tmr_Min_Inc_To_Get_MA5_Up',	'Tmr_Min_Inc_To_Get_MA21_Up',	'Tmr_Min_Inc_To_Get_MA55_Up',
+                        'two_week_fluctuation_sma_short_5',	'two_week_fluctuation_sma_middle_21',	'two_week_fluctuation_sma_long_55',
+                        'close_5_sma',		'close_21_sma',		'close_55_sma',
+                        'p_ma_dikou_5',	'p_ma_dikou_21',	'p_ma_dikou_55',]
+
+            df_ma_koudi = self.adjust_column(df=df_ma_koudi, col_name_list=col_name_list)
+
             df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
             logging.info("\nMA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
 
