@@ -386,7 +386,7 @@ fi
 
 if [ $full_or_daily == "DAILY" ]; then
       echo "SKIP"
-    #python t_daily_pe_pb_roe_history.py --force_run #refresh every run.
+      python t_daily_pe_pb_roe_history.py  #refresh every run.
 fi
 
 ###############################################
