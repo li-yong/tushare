@@ -448,6 +448,8 @@ def main():
     (options, args) = parser.parse_args()
     debug = options.debug
     force_run = options.force_run
+    daily_update = options.daily_update
+
     index_source = options.index_source
     index_name = options.index_name
     period_start = options.period_start
@@ -507,9 +509,9 @@ def main():
     df_list_days = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))[['code','list_status','list_date_days_before']]
 
     # df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end, daily_update=daily_update, debug=debug,force_run=force_run) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
     # df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=ndays,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
-    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
+    df_mktcap = finlib.Finlib().sort_by_market_cap_since_n_days_avg(ndays=None,period_start=period_start, period_end=period_end,daily_update=daily_update, debug=debug,force_run=force_run) #output: /home/ryan/DATA/result/average_daily_mktcap_sorted.csv
     df_total_share_weighted = get_hs300_total_share_weighted()
     df_amt_mktcap = pd.merge(df_amt[['code','name', 'amount','amount_perc']],df_mktcap[['code','name', 'circ_mv','circ_mv_perc','circ_mv_portion','total_mv','total_mv_perc','total_mv_portion','date']], on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_amt_mktcap_weight = pd.merge(df_amt_mktcap,df_total_share_weighted, on=['code','name'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)

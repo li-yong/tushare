@@ -4524,7 +4524,7 @@ class Finlib:
                 os.unlink(sl_out_csv)
 
             os.symlink(out_csv, sl_out_csv)
-            logging.info("\nthe latest N days amount symbol link created. "+sl_out_csv+" --> "+out_csv)
+            logging.info("\ndaily_update, the latest N days amount symbol link created. "+sl_out_csv+" --> "+out_csv)
 
             df_ma_koudi = df_amt[df_amt['date'] == df_amt['date'].max()].reset_index().drop('index', axis=1)
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up'] = round(((df_ma_koudi['p_ma_dikou_5'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
@@ -4549,7 +4549,7 @@ class Finlib:
 
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
             df_ma_koudi.to_csv(daily_ma_koudi_csv, encoding='UTF-8', index=False)
-            logging.info("\nThe latest MA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
+            logging.info("\nMA/Koudi saved to "+daily_ma_koudi_csv+" , len "+str(df_ma_koudi.__len__()))
 
             if os.path.exists(sl_daily_ma_koudi_csv):
                 os.unlink(sl_daily_ma_koudi_csv)
