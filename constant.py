@@ -78,6 +78,10 @@ MA5_UP_KOUDI_DISTANCE_LT_1 = "ma5 up koudi lt 1 perc"
 MA21_UP_KOUDI_DISTANCE_LT_1 = "ma21 up koudi lt 1 perc"
 MA55_UP_KOUDI_DISTANCE_LT_1 = " ma55 up koudi lt 1 perc"
 
+TWO_WEEK_FLUC_SMA_5_LT_3 = "two week fluctation sma5 lt 3 perc"
+TWO_WEEK_FLUC_SMA_21_LT_3 = "two week fluctation sma21 lt 3 perc"
+TWO_WEEK_FLUC_SMA_55_LT_3 = "two week fluctation sma55 lt 3 perc"
+
 #Price vs SMA
 CLOSE_ABOVE_SMA60 = "close above sma60"
 CLOSE_UNDER_SMA60 = "close under sma60"

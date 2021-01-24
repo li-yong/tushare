@@ -247,6 +247,27 @@ class Finlib_indicator:
         df['ema_middle_' + str(middle)] = stock['close_' + str(middle) + '_ema']
         df['ema_long_' + str(long)] = stock['close_' + str(long) + '_ema']
 
+        # #standard deviation of (biao zhun fang cha) of close. 表示数据大致扩散到多远
+        # df['std_close_short_' + str(short)] = df['close'].rolling(window=short).std()
+        # df['std_close_middle_' + str(middle)] = df['close'].rolling(window=middle).std()
+        # df['std_close_long_' + str(long)] = df['close'].rolling(window=long).std()
+
+        # #standard deviationof (biao zhun fang cha) of sma_short 表示数据大致扩散到多远
+        # df['std_sma_short_' + str(short)] = df['sma_short_' + str(short)].rolling(window=short).std()
+        # df['std_sma_middle_' + str(middle)] = df['sma_middle_' + str(middle)].rolling(window=middle).std()
+        # df['std_sma_long_' + str(long)] = df['sma_long_' + str(long)].rolling(window=long).std()
+
+        _df_tmp = df['sma_short_' + str(short)].rolling(window=10) #evaluate last two weeks.
+        df['two_week_fluctuation_sma_short_'+ str(short)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+
+        _df_tmp = df['sma_middle_' + str(middle)].rolling(window=10) #evaluate last two weeks.
+        df['two_week_fluctuation_sma_middle_'+ str(middle)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+
+        _df_tmp = df['sma_long_' + str(long)].rolling(window=10) #evaluate last two weeks.
+        df['two_week_fluctuation_sma_long_'+ str(long)] = (_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0
+
+
+
 
         df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
         if 'index' in df.columns:

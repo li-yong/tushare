@@ -28,7 +28,10 @@ import math
 # finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')
 
 #Year 2021
-finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430')  # HS300
+finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430', daily_update=True,
+                                              force_run=False, #ignore file existance, calculate everytime.
+                                              debug=True,  #only check head 3 rows
+                                              )  # HS300
 exit(0)
 finlib.Finlib().get_last_n_days_stocks_amount(dayS='20201101', dayE='20210430')  # SHEN_ZHEN
 

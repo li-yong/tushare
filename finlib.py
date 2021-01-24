@@ -4338,7 +4338,7 @@ class Finlib:
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
 
-    def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=True,debug=False):
+    def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=True,debug=False, force_run=False):
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
 
@@ -4361,7 +4361,7 @@ class Finlib:
         out_csv = "/home/ryan/DATA/result/daily_basic_"+dayS+"_"+dayE+".csv"
 
         # if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
-        if (not debug) and self.is_cached(file_path=out_csv, day=0.5):
+        if (not debug) and self.is_cached(file_path=out_csv, day=7) and (not force_run):
             logging.info("loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
@@ -4405,11 +4405,12 @@ class Finlib:
 
         mktcap_csv = "/home/ryan/DATA/result/average_daily_mktcap_sorted_"+str(period_start)+"_"+str(period_end)+".csv"
 
-        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
+        # if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7) and (datetime.today() > datetime.strptime(period_end, "%Y%m%d")):
+        if (not debug) and (not force_run) and self.is_cached(file_path=mktcap_csv, day=7):
             logging.info("read result from " + mktcap_csv)
             return (pd.read_csv(mktcap_csv))
 
-        df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=True,debug=debug)
+        df = self.get_last_n_days_daily_basic(ndays=None,dayS=period_start,dayE=period_end, daily_update=True,debug=debug,force_run=force_run)
 
         the_latest_date = df['trade_date'].unique().max() #'20210107'
 
@@ -4450,7 +4451,7 @@ class Finlib:
         return(df_circ_mv_market_cap)
 
 
-    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=True,debug=False):
+    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=True,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
 
 
@@ -4483,7 +4484,7 @@ class Finlib:
         out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
 
         # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
-        if self.is_cached(file_path=out_csv, day=0.5) and (not debug):
+        if self.is_cached(file_path=out_csv, day=7) and (not debug) and (not force_run):
             logging.info("loading cached file " + out_csv)
             return (pd.read_csv(out_csv))
 
@@ -4505,9 +4506,7 @@ class Finlib:
             if not os.path.exists(csv):
                 logging.error("file not exists, " + csv)
                 continue
-
-
-
+                
             # with open(csv, 'r') as f:
             #     q = deque(f, ndays)  # read tail ndays lines
             #
@@ -4531,7 +4530,7 @@ class Finlib:
                 os.unlink(sl_out_csv)
 
             os.symlink(out_csv, sl_out_csv)
-            logging.info("\nsymbol link created. "+sl_out_csv+" --> "+out_csv)
+            logging.info("\nthe latest N days amount symbol link created. "+sl_out_csv+" --> "+out_csv)
 
             df_ma_koudi = df_amt[df_amt['date'] == df_amt['date'].max()].reset_index().drop('index', axis=1)
             df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up'] = round(((df_ma_koudi['p_ma_dikou_5'] - df_ma_koudi['close'] )*100.0/df_ma_koudi['close']),2)
@@ -4547,6 +4546,11 @@ class Finlib:
             df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA5_Up']<=1), ['reason']] += constant.MA5_UP_KOUDI_DISTANCE_LT_1+";"
             df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA21_Up']<=1), ['reason']] += constant.MA21_UP_KOUDI_DISTANCE_LT_1+";"
             df_ma_koudi.loc[(df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up']>0) & (df_ma_koudi['Tmr_Min_Inc_To_Get_MA55_Up']<=1), ['reason']] += constant.MA55_UP_KOUDI_DISTANCE_LT_1+";"
+
+
+            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_5']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_5_LT_3+";"
+            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_21']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_21_LT_3+";"
+            df_ma_koudi.loc[(df_ma_koudi['two_week_fluctuation_sma_short_55']<3), ['reason']] += constant.TWO_WEEK_FLUC_SMA_55_LT_3+";"
 
 
             df_ma_koudi = self.add_stock_name_to_df(df=df_ma_koudi)
