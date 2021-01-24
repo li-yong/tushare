@@ -259,7 +259,7 @@ def fetch_index_wugui_selenium():
         'zz500': {'c': 'SH000905', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
         'szcz': {'c': 'SZ399001', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
         'sz100': {'c': 'SZ399330', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
-        'tech_advance': {'c': 'csi931087', 'sheet': '科技龙头的成分股', },  # 科技龙头
+        'tech_advance': {'c': 'CSI931087', 'sheet': '科技龙头的成分股', },  # 科技龙头
     }
 
     opts = Options()
@@ -287,6 +287,9 @@ def fetch_index_wugui_selenium():
         code = wg_index_dict[index_name]['c']
         u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
         f = "/home/ryan/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+
+        # 20210125_IndexData_CSI931087.xls
+
         f2 = wg_d+"/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
         f_sl = wg_d+"/"+code+".xls"
         logging.info("Download from wugui, index_name "+index_name+", url "+u)
@@ -294,7 +297,7 @@ def fetch_index_wugui_selenium():
 
         #20210111_IndexData_SH000300.xls
         while not os.path.exists(f):
-            logging.info("waiting download complete")
+            logging.info("waiting download complete, expecting "+f)
             time.sleep(1)
 
         shutil.move(f,f2)
