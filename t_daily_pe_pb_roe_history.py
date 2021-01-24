@@ -108,7 +108,7 @@ def get_indicator_history(output_csv):
 
     #for code_m in stock_list['code']: #code_m: SH600519
     for i in range(stock_list.__len__()):  #code_m: SH600519
-        code_m = stock_list.iloc[i]['code']
+        code_m = stock_list.iloc[i]['ts_code']
         stock_name = stock_list.iloc[i]['name']
 
         #extract PE, PB, PE_TTM
