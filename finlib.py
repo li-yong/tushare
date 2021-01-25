@@ -4380,7 +4380,7 @@ class Finlib:
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
             else:
-                logging.warnning("no such file "+input_csv)
+                logging.warning("no such file "+input_csv)
 
 
         df.to_csv(out_csv, encoding='UTF-8', index=False)
