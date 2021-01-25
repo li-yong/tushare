@@ -235,7 +235,7 @@ class Finlib_indicator:
 
         stock = stockstats.StockDataFrame.retype(df)
 
-        df['sma_short_' + str(short)] = Unknow source csv that matching querystock['close_' + str(short) + '_sma']
+        df['sma_short_' + str(short)] = stock['close_' + str(short) + '_sma']
         df['sma_middle_' + str(middle)] = stock['close_' + str(middle) + '_sma']
         df['sma_long_' + str(long)] = stock['close_' + str(long) + '_sma']
 
