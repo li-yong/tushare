@@ -16,11 +16,48 @@ import os
 import re
 import constant
 import math
+import time
+
+from futu import *
 
 
+#####################
 
+quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+# ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
+ret_sub, err_message = quote_ctx.subscribe(['SH.600519'], [SubType.BROKER], subscribe_push=False)
+# 先订阅经纪队列类型。订阅成功后FutuOpenD将持续收到服务器的推送，False代表暂时不需要推送给脚本
+if ret_sub == RET_OK:   # 订阅成功
+    ret, bid_frame_table, ask_frame_table = quote_ctx.get_broker_queue('HK.00700')   # 获取一次经纪队列数据
+    if ret == RET_OK:
+        print(finlib.Finlib().pprint(bid_frame_table))
+        print(finlib.Finlib().pprint(ask_frame_table))
+    else:
+        print('error:', bid_frame_table)
+else:
+    print('subscription failed')
+quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
 
+ls
+exit(0)
+#################################
 
+class BrokerTest(BrokerHandlerBase):
+    def on_recv_rsp(self, rsp_pb):
+        ret_code, err_or_stock_code, data = super(BrokerTest, self).on_recv_rsp(rsp_pb)
+        if ret_code != RET_OK:
+            print("BrokerTest: error, msg: {}".format(err_or_stock_code))
+            return RET_ERROR, data
+        print("BrokerTest: stock: {} data: {} ".format(err_or_stock_code, data))  # BrokerTest自己的处理逻辑
+        return RET_OK, data
+quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+handler = BrokerTest()
+quote_ctx.set_handler(handler)  # 设置实时经纪推送回调
+quote_ctx.subscribe(['HK.00700'], [SubType.BROKER]) # 订阅经纪类型，FutuOpenD开始持续收到服务器的推送
+time.sleep(1000)  # 设置脚本接收FutuOpenD的推送持续时间为15秒
+quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
+
+#################################
 
 #Year 2020
 # finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031', debug=True)

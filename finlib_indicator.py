@@ -235,7 +235,7 @@ class Finlib_indicator:
 
         stock = stockstats.StockDataFrame.retype(df)
 
-        df['sma_short_' + str(short)] = stock['close_' + str(short) + '_sma']
+        df['sma_short_' + str(short)] = Unknow source csv that matching querystock['close_' + str(short) + '_sma']
         df['sma_middle_' + str(middle)] = stock['close_' + str(middle) + '_sma']
         df['sma_long_' + str(long)] = stock['close_' + str(long) + '_sma']
 
@@ -784,9 +784,14 @@ class Finlib_indicator:
                        constant.MA21_UP_KOUDI_DISTANCE_LT_1,
                        constant.MA55_UP_KOUDI_DISTANCE_LT_1,
 
+                       constant.TWO_WEEK_FLUC_SMA_5_LT_3,
+                       constant.TWO_WEEK_FLUC_SMA_21_LT_3,
+                       constant.TWO_WEEK_FLUC_SMA_55_LT_3,
+
                        ]:
             source_csv = dir+'/latest_ma_koudi.csv'
             column_name='reason'
+
 
         else:
             logging.error("Unknow source csv that matching query "+query)
