@@ -9,8 +9,8 @@ rm -f curv_plot/SH*.png
 rm -f curv_plot/{A..Z}*.png
 rm -f curv_plot/{0..9}*.png
 rm -f curv_plot/* 
-rm -f report_20201*.cv
 rm -f report_20201*
+rm -f report_new_dev_20201*
 rm -f wei_pan_la_sheng/*
 rm -f today/*
 rm -f fib_plot/*
