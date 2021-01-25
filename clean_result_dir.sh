@@ -9,8 +9,15 @@ rm -f curv_plot/SH*.png
 rm -f curv_plot/{A..Z}*.png
 rm -f curv_plot/{0..9}*.png
 rm -f curv_plot/* 
-rm -f report_20201*
-rm -f report_new_dev_20201*
+rm -f report_202101*
+rm -f report_new_dev_B_202101*
+rm -f report_new_dev_S_202101*
+
+rm -f stocks_amount_*
+rm -f daily_basic_*
+rm -f average_daily_mktcap_sorted*
+rm -f average_daily_amount_sorted*
+
 rm -f wei_pan_la_sheng/*
 rm -f today/*
 rm -f fib_plot/*
