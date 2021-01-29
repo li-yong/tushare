@@ -393,7 +393,10 @@ def step2_ana(df_exam_day_all):
     ############################
     # pocket pivot
     ############################
+    # print(finlib.Finlib().pprint(df_exam_day_all[['cond_pocket_pivot']]))
     df_exam_day_all['cond_pocket_pivot'].fillna(value=False, inplace=True)
+    # print("==============")
+    # print(finlib.Finlib().pprint(df_exam_day_all[['cond_pocket_pivot']]))
     _df_filter_save(df = df_exam_day_all[df_exam_day_all['cond_pocket_pivot']],
                     col_list=['code','name','date','close','pct_chg',
                               'cond_pocket_pivot','pocket_pivot_maxvol_N_downdays' ,
