@@ -20,7 +20,8 @@ if [ $fetch_or_exam == "FETCH" ]; then
   python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
   python /home/ryan/tushare_ryan/t_daily_get_ag_index_from_tushare.py --fetch_index;
 
-  python /home/ryan/tushare_ryan/t_daily_update_csv_from_stooq.py;
+  # stooq often hung due to network, comment it. 2021.Jan.29
+  # python /home/ryan/tushare_ryan/t_daily_update_csv_from_stooq.py;
   python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK  --force_fetch;
 
   #python t_daily_update_csv_from_stooq.py --force_fetch;
@@ -48,21 +49,21 @@ if [ $fetch_or_exam == "EXAM" ]; then
   #-----------  FIB ---------------------------#
     ########### AG, AG_INDEX fib
     # /home/ryan/DATA/result/selected/ag_index_fib.csv
-    python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x AG_INDEX --selected --save_fig
+    python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG_INDEX --selected --save_fig
 
     # /home/ryan/DATA/result/selected/ag_fib.csv
-    python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x AG --selected --save_fig
+    python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG --selected --save_fig
 
 
     ############ US, US_INDEX, HK fib
     #/home/ryan/DATA/result/selected/us_index_fib.csv
-    python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x US_INDEX --selected --save_fig
+    python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x US_INDEX --selected --save_fig
 
     #/home/ryan/DATA/result/selected/us_fib.csv
-    python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x US --selected --save_fig
+    python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x US --selected --save_fig
 
     #/home/ryan/DATA/result/selected/hk_fib.csv
-    python t_fibonacci.py --begin_date "20180101"  --min_sample=500 -x HK --selected --save_fig
+    python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x HK --selected --save_fig
 
 
 
