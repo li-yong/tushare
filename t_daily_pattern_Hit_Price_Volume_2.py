@@ -152,8 +152,8 @@ def step1_generate_df(output_csv,date_exam_day):
     #code = finlib.Finlib().add_market_to_code_single(code_6d,dot_f=False,tspro_format=False) #SH600519
     #tscode = finlib.Finlib().add_market_to_code_single(code_6d,dot_f=True,tspro_format=True) #600519.SH
 
-    date_rpt_q = finlib.Finlib().get_year_month_quarter()['ann_date_1q_before'] #20200630
-    date_rpt_q1 = finlib.Finlib().get_year_month_quarter()['ann_date_2q_before'] #20200331
+    date_rpt_q = finlib.Finlib().get_year_month_quarter()['ann_date_2q_before'] #20200630
+    date_rpt_q1 = finlib.Finlib().get_year_month_quarter()['ann_date_3q_before'] #20200331
     date_rpt_y1 = finlib.Finlib().get_year_month_quarter()['stable_report_perid'] #20191231
 
     fund2_dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2'

@@ -112,7 +112,11 @@ def define_global(stock_global):
             "df_two_week_fluc_sma55_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_55_LT_3)", "term": "LONG TERM", "price": "NA"},
 
 
-            "df_two_week_fluc_sma55_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_55_LT_3)", "term": "LONG TERM", "price": "NA"},
+            "df_pv2_volume_ratio_bottom_10p": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_VOLUME_RATIO_BOTTOM_10P)", "term": "SHORT TERM", "price": "NA"},
+            "df_pv2_volume_ratio_top_20p": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_VOLUME_RATIO_TOP_20P)", "term": "SHORT TERM", "price": "NA"},
+            "df_pv2_zhangting_volume_ration_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            "df_pv2_pocket_pivot": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_POCKET_PIVOT)", "term": "SHORT TERM", "price": "NA"},
+            "df_pv2_stable_price_volume": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_STABLE_PRICE_VOLUME)", "term": "SHORT TERM", "price": "NA"},
 
             # MA55 koudi does not work well, not a good indicator for short term
             # "df_ma55_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},

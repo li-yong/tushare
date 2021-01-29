@@ -793,20 +793,39 @@ class Finlib_indicator:
             column_name='reason'
 
 
-        elif query in [constant.PV2_VOLUME_RATIO_BOTTOM_10P,
-                       constant.PV2_VOLUME_RATIO_BOTTOM_10P,
-                       constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1,
-                       ]:
-            latest_day = finlib.Finlib().get_last_trading_day()
-            source_csv = dir+'/pv_2/'+latest_day+'/volume_ratio_bottom_10p.csv'
-            column_name='reason'
-            pass
+        elif query in [constant.PV2_VOLUME_RATIO_BOTTOM_10P]:
+            return(pd.read_csv(dir+'/pv_2/latest/volume_ratio_bottom_10p.csv', encoding="utf-8"))
 
+        elif query in [constant.PV2_VOLUME_RATIO_TOP_20P]:
+            return(pd.read_csv(dir+'/pv_2/latest/volume_ratio_top_20p.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
+            return(pd.read_csv(dir+'/pv_2/latest/zhangting_volume_ration_lt_1.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
+            return(pd.read_csv(dir+'/pv_2/latest/zhangting_volume_ration_lt_1.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_POCKET_PIVOT]:
+            return(pd.read_csv(dir+'/pv_2/latest/pocket_pivot.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_DIE_TING]:
+            return(pd.read_csv(dir+'/pv_2/latest/die_ting.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANG_TING]:
+            return(pd.read_csv(dir+'/pv_2/latest/zhang_ting.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_PE_TOP_30P]:
+            return(pd.read_csv(dir+'/pv_2/latest/pe_top_30p.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_PE_BOTTOM_30P]:
+            return(pd.read_csv(dir+'/pv_2/latest/pe_bottom_30p.csv', encoding="utf-8"))
+
+        elif query in [constant.PV2_STABLE_PRICE_VOLUME]:
+            return(pd.read_csv(dir+'/pv_2/latest/stable_price_volume.csv', encoding="utf-8"))
 
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)
-
 
         df = pd.read_csv(source_csv, encoding="utf-8")
 

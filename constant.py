@@ -100,6 +100,14 @@ MA_SI_CHA_MAJOR = "ma si cha major"
 PV2_VOLUME_RATIO_BOTTOM_10P = "volume_ratio_bottom_10p"
 PV2_VOLUME_RATIO_TOP_20P = "volume_ratio_top_20p"
 PV2_ZHANGTING_VOLUME_RATIO_LT_1 = "zhangting_volume_ration_lt_1"
+PV2_POCKET_PIVOT = "pocket_pivot"
+PV2_DIE_TING = "die_ting"
+PV2_ZHANG_TING = "zhang_ting"
+PV2_PE_TOP_30P = "pe_top_30p"
+PV2_PE_BOTTOM_30P = "pe_bottom_30p"
+PV2_STABLE_PRICE_VOLUME = "stable_price_volume"
+
+
 
 
 MA_DUO_TOU_PAI_LIE = "ma duo tou pai lie"
