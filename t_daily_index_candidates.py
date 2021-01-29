@@ -30,7 +30,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import shutil
 ##############
 
-def tv_source(index_name,idict,period_end, ndays):
+def tv_source(index_name,idict,period_start,period_end, ndays):
     # index file is get by t_daily_get_us_index.py from WikiPedia.
     df_nas100 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
     df_spx500 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
@@ -84,11 +84,12 @@ def tv_source(index_name,idict,period_end, ndays):
 
 
     compare_with_official_index_list(df_my_index=df_mkt.head(100), df_offical_index=df_idx, index_name=index_name,
+                                     period_start=period_start,
                                      period_end=period_end, ndays=ndays)
 
 
 
-def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_end, ndays):
+def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_start,period_end, ndays):
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
     #replace with name_x if name is None
@@ -171,12 +172,12 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     df_offlical_only = df_merged[df_merged['predict'] == constant.TO_BE_REMOVED].reset_index().drop('index', axis=1)  # possible will be removed from hs300 index next time
     df_offlical_only = df_offlical_only.sort_values(by="total_mv_perc", ascending=True, inplace=False).reset_index().drop('index', axis=1)
     logging.info("\n"+str(df_offlical_only.__len__()) + " out of " + str(
-        len_merged) + " in offical list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be removed from "+index_name+" next time. Top 32")
+        len_merged) + " in offical list,"+ period_start+" to " + period_end +", period days "+ str(ndays) +". They possible will be removed from "+index_name+" next time. Top 32")
     logging.info(finlib.Finlib().pprint(df=df_offlical_only.head(32)))
 
     df_myonly = df_merged[df_merged['predict'] == constant.TO_BE_ADDED].reset_index().drop('index', axis=1)
     df_myonly = df_myonly.sort_values(by="total_mv_perc", ascending=False, inplace=False).reset_index().drop('index', axis=1)
-    logging.info("\n"+str(df_myonly.__len__()) + " out of " + str(len_merged) + " in my list, period_end "+ period_end +", period days "+ str(ndays) +". They possible will be added to "+index_name+" next time. Top 32")
+    logging.info("\n"+str(df_myonly.__len__()) + " out of " + str(len_merged) +" in my list, "+ period_start+" to "     + period_end +", period days "+ str(ndays) +". They possible will be added to "+index_name+" next time. Top 32")
     #print(finlib.Finlib().pprint(df=df_myonly.head(32)))
     logging.info(finlib.Finlib().pprint(df=df_myonly.head(32)))
 
@@ -238,7 +239,7 @@ def get_hs300_total_share_weighted():
     df_basic.loc[(df_basic['free_ration']>70) & (df_basic['free_ration']<=80) , ['weight_calc']] = 80
     df_basic.loc[(df_basic['free_ration']>80), ['weight_calc']] = 100
 
-    # hs300_total_share_weighted approximatly equal free_share 自由流通股本 （万). Has nothing related to Price.
+    # hs300_total_share_weighted approximatly equal free_share 自由流通股本 （万). Has nothing related to Price.in my list, period_end
     # hs300_total_share_weighted: means 'total share after weighter' 调整股本数, used by 调整市值 = ∑(证券价格×调整股本数)。
     # 调整股本数 = 样本总股本× 加权比例
     df_basic['hs300_total_share_weighted']=df_basic['total_share']*df_basic['weight_calc']*0.01
@@ -442,7 +443,7 @@ def main():
 
     parser.add_option( "--period_start", dest="period_start", help="the start date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
     parser.add_option( "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
-    parser.add_option("-n", "--ndays",default=365, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+    parser.add_option("-n", "--ndays",default=0, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
     parser.add_option("--fetch_index_ts", action="store_true", default=False, dest="fetch_index_ts",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
@@ -492,10 +493,14 @@ def main():
     if period_end is None:
         period_end = datetime.datetime.today().strftime("%Y%m%d")
 
+    if (period_start is not None) and (period_end is not None):
+        ndays = (datetime.datetime.strptime(period_end, "%Y%m%d") - datetime.datetime.strptime(period_start, "%Y%m%d")).days + 1
+        logging.info("Calculated ndays " + str(ndays))
+
     # Handling with TradingView source for US and AG(by different index_name).
     if index_name in ['nasdaq100','spx500','cn_sse','cn_szse','cn']:
         logging.info("using tradingview source to check index "+index_name)
-        tv_source(index_name,idict,period_end, ndays)
+        tv_source(index_name,idict,period_start,period_end, ndays)
         exit(0)
     elif index_name not in ['zz100','zz200','zz500','hs300','sz100','szcz', 'nsadaq100', 'spx500','cn','cn_sse','cn_szse']:
         logging.error("unsupported index_name "+index_name)
@@ -584,7 +589,7 @@ def main():
     df_offical_index = pd.merge(df_offical_index,df_amt_mktcap[['code','total_mv_perc','circ_mv_perc','amount_perc']],on='code', how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
     df_offical_index = pd.merge(df_offical_index,df_list_days,on=['code'], how='inner',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
-    compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name, period_end=period_end, ndays=ndays)
+    compare_with_official_index_list(df_my_index=my_index, df_offical_index=df_offical_index, index_name=index_name, period_start=period_start, period_end=period_end, ndays=ndays)
 
 
     exit(0)
