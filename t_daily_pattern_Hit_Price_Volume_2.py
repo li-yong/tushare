@@ -164,6 +164,15 @@ def step1_generate_df(output_csv,date_exam_day):
 
     df_daily_stocks_basic = finlib.Finlib().remove_garbage(df=df_daily_stocks_basic)
 
+    #量比(quantity relative ratio)这个指标所反映出来的是当前盘口的成交力度与最近五天的成交力度的差别，这个差别的值越大表明盘口成交越趋活跃，
+    #0.5倍以下的缩量情形也值得好好关注，其实严重缩量不仅显示了交易不活跃的表象，同时也暗藏着一定的市场机会
+    #0.8-1.5倍，则说明成交量处于正常水平；
+    #1.5-2.5倍之间则为温和放量;
+    #2.5-5倍，则为明显放量，若股价相应地突破重要支撑或阻力位置，则突破有效的几率颇高，可以相应地采取行动；
+    #5-10倍，则为剧烈放量，如果是在个股处于长期低位出现剧烈放量突破，涨势的后续空间巨大，是“钱”途无量的象征，
+    #10倍以上的股票，一般可以考虑反向操作。在涨势中出现这种情形，说明见顶的可能性压倒一切，即使不是彻底反转，至少涨势会休整相当长一段时间。
+    #20倍以上的情形基本上每天都有一两单，是极端放量的一种表现，这种情况的反转意义特别强烈，如果在连续的上涨之后，成交量极端放大，但股价出现“滞涨”现象，则是涨势行将死亡的强烈信号。
+
     df_daily_stocks_basic['volume_ratio_perc_rank'] = df_daily_stocks_basic['volume_ratio'].rank(pct=True) #量比
     df_daily_stocks_basic['total_mv_perc_rank'] = df_daily_stocks_basic['total_mv'].rank(pct=True) #总市值 （万元）
     df_daily_stocks_basic['circ_mv_perc_rank'] = df_daily_stocks_basic['circ_mv'].rank(pct=True) #流通市值（万元）
@@ -472,12 +481,20 @@ if __name__ == '__main__':
     logging.info("examine date "+str(date_exam_day))
 
     rst_dir = '/home/ryan/DATA/result/pv_2'
+
     if not os.path.isdir(rst_dir):
         os.mkdir(rst_dir)
 
     rst_dir = '/home/ryan/DATA/result/pv_2/'+str(date_exam_day)
+    sl_rst = '/home/ryan/DATA/result/pv_2/latest'
+
     if not os.path.isdir(rst_dir):
         os.mkdir(rst_dir)
+
+    if os.path.lexists(sl_rst):
+        os.unlink(sl_rst)
+    os.symlink(rst_dir, sl_rst)
+    logging.info(__file__ + " " + "make symbol link " + sl_rst + " --> " + rst_dir)
 
     step1_output_csv = rst_dir+"/step1.out.csv"
     step1_generate_df(output_csv=step1_output_csv, date_exam_day = date_exam_day)

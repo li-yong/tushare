@@ -18,9 +18,11 @@ import constant
 import math
 import time
 
-from futu import *
+#from futu import *
 
 
+finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.PV2_VOLUME_RATIO_BOTTOM_10P)
+pass
 #####################
 
 quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
@@ -38,7 +40,7 @@ else:
     print('subscription failed')
 quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
 
-ls
+
 exit(0)
 #################################
 

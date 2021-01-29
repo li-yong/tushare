@@ -97,6 +97,11 @@ MA_SI_CHA_MINOR = "ma si cha minor"
 MA_SI_CHA_MAJOR = "ma si cha major"
 
 
+PV2_VOLUME_RATIO_BOTTOM_10P = "volume_ratio_bottom_10p"
+PV2_VOLUME_RATIO_TOP_20P = "volume_ratio_top_20p"
+PV2_ZHANGTING_VOLUME_RATIO_LT_1 = "zhangting_volume_ration_lt_1"
+
+
 MA_DUO_TOU_PAI_LIE = "ma duo tou pai lie"
 MA_DUO_TOU_PAI_LIE_N_days = "ma duo tou pai lie n days"
 MA_LAST_KONG_TOU_PAI_LIE_N_days = "current is ma dtpl, last ktpl is n days before "

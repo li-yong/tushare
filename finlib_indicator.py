@@ -793,6 +793,16 @@ class Finlib_indicator:
             column_name='reason'
 
 
+        elif query in [constant.PV2_VOLUME_RATIO_BOTTOM_10P,
+                       constant.PV2_VOLUME_RATIO_BOTTOM_10P,
+                       constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1,
+                       ]:
+            latest_day = finlib.Finlib().get_last_trading_day()
+            source_csv = dir+'/pv_2/'+latest_day+'/volume_ratio_bottom_10p.csv'
+            column_name='reason'
+            pass
+
+
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)

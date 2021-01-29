@@ -111,6 +111,9 @@ def define_global(stock_global):
             "df_two_week_fluc_sma21_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_21_LT_3)", "term": "MIDDLE TERM", "price": "NA"},
             "df_two_week_fluc_sma55_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_55_LT_3)", "term": "LONG TERM", "price": "NA"},
 
+
+            "df_two_week_fluc_sma55_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_55_LT_3)", "term": "LONG TERM", "price": "NA"},
+
             # MA55 koudi does not work well, not a good indicator for short term
             # "df_ma55_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
             # "df_ma55_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
