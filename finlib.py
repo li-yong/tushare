@@ -453,8 +453,16 @@ class Finlib:
             full_period_list.append(str(i) + "0331")
             full_period_list.append(str(i) + "0630")
             full_period_list.append(str(i) + "0930")
-            full_period_list.append(str(i) + "1231")
-            full_period_list_yearly.append(str(i) + "1231")
+
+            #Only count last year 1231 after March next year.
+            if month <= 3 and  (year - i ==1):
+                logging.info("ingore last year 1231 as current month less than 3. current month "+str(month))
+            else:
+                full_period_list_yearly.append(str(i) + "1231")
+                full_period_list.append(str(i) + "1231")
+
+        full_period_list.sort(reverse=True) #most recent year in head.
+        full_period_list_yearly.sort(reverse=True)
 
         # get most recent report date
         m = month
