@@ -17,6 +17,7 @@ rm -f stocks_amount_*
 rm -f daily_basic_*
 rm -f average_daily_mktcap_sorted*
 rm -f average_daily_amount_sorted*
+rm -f latest_daily_basic_*
 
 rm -f wei_pan_la_sheng/*
 rm -f today/*
