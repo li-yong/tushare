@@ -729,12 +729,13 @@ def _ma_cross(csv_f,period, period_fast,period_slow):
     if df_ma_cross.iloc[-1]['ma21_stand_upon_ma55_nearly'] == True and df_ma_cross.index[df_ma_cross['ma21_stand_upon_ma55_nearly']==False].__len__()>0:
         last_false = df_ma_cross.index[df_ma_cross['ma21_stand_upon_ma55_nearly']==False][-1]
         bars = str(df_ma_cross.index[-1] - last_false)
-        logging.info(this_code+" ma21 has been nearly (more than -0.01) ma55 for "+bars + " days")
-        this_reason += constant.MA21_NEAR_MA55_N_DAYS+"_"+bars + "; "
-        this_action += constant.BUY_CHECK + "; "
-        logging.info(this_reason)
-        rtn['ma21_near_ma55_days'] = bars
 
+        if int(bars) >= 5: #ignore days less than 5
+            logging.info(this_code + " ma21 has been nearly ( in 2 perc) ma55 for " + bars + " days")
+            this_reason += constant.MA21_NEAR_MA55_N_DAYS+"_"+bars + "; "
+            this_action += constant.BUY_CHECK + "; "
+            logging.info(this_reason)
+            rtn['ma21_near_ma55_days'] = bars
 
 
     if df_ma_cross.__len__() < 2:  # at least two records.

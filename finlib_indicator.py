@@ -233,6 +233,10 @@ class Finlib_indicator:
         #    logging.fatal("df don't have enough bars , must large than long "+str(long)+" , "+str(df.__len__()))
         #    exit(1)
 
+        short = int(short)
+        middle = int(middle)
+        long = int(long)
+
         stock = stockstats.StockDataFrame.retype(df)
 
         df['sma_short_' + str(short)] = stock['close_' + str(short) + '_sma']

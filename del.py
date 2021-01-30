@@ -20,8 +20,13 @@ import time
 
 #from futu import *
 
+df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)
+print(finlib.Finlib().pprint(df1[['code','date','reason']]))
 
-finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.PV2_VOLUME_RATIO_BOTTOM_10P)
+df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_NEAR_MA55_N_DAYS)
+print(finlib.Finlib().pprint(df1[['code','date','reason']]))
+
+df2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.PV2_VOLUME_RATIO_BOTTOM_10P)
 pass
 #####################
 
