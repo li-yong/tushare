@@ -47,6 +47,7 @@ fi
 rsync -avz   ${source_host}:/home/ryan/no_hup_run_exam_ag.log  /home/ryan/
 rsync -avz   ${source_host}:/home/ryan/no_hup_run_exam_ushk.log  /home/ryan/
 
+rsync -avz   ${source_host}:/home/ryan/DATA/result/  /home/ryan/DATA/result/
 rsync -avz   ${source_host}:/home/ryan/DATA/result/*.csv  /home/ryan/DATA/result/
 rsync -avz   ${source_host}:/home/ryan/DATA/result/*.txt  /home/ryan/DATA/result/
 rsync -az   ${source_host}:/home/ryan/DATA/result/today/  /home/ryan/DATA/result/today/
