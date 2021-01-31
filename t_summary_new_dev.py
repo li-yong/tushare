@@ -950,7 +950,7 @@ def analyze_post_perf():
             df_r = finlib.Finlib().regular_read_csv_to_stdard_df(f)
 
             for i3 in range(10):
-                day_p3 = (datetime.strptime(day_p2, "%Y%m%d") - timedelta(i3 + 1)).strftime("%Y%m%d")
+                day_p3 = (datetime.strptime(day_p2, "%Y%m%d") + timedelta(i3 + 1)).strftime("%Y%m%d")
 
                 if "df_price_"+day_p3 not in price_df_dict.keys():
                     continue
