@@ -734,18 +734,15 @@ python t_daily_index_candidates.py --index_name sz100 --period_start '20201101' 
 #python t_daily_index_candidates.py --index_name sz100 --ndays 365 --index_source wugui --force_run
 
 
-
-
-
 #python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20200430
 #python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20201031
 
-#using tradingview source
-python t_daily_index_candidates.py --index_name nasdaq100
-python t_daily_index_candidates.py --index_name spx500
-python t_daily_index_candidates.py --index_name cn
-python t_daily_index_candidates.py --index_name cn_sse
-python t_daily_index_candidates.py --index_name cn_szse
+#using tradingview source.  period_start/end is not actually used, just not to broke the program
+python t_daily_index_candidates.py --index_name nasdaq100 --period_start '20210101' --period_end '20210101'
+python t_daily_index_candidates.py --index_name spx500 --period_start '20210101' --period_end '20210101'
+python t_daily_index_candidates.py --index_name cn --period_start '20210101' --period_end '20210101'
+python t_daily_index_candidates.py --index_name cn_sse --period_start '20210101' --period_end '20210101'
+python t_daily_index_candidates.py --index_name cn_szse --period_start '20210101' --period_end '20210101'
 
 
 
