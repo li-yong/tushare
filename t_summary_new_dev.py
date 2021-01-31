@@ -22,6 +22,7 @@ import logging
 from tabulate import tabulate
 import constant
 import finlib_indicator
+import glob
 
 global stock_global, arr, selected_dict, not_selected_dict
 
@@ -697,8 +698,17 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     dict_df = {}
 
     logging.info(__file__ + " " + "------ Combination 1 -------")
+
+    save_dir = '/home/ryan/DATA/result/result_new_dev_'+operation
+    if not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+
+    save_dir = save_dir+"/"+exam_date
+    if not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+
     for a in arr:
-        logging.info(__file__ + " " + "=== " + a + " ====")
+        logging.info(__file__ + " " + "=== " + a + " ")
         if a in ("sz50"):
             logging.info(__file__ + " " + "skip list set: " + a)
             continue
@@ -752,6 +762,12 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             fh.write(rst)
             fh.close()
             logging.info(rst)
+
+            #save each single df to daily result folder, in order to evaluate the performance later.
+            tmp.to_csv(save_dir+"/"+a+".csv", encoding='UTF-8', index=False)
+            logging.info("single df saved to "+save_dir+"/"+a+".csv")
+
+
 
     for combi in range(2, arr.__len__() + 1):
         # def _proc_combination(arr, combi, skip_sets, df_dict, day_3_before_date, debug, rpt):
@@ -895,6 +911,71 @@ def ana_result(operation):
     df_rpt_short.to_csv(output_f, encoding="UTF-8", index=False)
     logging.info(__file__ + ": " + "saved " + output_f + " . len " + str(df_rpt_short.__len__()))
 
+def analyze_post_perf():
+    "/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210129.csv"
+
+    price_df_dict = {}
+    for i in range(20):
+        day_p = (datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") - timedelta(i)).strftime("%Y%m%d")
+        csv = "/home/ryan/DATA/pickle/daily_update_source/ag_daily_"+day_p+".csv"
+        if not os.path.exists(csv):
+            continue
+        logging.info("get market stocks increase from "+csv)
+        cmd = "df_prev_day_"+str(i)+" = finlib.Finlib().regular_read_csv_to_stdard_df(csv)"
+        exec(cmd)
+        price_df_dict["df_price_"+day_p]=eval("df_prev_day_"+str(i))
+
+        # df_p = df_p[['code','trade_date','close','pct_chg']]
+
+    for i2 in range(10):
+        day_p2 = (datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") - timedelta(i2 + 1)).strftime(
+            "%Y%m%d")
+        dir = "/home/ryan/DATA/result/result_new_dev_B/" + day_p2
+
+        if not os.path.exists(dir):
+            continue
+
+        logging.info("update result csv increase in dir "+dir)
+        f_list = glob.glob(dir+"/*.csv")
+
+        f_summary = dir+"/summary.txt"
+
+        fh = open(f_summary, "w")
+        fh.write("")
+        fh.close()
+        lines = ""
+
+        for f in f_list:
+            lines += "\n\n=== " + f.split("/")[-1].split(".")[0] + " "
+            df_r = finlib.Finlib().regular_read_csv_to_stdard_df(f)
+
+            for i3 in range(10):
+                day_p3 = (datetime.strptime(day_p2, "%Y%m%d") - timedelta(i3 + 1)).strftime("%Y%m%d")
+
+                if "df_price_"+day_p3 not in price_df_dict.keys():
+                    continue
+
+                df_p = price_df_dict["df_price_"+day_p3]
+
+                #rename to
+                df_r = pd.merge(left=df_r, right=df_p[['code','pct_chg']], on='code',how='inner',suffixes=('','_x')).rename(columns={"pct_chg": "pct_chg_"+day_p3[-4:]})
+                logging.info("appended pct_chg of day "+day_p +" to result csv "+f)
+
+                df_r = finlib.Finlib().adjust_column(df=df_r, col_name_list=['pct_chg_'+day_p3[-4:]])
+
+                lines += ", "+str(day_p3[-4:])+": "+str(round(df_r['pct_chg_'+day_p3[-4:]].mean(), 2))
+                print("hi3")
+
+            lines += "\n"
+            lines += finlib.Finlib().pprint(df_r)
+
+
+            fh = open(f_summary, "w")
+            fh.write(lines)
+            fh.close()
+            logging.info("updated "+f +" in "+f_summary)
+
+
 
 def main():
     global stock_global
@@ -914,7 +995,7 @@ def main():
     parser.add_option("--operation", dest="operation", default="B", help="[B|S] check which operation, Buy or Sell")
     parser.add_option("--select", action="store_true", default=False, dest="select", help="Analyze selected stocks only")
 
-    parser.add_option("--action", dest="action", help="[generate_report|analyze_report] ")
+    parser.add_option("--action", dest="action", help="[generate_report|analyze_report|analyze_post_perf] ")
 
     (options, args) = parser.parse_args()
     stock_global = options.stock_global
@@ -941,6 +1022,8 @@ def main():
         generate_result_csv(full_combination=full_combination, select=select, operation=operation, debug=debug)
     elif action == "analyze_report":
         ana_result(operation=operation)
+    elif action == "analyze_post_perf":
+        analyze_post_perf()
 
 
 ### MAIN ####
