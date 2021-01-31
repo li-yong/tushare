@@ -119,7 +119,8 @@ def analyze_hsgt_top_10():
     df = df.sort_values(by=['net_amount'], ascending=[False])
     df = df[df['net_amount'] > 0].reset_index().drop('index', axis=1)
     df = df.rename(columns={'ts_code': 'code'}, inplace=False)
-    df = finlib.Finlib().add_market_to_code(df=df)
+    df = finlib.Finlib().add_market_to_code(df=df, tspro_format=True)
+    df = finlib.Finlib().ts_code_to_code(df)
 
     df.to_csv(output_csv, encoding='UTF-8', index=False)
     print(df)
