@@ -911,7 +911,7 @@ def ana_result(operation):
     df_rpt_short.to_csv(output_f, encoding="UTF-8", index=False)
     logging.info(__file__ + ": " + "saved " + output_f + " . len " + str(df_rpt_short.__len__()))
 
-def analyze_post_perf():
+def analyze_post_perf(operation='B'):
     "/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210129.csv"
 
     price_df_dict = {}
@@ -931,7 +931,7 @@ def analyze_post_perf():
         #include today's perc change in the report. so not i2+1 but i2
         day_p2 = (datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") - timedelta(i2)).strftime(
             "%Y%m%d")
-        dir = "/home/ryan/DATA/result/result_new_dev_B/" + day_p2
+        dir = "/home/ryan/DATA/result/result_new_dev_"+operation+"/" + day_p2
 
         if not os.path.exists(dir):
             continue
@@ -951,21 +951,23 @@ def analyze_post_perf():
             df_r = finlib.Finlib().regular_read_csv_to_stdard_df(f)
 
             #show price change from previous 3 days to after 10 days
-            for i3 in range(-3,10):
+            for i3 in range(-2,10):
                 day_p3 = (datetime.strptime(day_p2, "%Y%m%d") + timedelta(i3)).strftime("%Y%m%d")
 
                 if "df_price_"+day_p3 not in price_df_dict.keys():
                     continue
 
                 df_p = price_df_dict["df_price_"+day_p3]
+                df_p['pct_chg'] = df_p['pct_chg'].apply(lambda _d: round(_d,1))
+
 
                 #rename to
-                df_r = pd.merge(left=df_r, right=df_p[['code','pct_chg']], on='code',how='inner',suffixes=('','_x')).rename(columns={"pct_chg": "pct_chg_"+day_p3[-4:]})
+                df_r = pd.merge(left=df_r, right=df_p[['code','pct_chg']], on='code',how='inner',suffixes=('','_x')).rename(columns={"pct_chg": "pc_"+day_p3[-4:]})
                 logging.info("appended pct_chg of day "+day_p +" to result csv "+f)
 
-                df_r = finlib.Finlib().adjust_column(df=df_r, col_name_list=['pct_chg_'+day_p3[-4:]])
+                df_r = finlib.Finlib().adjust_column(df=df_r, col_name_list=['pc_'+day_p3[-4:]])
 
-                lines += ", "+str(day_p3[-4:])+": "+str(round(df_r['pct_chg_'+day_p3[-4:]].mean(), 2))
+                lines += ", "+str(day_p3[-4:])+": "+str(round(df_r['pc_'+day_p3[-4:]].mean(), 2))
                 print("hi3")
 
             lines += "\n"
@@ -1025,7 +1027,7 @@ def main():
     elif action == "analyze_report":
         ana_result(operation=operation)
     elif action == "analyze_post_perf":
-        analyze_post_perf()
+        analyze_post_perf(operation=operation)
 
 
 ### MAIN ####

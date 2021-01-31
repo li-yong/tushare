@@ -758,7 +758,8 @@ python t_summary_new_dev.py -x AG --operation S --action generate_report
 # $ grep === /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
 #=== df_szcz_add_candidate , 0126: -3.28, 0127: -0.15, 0128: -2.2, 0129: -0.98
 #=== df_sz100_add_candidate , 0126: -4.3, 0127: 0.04, 0128: -3.06, 0129: -1.5
-python t_summary_new_dev.py -x AG  --action analyze_post_perf
+python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation B
+python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
 
 
 #############
