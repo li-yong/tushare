@@ -928,7 +928,8 @@ def analyze_post_perf():
         # df_p = df_p[['code','trade_date','close','pct_chg']]
 
     for i2 in range(10):
-        day_p2 = (datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") - timedelta(i2 + 1)).strftime(
+        #include today's perc change in the report. so not i2+1 but i2
+        day_p2 = (datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") - timedelta(i2)).strftime(
             "%Y%m%d")
         dir = "/home/ryan/DATA/result/result_new_dev_B/" + day_p2
 
@@ -949,8 +950,9 @@ def analyze_post_perf():
             lines += "\n\n=== " + f.split("/")[-1].split(".")[0] + " "
             df_r = finlib.Finlib().regular_read_csv_to_stdard_df(f)
 
-            for i3 in range(10):
-                day_p3 = (datetime.strptime(day_p2, "%Y%m%d") + timedelta(i3 + 1)).strftime("%Y%m%d")
+            #show price change from previous 3 days to after 10 days
+            for i3 in range(-3,10):
+                day_p3 = (datetime.strptime(day_p2, "%Y%m%d") + timedelta(i3)).strftime("%Y%m%d")
 
                 if "df_price_"+day_p3 not in price_df_dict.keys():
                     continue
