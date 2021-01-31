@@ -118,13 +118,11 @@ def analyze_hsgt_top_10():
     df = df.groupby(['name', 'ts_code'])['net_amount'].sum().sort_values().reset_index()
     df = df.sort_values(by=['net_amount'], ascending=[False])
     df = df[df['net_amount'] > 0].reset_index().drop('index', axis=1)
-    df = df.rename(columns={'ts_code': 'code'}, inplace=False)
-    df = finlib.Finlib().add_market_to_code(df=df, tspro_format=True)
     df = finlib.Finlib().ts_code_to_code(df)
 
     df.to_csv(output_csv, encoding='UTF-8', index=False)
-    print(df)
-    print("Based on recent " + str(period_days) + " days selected hsgt_top_10 was saved to " + output_csv)
+    logging.info(finlib.Finlib().pprint(df))
+    logging.info("Based on recent " + str(period_days) + " days selected hsgt_top_10 was saved to " + output_csv)
 
 
 def fetch_moneyflow(fetch_whole=False, fetch_today=True, force_run=False,debug=False):
