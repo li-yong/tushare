@@ -20,6 +20,7 @@ import time
 
 #from futu import *
 
+df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)
 df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)
 print(finlib.Finlib().pprint(df1[['code','date','reason']]))
 

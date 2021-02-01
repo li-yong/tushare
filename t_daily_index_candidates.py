@@ -160,15 +160,15 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
     len_merged = df_merged.__len__()
     index_candiate_csv = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
 
-    df_merged.to_csv(index_candiate_csv, encoding='UTF-8', index=False)
-    logging.info("saved " + index_candiate_csv + " len " + str(len_merged))
-
     sort_col_name = ''
     if "total_mv_perc" in df_merged.columns:
         sort_col_name = "total_mv_perc"
     elif "circ_mv_perc" in df_merged.columns:
         sort_col_name = "circ_mv_perc"
 
+    df_merged = df_merged.sort_values(by=sort_col_name, ascending=False, inplace=False).reset_index().drop('index',axis=1)
+    df_merged.to_csv(index_candiate_csv, encoding='UTF-8', index=False)
+    logging.info("saved " + index_candiate_csv + " len " + str(len_merged))
 
     df_both = df_merged[df_merged['predict'] == constant.TO_BE_KEPT]
     df_both = df_both.sort_values(by=sort_col_name, ascending=False, inplace=False).reset_index().drop('index', axis=1)
