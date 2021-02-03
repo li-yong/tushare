@@ -1835,13 +1835,6 @@ def _analyze_step_1(end_date):
         end_date = df.iloc[i]['end_date']
         name = df.iloc[i]['name']
 
-        #ts_code = '002972.SZ'  #ryan debug
-
-        on_market_days = df_on_market_date[df_on_market_date['ts_code'] == ts_code]['list_date_days_before'].values[0]
-
-
-        logging.info(__file__+" "+ts_code + " " +name+ " , " + end_date+" , on market days "+str(on_market_days) )
-        sys.stdout.flush()
 
         #if end_date == '20171231':
         #    pass  #debug
@@ -1850,6 +1843,12 @@ def _analyze_step_1(end_date):
             logging.info(__file__ + " " + "stock has been not on market. " + ts_code + " , " + end_date)
             #df = df[df['ts_code'] != ts_code]  #remove the ts_code from df that saved in csv. <<< bug introduced.
             continue
+
+        #ts_code = '002972.SZ'  #ryan debug
+        on_market_days = df_on_market_date[df_on_market_date['ts_code'] == ts_code]['list_date_days_before'].values[0]
+        logging.info(__file__+" "+ts_code + " " +name+ " , " + end_date+" , on market days "+str(on_market_days) )
+        sys.stdout.flush()
+
 
         #debug
         #logging.info(__file__+" "+"i is " + str(i))
