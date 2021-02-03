@@ -3130,7 +3130,9 @@ class Finlib:
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
-        df = self._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+
+        #remove koudi, this affected the fundermental_2.py step6.
+        # df = self._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
 
         if ts_code_fmt:
             df = self.remove_market_from_tscode(df)

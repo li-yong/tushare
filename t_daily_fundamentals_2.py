@@ -4037,6 +4037,9 @@ def main():
 
     set_global(debug=debug_f, big_memory=big_memory_f, force_run=force_run_f)
 
+    # _analyze_step_6();
+    # exit(0); #ryan debug
+
     if options.fetch_all_f or options.fetch_pro_fund_f:
         set_global_pro_fetch_field()
 
