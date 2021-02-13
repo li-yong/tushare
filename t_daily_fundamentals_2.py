@@ -2342,13 +2342,13 @@ def _analyze_white_horse_ct(ts_code, end_date, basic_df):
     roe_3y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_3y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
     roe_4y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_4y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
     roe_5y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_5y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
-    #roe_6y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_6y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
-    roe_7y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_7y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
-    roe_8y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_8y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
-    roe_9y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_9y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
-    roe_10y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_10y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
+    # roe_6y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_6y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
+    # roe_7y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_7y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
+    # roe_8y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_8y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
+    # roe_9y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_9y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
+    # roe_10y =  finlib.Finlib().get_ts_field(ts_code=ts_code, ann_date=tmp['ann_date_10y_before'], field='roe', big_memory=big_memory_global, df_all_ts_pro=df_all_ts_pro,fund_base_merged=fund_base_merged)
 
-    roeC = 15
+    roeC = 20
     try:
         #at 2015, 5 years before is 2010, so bigload need load 2010
         if (this_roe >= roeC and roe_1y >= roeC and roe_1y >= roeC and roe_2y >= roeC and roe_3y >= roeC and roe_4y >= roeC and roe_5y >= roeC):
