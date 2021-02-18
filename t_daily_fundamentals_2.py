@@ -2367,19 +2367,35 @@ def _analyze_white_horse_ct(ts_code, end_date, basic_df):
                 logging.info(__file__ + " " + "bonus. " + bonusReason + " " + ts_code + " " + end_date)
 
         if or_yoy_1y >= or_yoy_c and or_yoy_2y >= or_yoy_c and or_yoy_3y >= or_yoy_c:
-            bonusReason += "or_yoy > " + str(or_yoy_c) + " consecutively (3years). "
+            bonusReason += " 营业收入同比增长率(%) or_yoy > " + str(or_yoy_c) + " consecutively (3years). "
             bonusCnt += 1
             logging.info(__file__ + " " + "bonus. " + bonusReason)
+        elif or_yoy_1y < 0:
+            garbageReason += "营业收入同比增长率(%) or_yoy < 0. "+str(round(or_yoy_1y, 2)+"; ")
+            garbageCnt += 1
+            stopProcess = False
+            logging.info(__file__ + " " + "garbage. " + garbageReason)
 
         if equity_yoy_1y >= equity_yoy_c and equity_yoy_2y >= equity_yoy_c and equity_yoy_3y >= equity_yoy_c:
-            bonusReason += "equity_yoy > " + str(equity_yoy_c) + " consecutively (3years). "
+            bonusReason += "净资产同比增长率 equity_yoy > " + str(equity_yoy_c) + " consecutively (3years). "
             bonusCnt += 1
             logging.info(__file__ + " " + "bonus. " + bonusReason)
+        elif equity_yoy_1y < 0:
+            garbageReason += "净资产同比增长率 equity_yoy_1y < 0. "+str(round(equity_yoy_1y, 2)+"; ")
+            garbageCnt += 1
+            stopProcess = False
+            logging.info(__file__ + " " + "garbage. " + garbageReason)
 
         if ocf_yoy_1y >= ocf_yoy_c and ocf_yoy_2y >= ocf_yoy_c and ocf_yoy_3y >= ocf_yoy_c:
-            bonusReason += "ocf_yoy > " + str(ocf_yoy_c) + " consecutively (3years). "
+            bonusReason += "经营活动产生的现金流量净额同比增长率(%) ocf_yoy > " + str(ocf_yoy_c) + " consecutively (3years). "
             bonusCnt += 1
             logging.info(__file__ + " " + "bonus. " + bonusReason)
+        elif or_yoy_1y < 0:
+            garbageReason += "经营活动产生的现金流量净额同比增长率(%) ocf_yoy_1y < 0. "+str(round(ocf_yoy_1y, 2)+"; ")
+            garbageCnt += 1
+            stopProcess = False
+            logging.info(__file__ + " " + "garbage. " + garbageReason)
+
 
 
 
@@ -3626,6 +3642,49 @@ def _fetch_pro_basic():
     return df
 
 
+def _fetch_pro_pledge_stat():
+    ts.set_token(myToken)
+    pro = ts.pro_api()
+
+    if not os.path.isdir(fund_base_source):
+        os.mkdir(fund_base_source)
+
+    dir = fund_base_source + "/pledge"
+
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+
+    output_csv = dir + "/pledge_stat.csv"
+
+    if finlib.Finlib().is_cached(output_csv, 1):
+        logging.info(__file__ + " " + "not fetch pledge_stat as the file updated in 1 day. " + output_csv)
+        return ()
+
+    stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
+    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
+
+    stock_cnt = 0
+    df_result= pd.DataFrame()
+    for ts_code in stock_list["ts_code"]:
+        stock_cnt += 1
+        logging.info(str(stock_cnt) + " of " + str(stock_list.__len__())+", fetching pledge_stat, "+ts_code)
+        df = pro.query("pledge_stat",ts_code=ts_code)
+        time.sleep(0.5)
+
+        if df.__len__()>0:
+            df = df.head(1)
+            df_result = pd.concat([df_result, df], sort=False).reset_index().drop("index", axis=1)
+            df_result.to_csv(output_csv, encoding="UTF-8", index=False)
+
+    df_result = df_result.sort_values('pledge_ratio', ascending=False)
+    df_result = finlib.Finlib().ts_code_to_code(df=df_result)
+    df_result = finlib.Finlib().add_stock_name_to_df(df=df_result)
+
+    df_result.to_csv(output_csv, encoding="UTF-8", index=False)
+    logging.info(__file__ + " " + "pledge_stat saved to " + output_csv + " . len " + str(df_result.__len__()))
+    return(df_result)
+
+
 def get_pro_basic():
     dir = fund_base_source + "/market"
     output_csv = dir + "/pro_basic.csv"
@@ -3925,6 +3984,7 @@ def main():
     #
     #########################
 
+
     logging.info(__file__ + " " + "\n")
     logging.info(__file__ + " " + "SCRIPT STARTING " + " ".join(sys.argv))
 
@@ -3944,6 +4004,7 @@ def main():
     parser.add_option("--fetch_cctv_news", action="store_true", dest="fetch_cctv_news_f", default=False, help="")
     parser.add_option("--fetch_new_share", action="store_true", dest="fetch_new_share_f", default=False, help="")
     parser.add_option("--fetch_change_name", action="store_true", dest="fetch_change_name_f", default=False, help="")
+    parser.add_option("--fetch_pledge_stat", action="store_true", dest="fetch_pledge_stat_f", default=False, help="")
 
     parser.add_option("-e", "--extract_latest", action="store_true", dest="extract_latest_f", default=False, help="extract latest quarter data")
 
@@ -4077,6 +4138,9 @@ def main():
     if options.fetch_change_name_f:
         _fetch_change_name()
 
+    if options.fetch_pledge_stat_f:
+        _fetch_pro_pledge_stat()
+
     if options.generate_today_fund1_fund2_stock_basic_f:
         finlib.Finlib().generate_today_fund1_fund2_stock_basic()
         finlib.Finlib().generate_common_fund_df()
@@ -4099,6 +4163,7 @@ def main():
         # _fetch_stk_holdertrade(fast_fetch=fast_fetch_f) #don't have 2000 api credits
         fetch_pro_fund(fast_fetch=fast_fetch_f)
         fetch_basic_quarterly()
+        _fetch_pro_pledge_stat()
 
     elif merge_individual_f:
         # generate source/individual_per_stock/*_basic.csv from source/basic.csv

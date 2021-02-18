@@ -395,9 +395,12 @@ class Finlib:
         code_fmt = self.get_code_format(df_tmp['code'].iloc[0])['format']
 
         if code_fmt == 'C2D6':
-            df['ts_code'] = self.add_market_to_code(self.remove_market_from_tscode(df_tmp), dot_f=True, tspro_format=True)['code']
+            df_a = self.remove_market_from_tscode(df_tmp)
+            df_b = self.add_market_to_code(df_a, dot_f=True, tspro_format=True)
+            df['ts_code'] = df_b['ts_code']
         elif code_fmt == 'D6':
-            df['ts_code'] = self.add_market_to_code(df, dot_f=True, tspro_format=True)['code']
+            df_b = self.add_market_to_code(df, dot_f=True, tspro_format=True)
+            df['ts_code'] = df_b['ts_code']
         else:
             logging.error("unknow code format "+str(df_tmp['code'].iloc[0]))
 

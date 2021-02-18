@@ -19,103 +19,103 @@ import math
 import time
 
 #from futu import *
-
-df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)
-df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)
-print(finlib.Finlib().pprint(df1[['code','date','reason']]))
-
-df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_NEAR_MA55_N_DAYS)
-print(finlib.Finlib().pprint(df1[['code','date','reason']]))
-
-df2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.PV2_VOLUME_RATIO_BOTTOM_10P)
-pass
-#####################
-
-quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-# ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
-ret_sub, err_message = quote_ctx.subscribe(['SH.600519'], [SubType.BROKER], subscribe_push=False)
-# 先订阅经纪队列类型。订阅成功后FutuOpenD将持续收到服务器的推送，False代表暂时不需要推送给脚本
-if ret_sub == RET_OK:   # 订阅成功
-    ret, bid_frame_table, ask_frame_table = quote_ctx.get_broker_queue('HK.00700')   # 获取一次经纪队列数据
-    if ret == RET_OK:
-        print(finlib.Finlib().pprint(bid_frame_table))
-        print(finlib.Finlib().pprint(ask_frame_table))
-    else:
-        print('error:', bid_frame_table)
-else:
-    print('subscription failed')
-quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
-
-
-exit(0)
-#################################
-
-class BrokerTest(BrokerHandlerBase):
-    def on_recv_rsp(self, rsp_pb):
-        ret_code, err_or_stock_code, data = super(BrokerTest, self).on_recv_rsp(rsp_pb)
-        if ret_code != RET_OK:
-            print("BrokerTest: error, msg: {}".format(err_or_stock_code))
-            return RET_ERROR, data
-        print("BrokerTest: stock: {} data: {} ".format(err_or_stock_code, data))  # BrokerTest自己的处理逻辑
-        return RET_OK, data
-quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-handler = BrokerTest()
-quote_ctx.set_handler(handler)  # 设置实时经纪推送回调
-quote_ctx.subscribe(['HK.00700'], [SubType.BROKER]) # 订阅经纪类型，FutuOpenD开始持续收到服务器的推送
-time.sleep(1000)  # 设置脚本接收FutuOpenD的推送持续时间为15秒
-quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
-
-#################################
-
-#Year 2020
-# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031', debug=True)
+#
+# df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)
+# df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)
+# print(finlib.Finlib().pprint(df1[['code','date','reason']]))
+#
+# df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_NEAR_MA55_N_DAYS)
+# print(finlib.Finlib().pprint(df1[['code','date','reason']]))
+#
+# df2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.PV2_VOLUME_RATIO_BOTTOM_10P)
+# pass
+# #####################
+#
+# quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+# # ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
+# ret_sub, err_message = quote_ctx.subscribe(['SH.600519'], [SubType.BROKER], subscribe_push=False)
+# # 先订阅经纪队列类型。订阅成功后FutuOpenD将持续收到服务器的推送，False代表暂时不需要推送给脚本
+# if ret_sub == RET_OK:   # 订阅成功
+#     ret, bid_frame_table, ask_frame_table = quote_ctx.get_broker_queue('HK.00700')   # 获取一次经纪队列数据
+#     if ret == RET_OK:
+#         print(finlib.Finlib().pprint(bid_frame_table))
+#         print(finlib.Finlib().pprint(ask_frame_table))
+#     else:
+#         print('error:', bid_frame_table)
+# else:
+#     print('subscription failed')
+# quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
+#
+#
 # exit(0)
-# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')
-
-#Year 2021
-finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430', daily_update=True,
-                                              force_run=False, #ignore file existance, calculate everytime.
-                                              debug=True,  #only check head 3 rows
-                                              )  # HS300
-exit(0)
-finlib.Finlib().get_last_n_days_stocks_amount(dayS='20201101', dayE='20210430')  # SHEN_ZHEN
-
-
-
-exit(0)
-
-
-
-
-this_year = datetime.datetime.today().year
-
-this_year = 2020
-this_month = 2
-
-
-last_year = this_year - 1
-this_month = datetime.datetime.today().month
-ndays = 365
-
-if this_month <= 6:
-    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '0501', dayE=str(this_year) + '0430') # HS300
-    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
-
-    df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=None, debug=True,force_run=True) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
-
-    a = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
-
-    exit(0)
-
-if this_month >6:
-    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '1031') # HS300
-    finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(this_year) + '0501', dayE=str(this_year) + '1031') # SHEN_ZHEN
-
-
-finlib.Finlib().get_last_n_days_stocks_amount(ndays=365)
-
-
-exit(0)
+# #################################
+#
+# class BrokerTest(BrokerHandlerBase):
+#     def on_recv_rsp(self, rsp_pb):
+#         ret_code, err_or_stock_code, data = super(BrokerTest, self).on_recv_rsp(rsp_pb)
+#         if ret_code != RET_OK:
+#             print("BrokerTest: error, msg: {}".format(err_or_stock_code))
+#             return RET_ERROR, data
+#         print("BrokerTest: stock: {} data: {} ".format(err_or_stock_code, data))  # BrokerTest自己的处理逻辑
+#         return RET_OK, data
+# quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+# handler = BrokerTest()
+# quote_ctx.set_handler(handler)  # 设置实时经纪推送回调
+# quote_ctx.subscribe(['HK.00700'], [SubType.BROKER]) # 订阅经纪类型，FutuOpenD开始持续收到服务器的推送
+# time.sleep(1000)  # 设置脚本接收FutuOpenD的推送持续时间为15秒
+# quote_ctx.close()   # 关闭当条连接，FutuOpenD会在1分钟后自动取消相应股票相应类型的订阅
+#
+# #################################
+#
+# #Year 2020
+# # finlib.Finlib().get_last_n_days_stocks_amount(dayS='20191101', dayE='20201031', debug=True)
+# # exit(0)
+# # finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20201031')
+#
+# #Year 2021
+# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20200501', dayE='20210430', daily_update=True,
+#                                               force_run=False, #ignore file existance, calculate everytime.
+#                                               debug=True,  #only check head 3 rows
+#                                               )  # HS300
+# exit(0)
+# finlib.Finlib().get_last_n_days_stocks_amount(dayS='20201101', dayE='20210430')  # SHEN_ZHEN
+#
+#
+#
+# exit(0)
+#
+#
+#
+#
+# this_year = datetime.datetime.today().year
+#
+# this_year = 2020
+# this_month = 2
+#
+#
+# last_year = this_year - 1
+# this_month = datetime.datetime.today().month
+# ndays = 365
+#
+# if this_month <= 6:
+#     finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '0501', dayE=str(this_year) + '0430') # HS300
+#     finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '0430') # SHEN_ZHEN
+#
+#     df_amt = finlib.Finlib().sort_by_amount_since_n_days_avg(ndays=ndays,period_end=None, debug=True,force_run=True) #output  /home/ryan/DATA/result/average_daily_amount_sorted.csv
+#
+#     a = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
+#
+#     exit(0)
+#
+# if this_month >6:
+#     finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(last_year) + '1101', dayE=str(this_year) + '1031') # HS300
+#     finlib.Finlib().get_last_n_days_stocks_amount(dayS=str(this_year) + '0501', dayE=str(this_year) + '1031') # SHEN_ZHEN
+#
+#
+# finlib.Finlib().get_last_n_days_stocks_amount(ndays=365)
+#
+#
+# exit(0)
 
 
 
@@ -127,6 +127,11 @@ out_f = "/home/ryan/DATA/result/price_quality.csv"
 stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
 stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # 603999.SH
 stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list, code_col='code')
+
+pro= ts.pro_api()
+df = pro.pledge_detail(ts_code='600519.SH')
+print(finlib.Finlib().pprint(df))
 
 csv_dir = "/home/ryan/DATA/DAY_Global/AG"
 i = 0
