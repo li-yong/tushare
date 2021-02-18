@@ -3669,7 +3669,7 @@ def _fetch_pro_pledge_stat():
         stock_cnt += 1
         logging.info(str(stock_cnt) + " of " + str(stock_list.__len__())+", fetching pledge_stat, "+ts_code)
         df = pro.query("pledge_stat",ts_code=ts_code)
-        time.sleep(1)
+        time.sleep(60/50) #抱歉，您每分钟最多访问该接口50次
 
         if df.__len__()>0:
             df = df.head(1)
