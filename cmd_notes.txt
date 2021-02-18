@@ -28,4 +28,20 @@ Solution: 1. combine a ma cross df       2. candidate expand scope (top 50 etc)
 df_hs300_add_candidate, df_jincha_minor
 
 
+# show the column # of a field 
+head -1 fina_indicator.csv | sed s/,/\\n/g | grep ts_code -n
+output:  1:ts_code
+
+head -1 fina_indicator.csv | sed s/,/\\n/g | grep roe_yoy -n
+151:roe_yoy
+
+grep -E "600519.SH|code" fina_indicator.csv | awk '{split($0,a,","); print a[1],a[2],a[3],a[151]}'
+ts_code name end_date roe_yoy
+600519.SH 贵州茅台 20200930 -6.281000000000001
+
+# sort by the 5th column ascendingly
+cat fina_indicator.csv | awk '{split($0,a,","); print a[1],a[2],a[3],a[151], a[156]}' | sort -k 5,5 -n -r  | more
+
+
+
 
