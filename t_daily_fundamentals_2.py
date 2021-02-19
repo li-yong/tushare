@@ -3642,7 +3642,7 @@ def _fetch_pro_basic():
     return df
 
 
-def _fetch_pro_pledge_stat():
+def _fetch_pro_pledge_stat_detail():
     ts.set_token(myToken)
     pro = ts.pro_api()
 
@@ -4042,7 +4042,7 @@ def main():
     parser.add_option("--fetch_cctv_news", action="store_true", dest="fetch_cctv_news_f", default=False, help="")
     parser.add_option("--fetch_new_share", action="store_true", dest="fetch_new_share_f", default=False, help="")
     parser.add_option("--fetch_change_name", action="store_true", dest="fetch_change_name_f", default=False, help="")
-    parser.add_option("--fetch_pledge_stat", action="store_true", dest="fetch_pledge_stat_f", default=False, help="")
+    parser.add_option("--fetch_pledge_stat_detail", action="store_true", dest="fetch_pledge_stat_detail_f", default=False, help="")
 
     parser.add_option("-e", "--extract_latest", action="store_true", dest="extract_latest_f", default=False, help="extract latest quarter data")
 
@@ -4176,8 +4176,8 @@ def main():
     if options.fetch_change_name_f:
         _fetch_change_name()
 
-    if options.fetch_pledge_stat_f:
-        _fetch_pro_pledge_stat()
+    if options.fetch_pledge_stat_detail_f:
+        _fetch_pro_pledge_stat_detail()
 
     if options.generate_today_fund1_fund2_stock_basic_f:
         finlib.Finlib().generate_today_fund1_fund2_stock_basic()

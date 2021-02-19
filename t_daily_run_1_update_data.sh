@@ -166,8 +166,18 @@ fi
 # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_basic.csv
 # #ts_code,symbol,name,area,industry,list_date
 ######################################
-
 python t_daily_fundamentals_2.py --fetch_pro_basic
+
+
+######################################
+#
+# output:
+# /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_stat.csv
+# /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_detail.csv
+# #ts_code,symbol,name,area,industry,list_date
+######################################
+python t_daily_fundamentals_2.py --fetch_pledge_stat_detail
+
 
 ######################################
 #
