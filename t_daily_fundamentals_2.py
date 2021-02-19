@@ -3654,35 +3654,73 @@ def _fetch_pro_pledge_stat():
     if not os.path.isdir(dir):
         os.mkdir(dir)
 
-    output_csv = dir + "/pledge_stat.csv"
+    output_csv_stat = dir + "/pledge_stat.csv"
+    output_csv_detail = dir + "/pledge_detail.csv"
 
-    if finlib.Finlib().is_cached(output_csv, 1):
-        logging.info(__file__ + " " + "not fetch pledge_stat as the file updated in 1 day. " + output_csv)
+    if finlib.Finlib().is_cached(output_csv_stat, 5) and (not force_run_global):
+        logging.info(__file__ + " " + "not fetch pledge_stat as the file updated in 1 day. " + output_csv_stat)
+        return ()
+
+    if finlib.Finlib().is_cached(output_csv_detail, 5) and (not force_run_global):
+        logging.info(__file__ + " " + "not fetch pledge_stat as the file updated in 1 day. " + output_csv_detail)
         return ()
 
     stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
 
     stock_cnt = 0
-    df_result= pd.DataFrame()
+    df_result_stat= pd.DataFrame()
+    df_result_detail= pd.DataFrame()
     for ts_code in stock_list["ts_code"]:
         stock_cnt += 1
         logging.info(str(stock_cnt) + " of " + str(stock_list.__len__())+", fetching pledge_stat, "+ts_code)
-        df = pro.query("pledge_stat",ts_code=ts_code)
-        time.sleep(60/50) #抱歉，您每分钟最多访问该接口50次
 
-        if df.__len__()>0:
-            df = df.head(1)
-            df_result = pd.concat([df_result, df], sort=False).reset_index().drop("index", axis=1)
-            df_result.to_csv(output_csv, encoding="UTF-8", index=False)
+        try:
+            df_stat = pro.query("pledge_stat",ts_code=ts_code)
+            df_detail = pro.query("pledge_detail",ts_code=ts_code)
+            time.sleep(60/50) #抱歉，您每分钟最多访问该接口50次
 
-    df_result = df_result.sort_values('pledge_ratio', ascending=False)
-    df_result = finlib.Finlib().ts_code_to_code(df=df_result)
-    df_result = finlib.Finlib().add_stock_name_to_df(df=df_result)
+        except:
+            logging.info(__file__ + " " + "exception in _fetch_pro_pledge_stat")
+        finally:
+            if sys.exc_info() == (None, None, None):
+                pass  # no exception
+            else:
+                logging.info(str(traceback.print_exception(*sys.exc_info())).encode("utf8"))
+                logging.info(sys.exc_value.message)  # print the human readable unincode
+                logging.info(__file__ + " " + "ts_code: " + ts_code)
+                sys.exc_clear()
 
-    df_result.to_csv(output_csv, encoding="UTF-8", index=False)
-    logging.info(__file__ + " " + "pledge_stat saved to " + output_csv + " . len " + str(df_result.__len__()))
-    return(df_result)
+        if df_stat.__len__()>0:
+            df_stat = df_stat.head(1)
+            df_result_stat = pd.concat([df_result_stat, df_stat], sort=False).reset_index().drop("index", axis=1)
+            df_result_stat.to_csv(output_csv_stat, encoding="UTF-8", index=False)
+
+        if df_detail.__len__()>0:
+            df_detail_not_relased = df_detail[df_detail['is_release']=='0']
+            print(finlib.Finlib().pprint(df_detail_not_relased))
+            p_total_ratio_sum = df_detail_not_relased['p_total_ratio'].sum()
+
+            df_detail_tmp = pd.DataFrame.from_dict({'ts_code':[ts_code],'p_total_ratio_sum':[p_total_ratio_sum] })
+            df_result_detail = pd.concat([df_result_detail, df_detail_tmp], sort=False).reset_index().drop("index", axis=1)
+            df_result_detail.to_csv(output_csv_detail, encoding="UTF-8", index=False)
+
+    df_result_stat = df_result_stat.sort_values('pledge_ratio', ascending=False)
+    df_result_stat = finlib.Finlib().ts_code_to_code(df=df_result_stat)
+    df_result_stat = finlib.Finlib().add_stock_name_to_df(df=df_result_stat)
+    df_result_stat.to_csv(output_csv_stat, encoding="UTF-8", index=False)
+    logging.info(__file__ + " " + "pledge_stat saved to " + output_csv_stat + " . len " + str(df_result_stat.__len__()))
+
+
+    df_result_detail = df_result_detail.sort_values('p_total_ratio_sum', ascending=False)
+    df_result_detail = finlib.Finlib().ts_code_to_code(df=df_result_detail)
+    df_result_detail = finlib.Finlib().add_stock_name_to_df(df=df_result_detail)
+    df_result_detail.to_csv(output_csv_detail, encoding="UTF-8", index=False)
+    logging.info(__file__ + " " + "pledge_stat saved to " + output_csv_detail + " . len " + str(df_result_detail.__len__()))
+
+
+
+    return(df_result_stat)
 
 
 def get_pro_basic():
