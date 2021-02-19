@@ -212,7 +212,8 @@ if [ $full_or_daily == "FULL" ]; then
   python t_daily_fundamentals_2.py --fetch_basic_daily --force_run
   python t_daily_fundamentals_2.py --fetch_info_daily --force_run
 
-
+  #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge_detail.csv  pledge_stat.csv
+  python t_daily_fundamentals_2.py --fetch_pledge_stat_detail --force_run
 
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/changed_name_stocks.csv
   #ts_code,name,start_date,end_date,ann_date,change_reason
