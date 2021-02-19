@@ -3285,6 +3285,27 @@ class Finlib:
         return(df)
 
 
+    def _remove_garbage_high_pledge_ration(self, df, threshold=50):
+        if df.__len__()==0:
+            logging.warning("empty df")
+            return(df)
+
+        csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_stat.csv'
+        df_gar = pd.read_csv(csv, converters={'end_date': str})
+
+        df_gar = df_gar[df_gar['pledge_ratio'] >= threshold]
+        df_gar = self.ts_code_to_code(df_gar)
+        df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        logging.info("pledge ration >= " + str(threshold) + ", len " + str(df_gar.__len__()))
+
+        if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
+            df = self.add_market_to_code(df)
+
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NONE_STANDARD_AUDIT_REPORT)
+
+        return(df)
+
+
     def remove_garbage_macd_ma(self,df):
         if df.empty:
             logging.info("df is empty, not to remove macd ma garbage")
