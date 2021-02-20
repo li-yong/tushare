@@ -129,8 +129,11 @@ stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_f
 stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
 stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list, code_col='code')
 
+
+df = finlib.Finlib()._remove_garbage_high_pledge_ration(df=stock_list)
+
 pro= ts.pro_api()
-df = pro.pledge_detail(ts_code='600519.SH')
+df = pro.pledge_detail(ts_code='000935.SZ')
 print(finlib.Finlib().pprint(df))
 
 csv_dir = "/home/ryan/DATA/DAY_Global/AG"

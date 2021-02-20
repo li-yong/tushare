@@ -3698,8 +3698,8 @@ def _fetch_pro_pledge_stat_detail():
 
         if df_detail.__len__()>0:
             df_detail_not_relased = df_detail[df_detail['is_release']=='0']
-            print(finlib.Finlib().pprint(df_detail_not_relased))
-            p_total_ratio_sum = df_detail_not_relased['p_total_ratio'].sum()
+            # print(finlib.Finlib().pprint(df_detail_not_relased))
+            p_total_ratio_sum = round(df_detail_not_relased['p_total_ratio'].sum(),2)
 
             df_detail_tmp = pd.DataFrame.from_dict({'ts_code':[ts_code],'p_total_ratio_sum':[p_total_ratio_sum] })
             df_result_detail = pd.concat([df_result_detail, df_detail_tmp], sort=False).reset_index().drop("index", axis=1)

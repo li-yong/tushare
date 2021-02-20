@@ -3291,17 +3291,24 @@ class Finlib:
             return(df)
 
         csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_stat.csv'
+        csv_detail = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_detail.csv'
         df_gar = pd.read_csv(csv, converters={'end_date': str})
+        df_gar_detail = pd.read_csv(csv_detail)
 
         df_gar = df_gar[df_gar['pledge_ratio'] >= threshold]
-        df_gar = self.ts_code_to_code(df_gar)
-        df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
-        logging.info("pledge ration >= " + str(threshold) + ", len " + str(df_gar.__len__()))
+        df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= threshold]
+
+        # df_gar = self.ts_code_to_code(df_gar)
+        # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        logging.info("pledge static: pledge_ration >= " + str(threshold) + ", len " + str(df_gar.__len__()))
+        logging.info("pledge detail: p_total_ratio_sum >= " + str(threshold) + ", len " + str(df_gar_detail.__len__()))
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NONE_STANDARD_AUDIT_REPORT)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.PLEDGE_STATISTIC_RATIO_GT_50)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_detail, byreason=constant.PLEDGE_DETAIL_RATIO_SUM_GT_50)
 
         return(df)
 
