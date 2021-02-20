@@ -338,7 +338,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     if save_fig_f:
         if rtn_dict['hit']:
-            fn = dir+"/" + code + "_" + name + "_" + the_day + "_double_bottom_"+rtn_dict['reason'][0:200]+".png"
+            fn = dir+"/" + code + "_" + name + "_" + the_day + "_double_bottom_"+rtn_dict['reason'][0:200].replace(';','_')+".png"
         # else:
         #     fn = dir+"/" + code + "_" + name + "_" + the_day + ".png" # commented as too many png
 
