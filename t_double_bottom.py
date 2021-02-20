@@ -15,6 +15,7 @@ import logging
 import tabulate
 from optparse import OptionParser
 import os
+import constant
 
 ####  regenerated font cache
 #import matplotlib.font_manager
@@ -31,6 +32,7 @@ register_matplotlib_converters()
 def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=500):
     rtn_dict = {}
     rtn_dict['hit']=False
+    rtn_dict['reason']=''
 
     if df.__len__() < min_sample:
         return (rtn_dict)
@@ -42,7 +44,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     df = df[(df['low'] > 0) & (df['high'] > 0) & (df['open'] > 0) & (df['close'] > 0)]
     df = df.reset_index().drop('index', axis=1)
     # use numerical integer index instead of date
-    print(tabulate.tabulate(df.tail(1), headers='keys', tablefmt='psql'))
+    # print(tabulate.tabulate(df.tail(1), headers='keys', tablefmt='psql'))
 
     if df.__len__() < min_sample:
         return (rtn_dict)
@@ -63,8 +65,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         x_date_ext.append(x_date[-1] + datetime.timedelta(days=i + 1))
 
     # polynomial fit of degree xx
-    pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
-    # pol = np.polyfit(x_data, y_data, min_sample-1)
+    # pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
+    pol = np.polyfit(x_data, y_data, min_sample-1)
     y_pol = np.polyval(pol, np.linspace(0, data_len - 1, data_len))
     y_pol_ext = np.polyval(pol, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
     rtn_dict['y_pol']=round(y_pol[-1],2)
@@ -92,6 +94,14 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     l_min = (np.diff(np.sign(np.diff(y_pol))) > 0).nonzero()[0] + 1  # local min
     l_max = (np.diff(np.sign(np.diff(y_pol))) < 0).nonzero()[0] + 1  # local max
     # +1 due to the fact that diff reduces the original index number
+
+    if l_min.__len__() < 2:
+        logging.info("min points less than 2, abort")
+        return
+
+    if l_max.__len__()  < 2:
+        logging.info("max points less than 2, abort")
+        return
 
     # plot
     x_min_list = []
@@ -134,7 +144,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         logging.info("head-bottom-head-bottom_today pattern detected")
 
         increase_perc = round((btm_1_y - btm_2_y)*100.0/btm_2_y,2)
-        if increase_perc > -2:
+        if increase_perc > 0: #not lower than previous low
             logging.info("increase perc from bot2 to bot1 "+str(increase_perc))
 
             if (head_1_x - btm_1_x).days == (btm_1_x - head_1_x).days:
@@ -150,8 +160,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
                 if (latest_y - y_[-1])/latest_y > 0.02 :
                     rtn_dict['hit'] = True
+                    rtn_dict['reason'] += constant.DOUBLE_BOTTOM_123_LONG_TREND_REVERSE+";"
                     logging.info("double bottom 123 hitted! "+str(code)+" "+str(name))
-                    exit(0)
+                    # exit(0)
 
 
     ### Double bottom detect end
@@ -207,6 +218,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     if (slop_degree_min_3 > 30):
         print("a very good right min slop degree " + str(slop_degree_min_3))
         rtn_dict['hit'] = True
+        rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE+";"
 
     #right max 3p
     pol_max_right_3 = np.polyfit(l_max[:3], y_max_pol_list[:3], 1)
@@ -219,6 +231,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     if (slop_degree_max_3 > 30):
         print("a very good right max slop degree " + str(round(slop_degree_max_3, 2)))
         rtn_dict['hit'] = True
+        rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE+";"
+
 
 
     plt.title(code + " " + name + " " + the_day + " " + str(round(y_data.iloc[-1], 2)))
@@ -407,7 +421,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
     if debug_f:
-        stock_list = stock_list[stock_list['code']=='SZ000999']
+        stock_list = stock_list[stock_list['code']=='SZ300829']
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
@@ -450,7 +464,7 @@ def main():
             df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
 
     cols = [
-        "code", "name", "hit",
+        "code", "name", "hit",'reason',
          "slop_degree_max_3", "slop_degree_min_3", "slop_degree_max_2", "slop_degree_min_2",
         "y_pol", "cur_p",  "pol_min_right_3",  "pol_max_right_3", "pol_min_right_2",  "pol_max_right_2",
         "date",

@@ -221,3 +221,7 @@ PLEDGE_DETAIL_RATIO_SUM_GT_THRESHOLD = 'pledge detail ratio sum gt threshold'
 ######################
 DOUBLE_BOTTOM_AG_SELECTED = 'double bottom ag selected'
 DOUBLE_BOTTOM_AG = 'double bottom ag'
+DOUBLE_BOTTOM_123_LONG_TREND_REVERSE = 'double bottom 123 long trend reverse'   # trend reversed, from down to up. buy at early up.
+DOUBLE_BOTTOM_123_LONG_TREND_CONTINUE = 'double bottom 123 long trend continue' #by at up trend
+DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE = "a very good right min slop degree"
+DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE = "a very good right max slop degree"
