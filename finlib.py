@@ -3133,6 +3133,8 @@ class Finlib:
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
+        df = self._remove_garbage_high_pledge_ration(df,statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
+        
 
         #remove koudi, this affected the fundermental_2.py step6.
         # df = self._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
@@ -3285,7 +3287,7 @@ class Finlib:
         return(df)
 
 
-    def _remove_garbage_high_pledge_ration(self, df, threshold=50):
+    def _remove_garbage_high_pledge_ration(self, df, statistic_ratio_threshold=50, detail_ratio_sum_threshold=50):
         if df.__len__()==0:
             logging.warning("empty df")
             return(df)
@@ -3295,20 +3297,20 @@ class Finlib:
         df_gar = pd.read_csv(csv, converters={'end_date': str})
         df_gar_detail = pd.read_csv(csv_detail)
 
-        df_gar = df_gar[df_gar['pledge_ratio'] >= threshold]
-        df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= threshold]
+        df_gar = df_gar[df_gar['pledge_ratio'] >= statistic_ratio_threshold]
+        df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= detail_ratio_sum_threshold]
 
         # df_gar = self.ts_code_to_code(df_gar)
         # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
         # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
-        logging.info("pledge static: pledge_ration >= " + str(threshold) + ", len " + str(df_gar.__len__()))
-        logging.info("pledge detail: p_total_ratio_sum >= " + str(threshold) + ", len " + str(df_gar_detail.__len__()))
+        logging.info("pledge static: pledge_ration >= " + str(statistic_ratio_threshold) + ", len " + str(df_gar.__len__()))
+        logging.info("pledge detail: p_total_ratio_sum >= " + str(detail_ratio_sum_threshold) + ", len " + str(df_gar_detail.__len__()))
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
             df = self.add_market_to_code(df)
 
-        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.PLEDGE_STATISTIC_RATIO_GT_50)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_detail, byreason=constant.PLEDGE_DETAIL_RATIO_SUM_GT_50)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.PLEDGE_STATISTIC_RATIO_GT_THRESHOLD)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_detail, byreason=constant.PLEDGE_DETAIL_RATIO_SUM_GT_THRESHOLD)
 
         return(df)
 

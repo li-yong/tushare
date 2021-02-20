@@ -212,5 +212,5 @@ SZCZ_INDEX_SELL_CANDIDATE = 'SZCZ_INDEX_SELL_CANDIDATE'
 ######################
 # pledge ration
 ######################
-PLEDGE_STATISTIC_RATIO_GT_50 = 'pledge statistic ratio gt 50'
-PLEDGE_DETAIL_RATIO_SUM_GT_50 = 'pledge detail ratio sum gt 50'
+PLEDGE_STATISTIC_RATIO_GT_THRESHOLD = 'pledge statistic ratio gt threshold'
+PLEDGE_DETAIL_RATIO_SUM_GT_THRESHOLD = 'pledge detail ratio sum gt threshold'
