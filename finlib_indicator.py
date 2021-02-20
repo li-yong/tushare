@@ -827,6 +827,10 @@ class Finlib_indicator:
         elif query in [constant.PV2_STABLE_PRICE_VOLUME]:
             return(pd.read_csv(dir+'/pv_2/latest/stable_price_volume.csv', converters={'date': str}, encoding="utf-8"))
 
+        elif query in [constant.DOUBLE_BOTTOM_AG_SELECTED, constant.DOUBLE_BOTTOM_AG]:
+            df = pd.read_csv(dir+'/ag_curve_shape.csv', converters={'code': str}, encoding="utf-8")
+            df = df[df['hit']==True].reset_index().drop('index', axis=1)
+            return(df)
         else:
             logging.error("Unknow source csv that matching query "+query)
             exit(0)

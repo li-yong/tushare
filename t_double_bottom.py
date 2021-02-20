@@ -42,7 +42,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     df = df[(df['low'] > 0) & (df['high'] > 0) & (df['open'] > 0) & (df['close'] > 0)]
     df = df.reset_index().drop('index', axis=1)
     # use numerical integer index instead of date
-    print(tabulate.tabulate(df.tail(2), headers='keys', tablefmt='psql'))
+    print(tabulate.tabulate(df.tail(1), headers='keys', tablefmt='psql'))
 
     if df.__len__() < min_sample:
         return (rtn_dict)
@@ -63,7 +63,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         x_date_ext.append(x_date[-1] + datetime.timedelta(days=i + 1))
 
     # polynomial fit of degree xx
-    pol = np.polyfit(x_data, y_data, 17)
+    pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
+    # pol = np.polyfit(x_data, y_data, min_sample-1)
     y_pol = np.polyval(pol, np.linspace(0, data_len - 1, data_len))
     y_pol_ext = np.polyval(pol, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
     rtn_dict['y_pol']=round(y_pol[-1],2)
@@ -82,7 +83,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     plt.plot_date(x_date_ext, y_pol_ext, '-', markersize=1.0, color='black', alpha=1.0)
     legend_list.append('polynomial fit')
 
-    #plt.show()
+    # plt.show()
 
     ########################################
     # ___ detection of local minimums and maximums ___
@@ -112,6 +113,49 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_max_list.append(y_data[i])
         y_max_pol_list.append(y_pol[i])
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
+
+    ### Double bottom detect start   head2 -- btm2 -- head1 -- btm1 --today
+    btm_1_x = x_min_list[-1]
+    btm_2_x = x_min_list[-2]
+
+    head_1_x = x_max_list[-1]
+    head_2_x = x_max_list[-2]
+
+    head_1_y = y_max_list[-1]
+    head_2_y = y_max_list[-2]
+
+    btm_1_y = y_min_list[-1]
+    btm_2_y = y_min_list[-2]
+
+    latest_x = x_date[-1]
+    latest_y = y_data.iloc[-1]
+
+    if (head_2_x < btm_2_x < head_1_x < btm_1_x < latest_x) and (head_1_y > latest_y) and (head_2_y > head_1_y):
+        logging.info("head-bottom-head-bottom_today pattern detected")
+
+        increase_perc = round((btm_1_y - btm_2_y)*100.0/btm_2_y,2)
+        if increase_perc > -2:
+            logging.info("increase perc from bot2 to bot1 "+str(increase_perc))
+
+            if (head_1_x - btm_1_x).days == (btm_1_x - head_1_x).days:
+                logging.info("Bonous, equal bottom pattern")
+
+            if (latest_x - btm_1_x).days <= 7:
+                cur_increase_perc = round((latest_y - btm_1_y)*100.0/btm_1_y,2)
+                pol_2_heads = np.polyfit(l_max[-2:], y_max_list[-2:], 1) #the trending line connect two heads
+                slop_degree_2_heads = round(np.arctan(pol_2_heads[0]) * 180 / np.pi, 2)
+                y_ = np.polyval(pol_2_heads, np.linspace(l_max[-2], data_len - 1 + predict_ext_win, data_len + predict_ext_win - l_max[-2]))
+                plt.plot_date(x_date_ext[l_max[-2]:], y_, '-', color='green', markersize=0.5,
+                              alpha=0.5)  # plot the head_2 line
+
+                if (latest_y - y_[-1])/latest_y > 0.02 :
+                    rtn_dict['hit'] = True
+                    logging.info("double bottom 123 hitted! "+str(code)+" "+str(name))
+                    exit(0)
+
+
+    ### Double bottom detect end
+
 
     #fit the chart left minimal
     pol_min_left_2 = np.polyfit(l_min[:2], y_min_pol_list[:2], 1)
@@ -284,8 +328,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         # else:
         #     fn = dir+"/" + code + "_" + name + "_" + the_day + ".png" # commented as too many png
 
-        plt.savefig(fn, bbox_inches='tight')
-        logging.info("figure saved to " + fn + "\n")
+            plt.savefig(fn, bbox_inches='tight')
+            logging.info("figure saved to " + fn + "\n")
 
     if show_fig_f:
         plt.show()
@@ -362,6 +406,9 @@ def main():
     stock_list = rst['stock_list']
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
+    if debug_f:
+        stock_list = stock_list[stock_list['code']=='SZ000999']
+
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 
@@ -414,7 +461,7 @@ def main():
     df_rtn = df_rtn.sort_values('slop_degree_min_3', ascending=False, inplace=False).reset_index().drop('index', axis=1)
 
     df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-    print(df_rtn)
+    print(finlib.Finlib().pprint(df_rtn.head(10)))
     print("output saved to " + out_f)
 
     exit(0)

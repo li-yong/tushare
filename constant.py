@@ -214,3 +214,10 @@ SZCZ_INDEX_SELL_CANDIDATE = 'SZCZ_INDEX_SELL_CANDIDATE'
 ######################
 PLEDGE_STATISTIC_RATIO_GT_THRESHOLD = 'pledge statistic ratio gt threshold'
 PLEDGE_DETAIL_RATIO_SUM_GT_THRESHOLD = 'pledge detail ratio sum gt threshold'
+
+
+######################
+# double bottom
+######################
+DOUBLE_BOTTOM_AG_SELECTED = 'double bottom ag selected'
+DOUBLE_BOTTOM_AG = 'double bottom ag'

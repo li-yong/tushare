@@ -17,6 +17,8 @@ import re
 import constant
 import math
 import time
+import numpy as np
+import matplotlib.pyplot as plt
 
 #from futu import *
 #
@@ -117,6 +119,27 @@ import time
 #
 # exit(0)
 
+points = [[1, 5], [2, 3], [4, 1], [8, 5]]
+x = [1,2,4,8]
+y = [5,3,1,5]
+coefficients = np.polyfit(x=x, y=y, deg=6)
+poly = np.poly1d(coefficients)
+new_x = np.linspace(x[0], x[-1])
+
+new_y = poly(new_x)
+plt.plot(x, y, "o", new_x, new_y)
+plt.show()
+plt.xlim([x[0]-1, x[-1] + 1 ])
+plt.savefig("line.jpg")
+
+
+
+# df = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.DOUBLE_BOTTOM_AG_SELECTED, selected=True)
+# print(finlib.Finlib().pprint(df))
+#
+#
+# df = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.DOUBLE_BOTTOM_AG_SELECTED, selected=False)
+# print(finlib.Finlib().pprint(df))
 
 
 ################ Filter price under 30 weeks MA,
@@ -131,6 +154,7 @@ stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list, code_col='code
 
 
 df = finlib.Finlib()._remove_garbage_high_pledge_ration(df=stock_list)
+
 
 pro= ts.pro_api()
 df = pro.pledge_detail(ts_code='000935.SZ')

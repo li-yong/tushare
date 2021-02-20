@@ -58,6 +58,8 @@ def define_global(stock_global):
             "df_fib_ag_selected": {"op": "B", "file": result_selected + "/ag_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_fib_ag_index_selected": {"op": "B", "file": result_selected + "/ag_index_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_moneyflow_top_amt_perc_selected": {"op": "B", "file": result_selected + "/mf_today_top5_large_amount.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_double_bottom_selected": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.DOUBLE_BOTTOM_AG_SELECTED, selected=True)","term": "SHORT TERM", "price": "NA"},
+
             "xxxx": {"op": "B", "file": result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of AG selected
         "US": {
@@ -118,6 +120,8 @@ def define_global(stock_global):
             "df_pv2_zhangting_volume_ration_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1)", "term": "SHORT TERM", "price": "NA"},
             "df_pv2_pocket_pivot": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_POCKET_PIVOT)", "term": "SHORT TERM", "price": "NA"},
             "df_pv2_stable_price_volume": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.PV2_STABLE_PRICE_VOLUME)", "term": "SHORT TERM", "price": "NA"},
+
+            "df_double_bottom": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.DOUBLE_BOTTOM_AG)", "term": "SHORT TERM", "price": "NA"},
 
             "df_ma55_near_ma21": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)", "term": "SHORT TERM", "price": "NA"},
             "df_ma21_near_ma55_n_days": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_NEAR_MA55_N_DAYS)", "term": "SHORT TERM", "price": "NA"},
