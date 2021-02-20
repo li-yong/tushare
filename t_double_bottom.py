@@ -338,7 +338,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     if save_fig_f:
         if rtn_dict['hit']:
-            fn = dir+"/" + code + "_" + name + "_" + the_day + "_double_bottom_"+rtn_dict['reason'][0:200].replace(';','_')+".png"
+            fn = dir+"/" + code + "_" + name + "_" + the_day + "_double_bottom_"+rtn_dict['reason'][0:200].replace(';','_').replace(' ','_')+".png"
         # else:
         #     fn = dir+"/" + code + "_" + name + "_" + the_day + ".png" # commented as too many png
 
@@ -421,7 +421,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
     if debug_f:
-        stock_list = stock_list[stock_list['code']=='SZ300829']
+        stock_list = stock_list[stock_list['code']=='SZ300035']
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
