@@ -38,7 +38,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         return (rtn_dict)
 
     df = df.tail(min_sample)  #.head(70) #ryan_debug
-    mean_window = 1  #ryan_debug
+    mean_window = 2  #ryan_debug#to avoid peak data outlier, e.g H-L-H in 3 days in a row )
     predict_ext_win = 0  ## of days to predict
 
     df = df[(df['low'] > 0) & (df['high'] > 0) & (df['open'] > 0) & (df['close'] > 0)]
@@ -73,8 +73,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     rtn_dict['cur_p'] = round(y_data.iloc[-1], 2)
 
     #___ plotting ___
-    plt.figure(figsize=(25, 15), facecolor='w', edgecolor='k')
-    #plt.figure(figsize=(150, 10), dpi=120, facecolor='w', edgecolor='k')
+    # plt.figure(figsize=(25, 15), facecolor='w', edgecolor='k')
+    plt.figure(figsize=(50, 15),  facecolor='w', edgecolor='k')
+    # plt.figure(figsize=(150, 10), dpi=120, facecolor='w', edgecolor='k')
     legend_list = []
     #plt.xticks(rotation=90)
 
@@ -117,12 +118,15 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_min_list.append(y_data[i])
         y_min_pol_list.append(y_pol[i])
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i], 2)), xy=(x_date[i], y_pol[i]), label="min", color='red')
+        logging.info("MIN, " + str(x_date[i]) + " ," + str(y_data[i]))
 
     for i in l_max:
-        x_max_list.append(x_date[i])
-        y_max_list.append(y_data[i])
-        y_max_pol_list.append(y_pol[i])
-        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
+        x_max_list.append(x_date[i+1])
+        y_max_list.append(y_data[i+1])
+        y_max_pol_list.append(y_pol[i+1])
+        # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
+        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i])), xy=(x_date[i], y_data[i]), label="max", color='blue')
+        logging.info("MAX, "+str(x_date[i])+" ,"+str(y_data[i]))
 
     ### Double bottom detect start   head2 -- btm2 -- head1 -- btm1 --today
     btm_1_x = x_min_list[-1]
@@ -196,7 +200,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     #plt.plot_date(x_date_ext, y_pol_min_right, '-', color='green', markersize=0.5, alpha=0.5)
     rtn_dict['pol_min_right_2'] = round(y_pol_min_right[-1-predict_ext_win],2) #the value is: line connecting two min points at today's value.
     rtn_dict['slop_degree_min_2'] = slop_2_degree_min
-    plt.annotate("min 2p est: " + str(rtn_dict['pol_min_right_2'])+" deg:"+str(slop_2_degree_min), xy=(x_date[-1-30], rtn_dict['pol_min_right_2']))
+    plt.annotate("min 2p est: " + str(rtn_dict['pol_min_right_2'])+" deg:"+str(slop_2_degree_min), xy=(x_date[int(min_sample*0.8)], rtn_dict['pol_min_right_2']))
 
     #right max 2p
     pol_max_right_2 = np.polyfit(l_max[-2:], y_max_pol_list[-2:], 1)
@@ -205,7 +209,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     #plt.plot_date(x_date_ext, y_pol_max_right, '-', color='green', markersize=0.5, alpha=0.5)
     rtn_dict['pol_max_right_2'] = round(y_pol_max_right_2[-1-predict_ext_win],2) #the value is: line connecting two max points at today's value.
     rtn_dict['slop_degree_max_2'] = slop_degree_max_2
-    plt.annotate("max 2p est: " + str(rtn_dict['pol_max_right_2'])+" deg:"+str(slop_degree_max_2),xy=(x_date[-1-30], rtn_dict['pol_max_right_2']))
+    plt.annotate("max 2p est: " + str(rtn_dict['pol_max_right_2'])+" deg:"+str(slop_degree_max_2),xy=(x_date[int(min_sample*0.8)], rtn_dict['pol_max_right_2']))
 
     #right min 3p
     pol_min_right_3 = np.polyfit(l_min[:3], y_min_pol_list[:3], 1)
@@ -421,7 +425,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
     if debug_f:
-        stock_list = stock_list[stock_list['code']=='SZ300035']
+        stock_list = stock_list[stock_list['code']=='SH603755']
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
