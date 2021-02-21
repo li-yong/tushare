@@ -16,7 +16,7 @@ import tabulate
 from optparse import OptionParser
 import os
 import constant
-
+import matplotlib
 ####  regenerated font cache
 #import matplotlib.font_manager
 #matplotlib.font_manager._rebuild()
@@ -38,7 +38,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         return (rtn_dict)
 
     df = df.tail(min_sample)  #.head(70) #ryan_debug
-    mean_window = 2  #ryan_debug#to avoid peak data outlier, e.g H-L-H in 3 days in a row )
+    # mean_window = 2  #ryan_debug#to avoid peak data outlier, e.g H-L-H in 3 days in a row )
+    mean_window = 1
     predict_ext_win = 0  ## of days to predict
 
     df = df[(df['low'] > 0) & (df['high'] > 0) & (df['open'] > 0) & (df['close'] > 0)]
@@ -57,7 +58,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     x_date = df['date'][mean_window - 1:].to_list()
     x_date_ext = df['date'][mean_window - 1:].to_list()
-    x_data = list(range(data_len))  # [0..209]
+    x_data = list(range(1, data_len+1))  # [0..209]
+    x_data_plot_date2num = list(df['date'].apply(lambda _d: matplotlib.dates.date2num(_d)))  # [0..209]
 
     the_day = x_date[-1].strftime("%Y%m%d")
 
@@ -66,9 +68,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     # polynomial fit of degree xx
     # pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
-    pol = np.polyfit(x_data, y_data, min_sample-1)
-    y_pol = np.polyval(pol, np.linspace(0, data_len - 1, data_len))
-    y_pol_ext = np.polyval(pol, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
+    pol = np.polyfit(x_data, y_data, data_len-1)
+    y_pol = np.polyval(pol, np.linspace(1, data_len, data_len))
+    y_pol_ext = np.polyval(pol, np.linspace(1, data_len + predict_ext_win, data_len + predict_ext_win))
     rtn_dict['y_pol']=round(y_pol[-1],2)
     rtn_dict['cur_p'] = round(y_data.iloc[-1], 2)
 
@@ -91,10 +93,17 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     ########################################
     # ___ detection of local minimums and maximums ___
     ########################################
+    # using polyfit y as min-max point, this reduce the min-max points number greatly,
+    # but result some points not the actually the most minimized date.
     min_max = np.diff(np.sign(np.diff(y_pol))).nonzero()[0] + 1  # local min & max
     l_min = (np.diff(np.sign(np.diff(y_pol))) > 0).nonzero()[0] + 1  # local min
     l_max = (np.diff(np.sign(np.diff(y_pol))) < 0).nonzero()[0] + 1  # local max
-    # +1 due to the fact that diff reduces the original index number
+
+
+    # min_max = np.diff(np.sign(np.diff(y_data))).nonzero()[0] + 1  # local min & max
+    # l_min = (np.diff(np.sign(np.diff(y_data))) > 0).nonzero()[0] + 1  # local min
+    # l_max = (np.diff(np.sign(np.diff(y_data))) < 0).nonzero()[0] + 1  # local max
+    # # +1 due to the fact that diff reduces the original index number
 
     if l_min.__len__() < 2:
         logging.info("min points less than 2, abort")
@@ -117,16 +126,17 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         x_min_list.append(x_date[i])
         y_min_list.append(y_data[i])
         y_min_pol_list.append(y_pol[i])
-        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i], 2)), xy=(x_date[i], y_pol[i]), label="min", color='red')
-        logging.info("MIN, " + str(x_date[i]) + " ," + str(y_data[i]))
+        # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i], 2)), xy=(x_date[i], y_pol[i]), label="min", color='red')
+        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i], 2)), xy=(x_date[i], y_data[i]), label="min", color='red')
+        logging.info("MIN position " +str(i)+", "+ str(x_date[i]) + " " + str(y_data[i]))
 
     for i in l_max:
-        x_max_list.append(x_date[i+1])
-        y_max_list.append(y_data[i+1])
-        y_max_pol_list.append(y_pol[i+1])
+        x_max_list.append(x_date[i])
+        y_max_list.append(y_data[i])
+        y_max_pol_list.append(y_pol[i])
         # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
-        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i])), xy=(x_date[i], y_data[i]), label="max", color='blue')
-        logging.info("MAX, "+str(x_date[i])+" ,"+str(y_data[i]))
+        plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i],2)), xy=(x_date[i], y_data[i]), label="max", color='blue')
+        logging.info("MAX position " +str(i)+", "+str(x_date[i])+" "+str(y_data[i]))
 
     ### Double bottom detect start   head2 -- btm2 -- head1 -- btm1 --today
     btm_1_x = x_min_list[-1]
@@ -158,9 +168,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
                 cur_increase_perc = round((latest_y - btm_1_y)*100.0/btm_1_y,2)
                 pol_2_heads = np.polyfit(l_max[-2:], y_max_list[-2:], 1) #the trending line connect two heads
                 slop_degree_2_heads = round(np.arctan(pol_2_heads[0]) * 180 / np.pi, 2)
-                y_ = np.polyval(pol_2_heads, np.linspace(l_max[-2], data_len - 1 + predict_ext_win, data_len + predict_ext_win - l_max[-2]))
-                plt.plot_date(x_date_ext[l_max[-2]:], y_, '-', color='green', markersize=0.5,
-                              alpha=0.5)  # plot the head_2 line
+                # y_ = np.polyval(pol_2_heads, np.linspace(l_max[-2], data_len - 1 + predict_ext_win, data_len + predict_ext_win - l_max[-2]))
+                y_ = np.polyval(pol_2_heads, list(range(l_max[-2], data_len)))
+                plt.plot_date(x_date_ext[l_max[-2]:], y_, 'b-', color='green', markersize=0.5, alpha=0.5)  # plot the head_2 line
 
                 if (latest_y - y_[-1])/latest_y > 0.02 :
                     rtn_dict['hit'] = True
@@ -220,7 +230,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     rtn_dict['slop_degree_min_3'] = round(slop_degree_min_3, 2)
     plt.annotate("min 3p est: " + str(rtn_dict['pol_min_right_3'])+" deg:"+str(slop_degree_min_3),xy=(x_date[-1], rtn_dict['pol_min_right_3']))
     if (slop_degree_min_3 > 30):
-        print("a very good right min slop degree " + str(slop_degree_min_3))
+        logging.info("a very good right min slop degree " + str(slop_degree_min_3))
         rtn_dict['hit'] = True
         rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE+";"
 
@@ -233,7 +243,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     rtn_dict['slop_degree_max_3'] = round(slop_degree_max_3, 2)
     plt.annotate("max 3p est: " + str(rtn_dict['pol_max_right_3'])+" deg:"+str(slop_degree_max_3),xy=(x_date[-1], rtn_dict['pol_max_right_3']))
     if (slop_degree_max_3 > 30):
-        print("a very good right max slop degree " + str(round(slop_degree_max_3, 2)))
+        logging.info("a very good right max slop degree " + str(round(slop_degree_max_3, 2)))
         rtn_dict['hit'] = True
         rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE+";"
 
@@ -425,7 +435,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
     if debug_f:
-        stock_list = stock_list[stock_list['code']=='SH603755']
+        stock_list = stock_list[stock_list['code']=='SH603566']
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
