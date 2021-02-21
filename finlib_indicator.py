@@ -879,10 +879,28 @@ class Finlib_indicator:
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
-    def w_shape_exam(self, df):
-        pass
+    def data_smoother(self, data_list, fill_na=False, fill_prev=True):
+        #data_list = [7, 6, 5, 5.1, 4, 3, 3.1, 2, 1, 2, 3, 4, 5]
+        df = pd.DataFrame.from_dict({'data': data_list})
+        df['perc_chg'] = df['data'].pct_change() * 100
+        df['perc_chg_mean_win2'] = df['perc_chg'].rolling(2).mean().shift()
 
+        df['condition1'] = df['perc_chg'] * df['perc_chg_mean_win2']
+        df['condition2'] = (df['perc_chg_mean_win2'].abs() + df['perc_chg'].abs()) * 100 / df['perc_chg'].abs()
 
+        # if trend reversed, and reverse is very slightly ( previous 2 windows mean change MUCH GREAT 2times as this change)
+        # then ignore this reverse, by filling data with data in previous row.
+        df_outlier = df[(df['condition1'] < 0) & (df['condition2'] > 200)]
+
+        for i in df_outlier.index.values:
+            if fill_prev:
+                df.iloc[i].data = df.iloc[i - 1].data
+            if fill_na:
+                df.iloc[i].data = np.nan
+
+        rtn_list = list(df['data'])
+        logging.info("after smoothing, rtn_list " + str(rtn_list))
+        return(rtn_list)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

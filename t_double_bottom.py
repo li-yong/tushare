@@ -17,6 +17,7 @@ from optparse import OptionParser
 import os
 import constant
 import matplotlib
+import finlib_indicator
 ####  regenerated font cache
 #import matplotlib.font_manager
 #matplotlib.font_manager._rebuild()
@@ -54,6 +55,10 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), '%Y%m%d'))
 
     y_data = df['close'].rolling(window=mean_window).mean().dropna()
+    # data_list = [7,6,5,5.1,4,3,3.1,2,1,2,3,4,5]
+    # data_list = finlib_indicator.Finlib_indicator().data_smoother(data_list)
+    y_data = pd.Series(finlib_indicator.Finlib_indicator().data_smoother(y_data,fill_na=True, fill_prev=False))
+
     data_len = y_data.__len__()
 
     x_date = df['date'][mean_window - 1:].to_list()
@@ -68,7 +73,11 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     # polynomial fit of degree xx
     # pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
-    pol = np.polyfit(x_data, y_data, data_len-1)
+
+    idx = np.isfinite(x_data) & np.isfinite(y_data)
+
+    # pol = np.polyfit(x_data[idx], y_data[idx], data_len-1)
+    pol = np.polyfit(list(pd.Series(x_data)[idx]), y_data[idx], y_data[idx].__len__()-1)
     y_pol = np.polyval(pol, np.linspace(1, data_len, data_len))
     y_pol_ext = np.polyval(pol, np.linspace(1, data_len + predict_ext_win, data_len + predict_ext_win))
     rtn_dict['y_pol']=round(y_pol[-1],2)
@@ -95,9 +104,23 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     ########################################
     # using polyfit y as min-max point, this reduce the min-max points number greatly,
     # but result some points not the actually the most minimized date.
+
+    # y_pol = finlib_indicator.Finlib_indicator().data_smoother(y_pol)
+
+
     min_max = np.diff(np.sign(np.diff(y_pol))).nonzero()[0] + 1  # local min & max
     l_min = (np.diff(np.sign(np.diff(y_pol))) > 0).nonzero()[0] + 1  # local min
     l_max = (np.diff(np.sign(np.diff(y_pol))) < 0).nonzero()[0] + 1  # local max
+
+
+
+    a = np.diff(y_pol)
+    b = np.sign(a)
+    c = np.diff(b)
+    d_min = (c > 0).nonzero()[0]
+    d_max = (c < 0).nonzero()[0]
+    d_zero = (c == 0).nonzero()[0]
+    print('hi')
 
 
     # min_max = np.diff(np.sign(np.diff(y_data))).nonzero()[0] + 1  # local min & max
