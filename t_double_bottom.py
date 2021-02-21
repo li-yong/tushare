@@ -185,8 +185,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     #fit the chart left minimal
     pol_min_left_2 = np.polyfit(l_min[:2], y_min_pol_list[:2], 1)
     slop_degree_min_left_2 = round(np.arctan(pol_min_left_2[0]) * 180 / np.pi,2)
-    y_pol_min_left = np.polyval(pol_min_left_2, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
-    plt.plot_date(x_date_ext, y_pol_min_left, '-', color='blue', alpha=0.5)
+    # y_pol_min_left = np.polyval(pol_min_left_2, np.linspace(1, data_len + predict_ext_win, data_len + predict_ext_win))
+    y_pol_min_left = np.polyval(pol_min_left_2, list(range(l_min[0], data_len+predict_ext_win)))
+    plt.plot_date(x_date_ext[l_min[0]:], y_pol_min_left, '-', color='blue', alpha=0.5)
     rtn_dict['pol_min_left_2'] = round(y_pol_min_left[-1-predict_ext_win],2) #the value is: line connecting two min points at today's value.
     rtn_dict['slop_degree_min_left_2'] = slop_degree_min_left_2
     plt.annotate("min 2p left, est:" + str(rtn_dict['pol_min_left_2'])+" deg"+str(slop_degree_min_left_2), xy=(x_date[10], rtn_dict['pol_min_left_2']))
@@ -194,8 +195,13 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     pol_max_left_2 = np.polyfit(l_max[:2], y_max_pol_list[:2], 1)
     slop_2_degree_max_left = round(np.arctan(pol_max_left_2[0]) * 180 / np.pi,2)
-    y_pol_max_left = np.polyval(pol_max_left_2, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
-    plt.plot_date(x_date_ext, y_pol_max_left, '-', color='blue',  markersize=0.5, alpha=0.5)
+
+    # y_pol_max_left = np.polyval(pol_max_left_2, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
+    # plt.plot_date(x_date_ext, y_pol_max_left, '-', color='blue',  markersize=0.5, alpha=0.5)
+
+    y_pol_max_left = np.polyval(pol_max_left_2, list(range(l_max[0], data_len+predict_ext_win)))
+    plt.plot_date(x_date_ext[l_max[0]:], y_pol_max_left, '-', color='blue',  markersize=0.5,  alpha=0.5)
+
     rtn_dict['pol_max_left_2'] = round(y_pol_max_left[-1-predict_ext_win], 2)  # the value is: line connecting two min points at today's value.
     rtn_dict['slop_max_degree_left_2'] = slop_2_degree_max_left
     plt.annotate("max 2p left, est: " + str(rtn_dict['pol_max_left_2'])+" deg:"+str(slop_2_degree_max_left), xy=(x_date[10], rtn_dict['pol_max_left_2']))
@@ -206,6 +212,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     #right min 2p
     pol_min_right_2 = np.polyfit(l_min[-2:], y_min_pol_list[-2:], 1)
     slop_2_degree_min = round(np.arctan(pol_min_right_2[0]) * 180 / np.pi,2)
+
     y_pol_min_right = np.polyval(pol_min_right_2, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
     #plt.plot_date(x_date_ext, y_pol_min_right, '-', color='green', markersize=0.5, alpha=0.5)
     rtn_dict['pol_min_right_2'] = round(y_pol_min_right[-1-predict_ext_win],2) #the value is: line connecting two min points at today's value.
@@ -222,10 +229,17 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     plt.annotate("max 2p est: " + str(rtn_dict['pol_max_right_2'])+" deg:"+str(slop_degree_max_2),xy=(x_date[int(min_sample*0.8)], rtn_dict['pol_max_right_2']))
 
     #right min 3p
-    pol_min_right_3 = np.polyfit(l_min[:3], y_min_pol_list[:3], 1)
+    pol_min_right_3 = np.polyfit(l_min[-3:], y_min_pol_list[-3:], 1)
     slop_degree_min_3 = round(np.arctan(pol_min_right_3[0]) * 180 / np.pi,2)
-    y_pol_min_right_3 = np.polyval(pol_min_right_3, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
-    plt.plot_date(x_date_ext, y_pol_min_right_3, '-', color='green', markersize=0.5, alpha=0.5) #plot the min3p line
+
+
+    # y_pol_min_right_3 = np.polyval(pol_min_right_3, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
+    # plt.plot_date(x_date_ext, y_pol_min_right_3, '-', color='green', markersize=0.5, alpha=0.5) #plot the min3p line
+
+
+    y_pol_min_right_3 = np.polyval(pol_min_right_3, list(range(l_min[-3], data_len+predict_ext_win)))
+    plt.plot_date(x_date_ext[l_min[-3]:], y_pol_min_right_3, '-', color='green',  markersize=0.5,  alpha=0.5)
+
     rtn_dict['pol_min_right_3'] = round(y_pol_min_right_3[-1-predict_ext_win], 2)
     rtn_dict['slop_degree_min_3'] = round(slop_degree_min_3, 2)
     plt.annotate("min 3p est: " + str(rtn_dict['pol_min_right_3'])+" deg:"+str(slop_degree_min_3),xy=(x_date[-1], rtn_dict['pol_min_right_3']))
@@ -235,10 +249,15 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE+";"
 
     #right max 3p
-    pol_max_right_3 = np.polyfit(l_max[:3], y_max_pol_list[:3], 1)
+    pol_max_right_3 = np.polyfit(l_max[-3:], y_max_pol_list[-3:], 1)
     slop_degree_max_3 = round(np.arctan(pol_max_right_3[0]) * 180 / np.pi,2)
-    y_pol_max_right_3 = np.polyval(pol_max_right_3, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
-    plt.plot_date(x_date_ext, y_pol_max_right_3, '-', color='green', markersize=0.5, alpha=0.5) #plot the max3p line
+    # y_pol_max_right_3 = np.polyval(pol_max_right_3, np.linspace(0, data_len - 1 + predict_ext_win, data_len + predict_ext_win))
+    # plt.plot_date(x_date_ext, y_pol_max_right_3, '-', color='green', markersize=0.5, alpha=0.5) #plot the max3p line
+
+    y_pol_max_right_3 = np.polyval(pol_max_right_3, list(range(l_max[-3], data_len+predict_ext_win)))
+    plt.plot_date(x_date_ext[l_max[-3]:], y_pol_max_right_3, '-', color='green',  markersize=0.5,  alpha=0.5)
+
+
     rtn_dict['pol_max_right_3'] = round(y_pol_max_right_3[-1-predict_ext_win], 2)
     rtn_dict['slop_degree_max_3'] = round(slop_degree_max_3, 2)
     plt.annotate("max 3p est: " + str(rtn_dict['pol_max_right_3'])+" deg:"+str(slop_degree_max_3),xy=(x_date[-1], rtn_dict['pol_max_right_3']))
@@ -343,7 +362,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         # print('dict key value: ', dict_i[key])
         for value in dict_x[key]:
             if value in range(x_date.__len__()):
-                plt.axvline(x=x_date[value], linestyle='-', color='lightblue', alpha=0.2)
+                # plt.axvline(x=x_date[value], linestyle='-', color='lightblue', alpha=0.2)
+                pass
 
     dir = "/home/ryan/DATA/result/curv_plot"
 
