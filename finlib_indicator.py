@@ -894,7 +894,8 @@ class Finlib_indicator:
 
         for i in df_outlier.index.values:
             if fill_prev:
-                df.iloc[i].data = df.iloc[i - 1].data
+                # df.iloc[i].data = df.iloc[i - 1].data
+                df.iloc[i]['data'] = df.iloc[i - 1]['data']
             if fill_na:
                 df.iloc[i].data = np.nan
 
