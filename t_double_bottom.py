@@ -57,7 +57,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     y_data = df['close'].rolling(window=mean_window).mean().dropna()
     # data_list = [7,6,5,5.1,4,3,3.1,2,1,2,3,4,5]
     # data_list = finlib_indicator.Finlib_indicator().data_smoother(data_list)
-    y_data = pd.Series(finlib_indicator.Finlib_indicator().data_smoother(y_data,fill_na=True, fill_prev=False))
+    y_data_na = pd.Series(finlib_indicator.Finlib_indicator().data_smoother(y_data,fill_na=True, fill_prev=False))
+    y_data = pd.Series(finlib_indicator.Finlib_indicator().data_smoother(y_data,fill_na=False, fill_prev=True))
 
     data_len = y_data.__len__()
 
@@ -74,10 +75,10 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     # polynomial fit of degree xx
     # pol = np.polyfit(x_data, y_data, 17) #17 is the degree,
 
-    idx = np.isfinite(x_data) & np.isfinite(y_data)
+    idx = np.isfinite(x_data) & np.isfinite(y_data_na)
 
     # pol = np.polyfit(x_data[idx], y_data[idx], data_len-1)
-    pol = np.polyfit(list(pd.Series(x_data)[idx]), y_data[idx], y_data[idx].__len__()-1)
+    pol = np.polyfit(list(pd.Series(x_data)[idx]), y_data_na[idx], y_data_na[idx].__len__()-1)
     y_pol = np.polyval(pol, np.linspace(1, data_len, data_len))
     y_pol_ext = np.polyval(pol, np.linspace(1, data_len + predict_ext_win, data_len + predict_ext_win))
     rtn_dict['y_pol']=round(y_pol[-1],2)
