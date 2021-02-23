@@ -15,6 +15,7 @@ import tabulate
 import collections
 import stat
 import constant
+from scipy import stats
 
 # import matplotlib.pyplot as plt
 # from pandas.plotting import register_matplotlib_converters
@@ -905,8 +906,28 @@ class Finlib_indicator:
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
+    # zscore = (value - mean)/std
+    #The basic z score formula for a sample is:
+    # z = (x – μ) / σ
+    # For example, let’s say you have a test score of 190. The test has a mean (μ) of 150 and a standard deviation (σ) of 25. Assuming a normal distribution, your z score would be:
+    # z = (x – μ) / σ
+    # = (190 – 150) / 25 = 1.6.
+
+    def get_outier(self, df, on_column, zscore_threshold=3):
+        rtn_dict={}
+
+        df = df[df[on_column].notna()]
+        o_min = df[(stats.zscore(df[on_column]) < -1*zscore_threshold)].reset_index().drop('index', axis=1)
+        o_max = df[(stats.zscore(df[on_column]) > zscore_threshold)].reset_index().drop('index', axis=1)
+
+        return(o_min, o_max)
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
         pass
+
+
 
 
 
