@@ -118,10 +118,23 @@ import matplotlib.pyplot as plt
 #
 #
 ####### outlier start
-
-df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/SH600519.csv")
+code = "SH688363"
+# df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/SH600519.csv")
+df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/"+code+".csv")
 a_dict = finlib_indicator.Finlib_indicator().get_support_price_by_price_volume(df_daily_ohlc_volume=df, verify_last_n_days=250)
 
+p_list = []
+for k1 in a_dict.keys():
+    for k2 in a_dict[k1].keys():
+        if type(a_dict[k1][k2]) is dict:
+            p_list.append(a_dict[k1][k2]['open'])
+            p_list.append(a_dict[k1][k2]['high'])
+            p_list.append(a_dict[k1][k2]['low'])
+            p_list.append(a_dict[k1][k2]['close'])
+
+print("Key price list, code "+code)
+s = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
+print(finlib.Finlib().pprint(df=s))
 
 
 exit(0)
