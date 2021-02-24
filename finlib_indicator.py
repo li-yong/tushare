@@ -21,7 +21,7 @@ from scipy import stats
 # from pandas.plotting import register_matplotlib_converters
 # register_matplotlib_converters()
 
-import pandas
+# import pandas
 import mysql.connector
 from sqlalchemy import create_engine
 import re
@@ -39,6 +39,8 @@ import logging
 import yaml
 import warnings
 import constant
+
+pd.options.mode.chained_assignment = None
 
 # warnings.filterwarnings("error")
 warnings.filterwarnings("default")
@@ -928,7 +930,7 @@ class Finlib_indicator:
 
     #input: df [open,high, low, close]
     #output:
-    def _get_key_support_price_from_pv(self, df):
+    def _get_key_support_price_from_pv(self, df, period):
         df['increase'] = df['close'].pct_change()
         df['inday_fluctuation'] = round((df['high'] - df['low'])/df['low'], 2)
         df['inday_increase'] = round((df['close'] - df['open'])/df['open'],2)
@@ -943,7 +945,49 @@ class Finlib_indicator:
         (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=3)
         print("haha, calculate key price here")
 
+        max_increase_dict = {}
+        if df_high_outier_increase.__len__() > 0:
+            _row = df_high_outier_increase.sort_values(by='zscore_increase', ascending=False).reset_index().drop('index', axis=1).iloc[0]
 
+            max_increase_dict = {
+                "open": _row.open,
+                "high" : _row.high,
+                "low" : _row.low,
+                "close" : _row.close,
+            }
+
+
+        max_inday_fluctuation_dict = {}
+        if df_high_outier_inday_fluctuation.__len__() > 0:
+            _row = df_high_outier_inday_fluctuation.sort_values(by='zscore_inday_fluctuation', ascending=False).reset_index().drop('index', axis=1).iloc[0]
+
+            max_inday_fluctuation_dict = {
+                "open": _row.open,
+                "high" : _row.high,
+                "low" : _row.low,
+                "close" : _row.close,
+            }
+
+
+
+        max_volume_dict = {}
+        if df_high_outier_volume.__len__() > 0:
+            _row = df_high_outier_volume.sort_values(by='zscore_volume', ascending=False).reset_index().drop('index', axis=1).iloc[0]
+
+            max_volume_dict = {
+                "open": _row.open,
+                "high" : _row.high,
+                "low" : _row.low,
+                "close" : _row.close,
+            }
+
+        return({
+            "period":period,
+            "period_cnt":df.__len__(),
+            "max_increase":max_increase_dict,
+            "max_inday_fluctuation":max_inday_fluctuation_dict,
+            "max_volume":max_volume_dict,
+        })
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
@@ -953,8 +997,18 @@ class Finlib_indicator:
         _t = finlib.Finlib().daily_to_monthly_bar(df_daily_ohlc_volume)
         df_weekly = _t['df_weekly']
         df_monthly = _t['df_monthly']
-        weekly_support_dict = self._get_key_support_price_from_pv(df=df_weekly)
-        monthly_support_dict = self._get_key_support_price_from_pv(df=df_monthly)
+        daily_support_dict = self._get_key_support_price_from_pv(df=df_daily_ohlc_volume, period='D')
+        weekly_support_dict = self._get_key_support_price_from_pv(df=df_weekly, period='W')
+        monthly_support_dict = self._get_key_support_price_from_pv(df=df_monthly, period='M')
+
+        return(
+            {
+                'daily_support':daily_support_dict,
+                'weekly_support':weekly_support_dict,
+                'monthly_support':monthly_support_dict,
+            }
+
+        )
 
 
 
