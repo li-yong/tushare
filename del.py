@@ -120,7 +120,10 @@ import matplotlib.pyplot as plt
 ####### outlier start
 
 df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/SH600519.csv")
-a_dict = finlib_indicator.Finlib_indicator().get_monthly_weekly_support_price(df_daily_ohlc_volume=df, verify_last_n_days=250)
+a_dict = finlib_indicator.Finlib_indicator().get_support_price_by_price_volume(df_daily_ohlc_volume=df, verify_last_n_days=250)
+
+
+
 exit(0)
 print(1)
 ####### outlier end

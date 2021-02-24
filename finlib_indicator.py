@@ -996,7 +996,7 @@ class Finlib_indicator:
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     # trading days of 2021 : 252 , half year 126,  quarter: 63, month: 21, half month: 10, week: 5
-    def get_monthly_weekly_support_price(self, df_daily_ohlc_volume, verify_last_n_days=120):
+    def get_support_price_by_price_volume(self, df_daily_ohlc_volume, verify_last_n_days=120):
         df_daily_ohlc_volume = df_daily_ohlc_volume.tail(verify_last_n_days)
         _t = finlib.Finlib().daily_to_monthly_bar(df_daily_ohlc_volume)
         df_weekly = _t['df_weekly']
