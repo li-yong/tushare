@@ -938,11 +938,11 @@ class Finlib_indicator:
         df_t = df[['code','date','increase', 'volume','inday_fluctuation', 'inday_increase']]
         print(df_t.corr())
 
-        (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase',zscore_threshold=3)
-        (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase',zscore_threshold=3)
-        (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation',zscore_threshold=3)
+        (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase',zscore_threshold=1)
+        (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase',zscore_threshold=1)
+        (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation',zscore_threshold=1)
 
-        (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=3)
+        (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=1)
         print("haha, calculate key price here")
 
         max_increase_dict = {}
@@ -950,6 +950,7 @@ class Finlib_indicator:
             _row = df_high_outier_increase.sort_values(by='zscore_increase', ascending=False).reset_index().drop('index', axis=1).iloc[0]
 
             max_increase_dict = {
+                "date": _row.date,
                 "open": _row.open,
                 "high" : _row.high,
                 "low" : _row.low,
@@ -962,6 +963,7 @@ class Finlib_indicator:
             _row = df_high_outier_inday_fluctuation.sort_values(by='zscore_inday_fluctuation', ascending=False).reset_index().drop('index', axis=1).iloc[0]
 
             max_inday_fluctuation_dict = {
+                "date": _row.date,
                 "open": _row.open,
                 "high" : _row.high,
                 "low" : _row.low,
@@ -975,10 +977,12 @@ class Finlib_indicator:
             _row = df_high_outier_volume.sort_values(by='zscore_volume', ascending=False).reset_index().drop('index', axis=1).iloc[0]
 
             max_volume_dict = {
+                "date": _row.date,
                 "open": _row.open,
                 "high" : _row.high,
                 "low" : _row.low,
                 "close" : _row.close,
+
             }
 
         return({

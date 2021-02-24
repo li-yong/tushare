@@ -3454,6 +3454,12 @@ class Finlib:
         #-2 to Friday 2020-11-20.  ignore to next Sunday 2020-11-22.  -6 to Monday 2020-11-16.
         # df_weekly = df_daily.resample('W', on='date',loffset=pd.offsets.timedelta(days=-2)).apply(logic).reset_index()
         df_weekly = df_daily.resample('W', on='date',loffset=timedelta(days=-2)).apply(logic).reset_index()
+
+        # did not get it work.   FutureWarning: 'loffset' in .resample() and in Grouper() is deprecated.
+        # from pandas.tseries.frequencies import to_offset
+        # df_weekly = df_daily.resample('W', on='date').apply(logic).reset_index()
+        # df_weekly.index = df_weekly.index.to_timestamp() + to_offset("-2D")
+
         df_weekly['code'] = code
         df_weekly  = self.change_df_columns_order(df=df_weekly, col_list_to_head=['code'])
         # print("\n\n df_daily 2")
