@@ -43,7 +43,7 @@ import constant
 pd.options.mode.chained_assignment = None
 
 # warnings.filterwarnings("error")
-warnings.filterwarnings("default")
+# warnings.filterwarnings("default")
 
 
 class Finlib_indicator:
@@ -934,16 +934,15 @@ class Finlib_indicator:
         df['increase'] = df['close'].pct_change()
         df['inday_fluctuation'] = round((df['high'] - df['low'])/df['low'], 2)
         df['inday_increase'] = round((df['close'] - df['open'])/df['open'],2)
-
-        df_t = df[['code','date','increase', 'volume','inday_fluctuation', 'inday_increase']]
-        print(df_t.corr())
+        #
+        # df_t = df[['code','date','increase', 'volume','inday_fluctuation', 'inday_increase']]
+        # print(df_t.corr())
 
         (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase',zscore_threshold=1)
         (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase',zscore_threshold=1)
         (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation',zscore_threshold=1)
 
         (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=1)
-        print("haha, calculate key price here")
 
         max_increase_dict = {}
         if df_high_outier_increase.__len__() > 0:
@@ -1015,6 +1014,25 @@ class Finlib_indicator:
         )
 
 
+    def print_support_price_by_price_volume(self, code, market='AG'):
+
+        if market == 'AG':
+            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/" + code + ".csv")
+
+        a_dict = self.get_support_price_by_price_volume(df_daily_ohlc_volume=df,  verify_last_n_days=250)
+
+        p_list = []
+        for k1 in a_dict.keys():
+            for k2 in a_dict[k1].keys():
+                if type(a_dict[k1][k2]) is dict:
+                    p_list.append(a_dict[k1][k2]['open'])
+                    p_list.append(a_dict[k1][k2]['high'])
+                    p_list.append(a_dict[k1][k2]['low'])
+                    p_list.append(a_dict[k1][k2]['close'])
+
+        print("Key price list, code " + code)
+        s = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
+        print(finlib.Finlib().pprint(df=s))
 
 
 
