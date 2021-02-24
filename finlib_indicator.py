@@ -917,10 +917,48 @@ class Finlib_indicator:
         rtn_dict={}
 
         df = df[df[on_column].notna()]
-        o_min = df[(stats.zscore(df[on_column]) < -1*zscore_threshold)].reset_index().drop('index', axis=1)
-        o_max = df[(stats.zscore(df[on_column]) > zscore_threshold)].reset_index().drop('index', axis=1)
+        df['zscore_'+on_column] = stats.zscore(df[on_column])
 
-        return(o_min, o_max)
+        o_all = df[abs(df['zscore_'+on_column]) > zscore_threshold].reset_index().drop('index', axis=1)
+        o_min = df[df['zscore_'+on_column] < -1*zscore_threshold].reset_index().drop('index', axis=1)
+        o_max = df[df['zscore_'+on_column] > zscore_threshold ].reset_index().drop('index', axis=1)
+
+        return(o_all,o_min, o_max)
+
+
+    #input: df [open,high, low, close]
+    #output:
+    def _get_key_support_price_from_pv(self, df):
+        df['increase'] = df['close'].pct_change()
+        df['inday_fluctuation'] = round((df['high'] - df['low'])/df['low'], 2)
+        df['inday_increase'] = round((df['close'] - df['open'])/df['open'],2)
+
+        df_t = df[['code','date','increase', 'volume','inday_fluctuation', 'inday_increase']]
+        print(df_t.corr())
+
+        (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase',zscore_threshold=3)
+        (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase',zscore_threshold=3)
+        (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation',zscore_threshold=3)
+
+        (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=3)
+        print("haha, calculate key price here")
+
+
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    # trading days of 2021 : 252 , half year 126,  quarter: 63, month: 21, half month: 10, week: 5
+    def get_monthly_weekly_support_price(self, df_daily_ohlc_volume, verify_last_n_days=120):
+        df_daily_ohlc_volume = df_daily_ohlc_volume.tail(verify_last_n_days)
+        _t = finlib.Finlib().daily_to_monthly_bar(df_daily_ohlc_volume)
+        df_weekly = _t['df_weekly']
+        df_monthly = _t['df_monthly']
+        weekly_support_dict = self._get_key_support_price_from_pv(df=df_weekly)
+        monthly_support_dict = self._get_key_support_price_from_pv(df=df_monthly)
+
+
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

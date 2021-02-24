@@ -36,24 +36,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     rtn_dict['reason']=''
 
 
-    ####### outlier start
-    df[['close_pct_chg', 'volume_pct_chg']] = df[['close','volume']].pct_change()
-    df['in_day_high_low_chg'] = round((df['high'] - df['low'])/df['low'], 2)
-    df['in_day_close_open_chg'] = round((df['close'] - df['open'])/df['open'],2)
 
-    df_t = df[['close_pct_chg', 'volume_pct_chg','in_day_high_low_chg', 'in_day_close_open_chg']]
-    df_t = df[['code','date','close_pct_chg']].dropna()
-
-    (df_low_outier_increase, df_high_outier_increase) = finlib_indicator.Finlib_indicator().get_outier(df=df, on_column='close_pct_chg',zscore_threshold=3)
-    (df_low_outier_inday_increase, df_high_outier_inday_increase) = finlib_indicator.Finlib_indicator().get_outier(df=df, on_column='in_day_close_open_chg',zscore_threshold=3)
-    (df_low_outier_volume, df_high_outier_volume) = finlib_indicator.Finlib_indicator().get_outier(df=df, on_column='volume_pct_chg',zscore_threshold=3)
-    (df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = finlib_indicator.Finlib_indicator().get_outier(df=df, on_column='in_day_high_low_chg',zscore_threshold=3)
-
-
-
-    print(1)
-
-    ####### outlier end
 
     if df.__len__() < min_sample:
         return (rtn_dict)

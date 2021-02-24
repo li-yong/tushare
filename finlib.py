@@ -3452,7 +3452,10 @@ class Finlib:
 
 #https://stackoverflow.com/questions/34597926/converting-daily-stock-data-to-weekly-based-via-pandas-in-python
         #-2 to Friday 2020-11-20.  ignore to next Sunday 2020-11-22.  -6 to Monday 2020-11-16.
-        df_weekly = df_daily.resample('W', on='date',loffset=pd.offsets.timedelta(days=-2)).apply(logic).reset_index()
+        # df_weekly = df_daily.resample('W', on='date',loffset=pd.offsets.timedelta(days=-2)).apply(logic).reset_index()
+        df_weekly = df_daily.resample('W', on='date',loffset=timedelta(days=-2)).apply(logic).reset_index()
+        df_weekly['code'] = code
+        df_weekly  = self.change_df_columns_order(df=df_weekly, col_list_to_head=['code'])
         # print("\n\n df_daily 2")
         # print(df_daily.iloc[-1])
         #
@@ -3461,6 +3464,8 @@ class Finlib:
 
         #ignore to last day of the month. 2020-11-30
         df_monthly = df_daily.resample('M', on='date').apply(logic).reset_index()
+        df_monthly['code'] = code
+        df_monthly  = self.change_df_columns_order(df=df_monthly, col_list_to_head=['code'])
 
         # print("\n\n df_monthly")
         # print(df_monthly.iloc[-1])
