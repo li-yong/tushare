@@ -1032,12 +1032,18 @@ class Finlib_indicator:
                     p_list.append(a_dict[k1][k2]['low'])
                     p_list.append(a_dict[k1][k2]['close'])
 
+
+
         support = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
-        delta_perc = round((s - last_price) * 100 / last_price, 2)
+        delta_perc = round((support - last_price) * 100 / last_price, 2)
         s = support.append(delta_perc).reset_index().drop('index', axis=1)
 
-        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(last_price))
-        print(finlib.Finlib().pprint(df=s))
+        spt2 = support.T
+        last_price_rank = spt2[spt2[0] < last_price].__len__()
+
+
+        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(last_price)+", rank "+str(last_price_rank))
+        logging.info("\n"+finlib.Finlib().pprint(df=s))
         return(s)
 
     #input: df [open,high, low, close]

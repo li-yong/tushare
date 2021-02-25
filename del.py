@@ -21,6 +21,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 stock_global = 'US_INDEX'
+stock_global = 'AG_INDEX'
 a = finlib.Finlib().get_stock_configuration(selected=True, stock_global=stock_global)
 
 for index, (code, name) in a['stock_list'].iterrows():
