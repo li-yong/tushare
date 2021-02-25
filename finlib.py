@@ -3412,6 +3412,14 @@ class Finlib:
             'volume': 'sum',
         }
 
+        logic_us = {
+            'open': 'first',
+            'high': 'max',
+            'low': 'min',
+            'close': 'last',
+            'volume': 'sum',
+        }
+
 
         #### /home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv
         # code,date,close,open,high,low,pre_close,change,pct_chg,volume,amount
@@ -3445,6 +3453,13 @@ class Finlib:
         elif ('pct_chg' in df_daily.columns):
             logic = logic_ag_index
             logging.info("found pct_chg in columns, suppose this is AG_INDEX. ")
+        elif (re.match(r'S[H|Z]\d{6}',code)):
+            logic = logic_ag
+            logging.info("detected AG Indivial stocks, code "+code)
+
+        elif (re.match(r'^\w+',code)):
+            logic = logic_us
+            logging.info("detected US Indivial stocks, code "+code)
         else:
             logic = logic_ag
             logging.info("Not found pct_chg in columns, suppose this is AG Indivial stocks. ")
@@ -3923,8 +3938,14 @@ class Finlib:
         elif dir == base_dir + "/HK":
             #add_market = False
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'date': str}, encoding="utf-8")
+
         elif dir == base_dir + "/AG_INDEX":
             rtn_df = pd.read_csv(data_csv_fp, skiprows=1, header=None, names=['code', 'date', 'close', 'open', 'high', 'low', 'pre_close', 'change', 'pct_chg', 'vol', 'amount'], converters={'code': str, 'date': str}, encoding="utf-8")
+
+        # elif dir == base_dir + "/stooq/US_INDEX":
+        #     rtn_df = pd.read_csv(data_csv_fp, skiprows=1, header=None, names=['date','open','high','low','close','volume'], converters={'date': str}, encoding="utf-8")
+        #     _code = os.path.basename(data_csv_fp).replace(".csv",'').upper()
+        #     rtn_df['code']=_code
 
         elif dir == base_dir_fund2 + "/source/basic_daily":
             rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp,converters={'ts_code': str, 'trade_date': str}, encoding="utf-8"))

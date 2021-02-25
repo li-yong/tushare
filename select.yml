@@ -1,6 +1,10 @@
 US:
     - AAPL: APPLE        
+    - FUTU: FUTU        
     - ZM: ZOOM
+    - MSFT: Mircosoft
+    - QCOM: 高通
+    - YUMC: 百胜中国
     - BA: 波音
     - BILL: Bill
     - BTCmain: BTC
@@ -33,9 +37,6 @@ US:
     - AMD: AMD
     #- VIX: 标普500波动率指数
     - SNPS: 新思科技
-    - MSFT: Mircosoft
-    - QCOM: 高通
-    - YUMC: 百胜中国
     - KHC: 卡夫亨氏
     - GOOS: 加拿大鹅
     - PINS: Pinterest

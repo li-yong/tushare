@@ -20,7 +20,23 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SH600519', market='AG')
+stock_global = 'US_INDEX'
+a = finlib.Finlib().get_stock_configuration(selected=True, stock_global=stock_global)
+
+for index, (code, name) in a['stock_list'].iterrows():
+    data_csv = a['csv_dir'] + '/' + str(code).upper() + '.csv'
+    finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(data_csv=data_csv)
+    print(1)
+exit(0)
+
+
+
+df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/stooq/US_INDEX/SP500.csv")
+
+finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='US_INDEX')
+finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='AG')
+# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='AAPL', market='US')
+# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='FUTU', market='US')
 exit(0)
 #from futu import *
 #

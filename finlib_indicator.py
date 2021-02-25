@@ -1014,10 +1014,12 @@ class Finlib_indicator:
         )
 
 
-    def print_support_price_by_price_volume(self, code, market='AG'):
+    def print_support_price_by_price_volume(self, data_csv):
 
-        if market == 'AG':
-            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG/" + code + ".csv")
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
+
+
+
 
         a_dict = self.get_support_price_by_price_volume(df_daily_ohlc_volume=df,  verify_last_n_days=250)
 
@@ -1030,19 +1032,12 @@ class Finlib_indicator:
                     p_list.append(a_dict[k1][k2]['low'])
                     p_list.append(a_dict[k1][k2]['close'])
 
-        print("Key price list, code " + code)
+        print("Key price list, code ")
         s = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
         print(finlib.Finlib().pprint(df=s))
-
-
+        return(s)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
         pass
-
-
-
-
-
-
