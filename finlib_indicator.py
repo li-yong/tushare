@@ -1017,9 +1017,9 @@ class Finlib_indicator:
     def print_support_price_by_price_volume(self, data_csv):
 
         df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
-
-
-
+        last_price = df.iloc[-1].close
+        last_date = df.iloc[-1].date
+        code = df.iloc[-1].code
 
         a_dict = self.get_support_price_by_price_volume(df_daily_ohlc_volume=df,  verify_last_n_days=250)
 
@@ -1032,8 +1032,11 @@ class Finlib_indicator:
                     p_list.append(a_dict[k1][k2]['low'])
                     p_list.append(a_dict[k1][k2]['close'])
 
-        print("Key price list, code ")
-        s = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
+        support = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
+        delta_perc = round((s - last_price) * 100 / last_price, 2)
+        s = support.append(delta_perc).reset_index().drop('index', axis=1)
+
+        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(last_price))
         print(finlib.Finlib().pprint(df=s))
         return(s)
 
