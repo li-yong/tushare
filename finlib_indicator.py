@@ -1032,8 +1032,6 @@ class Finlib_indicator:
                     p_list.append(a_dict[k1][k2]['low'])
                     p_list.append(a_dict[k1][k2]['close'])
 
-
-
         support = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
         delta_perc = round((support - last_price) * 100 / last_price, 2)
         s = support.append(delta_perc).reset_index().drop('index', axis=1)
@@ -1041,9 +1039,18 @@ class Finlib_indicator:
         spt2 = support.T
         last_price_rank = spt2[spt2[0] < last_price].__len__()
 
+        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(round(last_price,2))+", rank "+str(last_price_rank) +"/"+str(spt2.__len__()))
 
-        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(last_price)+", rank "+str(last_price_rank))
-        logging.info("\n"+finlib.Finlib().pprint(df=s))
+        # print s every 10 columns
+        col_p = 0
+        for i in range(s.columns.__len__()//10):
+            # print(list(range(col_p,col_p+10)))
+            logging.info(finlib.Finlib().pprint(df=s[list(range(col_p,col_p+10))]))
+            col_p = col_p+10
+
+        # print(list(range(col_p, s.columns.__len__())))
+        logging.info(finlib.Finlib().pprint(df=s[list(range(col_p, s.columns.__len__()))]))
+
         return(s)
 
     #input: df [open,high, low, close]
