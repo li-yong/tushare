@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 
 stock_global = 'AG'
 selected = False
+selected = True
 
 rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
 out_dir = rst['out_dir']
