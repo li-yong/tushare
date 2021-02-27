@@ -20,17 +20,67 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+stock_global = 'AG'
+selected = False
 
+rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
+out_dir = rst['out_dir']
+csv_dir = rst['csv_dir']
+stock_list = rst['stock_list']
 
+root_dir = '/home/ryan/DATA/DAY_Global'
+if stock_global in ['US', 'US_INDEX']:
+    root_dir = root_dir + "/stooq/" + stock_global
+else:
+    root_dir = root_dir + "/" + stock_global
 
+df_rtn = pd.DataFrame()
+#################
 
-df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/stooq/US_INDEX/SP500.csv")
+############## Get live price before market closure.
+in_day_price_csv = "/home/ryan/DATA/result/wei_pan_la_sheng/ag_spot_link.csv"
+in_day_price_df = pd.read_csv(in_day_price_csv, encoding="utf-8")
+in_day_price_df['symbol'] = in_day_price_df['symbol'].apply(lambda _d:_d.upper())
+logging.info("loaded in_day_price_df from " + in_day_price_csv)
 
-finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='US_INDEX')
-finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='AG')
-# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='AAPL', market='US')
-# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='FUTU', market='US')
+###############
+for index, row in stock_list.iterrows():
+    code = row['code'] #SH600519
+    data_csv = csv_dir + '/' + str(code).upper() + '.csv'
+
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
+    df = df[['code', 'date', 'open', 'high', 'low', 'close']]
+
+    a_live_df = in_day_price_df[in_day_price_df['symbol'] == code]
+    if a_live_df.__len__()==0:
+        logging.warning("not found current price of "+code)
+        continue
+
+    df_today = pd.DataFrame.from_dict(
+        {
+            'code': [code],
+            'date': [datetime.datetime.today().strftime('%Y%m%d')],
+            'open': [a_live_df.open.values[0]],
+            'high': [a_live_df.high.values[0]],
+            'low': [a_live_df.low.values[0]],
+            'close': [a_live_df.trade.values[0]],
+        }
+    )
+    df = df.append(df_today).reset_index().drop('index', axis=1)
+
+    rtn = finlib_indicator.Finlib_indicator().my_ma_koudi(df=df)
+
 exit(0)
+
+
+
+exit(0)
+
+
+# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='US_INDEX')
+# finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='AG')
+
+
 #from futu import *
 #
 # df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)

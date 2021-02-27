@@ -1054,6 +1054,57 @@ class Finlib_indicator:
 
         return(s)
 
+
+    def my_ma_koudi(self, df):
+        code = df.iloc[0].code
+        period = 5  # using MA5
+        look_back_records = 3  # check last three records. eg 3: Day_b4_MA, Day_b3_MA, Day_b2_MA.
+        last_N = period + look_back_records + 1
+
+        if df.__len__()<last_N:
+            return
+
+        df = self.add_ma_ema_simple(df=df)
+        # df = self.add_tr_atr(df=df)
+        df = df.tail(last_N)
+        # df_simple = df[['code', 'date', 'close', 'close_sma_5', 'tr', 'atr_short_5']]
+        df_simple = df[['code', 'date', 'close', 'close_sma_5']]
+
+        a1 = df_simple[['close']].shift(period) - df_simple[['close']].shift(period - 1) - df_simple[['close']].shift(
+            0)  # consider today close, suppose tomorror close is zero.
+        a2 = df_simple[['close']].shift(period) - df_simple[['close']].shift(
+            period - 1)  # assume tomorrow close is same as today.
+        b = df_simple[['close_sma_5']].shift(0) - df_simple[['close_sma_5']].shift(1)
+        df_simple['MA1'] = a1['close'] / period + b['close_sma_5']
+        df_simple['MA2'] = a2['close'] / period + b['close_sma_5']
+        # print(finlib.Finlib().pprint(df_simple.tail(50)))
+
+        Day_b4_MA2 = round(df_simple.iloc[-4].MA2, 2)
+        Day_b3_MA2 = round(df_simple.iloc[-3].MA2, 2)
+        Day_b2_MA2 = round(df_simple.iloc[-2].MA2, 2)
+        today_predicated_MA2 = round(df_simple.iloc[-1].MA2, 2)
+        strength = round(df_simple.iloc[-1].MA2 - Day_b2_MA2, 2)
+
+        if Day_b4_MA2 < 0 and Day_b3_MA2 < 0 and Day_b2_MA2 < 0 and today_predicated_MA2 > 0:
+            logging.info("strength "+str(strength)+", BUY " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
+                  + " MA2s: " + str(Day_b4_MA2) + " " + str(Day_b3_MA2) + " " + str(Day_b2_MA2) + " " + str(
+                today_predicated_MA2)
+                  )
+            print(1)
+
+        elif Day_b4_MA2 > 0 and Day_b3_MA2 > 0 and Day_b2_MA2 > 0 and today_predicated_MA2 < 0:
+            logging.info("strength "+str(strength)+", SELL " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
+                  + " MA2s: " + str(Day_b4_MA2) + " " + str(Day_b3_MA2) + " " + str(Day_b2_MA2) + " " + str(
+                today_predicated_MA2)
+                  )
+            print(1)
+
+        else:
+            logging.info("code " + code + " No operation. " + str(Day_b4_MA2) + " " + str(Day_b3_MA2) + " " + str(
+                Day_b2_MA2) + " " + str(today_predicated_MA2))
+
+        return()
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
