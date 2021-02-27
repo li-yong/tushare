@@ -20,18 +20,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-stock_global = 'US_INDEX'
-stock_global = 'AG_INDEX'
-stock_global = 'HK'
-stock_global = 'US'
-stock_global = 'AG'
-a = finlib.Finlib().get_stock_configuration(selected=True, stock_global=stock_global)
 
-for index, (code, name) in a['stock_list'].iterrows():
-    data_csv = a['csv_dir'] + '/' + str(code).upper() + '.csv'
-    finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(data_csv=data_csv)
-    print(1)
-exit(0)
 
 
 

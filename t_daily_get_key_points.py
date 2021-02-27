@@ -18,6 +18,7 @@ import traceback
 import sys
 import tushare.util.conns as ts_cs
 import finlib
+import finlib_indicator
 
 # import matplotlib.pyplot as plt
 # import matplotlib.dates as mdates
@@ -314,6 +315,7 @@ def main():
     parser.add_option("--force_run", action="store_true", dest="force_run_f", default=False, help="force fetch, force generate file, even when file exist or just updated")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
+    parser.add_option("--print_selected_keyprice_based_on_price_volume", action="store_true", dest="print_selected_keyprice_based_on_price_volume", default=False, help="calculate then print key price based on last N days price and volume.")
 
     (options, args) = parser.parse_args()
 
@@ -325,6 +327,7 @@ def main():
     today_selection_f = options.today_selection
     debug = options.debug
     force_run_f = options.force_run_f
+    print_selected_keyprice_based_on_price_volume = options.print_selected_keyprice_based_on_price_volume
 
     print("stock_global: " + str(stock_global))
     print("calc_base: " + str(calc_base))
@@ -332,6 +335,7 @@ def main():
     print("today_selection_f: " + str(today_selection_f))
     print("debug: " + str(debug))
     print("force_run_f: " + str(force_run_f))
+    print("print_selected_keyprice_based_on_price_volume: " + str(print_selected_keyprice_based_on_price_volume))
 
     global force_run_global
     force_run_global = False
@@ -371,6 +375,13 @@ def main():
         root_dir = root_dir + "/" + stock_global
 
     df_rtn = pd.DataFrame()
+
+
+    if print_selected_keyprice_based_on_price_volume:
+        for index, row in stock_list.iterrows():
+            data_csv = csv_dir + '/' + str(row['code']).upper() + '.csv'
+            rtn = finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(data_csv=data_csv)
+        exit(0)
 
     if debug:
         files = ['SH000001.csv']
