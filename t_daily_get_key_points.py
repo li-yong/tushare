@@ -386,6 +386,7 @@ def main():
     if debug:
         files = ['SH000001.csv']
         # files = ['SZ300492.csv']
+        files = ['SZ000029.csv']
 
     if calc_today:
         df_hl = pd.read_csv(outputF)

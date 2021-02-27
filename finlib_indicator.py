@@ -1026,7 +1026,8 @@ class Finlib_indicator:
         p_list = []
         for k1 in a_dict.keys():
             for k2 in a_dict[k1].keys():
-                if type(a_dict[k1][k2]) is dict:
+                if type(a_dict[k1][k2]) is dict  and a_dict[k1][k2].__len__() > 0:
+                    # print(a_dict[k1][k2])
                     p_list.append(a_dict[k1][k2]['open'])
                     p_list.append(a_dict[k1][k2]['high'])
                     p_list.append(a_dict[k1][k2]['low'])
