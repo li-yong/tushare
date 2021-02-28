@@ -4259,6 +4259,20 @@ class Finlib:
             elif stock_global == 'US':
                 csv_dir = "/home/ryan/DATA/DAY_Global/stooq/US"
                 stock_list = selected_stocks['US']
+
+
+            # Then Stocks
+            elif stock_global == "AG_HOLD":
+                csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+                stock_list = selected_stocks['CN_HOLD']
+            elif stock_global == 'HK_HOLD':
+                csv_dir = "/home/ryan/DATA/DAY_Global/HK"
+                stock_list = selected_stocks['HK_HOLD']
+            elif stock_global == 'US_HOLD':
+                csv_dir = "/home/ryan/DATA/DAY_Global/stooq/US"
+                stock_list = selected_stocks['US_HOLD']
+
+
         else:  # selected == False
             if stock_global == 'AG':
                 csv_dir = "/home/ryan/DATA/DAY_Global/AG"

@@ -1074,35 +1074,39 @@ class Finlib_indicator:
         a1 = df_simple[['close']].shift(0) - df_simple[['close']].shift(1) +df_simple[['close']].shift(period+1) - df_simple[['close']].shift(period)  # consider today close, suppose tomorror close is zero.
         a2 = df_simple[['close']].shift(period) - df_simple[['close']].shift(period - 1)  # assume tomorrow close is same as today.
         b = df_simple[['close_sma_5']].shift(1) - df_simple[['close_sma_5']].shift(2)
-        df_simple['MA1'] = a1['close'] / period + b['close_sma_5']
-        df_simple['MA2'] = a2['close'] / period + b['close_sma_5']
-        df_simple['MA3'] = df_simple['close_sma_5'] - df_simple['close_sma_5'].shift(1)
+        df_simple['delta_MA1'] = a1['close'] / period + b['close_sma_5']
+        df_simple['delta_MA2'] = a2['close'] / period + b['close_sma_5']
+        df_simple['delta_MA3'] = df_simple['close_sma_5'] - df_simple['close_sma_5'].shift(1)
+        df_simple['delta_MA_chg_perc'] = round(df_simple['delta_MA3']*100/df_simple['close_sma_5'].shift(1), 2)
+
+        df_simple = df_simple[['code', 'date', 'close', 'delta_MA_chg_perc']]
         print(finlib.Finlib().pprint(df_simple.tail(50)))
         # exit(0)  #ryan debug
 
-        Day_b4_MA = round(df_simple.iloc[-4].MA3, 2)
-        Day_b3_MA = round(df_simple.iloc[-3].MA3, 2)
-        Day_b2_MA = round(df_simple.iloc[-2].MA3, 2)
-        today_predicated_MA = round(df_simple.iloc[-1].MA3, 2)
-        strength = round(today_predicated_MA - Day_b2_MA, 2)
+        Day_b4_delta_MA_chg_perc = round(df_simple.iloc[-4].delta_MA_chg_perc, 2)
+        Day_b3_delta_MA_chg_perc = round(df_simple.iloc[-3].delta_MA_chg_perc, 2)
+        Day_b2_delta_MA_chg_perc = round(df_simple.iloc[-2].delta_MA_chg_perc, 2)
+        today_predicated_delta_MA_chg_perc = round(df_simple.iloc[-1].delta_MA_chg_perc, 2)
+        strength = round(today_predicated_delta_MA_chg_perc - Day_b2_delta_MA_chg_perc, 2)
 
-        if Day_b4_MA < 0 and Day_b3_MA < 0 and Day_b2_MA < 0 and today_predicated_MA > 0:
+        # -0.1 in after times 100, it is -0.1 percent. original number is -0.001
+        if Day_b4_delta_MA_chg_perc < 0 and Day_b3_delta_MA_chg_perc < 0 and Day_b2_delta_MA_chg_perc < 0 and today_predicated_delta_MA_chg_perc > 0:
             logging.info("strength "+str(strength)+", BUY " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
-                  + " MAs: " + str(Day_b4_MA) + " " + str(Day_b3_MA) + " " + str(Day_b2_MA) + " " + str(
-                today_predicated_MA)
+                  + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
+                today_predicated_delta_MA_chg_perc)
                   )
             print(1)
 
-        elif Day_b4_MA > 0 and Day_b3_MA > 0 and Day_b2_MA > 0 and today_predicated_MA < 0:
+        elif Day_b4_delta_MA_chg_perc > 0 and Day_b3_delta_MA_chg_perc > 0 and Day_b2_delta_MA_chg_perc > 0 and today_predicated_delta_MA_chg_perc < 0:
             logging.info("strength "+str(strength)+", SELL " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
-                  + " MAs: " + str(Day_b4_MA) + " " + str(Day_b3_MA) + " " + str(Day_b2_MA) + " " + str(
-                today_predicated_MA)
+                  + " MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
+                today_predicated_delta_MA_chg_perc)
                   )
             print(1)
 
         else:
-            logging.info("strength "+str(strength)+" code " + code + " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs" + str(Day_b4_MA) + " " + str(Day_b3_MA) + " " + str(
-                Day_b2_MA) + " " + str(today_predicated_MA))
+            logging.info("strength "+str(strength)+" code " + code + " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs" + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
+                Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
 
         return()
 

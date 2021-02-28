@@ -20,7 +20,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-stock_global = 'AG'
+stock_global = 'AG_HOLD'
 selected = False
 selected = True
 
