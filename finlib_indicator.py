@@ -1060,9 +1060,10 @@ class Finlib_indicator:
         period = 5  # using MA5
         look_back_records = 3  # check last three records. eg 3: Day_b4_MA, Day_b3_MA, Day_b2_MA.
         last_N = period + look_back_records + 1
-        last_N = 1000 #ryan debug
+        # last_N = 100 #ryan debug
 
         if df.__len__()<last_N:
+            logging.info("No enough data in df, expected df len "+str(last_N))
             return
 
         df = self.add_ma_ema_simple(df=df)
@@ -1105,7 +1106,7 @@ class Finlib_indicator:
             print(1)
 
         else:
-            logging.info("strength "+str(strength)+" code " + code + " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs" + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
+            logging.info("strength "+str(strength)+" code " + code + " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
                 Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
 
         return()

@@ -20,7 +20,15 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+import akshare as ak
+
+
+
+################
+
 stock_global = 'AG_HOLD'
+stock_global = 'US_HOLD'
+# stock_global = 'HK_HOLD'
 selected = False
 selected = True
 
@@ -39,10 +47,17 @@ df_rtn = pd.DataFrame()
 #################
 
 ############## Get live price before market closure.
-in_day_price_csv = "/home/ryan/DATA/result/wei_pan_la_sheng/ag_spot_link.csv"
-in_day_price_df = pd.read_csv(in_day_price_csv, encoding="utf-8")
-in_day_price_df['symbol'] = in_day_price_df['symbol'].apply(lambda _d:_d.upper())
-logging.info("loaded in_day_price_df from " + in_day_price_csv)
+allow_delay_min = 60
+if stock_global == 'HK_HOLD':
+    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min)
+elif stock_global == 'AG_HOLD':
+    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='AG', allow_delay_min=allow_delay_min)
+elif stock_global == 'US_HOLD':
+    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min)
+
+
+
+logging.info("loaded in_day_price_df")
 
 ###############
 for index, row in stock_list.iterrows():
@@ -52,7 +67,7 @@ for index, row in stock_list.iterrows():
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
     df = df[['code', 'date', 'open', 'high', 'low', 'close']]
 
-    a_live_df = in_day_price_df[in_day_price_df['symbol'] == code]
+    a_live_df = in_day_price_df[in_day_price_df['code'] == code]
     if a_live_df.__len__()==0:
         logging.warning("not found current price of "+code)
         continue
@@ -64,7 +79,7 @@ for index, row in stock_list.iterrows():
             'open': [a_live_df.open.values[0]],
             'high': [a_live_df.high.values[0]],
             'low': [a_live_df.low.values[0]],
-            'close': [a_live_df.trade.values[0]],
+            'close': [a_live_df.close.values[0]],
         }
     )
     df = df.append(df_today).reset_index().drop('index', axis=1)

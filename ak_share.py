@@ -105,54 +105,10 @@ def get_individual_min():
 
 
 
-def wei_pan_la_sheng():
-    ########################
-    #
-    #################
-    b = "/home/ryan/DATA/result/wei_pan_la_sheng"
-
-    if not os.path.isdir(b):
-        os.mkdir(b)
-
-    nowS = datetime.datetime.now().strftime('%Y%m%d_%H%M')       #'20201117_2003'
+def wei_pan_la_sheng(stock_market='AG'):
 
 
-    # run at 14:55 (run_time). Find the stocks increase fastly since 14:00 or 14:30 to run_time.
-    a_spot_csv = b + "/ag_spot_"+nowS+".csv"
-    a_spot_csv_link = b + "/ag_spot_link.csv"
-    a_spot_csv_link_old = b + "/ag_spot_link_old.csv"
-    if finlib.Finlib().is_cached(file_path=a_spot_csv_link, day=1 / 24 / 60 * 1):  # cached in 5 minutes
-        stock_zh_a_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8")
-        logging.info("loading ag spot df from " + a_spot_csv_link)
-    else:
-        # 获取 A 股实时行情数据. 单次返回所有 A 股上市公司的实时行情数据
-        # A 股数据是从新浪财经获取的数据, 重复运行本函数会被新浪暂时封 IP, 建议增加时间间隔
-        stock_zh_a_spot_df = ak.stock_zh_a_spot().drop_duplicates()
-
-        # 获取科创板实时行情数据. 单次返回所有科创板上市公司的实时行情数据
-        # 从新浪财经获取科创板股票数据
-        stock_zh_kcb_spot_df = ak.stock_zh_kcb_spot().drop_duplicates()
-
-
-        # Merge KCB to AG
-        stock_zh_a_spot_df = pd.concat([stock_zh_a_spot_df, stock_zh_kcb_spot_df]).reset_index().drop('index', axis=1)
-        finlib.Finlib().pprint(stock_zh_a_spot_df.head(3))
-        stock_zh_a_spot_df.to_csv(a_spot_csv, encoding='UTF-8', index=False)
-        logging.info("ag spot saved to " + a_spot_csv)
-
-        if os.path.lexists(a_spot_csv_link_old):
-            os.unlink(a_spot_csv_link_old)
-            logging.info("removed previous old link " + a_spot_csv_link_old)
-
-        if os.path.lexists(a_spot_csv_link):
-            os.rename(a_spot_csv_link, a_spot_csv_link_old)
-            logging.info("renamed previous new link to old link, to " + a_spot_csv_link_old)
-
-
-        os.symlink(a_spot_csv, a_spot_csv_link)
-        logging.info(__file__ + ": " + "symbol link created  " + a_spot_csv_link + " -> " + a_spot_csv)
-
-
+    finlib.Finlib().get_ak_live_price(stock_market='AG')
 
     # find stocks increased at the end of the market time
     # dfmt = stock_zh_a_spot_df[stock_zh_a_spot_df['symbol'] == 'sh600519']
@@ -168,6 +124,18 @@ def wei_pan_la_sheng():
     # open: 开
     # pricechange: trade - settlement
     # changepercent = pricechange / settlement * 100
+
+    stock_market = stock_market.upper()
+    b = "/home/ryan/DATA/result/wei_pan_la_sheng"
+
+    if not os.path.isdir(b):
+        os.mkdir(b)
+
+    nowS = datetime.datetime.now().strftime('%Y%m%d_%H%M')  # '20201117_2003'
+
+    a_spot_csv_link = b + "/" + stock_market + "_spot_link.csv"
+    a_spot_csv_link_old = b + "/" + stock_market + "_spot_link_old.csv"
+
     if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
         old_df = pd.read_csv(a_spot_csv_link_old, encoding="utf-8")
         old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
