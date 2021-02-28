@@ -4896,7 +4896,7 @@ class Finlib:
         a_spot_csv_link_old = b + "/" + stock_market + "_spot_link_old.csv"
 
         if self.is_cached(file_path=a_spot_csv_link, day=1 / 24 / 60 * allow_delay_min):  # cached in 15 minutes
-            stock_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8", converters={'symbol': str})
+            stock_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8", converters={'code': str})
             logging.info("loading " + stock_market + " spot df from " + a_spot_csv_link)
             return(stock_spot_df)
         else:
@@ -4912,9 +4912,11 @@ class Finlib:
 
                 # Merge KCB to AG
                 stock_spot_df = pd.concat([stock_spot_df, stock_zh_kcb_spot_df]).reset_index().drop('index', axis=1)
+                stock_spot_df = stock_spot_df.drop('code', axis=1)
                 stock_spot_df = stock_spot_df.rename(columns={
-                    "symbol": "code", "lasttrade": "close",
+                    "symbol": "code", "trade": "close",
                 }, inplace=False)
+                stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
 
             elif stock_market == 'HK':
                 stock_spot_df = ak.stock_hk_spot().drop_duplicates()  # 获取港股的实时行情数据
@@ -4922,15 +4924,14 @@ class Finlib:
                 stock_spot_df = stock_spot_df.rename(columns={
                     "symbol": "code", "lasttrade": "close",
                 }, inplace=False)
+                stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
 
             elif stock_market == 'US':
                 stock_spot_df = ak.stock_us_spot().drop_duplicates()  # 获取美股行情报价
                 stock_spot_df = stock_spot_df.rename(columns={
                     "symbol": "code", "price": "close",
                 }, inplace=False)
-
-            stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
-
+                stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
 
 
 

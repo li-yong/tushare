@@ -27,7 +27,7 @@ import akshare as ak
 ################
 
 stock_global = 'AG_HOLD'
-stock_global = 'US_HOLD'
+# stock_global = 'US_HOLD'
 # stock_global = 'HK_HOLD'
 selected = False
 selected = True
