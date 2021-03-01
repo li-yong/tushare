@@ -4949,6 +4949,8 @@ class Finlib:
 
             os.symlink(a_spot_csv, a_spot_csv_link)
             logging.info(__file__ + ": " + "symbol link created  " + a_spot_csv_link + " -> " + a_spot_csv)
+
+            stock_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8", converters={'code': str})
             return(stock_spot_df)
 
     #input: df [open,high, low, close]

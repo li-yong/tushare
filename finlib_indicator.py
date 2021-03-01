@@ -1076,9 +1076,9 @@ class Finlib_indicator:
         # df_simple = df[['code', 'date', 'close', 'close_sma_5', 'tr', 'atr_short_5']]
         df_simple = df[['code', 'date', 'close', 'close_sma_5']]
 
-        a1 = df_simple[['close']].shift(0) - df_simple[['close']].shift(1) +df_simple[['close']].shift(period+1) - df_simple[['close']].shift(period)  # consider today close, suppose tomorror close is zero.
-        a2 = df_simple[['close']].shift(period) - df_simple[['close']].shift(period - 1)  # assume tomorrow close is same as today.
-        b = df_simple[['close_sma_5']].shift(1) - df_simple[['close_sma_5']].shift(2)
+        a1 = df_simple[['close']].shift(0).fillna(0) - df_simple[['close']].shift(1).fillna(0) +df_simple[['close']].shift(period+1).fillna(0) - df_simple[['close']].shift(period).fillna(0)  # consider today close, suppose tomorror close is zero.
+        a2 = df_simple[['close']].shift(period).fillna(0) - df_simple[['close']].shift(period - 1).fillna(0)  # assume tomorrow close is same as today.
+        b = df_simple[['close_sma_5']].shift(1).fillna(0) - df_simple[['close_sma_5']].shift(2).fillna(0)
         df_simple['delta_MA1'] = a1['close'] / period + b['close_sma_5']
         df_simple['delta_MA2'] = a2['close'] / period + b['close_sma_5']
         df_simple['delta_MA3'] = df_simple['close_sma_5'] - df_simple['close_sma_5'].shift(1)
@@ -1102,11 +1102,11 @@ class Finlib_indicator:
                   )
         elif Day_b4_delta_MA_chg_perc > 0 and Day_b3_delta_MA_chg_perc > 0 and Day_b2_delta_MA_chg_perc > 0 and today_predicated_delta_MA_chg_perc < 0:
             logging.info("strength "+str(strength)+", SELL " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
-                  + " MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
+                  + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
                 today_predicated_delta_MA_chg_perc)
                   )
         else:
-            logging.info("strength "+str(strength)+" code " + code+" "+name+ " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
+            logging.info("strength "+str(strength)+" code " + code+" "+name+ " No operation. based on price " + str(df_simple.iloc[-1].close)+" delta_MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
                 Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
 
         return()

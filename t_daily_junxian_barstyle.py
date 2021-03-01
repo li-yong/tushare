@@ -209,7 +209,7 @@ def main():
 
     parser.add_option("--check_my_ma", action="store_true", dest="check_my_ma", default=False, help="run before market close")
     parser.add_option("--check_my_ma_allow_delay_min", type="int", action="store", dest="check_my_ma_allow_delay_min", default=30, help="minimal minutes to reuse cached market spot csv.")
-    parser.add_option("--check_my_ma_force_fetch", dest="check_my_ma_force_fetch", help="force download current market spot via akshare.")
+    parser.add_option("--check_my_ma_force_fetch", action="store_true", dest="check_my_ma_force_fetch", default=False,help="force download current market spot via akshare.")
 
 
     #df_rtn = pd.DataFrame()
