@@ -1157,7 +1157,7 @@ class Finlib_indicator:
             df_today = pd.DataFrame.from_dict(
                 {
                     'code': [code],
-                    'date': [datetime.datetime.today().strftime('%Y%m%d')],
+                    'date': [datetime.today().strftime('%Y%m%d')],
                     'open': [a_live_df.open.values[0]],
                     'high': [a_live_df.high.values[0]],
                     'low': [a_live_df.low.values[0]],
@@ -1167,7 +1167,7 @@ class Finlib_indicator:
             df = df.append(df_today).reset_index().drop('index', axis=1)
             df['name'] = a_live_df.iloc[0]['name']  # add name column. AK returns name in df.
 
-            rtn = finlib_indicator.Finlib_indicator().my_ma_koudi(df=df)
+            rtn = self.my_ma_koudi(df=df)
 
 
 
