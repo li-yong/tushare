@@ -1085,7 +1085,7 @@ class Finlib_indicator:
         df_simple['delta_MA_chg_perc'] = round(df_simple['delta_MA3']*100/df_simple['close_sma_5'].shift(1), 2)
 
         df_simple = df_simple[['code', 'date', 'close', 'delta_MA_chg_perc']]
-        print(finlib.Finlib().pprint(df_simple.tail(50)))
+        # print(finlib.Finlib().pprint(df_simple.tail(50)))
         # exit(0)  #ryan debug
 
         Day_b4_delta_MA_chg_perc = round(df_simple.iloc[-4].delta_MA_chg_perc, 2)
@@ -1100,15 +1100,11 @@ class Finlib_indicator:
                   + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
                 today_predicated_delta_MA_chg_perc)
                   )
-            print(1)
-
         elif Day_b4_delta_MA_chg_perc > 0 and Day_b3_delta_MA_chg_perc > 0 and Day_b2_delta_MA_chg_perc > 0 and today_predicated_delta_MA_chg_perc < 0:
             logging.info("strength "+str(strength)+", SELL " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
                   + " MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
                 today_predicated_delta_MA_chg_perc)
                   )
-            print(1)
-
         else:
             logging.info("strength "+str(strength)+" code " + code+" "+name+ " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
                 Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
