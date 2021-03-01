@@ -39,8 +39,8 @@ selected = options.selected
 stock_global = options.stock_global
 force_fetch = options.force_fetch
 
-if (stock_global not in ['US', 'HK']):
-    logging.fatal("stock_global only can be in [US, HK]")
+if (stock_global not in ['US','US_HOLD','HK', 'HK_HOLD']):
+    logging.fatal("stock_global only can be in ['US','US_HOLD','HK', 'HK_HOLD']")
     exit()
 
 # This script to get US,HK stock daily bar.
