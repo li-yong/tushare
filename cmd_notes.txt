@@ -44,4 +44,6 @@ cat fina_indicator.csv | awk '{split($0,a,","); print a[1],a[2],a[3],a[151], a[1
 
 
 
-
+# run on AG openning, 2.30pm
+python t_daily_junxian_barstyle.py --check_my_ma --check_my_ma_allow_delay_min 30 --selected --stock_global AG_HOLD 
+python t_daily_junxian_barstyle.py --check_my_ma --check_my_ma_allow_delay_min 30 --selected --stock_global AG_HOLD --check_my_ma_force_fetch
