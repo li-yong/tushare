@@ -26,65 +26,16 @@ import akshare as ak
 
 ################
 
-stock_global = 'AG_HOLD'
-stock_global = 'US_HOLD'
-stock_global = 'HK_HOLD'
-selected = False
-selected = True
+# selected = False
+# selected = True
+allow_delay_min = 30
+force_fetch = False
 
-rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
-out_dir = rst['out_dir']
-csv_dir = rst['csv_dir']
-stock_list = rst['stock_list']
-
-root_dir = '/home/ryan/DATA/DAY_Global'
-if stock_global in ['US', 'US_INDEX']:
-    root_dir = root_dir + "/stooq/" + stock_global
-else:
-    root_dir = root_dir + "/" + stock_global
-
-df_rtn = pd.DataFrame()
-#################
-
-############## Get live price before market closure.
-allow_delay_min = 600
-if stock_global == 'HK_HOLD':
-    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min)
-elif stock_global == 'AG_HOLD':
-    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='AG', allow_delay_min=allow_delay_min)
-elif stock_global == 'US_HOLD':
-    in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min)
-
-logging.info("loaded in_day_price_df")
-
-###############
-for index, row in stock_list.iterrows():
-    code = row['code'] #SH600519
-    data_csv = csv_dir + '/' + str(code).upper() + '.csv'
-
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
-    df = df[['code','date', 'open', 'high', 'low', 'close']]
-
-    a_live_df = in_day_price_df[in_day_price_df['code'] == code]
-    if a_live_df.__len__()==0:
-        logging.warning("not found current price of "+code)
-        continue
-
-    df_today = pd.DataFrame.from_dict(
-        {
-            'code': [code],
-            'date': [datetime.datetime.today().strftime('%Y%m%d')],
-            'open': [a_live_df.open.values[0]],
-            'high': [a_live_df.high.values[0]],
-            'low': [a_live_df.low.values[0]],
-            'close': [a_live_df.close.values[0]],
-        }
-    )
-    df = df.append(df_today).reset_index().drop('index', axis=1)
-    df['name'] = a_live_df.iloc[0]['name']  #add name column. AK returns name in df.
-
-    rtn = finlib_indicator.Finlib_indicator().my_ma_koudi(df=df)
-
+finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='AG_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
+finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='HK_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
+finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='US_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
+finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='AG',allow_delay_min = allow_delay_min, force_fetch=False)
+finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='HK',allow_delay_min = allow_delay_min, force_fetch=False)
 exit(0)
 
 
