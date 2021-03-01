@@ -1144,7 +1144,7 @@ class Finlib_indicator:
 
             df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv, exit_if_not_exist=False)
 
-            if df == "FILE_NOT_EXIT":
+            if type(df) is str: # "FILE_NOT_EXIT"
                 continue
 
             df = df[['code', 'date', 'open', 'high', 'low', 'close']]
