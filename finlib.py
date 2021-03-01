@@ -4239,7 +4239,7 @@ class Finlib:
             selected_stocks = self.load_select()
             out_dir = "/home/ryan/DATA/result/selected"
 
-            # INDEX first
+            # selected INDEX first
             if stock_global == 'AG_INDEX':
                 csv_dir = "/home/ryan/DATA/DAY_Global/AG_INDEX"
                 stock_list = selected_stocks['CN_INDEX']
@@ -4250,7 +4250,7 @@ class Finlib:
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK_INDEX"
                 stock_list = selected_stocks['HK_INDEX']
 
-            # Then Stocks
+            # Then selected Stocks
             elif stock_global == "AG":
                 csv_dir = "/home/ryan/DATA/DAY_Global/AG"
                 stock_list = selected_stocks['CN']
@@ -4262,7 +4262,7 @@ class Finlib:
                 stock_list = selected_stocks['US']
 
 
-            # Then Stocks
+            # Then (selected) Holded Stocks (
             elif stock_global == "AG_HOLD":
                 csv_dir = "/home/ryan/DATA/DAY_Global/AG"
                 stock_list = selected_stocks['CN_HOLD']
@@ -4272,6 +4272,18 @@ class Finlib:
             elif stock_global == 'US_HOLD':
                 csv_dir = "/home/ryan/DATA/DAY_Global/stooq/US"
                 stock_list = selected_stocks['US_HOLD']
+
+            # Then (selected) Holded Stocks (AK Share source)
+            elif stock_global == "AG_HOLD_AK":
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/AG"
+                stock_list = selected_stocks['CN_HOLD']
+            elif stock_global == 'HK_HOLD_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/HK"
+                stock_list = selected_stocks['HK_HOLD']
+            elif stock_global == 'US_HOLD_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/US"
+                stock_list = selected_stocks['US_HOLD']
+
 
 
         else:  # selected == False
@@ -4301,6 +4313,19 @@ class Finlib:
                 out_dir = "/home/ryan/DATA/result/ch"
                 df_instrument = self.get_instrument()
                 stock_list = df_instrument.query("market==40 and category==11").reset_index().drop('index', axis=1)  # 78
+            
+            # Then (not selected) Stocks (AK Share source)
+            # elif stock_global == "AG_AK":
+            #     csv_dir = "/home/ryan/DATA/DAY_Global/akshare/AG"
+            #     stock_list = selected_stocks['CN_HOLD']
+            elif stock_global == 'HK_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/HK"
+                stock_list = self.get_ak_hk_us_list('HK')[['code','name']]
+                out_dir = "/home/ryan/DATA/result/hk"
+            elif stock_global == 'US_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/US"
+                out_dir = "/home/ryan/DATA/result/us"
+                stock_list = self.get_ak_hk_us_list('US')[['code','name']]
 
         rtn = {
             "stock_list": stock_list,
@@ -4309,6 +4334,17 @@ class Finlib:
         }
 
         return (rtn)
+
+    def get_ak_hk_us_list(self,market):
+        if market not in ['HK','US']:
+            logging.error("unknown market, expected ['HK','US'], got "+str(market))
+            exit()
+        csv_f = "/home/ryan/DATA/result/wei_pan_la_sheng/"+market+"_spot_link.csv"
+
+        df = pd.read_csv(csv_f, converters={'code': str})
+
+        return(df)
+
 
     #keep columns in the col_name_list_kept
     def keep_column(self, df, col_keep):

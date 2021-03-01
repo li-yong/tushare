@@ -22,20 +22,28 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
+#########################################
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
+df = pro.hk_daily(ts_code='00001.HK', start_date='20190101', end_date='20190904')
 ################
-
-# selected = False
-# selected = True
-allow_delay_min = 30
-force_fetch = False
-
-finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='AG_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
-finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='HK_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
-finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='US_HOLD',allow_delay_min = allow_delay_min, force_fetch=False)
-finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='AG',allow_delay_min = allow_delay_min, force_fetch=False)
-finlib_indicator.Finlib_indicator().check_my_ma(selected=True, stock_global='HK',allow_delay_min = allow_delay_min, force_fetch=False)
+df = ak.stock_hk_daily(symbol="00700",adjust="qfq")
 exit(0)
 
 
