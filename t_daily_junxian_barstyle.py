@@ -203,9 +203,14 @@ def main():
 
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
-    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)], source is /home/ryan/DATA/DAY_global/xx/")
+    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
+
+    parser.add_option("--check_my_ma", action="store_true", dest="check_my_ma", default=False, help="run before market close")
+    parser.add_option("--check_my_ma_allow_delay_min", type="int", action="store", dest="check_my_ma_allow_delay_min", default=30, help="minimal minutes to reuse cached market spot csv.")
+    parser.add_option("--check_my_ma_force_fetch", dest="check_my_ma_force_fetch", help="force download current market spot via akshare.")
+
 
     #df_rtn = pd.DataFrame()
     df_rtn = pd.DataFrame(columns=["code", "name"])
@@ -217,6 +222,10 @@ def main():
     selected = options.selected
     stock_global = options.stock_global
 
+    check_my_ma = options.check_my_ma
+    check_my_ma_allow_delay_min = options.check_my_ma_allow_delay_min
+    check_my_ma_force_fetch = options.check_my_ma_force_fetch
+
     rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
@@ -226,7 +235,11 @@ def main():
     if show_result_f:
         show_result(file=out_f, dir=out_dir, filebase= stock_global.lower() + "_junxian_barstyle")
         exit()
-
+    elif check_my_ma:
+        finlib_indicator.Finlib_indicator().check_my_ma(selected=selected, stock_global=stock_global,
+                                                        allow_delay_min=check_my_ma_allow_delay_min,
+                                                        force_fetch=check_my_ma_force_fetch)
+        exit()
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
