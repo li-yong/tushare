@@ -1062,9 +1062,13 @@ class Finlib_indicator:
         last_N = period + look_back_records + 1
         # last_N = 100 #ryan debug
 
-        if df.__len__()<last_N:
+        if df.__len__() < last_N:
             logging.info("No enough data in df, expected df len "+str(last_N))
             return
+
+        name = ''
+        if 'name' in df.columns:
+            name = df.iloc[-1]['name']
 
         df = self.add_ma_ema_simple(df=df)
         # df = self.add_tr_atr(df=df)
@@ -1092,21 +1096,21 @@ class Finlib_indicator:
 
         # -0.1 in after times 100, it is -0.1 percent. original number is -0.001
         if Day_b4_delta_MA_chg_perc < 0 and Day_b3_delta_MA_chg_perc < 0 and Day_b2_delta_MA_chg_perc < 0 and today_predicated_delta_MA_chg_perc > 0:
-            logging.info("strength "+str(strength)+", BUY " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
+            logging.info("strength "+str(strength)+", BUY " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
                   + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
                 today_predicated_delta_MA_chg_perc)
                   )
             print(1)
 
         elif Day_b4_delta_MA_chg_perc > 0 and Day_b3_delta_MA_chg_perc > 0 and Day_b2_delta_MA_chg_perc > 0 and today_predicated_delta_MA_chg_perc < 0:
-            logging.info("strength "+str(strength)+", SELL " + code + " before today market close. based on price " + str(df_simple.iloc[-1].close)
+            logging.info("strength "+str(strength)+", SELL " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
                   + " MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
                 today_predicated_delta_MA_chg_perc)
                   )
             print(1)
 
         else:
-            logging.info("strength "+str(strength)+" code " + code + " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
+            logging.info("strength "+str(strength)+" code " + code+" "+name+ " No operation. based on price " + str(df_simple.iloc[-1].close)+" MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
                 Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
 
         return()
