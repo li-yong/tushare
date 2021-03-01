@@ -1142,7 +1142,11 @@ class Finlib_indicator:
             code = row['code']  # SH600519
             data_csv = csv_dir + '/' + str(code).upper() + '.csv'
 
-            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv)
+            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv, exit_if_not_exist=False)
+
+            if df == "FILE_NOT_EXIT":
+                continue
+
             df = df[['code', 'date', 'open', 'high', 'low', 'close']]
 
             a_live_df = in_day_price_df[in_day_price_df['code'] == code]
