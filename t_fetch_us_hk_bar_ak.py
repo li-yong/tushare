@@ -53,8 +53,43 @@ def fetch_base(stock_global, csv_dir, stock_list):
                 traceback.print_exception(*exc_info)
             del exc_info
 
-def fetch_daily_spot():
-    pass
+def fetch_daily_spot(stock_global):
+    allow_delay_min = 600
+    force_fetch = False
+
+    b_dir = "/home/ryan/DATA/pickle/daily_update_source"
+    todayS = datetime.datetime.today().strftime("%Y%m%d")
+
+    if stock_global == 'HK_AK':
+        b_dir = b_dir+"/HK_AK"
+        if not os.path.isdir(b_dir):
+            os.mkdir(b_dir)
+
+        if finlib.Finlib().is_market_open_hk():
+            logging.info("HK market is open now, cannot run daily spot at this time to update base stocks daily.")
+            return
+
+        csv_f = b_dir + "/hk_ak_daily_"+todayS+".csv"
+        in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min,
+                                                            force_fetch=force_fetch)
+
+        in_day_price_df.to_csv(csv_f, encoding='UTF-8', index=False)
+        logging.info("today HK mkt close from source akshare saved to " + csv_f)
+
+    elif stock_global == 'US_AK':
+        b_dir = b_dir + "/US_AK"
+        if not os.path.isdir(b_dir):
+            os.mkdir(b_dir)
+
+        if finlib.Finlib().is_market_open_us():
+            logging.info("US market is open now, cannot run daily spot at this time to update base stocks daily.")
+            return
+
+        csv_f = b_dir + "/us_ak_daily_" + todayS + ".csv"
+        in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min,
+                                                            force_fetch=force_fetch)
+        in_day_price_df.to_csv(csv_f, encoding='UTF-8', index=False)
+        logging.info("today US mkt close from source akshare saved to " + csv_f)
 
 def append_daily_spot_to_base():
     pass
@@ -124,10 +159,10 @@ def main():
         os.mkdir("/home/ryan/DATA/DAY_Global/akshare/US")
 
     if options.fetch_base:
-        fetch_base(stock_global, csv_dir, stock_list)
+        fetch_base(stock_global=stock_global, csv_dir=csv_dir, stock_list=stock_list)
         exit()
     elif options.fetch_daily_spot:
-        fetch_daily_spot()
+        fetch_daily_spot(stock_global=stock_global)
         exit()
     elif options.update_base:
         append_daily_spot_to_base()

@@ -4909,6 +4909,26 @@ class Finlib:
 
         return(rtn)
 
+    #return True if HK market is open
+    def is_market_open_hk(self):
+        hour = datetime.now().hour
+        minute = datetime.now().minute
+
+        rtn = False
+        if (hour >= 9) and (hour <= 16): #9 ~ 15.59
+            rtn = True
+        return(rtn)
+
+    #return True if US market is open
+    def is_market_open_us(self):
+        hour = datetime.now().hour
+        minute = datetime.now().minute
+
+        rtn = True
+        if (hour > 9) and (hour <= 16): #10.00 ~ 16.59
+            rtn = False
+        return(rtn)
+
 #https://www.mytecbits.com/internet/python/week-number-of-month
     def week_number_of_month(self,date_value):
         #return (date_value.isocalendar()[1] - date_value.replace(day=1).isocalendar()[1]  )

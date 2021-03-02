@@ -61,6 +61,9 @@ rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/HK/  /home/ryan/DATA/DAY_
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/AG_MoneyFlow/  /home/ryan/DATA/DAY_Global/AG_MoneyFlow/
 
 
+rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/akshare/HK/  /home/ryan/DATA/DAY_Global/akshare/HK/
+rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/akshare/US/  /home/ryan/DATA/DAY_Global/stooq/US/
+
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/stooq/US/  /home/ryan/DATA/DAY_Global/stooq/US/
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/stooq/US_INDEX/  /home/ryan/DATA/DAY_Global/stooq/US_INDEX/
 
