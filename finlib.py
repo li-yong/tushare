@@ -4954,6 +4954,8 @@ class Finlib:
             os.mkdir(b)
 
         nowS = datetime.now().strftime('%Y%m%d_%H%M')  # '20201117_2003'
+        date_cn = datetime.now().strftime('%Y%m%d')
+        date_us = (datetime.now()-timedelta(1)).strftime('%Y%m%d')
 
         # run at 14:55 (run_time). Find the stocks increase fastly since 14:00 or 14:30 to run_time.
         a_spot_csv = b + "/" + stock_market + "_spot_" + nowS + ".csv"
@@ -4982,6 +4984,7 @@ class Finlib:
                     "symbol": "code", "trade": "close",
                 }, inplace=False)
                 stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
+                stock_spot_df['date'] = date_cn
 
             elif stock_market == 'HK':
                 stock_spot_df = ak.stock_hk_spot().drop_duplicates()  # 获取港股的实时行情数据
@@ -4990,6 +4993,7 @@ class Finlib:
                     "symbol": "code", "lasttrade": "close",
                 }, inplace=False)
                 stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
+                stock_spot_df['date'] = date_cn
 
             elif stock_market == 'US':
                 stock_spot_df = ak.stock_us_spot().drop_duplicates()  # 获取美股行情报价
@@ -4997,9 +5001,9 @@ class Finlib:
                     "symbol": "code", "price": "close",
                 }, inplace=False)
                 stock_spot_df['code'] = stock_spot_df['code'].apply(lambda _d: _d.upper())
+                stock_spot_df['date'] = date_us
 
-
-
+            stock_spot_df = self.adjust_column(df=stock_spot_df, col_name_list=['date','code'])
             stock_spot_df.to_csv(a_spot_csv, encoding='UTF-8', index=False)
             self.pprint(stock_spot_df.head(3))
             logging.info(stock_market + " spot saved to " + a_spot_csv)
