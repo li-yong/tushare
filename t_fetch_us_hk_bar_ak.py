@@ -91,8 +91,88 @@ def fetch_daily_spot(stock_global):
         in_day_price_df.to_csv(csv_f, encoding='UTF-8', index=False)
         logging.info("today US mkt close from source akshare saved to " + csv_f)
 
-def append_daily_spot_to_base():
-    pass
+def update_base(stock_global, csv_dir, stock_list): #append_daily_spot_to_base
+    i = 0
+    for index, row in stock_list.iterrows():
+        i += 1
+        name, code = row['name'], row['code']
+
+        if stock_global not in ['HK_AK','US_AK']:
+            logging.fatal("please use HK_AK|US_AK only.")
+            exit(0)
+
+        if stock_global == 'HK_AK':
+            daily_source_dir = '/home/ryan/DATA/pickle/daily_update_source/HK_AK/hk_ak_daily_'
+        elif stock_global == 'US_AK':
+            daily_source_dir = '/home/ryan/DATA/pickle/daily_update_source/US_AK/hk_ak_daily_'
+        else:
+            logging.fatal()
+            exit()
+
+        csv_f = csv_dir + "/" + code + ".csv"
+        logging.info(str(i) + " of " + str(stock_list.__len__())+" update "+code+" "+name+" "+csv_f)
+
+        if finlib.Finlib().is_cached(csv_f, day=0.1):
+            logging.info("skip file updated in 1 days "+csv_f)
+            continue
+
+        if not os.path.exists(csv_f):
+            logging.warning("no such file "+csv_f)
+            continue
+
+        df_target = pd.read_csv(csv_f,converters={"code":str, "date":str})
+        last_date = datetime.datetime.strptime(df_target.iloc[-1]['date'], '%Y%m%d')
+        delta = (datetime.datetime.today() - last_date).days
+
+        for i2 in range(delta):
+            added_date = (last_date + datetime.timedelta(i2+1)).strftime('%Y%m%d')
+            source_daily_csv_f = daily_source_dir + added_date+".csv"
+
+            if not os.path.exists(source_daily_csv_f):
+                logging.warning("no such file "+source_daily_csv_f)
+                continue
+
+            source_df = pd.read_csv(source_daily_csv_f, converters={"code":str, "date":str})
+            a_stock_today_df = source_df[source_df['code']==code]
+            df_target = df_target.append(pd.DataFrame.from_dict({
+                'code':[code],
+                'name':[name],
+                'date':[added_date],
+                'open':[a_stock_today_df.iloc[0]['open']],
+                'high':[a_stock_today_df.iloc[0]['high']],
+                'low':[a_stock_today_df.iloc[0]['low']],
+                'close':[a_stock_today_df.iloc[0]['close']],
+                'volume':[a_stock_today_df.iloc[0]['volume']],
+            })).reset_index().drop('index', axis=1)
+
+            df_target.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info("appended date "+added_date+" to "+csv_f)
+            print(finlib.Finlib().pprint(df_target.tail(2)))
+
+
+            print(1)
+
+        #
+        # try:
+        #     exc_info = sys.exc_info()
+        #
+        #
+        #     df = df.reset_index().rename(columns={"index": "date"})
+        #     df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
+        #     df['name'] = name
+        #     df['code'] = code
+        #
+        #     df = finlib.Finlib().adjust_column(df,['code','name','date'])
+        #     df.to_csv(csv_f, encoding='UTF-8', index=False)
+        #     logging.info("saved "+csv_f)
+        # except:
+        #     logging.info(__file__+" "+"\tcaught exception when getting data")
+        # finally:
+        #     if exc_info == (None, None, None):
+        #         pass  # no exception
+        #     else:
+        #         traceback.print_exception(*exc_info)
+        #     del exc_info
 
 def list(stock_list,csv_dir):
     i = 0
@@ -165,7 +245,11 @@ def main():
         fetch_daily_spot(stock_global=stock_global)
         exit()
     elif options.update_base:
-        append_daily_spot_to_base()
+        if options.selected:
+            logging.fatal("remove --selected when --update_base")
+            exit()
+
+        update_base(stock_global=stock_global, csv_dir=csv_dir, stock_list=stock_list)
         exit()
     elif options.list:
         list(stock_list, csv_dir)
@@ -174,7 +258,5 @@ def main():
 
 ### MAIN ####
 if __name__ == '__main__':
-
-
 
     main()
