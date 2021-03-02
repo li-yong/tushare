@@ -58,7 +58,6 @@ def list(stock_list,csv_dir):
         csv_f = csv_dir + "/" + code + ".csv"
         logging.info(str(i) + " of " + str(stock_list.__len__())+" "+code+" "+name+" "+csv_f)
 
-        print(1)
 
 def main():
 
@@ -101,7 +100,6 @@ def main():
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
-    out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
