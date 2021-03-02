@@ -18,6 +18,10 @@ def fetch_base(stock_global, csv_dir, stock_list):
         i += 1
         name, code = row['name'], row['code']
 
+        if stock_global not in ['HK_AK','US_AK']:
+            logging.fatal("please use HK_AK|US_AK only.")
+            exit(0)
+
         csv_f = csv_dir + "/" + code + ".csv"
         logging.info(str(i) + " of " + str(stock_list.__len__())+" "+code+" "+name+" "+csv_f)
 
@@ -29,9 +33,6 @@ def fetch_base(stock_global, csv_dir, stock_list):
             df = ak.stock_hk_daily(symbol=code, adjust="qfq")
         elif stock_global == 'US_AK':
             df = ak.stock_us_daily(symbol=code, adjust="qfq")
-        else:
-            logging.fatal("please use HK_AK|US_AK only.")
-            exit(0)
 
         df = df.reset_index().rename(columns={"index": "date"})
         df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
