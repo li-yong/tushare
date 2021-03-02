@@ -55,7 +55,7 @@ def fetch_base(stock_global, csv_dir, stock_list):
 
 def fetch_daily_spot(stock_global):
     allow_delay_min = 600
-    force_fetch = False
+    force_fetch = True
 
     b_dir = "/home/ryan/DATA/pickle/daily_update_source"
     todayS = datetime.datetime.today().strftime("%Y%m%d")
