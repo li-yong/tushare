@@ -8,7 +8,8 @@ import tabulate
 import constant
 import akshare as ak
 import datetime
-
+import traceback
+import sys
 
 
 
@@ -28,21 +29,29 @@ def fetch_base(stock_global, csv_dir, stock_list):
         if finlib.Finlib().is_cached(csv_f, day=1):
             logging.info("skip file updated in 1 days "+csv_f)
             continue
+        try:
+            exc_info = sys.exc_info()
+            if stock_global == 'HK_AK':
+                df = ak.stock_hk_daily(symbol=code, adjust="qfq")
+            elif stock_global == 'US_AK':
+                df = ak.stock_us_daily(symbol=code, adjust="qfq")
 
-        if stock_global == 'HK_AK':
-            df = ak.stock_hk_daily(symbol=code, adjust="qfq")
-        elif stock_global == 'US_AK':
-            df = ak.stock_us_daily(symbol=code, adjust="qfq")
+            df = df.reset_index().rename(columns={"index": "date"})
+            df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
+            df['name'] = name
+            df['code'] = code
 
-        df = df.reset_index().rename(columns={"index": "date"})
-        df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
-        df['name'] = name
-        df['code'] = code
-
-        df = finlib.Finlib().adjust_column(df,['code','name','date'])
-        df.to_csv(csv_f, encoding='UTF-8', index=False)
-        logging.info("saved "+csv_f)
-
+            df = finlib.Finlib().adjust_column(df,['code','name','date'])
+            df.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info("saved "+csv_f)
+        except:
+            logging.info(__file__+" "+"\tcaught exception when getting data")
+        finally:
+            if exc_info == (None, None, None):
+                pass  # no exception
+            else:
+                traceback.print_exception(*exc_info)
+            del exc_info
 
 def fetch_daily_spot():
     pass
