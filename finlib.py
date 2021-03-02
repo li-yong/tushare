@@ -4260,6 +4260,15 @@ class Finlib:
             elif stock_global == 'US':
                 csv_dir = "/home/ryan/DATA/DAY_Global/stooq/US"
                 stock_list = selected_stocks['US']
+            # elif stock_global == "AG_AK":
+            #     csv_dir = "/home/ryan/DATA/DAY_Global/akshare/AG"
+            #     stock_list = selected_stocks['CN']
+            elif stock_global == 'HK_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/HK"
+                stock_list = selected_stocks['HK']
+            elif stock_global == 'US_AK':
+                csv_dir = "/home/ryan/DATA/DAY_Global/akshare/US"
+                stock_list = selected_stocks['US']
 
 
             # Then (selected) Holded Stocks (
@@ -4341,7 +4350,7 @@ class Finlib:
             exit()
         csv_f = "/home/ryan/DATA/result/wei_pan_la_sheng/"+market+"_spot_link.csv"
 
-        df = pd.read_csv(csv_f, converters={'code': str})
+        df = pd.read_csv(csv_f, converters={'code': str, 'name':str})
 
         return(df)
 
