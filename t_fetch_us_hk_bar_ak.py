@@ -150,30 +150,6 @@ def update_base(stock_global, csv_dir, stock_list): #append_daily_spot_to_base
             print(finlib.Finlib().pprint(df_target.tail(2)))
 
 
-            print(1)
-
-        #
-        # try:
-        #     exc_info = sys.exc_info()
-        #
-        #
-        #     df = df.reset_index().rename(columns={"index": "date"})
-        #     df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
-        #     df['name'] = name
-        #     df['code'] = code
-        #
-        #     df = finlib.Finlib().adjust_column(df,['code','name','date'])
-        #     df.to_csv(csv_f, encoding='UTF-8', index=False)
-        #     logging.info("saved "+csv_f)
-        # except:
-        #     logging.info(__file__+" "+"\tcaught exception when getting data")
-        # finally:
-        #     if exc_info == (None, None, None):
-        #         pass  # no exception
-        #     else:
-        #         traceback.print_exception(*exc_info)
-        #     del exc_info
-
 def list(stock_list,csv_dir):
     i = 0
     for index, row in stock_list.iterrows():

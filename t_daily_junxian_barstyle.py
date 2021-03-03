@@ -190,9 +190,6 @@ def show_result(file, dir, filebase):
 
 
 
-
-
-
 def main():
 
     parser = OptionParser()

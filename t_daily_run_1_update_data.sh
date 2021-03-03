@@ -70,6 +70,14 @@ python t_daily_index_candidates.py --fetch_index_ts --index_name zz100
 python t_daily_index_candidates.py --fetch_index_ts --index_name szcz
 python t_daily_index_candidates.py --fetch_index_ts --index_name sz100
 
+##############
+# update
+# input: none
+# output: /home/ryan/DATA/pickle/INDEX_US_HK/*.csv
+# dow.csv  nasdqa100.csv  sp400.csv  sp500.csv
+python t_daily_get_us_index.py
+
+
 # Need a running X server. Download 15 times a day.
 # env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
 

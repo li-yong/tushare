@@ -17,7 +17,7 @@ import requests
 import logging
 import finlib
 
-output_csv_base = '~/DATA/pickle/INDEX_US_HK'
+output_csv_base = '/home/ryan/DATA/pickle/INDEX_US_HK'
 
 # ## Get components / constituents of indices
 
