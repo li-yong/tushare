@@ -148,8 +148,8 @@ def wei_pan_la_sheng(stock_market='AG'):
         logging.info(" number of large change df in new " + str(new_df_large_change.__len__()) + ", data at " +
                      new_df_large_change['ticktime'].iloc[0])
 
-        merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='symbol',
-                                right_on='symbol',
+        merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code',
+                                right_on='code',
                                 suffixes=('_o', '')).drop('name_o', axis=1)
         merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
 
