@@ -191,19 +191,9 @@ def main():
     show_result_f = options.show_result_f
     min_sample_f = options.min_sample_f
     selected = options.selected
-    stock_global = options.stock_global
-    #
+    stock_global = options.stock_global    #
 
-    # check_my_ma_allow_delay_min = options.check_my_ma_allow_delay_min
-    # check_my_ma_force_fetch = options.check_my_ma_force_fetch
 
-    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
-    out_dir = rst['out_dir']
-    csv_dir = rst['csv_dir']
-    stock_list = rst['stock_list']
-
-    if not os.path.isdir(out_dir):
-        os.mkdir(out_dir)
 
     if not os.path.isdir("/home/ryan/DATA/DAY_Global/akshare"):
         os.mkdir("/home/ryan/DATA/DAY_Global/akshare")
@@ -214,11 +204,21 @@ def main():
     if not os.path.isdir("/home/ryan/DATA/DAY_Global/akshare/US"):
         os.mkdir("/home/ryan/DATA/DAY_Global/akshare/US")
 
+    if options.fetch_daily_spot:
+        fetch_daily_spot(stock_global=stock_global)
+        exit()
+
+
+    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
+    out_dir = rst['out_dir']
+    csv_dir = rst['csv_dir']
+    stock_list = rst['stock_list']
+
+    if not os.path.isdir(out_dir):
+        os.mkdir(out_dir)
+
     if options.fetch_base:
         fetch_base(stock_global=stock_global, csv_dir=csv_dir, stock_list=stock_list)
-        exit()
-    elif options.fetch_daily_spot:
-        fetch_daily_spot(stock_global=stock_global)
         exit()
     elif options.update_base:
         if options.selected:
