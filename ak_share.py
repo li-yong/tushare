@@ -154,7 +154,7 @@ def wei_pan_la_sheng(stock_market='AG'):
         merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
 
         merged_inner_rst = merged_inner[
-            ['code', 'name', 'trade', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
+            ['code', 'name', 'close', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
              'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
 
