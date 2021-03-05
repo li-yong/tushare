@@ -53,7 +53,7 @@ def fetch_base(stock_global, csv_dir, stock_list):
                 traceback.print_exception(*exc_info)
             del exc_info
 
-def fetch_daily_spot(stock_global):
+def fetch_daily_spot(stock_global,force_run=False):
     allow_delay_min = 600
     force_fetch = True
 
@@ -65,7 +65,7 @@ def fetch_daily_spot(stock_global):
         if not os.path.isdir(b_dir):
             os.mkdir(b_dir)
 
-        if finlib.Finlib().is_market_open_hk():
+        if finlib.Finlib().is_market_open_hk() and (not force_run):
             logging.info("HK market is open now, cannot run daily spot at this time to update base stocks daily.")
             return
 
@@ -81,7 +81,7 @@ def fetch_daily_spot(stock_global):
         if not os.path.isdir(b_dir):
             os.mkdir(b_dir)
 
-        if finlib.Finlib().is_market_open_us():
+        if finlib.Finlib().is_market_open_us() and (not force_run):
             logging.info("US market is open now, cannot run daily spot at this time to update base stocks daily.")
             return
 
@@ -169,6 +169,7 @@ def main():
     parser.add_option("--min_sample", type="int", action="store", dest="min_sample_f", default=200, help="minimal samples number of input to analysis")
 
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
+    parser.add_option("--force_run", action="store_true", dest="force_run", default=False, help="force_run")
 
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
 
@@ -188,7 +189,7 @@ def main():
 
     (options, args) = parser.parse_args()
     debug_f = options.debug_f
-    show_result_f = options.show_result_f
+    force_run = options.force_run
     min_sample_f = options.min_sample_f
     selected = options.selected
     stock_global = options.stock_global    #
@@ -205,7 +206,7 @@ def main():
         os.mkdir("/home/ryan/DATA/DAY_Global/akshare/US")
 
     if options.fetch_daily_spot:
-        fetch_daily_spot(stock_global=stock_global)
+        fetch_daily_spot(stock_global=stock_global,force_run=force_run)
         exit()
 
 

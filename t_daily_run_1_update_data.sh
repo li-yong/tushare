@@ -184,8 +184,9 @@ python t_daily_fundamentals_2.py --fetch_pro_basic
 # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_detail.csv
 # #ts_code,symbol,name,area,industry,list_date
 ######################################
-python t_daily_fundamentals_2.py --fetch_pledge_stat_detail
-
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_fundamentals_2.py --fetch_pledge_stat_detail
+fi
 
 ######################################
 #
