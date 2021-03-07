@@ -2768,7 +2768,7 @@ class Finlib:
                 cursor.execute(update_ptn_perf, data_ptn_perf)
                 cnx.commit()
 
-    def is_on_market(self, ts_code, date, basic_df):
+    def is_on_market(self, ts_code, date, basic_df=None):
         # basic_df passed from invoker, to avoid load csv everytime.
         # self.get_ts_field(ts_code = ts_code, field = )
 

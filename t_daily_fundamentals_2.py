@@ -526,7 +526,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
     total = str(stock_list.__len__())
 
     stock_cnt = 0
-    for ts_code in stock_list["code"]:
+    for ts_code in stock_list["ts_code"]:
         stock_cnt += 1
         fetch_period_list = fetch_period_list_ori  # fetch_period_list will be empty after fetch a stock, so need restore it at the begining of new stock fetching.
 
