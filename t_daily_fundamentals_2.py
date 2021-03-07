@@ -572,7 +572,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 os.utime(ind_csv, (modTime, modTime))
 
             if (not force_run_global) and (period < fetch_most_recent_report_perid):
-                logging.info(__file__ + " " + "not fetch stable period on " + ind_csv)
+                # logging.info(__file__ + " " + "not fetch stable period on " + ind_csv)
                 continue
 
             if os.path.exists(ind_csv) and os.stat(ind_csv).st_size > 0 and period < fetch_most_recent_report_perid:
