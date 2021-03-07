@@ -726,7 +726,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             if (not force_run_global) and fast_fetch:
                 df_tmp = df_tmp[df_tmp[field] == fetch_most_recent_report_perid]
 
-            name = stock_list[stock_list["code"] == ts_code]["name"].values[0]
+            name = stock_list[stock_list["ts_code"] == ts_code]["name"].values[0]
             df_tmp = pd.DataFrame([name] * df_tmp.__len__(), columns=["name"]).join(df_tmp)
             df_tmp = df_tmp.drop_duplicates().reset_index().drop("index", axis=1)
 
@@ -769,10 +769,11 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 ind_csv_sub = dir_sub + "/" + ts_code + "_" + query + ".csv"
 
                 # if (not os.path.exists(ind_csv_sub)) or (force_run_global) or (os.stat(ind_csv).st_size < 2000):
-                df_tmp_sub.to_csv(ind_csv_sub, encoding="UTF-8", index=False)
-                logging.info(__file__ + ": " + "saved " + ind_csv_sub + " . len " + str(df_tmp_sub.__len__()))
-                # else:
-                # logging.info(__file__+" "+"file exists, "+ind_csv_sub)
+                if df_tmp_sub.__len__() > 0:
+                    df_tmp_sub.to_csv(ind_csv_sub, encoding="UTF-8", index=False)
+                    logging.info(__file__ + ": " + "saved " + ind_csv_sub + " . len " + str(df_tmp_sub.__len__()))
+                else:
+                    logging.info(__file__+" "+"empty df, skip saving "+ind_csv_sub)
 
                 if not ed in already_fetch_p:
                     already_fetch_p.append(ed)
