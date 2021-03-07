@@ -452,7 +452,7 @@ class Finlib:
             full_period_list.append(str(year) + "0930")
 
         i = year
-        while i >= 2017:
+        while i >= year - 5: #last 5 years
             i = i - 1
             full_period_list.append(str(i) + "0331")
             full_period_list.append(str(i) + "0630")

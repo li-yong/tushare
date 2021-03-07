@@ -24,7 +24,25 @@ import akshare as ak
 
 #########################################
 
-a = finlib.Finlib().is_on_market(ts_code="600519.SH", date="20161231", basic_df=None)
+df = finlib.Finlib().load_tv_fund(market='US')
+
+#ROE > 0
+
+#PE rank < 0.85 perc
+
+net_profit
+
+_remove_garbage_high_pledge_ration
+
+low_roe_pe
+
+#Depeat fuzhai < zichan
+
+
+
+
+
+# a = finlib.Finlib().is_on_market(ts_code="600519.SH", date="20161231", basic_df=None)
 # df = finlib.Finlib().load_all_ts_pro()
 df = finlib.Finlib().get_A_stock_instrment()
 df_1 = finlib.Finlib().remove_garbage(df=df)

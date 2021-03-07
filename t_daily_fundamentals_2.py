@@ -1118,7 +1118,7 @@ def merge_local_bash():
             logging.info(__file__ + " " + "file updated in 6 days, not process. " + output_csv)
             continue
 
-        cmd = " find -L " + input_dir + " -name *_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
+        cmd = " find -L " + input_dir + " -size +0 -name *_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
         logging.info(cmd)
         start_time = time.time()
         os.system(cmd)
