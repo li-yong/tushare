@@ -3135,7 +3135,8 @@ class Finlib:
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
         df = self._remove_garbage_high_pledge_ration(df,statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
-        
+        df = self._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
+
 
         #remove koudi, this affected the fundermental_2.py step6.
         # df = self._remove_garbage_ma_up_koudi_gt_5(df, reason=constant.MA5_UP_KOUDI_DISTANCE_GT_5)
@@ -3265,6 +3266,19 @@ class Finlib:
         df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=reason)
 
         return(df)
+
+    # roe_pe_ratio_threshold the higher the striker
+    def _remove_garbage_low_roe_pe(self, df, market='AG', roe_pe_ratio_threshold=1):
+        df = self.get_roe_div_pe(market=market)
+        df_gar = df[df['pe_ttm'] <= 0]
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAGTIVE_OR_ZERO_PE)
+        
+        df_gar = df[df['roe_pe'] < roe_pe_ratio_threshold]
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.LOW_ROE_PE_RATIO)
+        return(df)
+
+
+
 
     def _remove_garbage_none_standard_audit_statement(self, df, n_year=5):
         if df.__len__()==0:
@@ -4838,6 +4852,23 @@ class Finlib:
 
         return(df)
 
+
+    def add_stock_name_to_df_us_hk(self, df, market='US'):
+        market = market.upper()
+        name_csv = "/home/ryan/DATA/result/wei_pan_la_sheng"+ "/" + market + "_spot_link.csv"
+        name_df = pd.read_csv(name_csv, encoding="utf-8", converters={'code': str})
+        name_df = name_df[['code','name']]
+
+        df = pd.merge(df, name_df, on=['code'], how="left",suffixes=('','_x'))
+        df = self.adjust_column(df, ['code', 'name'])
+
+        return(df)
+
+
+
+
+
+
     def count_min_max_value_days(self,df,col_name):
         latest_close = df[col_name].iloc[-1]
 
@@ -5021,6 +5052,50 @@ class Finlib:
 
             stock_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8", converters={'code': str})
             return(stock_spot_df)
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    def get_roe_div_pe(self, market='AG'):
+        if market=='AG':
+            df_fund = self.load_all_ts_pro(debug=False)
+            df_fund = df_fund[df_fund['end_date'] == self.get_report_publish_status()['completed_year_rpt_date']]
+            df_daily = self.get_last_n_days_daily_basic(ndays=1, dayE=self.get_last_trading_day())
+
+            df = pd.merge(df_fund, df_daily, left_on='ts_code', right_on='ts_code')
+            df['roe_pe'] = df['roe'] / df['pe_ttm']
+            df_target = df[['ts_code', 'name', 'roe_pe', 'pe_ttm', 'roe']].sort_values(by='roe_pe', ascending=False)
+            df_target = self.ts_code_to_code(df=df_target)
+            print(self.pprint(df_target.head(100)))
+
+        if market=='US':
+            df = self.load_tv_fund(market='US',period='d')
+            df['roe_pe'] = df['roe_ttm'] / df['pe_ttm']
+            df_target = df[['code', 'name','roe_pe', 'roe_ttm', 'pe_ttm']].sort_values(by='roe_pe', ascending=False)
+            print(self.pprint(df_target.head(100)))
+
+        return(df_target)
+
+    #input: na
+    #output:
+    def load_tv_fund(self, market='US', period='d'):
+
+        if market == 'US':
+            csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/america_latest_"+period+".csv"
+        elif market == 'AG':
+            csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest_"+period+".csv"
+
+
+        df = pd.read_csv(csv_f)
+        df = df.fillna(0)
+
+        tv_col_name_dict = constant.TRADINGVIEW_COLS
+
+        for c in df.columns:
+            if c in tv_col_name_dict.keys() and tv_col_name_dict[c] != "xxxx":
+                df.rename(columns={c: tv_col_name_dict[c] }, inplace=True)
+
+        df = self.add_stock_name_to_df_us_hk(df=df, market=market)
+        return(df)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

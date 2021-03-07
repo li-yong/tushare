@@ -23,19 +23,20 @@ import matplotlib.pyplot as plt
 import akshare as ak
 
 #########################################
+# df = finlib.Finlib().load_all_ts_pro()
+df = finlib.Finlib().get_A_stock_instrment()
+df_1 = finlib.Finlib().remove_garbage(df=df)
+print(finlib.Finlib().pprint(df_1))
 
+df_us = finlib.Finlib().get_roe_div_pe(market='US')
+df_ag = finlib.Finlib().get_roe_div_pe(market='AG')
 
+df = df_ag
+df_gar_1 = df[df['pe_ttm']<1]
+df_gar_2 = df[df['roe']<3]
+df_gar_3 = df[df['roe_pe']<0.5]
 
-
-
-
-
-
-
-
-
-
-
+# df = finlib.Finlib().load_tv_fund(market='us',period='d')
 
 
 
