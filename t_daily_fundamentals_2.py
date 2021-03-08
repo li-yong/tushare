@@ -427,7 +427,7 @@ def load_fund_result(mini_score=80):
 
         # df_fund_2 = finlib.Finlib().ts_code_to_code(df_fund_2)
         df_fund_2 = df_fund_2[["ts_code", "name"]]
-        df_fund_2 = df_fund_2.rename(columns={"ts_code": "code"}, inplace=False)
+        # df_fund_2 = df_fund_2.rename(columns={"ts_code": "code"}, inplace=False)
 
         df_fund_2 = df_fund_2.drop_duplicates()
         df_fund_2 = df_fund_2.reset_index().drop("index", axis=1)
@@ -1015,6 +1015,8 @@ def _merge_individual_bash(ts_code, feature):
 # input: ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv
 # output: ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/a_stock_code_basic.csv
 def merge_individual_bash_basic(fast_fetch=False):
+    os.system("mkdir -p /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock")
+
     if fast_fetch:
 
         last_trade_date = finlib.Finlib().get_last_trading_day()

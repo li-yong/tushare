@@ -276,7 +276,7 @@ if [ $full_or_daily == "DAILY" ]; then
 
   #`fetch lastest quarter fund data, all stocks
   # comment this as in Q3, audit is empty and always fetch everytime as is_cached return False
-  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch --force_run
+  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch
 fi
 
 
