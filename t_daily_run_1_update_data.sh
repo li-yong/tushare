@@ -271,12 +271,12 @@ if [ $full_or_daily == "DAILY" ]; then
   python t_daily_fundamentals_2.py --fetch_basic_daily
   python t_daily_fundamentals_2.py --fetch_info_daily
   python t_daily_fundamentals_2.py --fetch_new_share
-  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch  #pro fundation tables. 10 tables.
+  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch #pro fundation tables. 10 tables.
   python t_daily_fundamentals_2.py --fetch_change_name
 
   #`fetch lastest quarter fund data, all stocks
-  # comment this as in Q3, audit is empty and always fetch everytime as is_cached return False
-  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch
+  # comment this as in Q3, audit is empty and always fetch everytime as is_cached return False\
+#  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch  --force_run
 fi
 
 
