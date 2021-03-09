@@ -3269,12 +3269,12 @@ class Finlib:
 
     # roe_pe_ratio_threshold the higher the striker
     def _remove_garbage_low_roe_pe(self, df, market='AG', roe_pe_ratio_threshold=1):
-        df = self.get_roe_div_pe(market=market)
-        df_gar = df[df['pe_ttm'] <= 0]
-        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAGTIVE_OR_ZERO_PE)
-        
-        df_gar = df[df['roe_pe'] < roe_pe_ratio_threshold]
-        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.LOW_ROE_PE_RATIO)
+        df_roe_pe = self.get_roe_div_pe(market=market)
+        df_gar_1 = df_roe_pe[df_roe_pe['pe_ttm'] <= 0]
+        df_gar_2 = df_roe_pe[df_roe_pe['roe_pe'] < roe_pe_ratio_threshold]
+
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_1, byreason=constant.NAGTIVE_OR_ZERO_PE)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2, byreason=constant.LOW_ROE_PE_RATIO)
         return(df)
 
 

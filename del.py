@@ -24,6 +24,20 @@ import akshare as ak
 
 #########################################
 
+
+
+df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_AG.csv')
+df_pv_db_buy_filter.drop_duplicates(inplace=True)
+
+df_pv_db_buy_filter.sort_values('2mea', ascending=False, inplace=True)
+# already sorted by Increase_2D in t_daily_pattern_Hit_Price_Volume.py
+df_pv_db_buy_filter = df_pv_db_buy_filter.loc[df_pv_db_buy_filter['close_p'] != '0.0']
+len_df_pv_db_buy_filter_0 = str(df_pv_db_buy_filter.__len__())
+df_pv_db_buy_filter = finlib.Finlib().remove_garbage(df_pv_db_buy_filter, code_field_name='code', code_format='C2D6')
+logging.info(__file__ + " " + "\t df_pv_db_buy_filter length " + str(df_pv_db_buy_filter.__len__()))
+
+
+
 df = finlib.Finlib().load_tv_fund(market='US')
 
 #ROE > 0

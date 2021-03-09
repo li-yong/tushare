@@ -60,10 +60,10 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
     #df_rtn = pd.DataFrame(columns=input_df.columns).rename(columns={'op': 'hit_ptn_cnt'}).drop('op_rsn', axis=1)
     df_rtn = pd.DataFrame(columns=input_df.columns).rename(columns={'op': 'hit_ptn_cnt'})
 
-    engine = create_engine('mysql://root:admin888.@_@@127.0.0.1/ryan_stock_db?charset=utf8')
-    mysql_host = '127.0.0.1'
-    cnx = mysql.connector.connect(host=mysql_host, user='root', password='admin888.@_@', database="ryan_stock_db")
-    cursor = cnx.cursor()  # setup db connection before for loop.
+    # engine = create_engine('mysql://root:admin888.@_@@127.0.0.1/ryan_stock_db?charset=utf8')
+    # mysql_host = '127.0.0.1'
+    # cnx = mysql.connector.connect(host=mysql_host, user='root', password='admin888.@_@', database="ryan_stock_db")
+    # cursor = cnx.cursor()  # setup db connection before for loop.
 
     for i in input_df['code'].unique():
         code = i
@@ -100,32 +100,32 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
 
             avg2 = avg5 = sum2uc = sum2dc = sum5uc = sum5dc = 0
 
-            if has_db_record and insert_buy_record_to_db:  # AG only
-                sql = "SELECT AVG(`2mea`) as avg2mea, AVG(`5mea`) as avg5mea," \
-                      " sum(`2uc`) as sum2uc , sum(`2dc`) as sum2dc , sum(`5uc`) as sum5uc, sum(`5dc`) as sum5dc " \
-                      " FROM `pattern_perf` WHERE `pattern` in ("+ptn_list+')'
-                ptn_perf = pd.read_sql_query(sql, engine)
-
-                avg2 = ptn_perf.iloc[0]['avg2mea']
-                avg5 = ptn_perf.iloc[0]['avg5mea']
-                sum2uc = ptn_perf.iloc[0]['sum2uc']
-                sum2dc = ptn_perf.iloc[0]['sum2dc']
-                sum5uc = ptn_perf.iloc[0]['sum5uc']
-                sum5dc = ptn_perf.iloc[0]['sum5dc']
-
-                if force_pass:
-                    pass
-                #elif ('_pvbreak_' in ptn_list ): ## REMOVED, HAS df_pv_break
-                # pass #
-                elif ('None' == str(avg2)) or ('None' == str(avg5)):
-                    #if ('None' == str(avg2)) or ('None' == str(avg5)):
-                    logging.info('None of the patterns in the DB')
-                    continue
-                elif (avg2 > 0.02) and (avg5 > 0.02) and (sum2uc > sum2dc * 3) and (sum5uc > sum5dc * 3):
-                    pass  #Don't stop, continue to running into codes below.
-                else:
-                    logging.info(__file__+" "+"not qualified to buy")
-                    continue
+            # if has_db_record and insert_buy_record_to_db:  # AG only
+            #     sql = "SELECT AVG(`2mea`) as avg2mea, AVG(`5mea`) as avg5mea," \
+            #           " sum(`2uc`) as sum2uc , sum(`2dc`) as sum2dc , sum(`5uc`) as sum5uc, sum(`5dc`) as sum5dc " \
+            #           " FROM `pattern_perf` WHERE `pattern` in ("+ptn_list+')'
+            #     ptn_perf = pd.read_sql_query(sql, engine)
+            #
+            #     avg2 = ptn_perf.iloc[0]['avg2mea']
+            #     avg5 = ptn_perf.iloc[0]['avg5mea']
+            #     sum2uc = ptn_perf.iloc[0]['sum2uc']
+            #     sum2dc = ptn_perf.iloc[0]['sum2dc']
+            #     sum5uc = ptn_perf.iloc[0]['sum5uc']
+            #     sum5dc = ptn_perf.iloc[0]['sum5dc']
+            #
+            #     if force_pass:
+            #         pass
+            #     #elif ('_pvbreak_' in ptn_list ): ## REMOVED, HAS df_pv_break
+            #     # pass #
+            #     elif ('None' == str(avg2)) or ('None' == str(avg5)):
+            #         #if ('None' == str(avg2)) or ('None' == str(avg5)):
+            #         logging.info('None of the patterns in the DB')
+            #         continue
+            #     elif (avg2 > 0.02) and (avg5 > 0.02) and (sum2uc > sum2dc * 3) and (sum5uc > sum5dc * 3):
+            #         pass  #Don't stop, continue to running into codes below.
+            #     else:
+            #         logging.info(__file__+" "+"not qualified to buy")
+            #         continue
 
         c_code = str(c['code'].values[0])
         c_name = str(c['name'].values[0].encode("utf-8"))
@@ -143,47 +143,47 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
             logging.info(__file__+" "+"not processing as c_close_p is 0. " + c_code + " " + c_name + " " + c_date)
             continue
 
+        # #
+        # if insert_buy_record_to_db:
+        #     sql = 'SELECT * FROM `order_tracking_stock` WHERE `code` =\'' + c_code + '\' AND `status`=\'OPEN\''
+        #     open_stocks = pd.read_sql_query(sql, engine)
+        #     db_tbl = 'order_tracking_stock'
         #
-        if insert_buy_record_to_db:
-            sql = 'SELECT * FROM `order_tracking_stock` WHERE `code` =\'' + c_code + '\' AND `status`=\'OPEN\''
-            open_stocks = pd.read_sql_query(sql, engine)
-            db_tbl = 'order_tracking_stock'
-
-            if open_stocks.__len__() > 0:
-                logging.info(__file__+" "+"Have OPEN order on code " + c_code + ", +1 its buy_cnt")
-                exist_buy_reason = open_stocks['buy_reason'].values[0]
-                exist_buy_cnt = open_stocks['buy_cnt'].values[0]
-
-                update_sql = ("UPDATE `" + db_tbl + "`  " "SET buy_cnt = %(buy_cnt)s, buy_reason = %(buy_reason)s " " WHERE `id` =  %(id)s ")
-                data_sql = {}
-                data_sql['buy_cnt'] = int(exist_buy_cnt + 1)
-                bs = exist_buy_reason + "; " + c_date + ":" + c_op_rsn
-                data_sql['buy_reason'] = bs[0:3199]  #var char 3200, length limit
-                data_sql['id'] = int(open_stocks['id'].values[0])
-
-                cursor.execute(update_sql, data_sql)
-                cnx.commit()
-
-                #continue
-            else:
-                logging.info('buy candidate,' + c_code + ' ' + c_name + ' ' + c_close_p + ' ' + c_date)
-
-                update_sql = ("INSERT INTO `" + db_tbl + "`  " "SET code = %(code)s, name = %(name)s, buy_date = %(buy_date)s, " " buy_price = %(buy_price)s,  buy_cnt = %(buy_cnt)s, buy_reason = %(buy_reason)s, h_ptn_cnt = %(h_ptn_cnt)s, status = %(status)s ")
-
-                data_sql = {}
-                data_sql['code'] = c_code
-                data_sql['name'] = c_name
-                data_sql['buy_date'] = c_date
-                data_sql['buy_price'] = c_close_p
-                data_sql['buy_cnt'] = 1
-                data_sql['buy_reason'] = c_op_rsn
-                data_sql['status'] = c_status
-                data_sql['h_ptn_cnt'] = c['op_rsn'].__len__()
-                #print("update_sql "+update_sql)
-                #print("name "+c_name)
-
-                cursor.execute(update_sql, data_sql)
-                cnx.commit()
+        #     if open_stocks.__len__() > 0:
+        #         logging.info(__file__+" "+"Have OPEN order on code " + c_code + ", +1 its buy_cnt")
+        #         exist_buy_reason = open_stocks['buy_reason'].values[0]
+        #         exist_buy_cnt = open_stocks['buy_cnt'].values[0]
+        #
+        #         update_sql = ("UPDATE `" + db_tbl + "`  " "SET buy_cnt = %(buy_cnt)s, buy_reason = %(buy_reason)s " " WHERE `id` =  %(id)s ")
+        #         data_sql = {}
+        #         data_sql['buy_cnt'] = int(exist_buy_cnt + 1)
+        #         bs = exist_buy_reason + "; " + c_date + ":" + c_op_rsn
+        #         data_sql['buy_reason'] = bs[0:3199]  #var char 3200, length limit
+        #         data_sql['id'] = int(open_stocks['id'].values[0])
+        #
+        #         cursor.execute(update_sql, data_sql)
+        #         cnx.commit()
+        #
+        #         #continue
+        #     else:
+        #         logging.info('buy candidate,' + c_code + ' ' + c_name + ' ' + c_close_p + ' ' + c_date)
+        #
+        #         update_sql = ("INSERT INTO `" + db_tbl + "`  " "SET code = %(code)s, name = %(name)s, buy_date = %(buy_date)s, " " buy_price = %(buy_price)s,  buy_cnt = %(buy_cnt)s, buy_reason = %(buy_reason)s, h_ptn_cnt = %(h_ptn_cnt)s, status = %(status)s ")
+        #
+        #         data_sql = {}
+        #         data_sql['code'] = c_code
+        #         data_sql['name'] = c_name
+        #         data_sql['buy_date'] = c_date
+        #         data_sql['buy_price'] = c_close_p
+        #         data_sql['buy_cnt'] = 1
+        #         data_sql['buy_reason'] = c_op_rsn
+        #         data_sql['status'] = c_status
+        #         data_sql['h_ptn_cnt'] = c['op_rsn'].__len__()
+        #         #print("update_sql "+update_sql)
+        #         #print("name "+c_name)
+        #
+        #         cursor.execute(update_sql, data_sql)
+        #         cnx.commit()
 
         try:
             op_strength_group_sum = pd.to_numeric(c['op_strength']).sum()
@@ -202,7 +202,7 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
                 op_strength_group_sum += float(strength)
             logging.info(__file__+" "+"re-calc op_strength_group_sum to " + str(op_strength_group_sum) + ", " + c_code + " " + c_name)
 
-        if has_db_record:
+        if has_db_record and False:
             df_rtn = df_rtn.append({
                 "code": c[0:1]['code'].values[0],
                 "name": c[0:1]['name'].values[0],
@@ -239,9 +239,10 @@ def refine_df(input_df, has_db_record=False, force_pass=False, force_pass_open_r
                 "5mea": avg5,
             }, ignore_index=True)
 
-    engine.dispose()  #close db connection after for loop.
-    cursor.close()
-    cnx.close()
+    #
+    # engine.dispose()  #close db connection after for loop.
+    # cursor.close()
+    # cnx.close()
     # print(df_rtn)
     if 'index' in df_rtn.columns:
         df_rtn = df_rtn.drop('index', axis=1)
@@ -1220,7 +1221,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         else:
             logging.info(__file__+" "+"no such file " + f_hen_cow)
 
-        logging.info(__file__+" "+"loading df_pv_db_buy_filter")
+        logging.info(__file__+" "+"loading df_pv_db_buy_filter, "+ f_pv_db_buy_filter)
         if (os.path.isfile(f_pv_db_buy_filter)) and os.stat(f_pv_db_buy_filter).st_size >= 10:  # > 10 bytes
             df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df(f_pv_db_buy_filter)
             df_pv_db_buy_filter.drop_duplicates(inplace=True)
@@ -1233,7 +1234,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"\t df_pv_db_buy_filter length " + str(df_pv_db_buy_filter.__len__()))
         else:
             logging.info(__file__+" "+"ERROR: NOT found file " + f_pv_db_buy_filter)
-            #exit(0)
+            # exit(0)
 
         logging.info(__file__+" "+"loading  df_pv_db_sell_filter")
         if (os.path.isfile(f_pv_db_sell_filter)) and os.stat(f_pv_db_sell_filter).st_size >= 10:  # > 10 bytes
