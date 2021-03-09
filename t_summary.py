@@ -983,9 +983,9 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         #df_disclosure_date_notify = finlib.Finlib().regular_read_csv_to_stdard_df(f_disclosure_date_notify)
 
         # CANNOT USE converters={'name':str}, it will cause error in tabulate. 'UnicodeDecodeError: 'ascii' codec can't decode byte 0xe6 in position 0: ordinal not in range(128)'
-        df_disclosure_date_notify = finlib.Finlib().regular_read_csv_to_stdard_df(f_disclosure_date_notify)
-        df_disclosure_date_notify = finlib.Finlib().remove_garbage(df_disclosure_date_notify, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_disclosure_date_notify length " + str(df_disclosure_date_notify.__len__()))
+        # df_disclosure_date_notify = finlib.Finlib().regular_read_csv_to_stdard_df(f_disclosure_date_notify)
+        # df_disclosure_date_notify = finlib.Finlib().remove_garbage(df_disclosure_date_notify, code_field_name='code', code_format='C2D6')
+        # logging.info(__file__+" "+"\t df_disclosure_date_notify length " + str(df_disclosure_date_notify.__len__()))
 
         df_macd_m = finlib.Finlib().regular_read_csv_to_stdard_df(f_macd_m)
         df_macd_m = df_macd_m[df_macd_m.action.str.contains('BUY')]
