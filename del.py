@@ -26,7 +26,12 @@ import akshare as ak
 
 
 
-df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_AG.csv')
+# df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_AG.csv')
+df_hs300_candi = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/hs300_candidate_list.csv')
+df_pv_db_buy_filter = finlib.Finlib()._remove_garbage_must(df=df_hs300_candi)
+exit(0)
+
+
 df_pv_db_buy_filter.drop_duplicates(inplace=True)
 
 df_pv_db_buy_filter.sort_values('2mea', ascending=False, inplace=True)

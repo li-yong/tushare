@@ -600,7 +600,7 @@ def combin_filter(df, post_combine=False, debug=False):
     return df
 
 
-def generate_result_csv(full_combination=False, select=True, operation="B", debug=False):
+def generate_result_csv(full_combination=False, select=True, operation="B", debug=False, remove_garbage=False):
     today_d = datetime.today().strftime("%d")
 
     exam_date = finlib.Finlib().get_last_trading_day()
@@ -692,6 +692,10 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     for d in arr:
         logging.info(d)
         tmp_df = combin_filter(eval(d), debug=debug)
+
+        if remove_garbage:
+            tmp_df = finlib.Finlib().remove_garbage(df=tmp_df)
+
         s = d + " = tmp_df"
         exec(s)
 
@@ -1002,6 +1006,7 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="skip refine_df sub, ")
     parser.add_option("--operation", dest="operation", default="B", help="[B|S] check which operation, Buy or Sell")
     parser.add_option("--select", action="store_true", default=False, dest="select", help="Analyze selected stocks only")
+    parser.add_option("--remove_garbage", action="store_true", default=False, dest="remove_garbage", help="remove garbage")
 
     parser.add_option("--action", dest="action", help="[generate_report|analyze_report|analyze_post_perf] ")
 
@@ -1012,6 +1017,7 @@ def main():
     operation = options.operation
     action = options.action
     select = options.select
+    remove_garbage = options.remove_garbage
 
     define_global(stock_global=stock_global)
 
@@ -1027,7 +1033,7 @@ def main():
         exit(0)
 
     if action == "generate_report":
-        generate_result_csv(full_combination=full_combination, select=select, operation=operation, debug=debug)
+        generate_result_csv(full_combination=full_combination, select=select, operation=operation, debug=debug, remove_garbage=remove_garbage)
     elif action == "analyze_report":
         ana_result(operation=operation)
     elif action == "analyze_post_perf":

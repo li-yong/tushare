@@ -3389,6 +3389,9 @@ class Finlib:
             return(df)
 
         df_init_len = df.__len__()
+        
+        df = df.reset_index().drop('index', axis=1)
+        df_sub = df_sub.reset_index().drop('index', axis=1)
 
         s_all = df['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
         s_sub = df_sub['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
@@ -3403,6 +3406,7 @@ class Finlib:
         df = df.reset_index().drop('index', axis=1)
 
         df_len = df.__len__()
+        print(self.pprint(df_sub))
         logging.info(str(df_init_len)+"->"+str(df_len)+", "+str(df_init_len - df_len) + " shares were removed by "+byreason)
         return(df)
 
@@ -5056,22 +5060,27 @@ class Finlib:
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def get_roe_div_pe(self, market='AG'):
+        to_csv = "/home/ryan/DATA/result/roe_div_pe_"+market+".csv"
         if market=='AG':
             df_fund = self.load_all_ts_pro(debug=False)
             df_fund = df_fund[df_fund['end_date'] == self.get_report_publish_status()['completed_year_rpt_date']]
             df_daily = self.get_last_n_days_daily_basic(ndays=1, dayE=self.get_last_trading_day())
 
             df = pd.merge(df_fund, df_daily, left_on='ts_code', right_on='ts_code')
-            df['roe_pe'] = df['roe'] / df['pe_ttm']
-            df_target = df[['ts_code', 'name', 'roe_pe', 'pe_ttm', 'roe']].sort_values(by='roe_pe', ascending=False)
+            df['roe_pe'] = round(df['roe'] / df['pe_ttm'],2)
+            df_target = df[['ts_code', 'name', 'roe_pe', 'roe', 'pe_ttm']].sort_values(by='roe_pe', ascending=False)
             df_target = self.ts_code_to_code(df=df_target)
-            print(self.pprint(df_target.head(100)))
+            # print(self.pprint(df_target.head(100)))
 
         if market=='US':
             df = self.load_tv_fund(market='US',period='d')
-            df['roe_pe'] = df['roe_ttm'] / df['pe_ttm']
+            df['roe_pe'] = round(df['roe_ttm'] / df['pe_ttm'],2)
             df_target = df[['code', 'name','roe_pe', 'roe_ttm', 'pe_ttm']].sort_values(by='roe_pe', ascending=False)
-            print(self.pprint(df_target.head(100)))
+            # print(self.pprint(df_target.head(100)))
+
+        df_target.to_csv(to_csv, encoding='UTF-8', index=False)
+        logging.info("roe/pe saved to "+to_csv)
+
 
         return(df_target)
 
