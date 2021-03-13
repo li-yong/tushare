@@ -460,6 +460,9 @@ def fetch_pro_fund(fast_fetch=False):
         # high_score_stock_only
         if not force_run_global:  # ryan debug
             stock_list = load_fund_result(mini_score=70)
+            # stock_list = finlib.Finlib().ts_code_to_code(df=stock_list)
+            # stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list)
+            stock_list = finlib.Finlib().remove_garbage(df=stock_list)
             # print(stock_list.__len__())
         else:
             stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
@@ -493,15 +496,17 @@ def fetch_pro_fund(fast_fetch=False):
         logging.info(__file__ + " " + "not processing fundermental data at this month. ")
         return ()
     else:
-        _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
+        #return the valid stock_list which has data.
+        stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list)  # 资产负债表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "cashflow", query_fields_cashflow, fetch_period_list)  # 现金流量表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "fina_indicator", query_fields_fina_indicator, fetch_period_list)  # 财务指标数据
         _ts_pro_fetch(pro, stock_list, fast_fetch, "fina_audit", query_fields_fina_audit, fetch_period_list)  # 财务审计意见
 
-        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list)  #分红送股
-        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
-
+# check following as stock_list is very short after previous filter.
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list)  #分红送股
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        #
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'disclosure_date', query_fields_disclosure_date, fetch_period_list)  #财报披露计划日期
@@ -516,6 +521,7 @@ def handler(signum, frame):
 def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_period_list):
     # save_only == generate 6 source/*.csv, e.g income.csv, balance_sheet.csv
     fetch_period_list_ori = fetch_period_list
+    df_stock_list_rtn = stock_list
 
     basic_df = get_pro_basic()
     fetch_most_recent_report_perid = finlib.Finlib().get_year_month_quarter()["fetch_most_recent_report_perid"][-1]
@@ -559,6 +565,13 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             ind_csv = dir + "/" + ts_code + "_" + query + ".csv"
 
             # print(ind_csv)
+
+            # > 100 bytes
+            if (not force_run_global) and fast_fetch and (os.path.exists(ind_csv)) and (os.stat(ind_csv).st_size > 100):
+                logging.info(__file__ + ": " + "file already have content, skip fetching, kick off from return df "+ind_csv)
+                df_stock_list_rtn = df_stock_list_rtn[df_stock_list_rtn['ts_code'] != ts_code]
+                continue
+
 
             # if (finlib.Finlib().is_cached(ind_csv, day=3)) and (not force_run_global) :
             if finlib.Finlib().is_cached(ind_csv, day=14):
@@ -726,6 +739,13 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             if (not force_run_global) and fast_fetch:
                 df_tmp = df_tmp[df_tmp[field] == fetch_most_recent_report_perid]
 
+                if df_tmp.empty:
+                    logging.info(__file__ + ": " + "no content for "+ts_code +" "+query+" "+period+", kick off from return df")
+                    df_stock_list_rtn = df_stock_list_rtn[df_stock_list_rtn['ts_code'] != ts_code]
+                    continue
+                else:
+                    print(finlib.Finlib().pprint(df=df_tmp))
+
             name = stock_list[stock_list["ts_code"] == ts_code]["name"].values[0]
             df_tmp = pd.DataFrame([name] * df_tmp.__len__(), columns=["name"]).join(df_tmp)
             df_tmp = df_tmp.drop_duplicates().reset_index().drop("index", axis=1)
@@ -778,6 +798,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 if not ed in already_fetch_p:
                     already_fetch_p.append(ed)
                     # logging.info(__file__+" "+"append "+ed +" to already_fetch_p")
+    return(df_stock_list_rtn)
 
 
 # jasq stop work, get PE, PB from tushare. 20190302

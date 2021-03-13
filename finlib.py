@@ -1019,13 +1019,13 @@ class Finlib:
 
         for index, row in df.iterrows():
             code = row['code']
-            #print("code "+code)
-            try:
-                dcode = re.match('(\d{6})\.(.*)', code).group(1)  # group(1):600000,
-                mkt = re.match('(\d{6})\.(.*)', code).group(2)  # group(2):
-                df.at[index, 'code'] = mkt + dcode
-            except:
-                logging.warning("expection convert ts_code to code, ts_code "+code)
+            # print("code "+code)
+            # try:
+            dcode = re.match('(\d{6})\.(.*)', code).group(1)  # group(1):600000,
+            mkt = re.match('(\d{6})\.(.*)', code).group(2)  # group(2):
+            df.at[index, 'code'] = mkt + dcode
+            # except:
+            #     logging.warning("exception convert ts_code to code, ts_code "+code)
 
 
         return df
@@ -3186,27 +3186,13 @@ class Finlib:
 
         df = self._df_sub_by_code(df=df, df_sub=df_garbage, byreason=constant.STOP_PROCESS)
 
+
         if ts_code_fmt:
-            df = self.remove_market_from_tscode(df)
-            df = self.add_market_to_code(df=df,dot_f=True,tspro_format=True)
-            df = df.rename(columns={"code": "ts_code"}, inplace=False)
+            df = self.add_ts_code_to_column(df=df)
 
         df = df.reset_index().drop('index', axis=1)
         return (df)
 
-        #
-        # garbage_cnt = df_garbage.__len__()
-        #
-        # # determin input df code format
-        #
-        # for i in range(garbage_cnt):
-        #     garbage_ts_code = df_garbage.iloc[i]
-        #     garbage_ts_code = garbage_ts_code['ts_code']  # 600519.SH
-        #
-        #     dict = self.get_code_format(garbage_ts_code)
-        #
-        #     code_target = dict[code_format]
-        #     df = df[df[code_field_name] != code_target]
 
 
 
