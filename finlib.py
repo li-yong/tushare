@@ -355,12 +355,12 @@ class Finlib:
 
         #df_daily_basic_1 = self.add_market_to_code(self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/basic_" + date_exam_day + ".csv" )) #no longer work. tushare1.
 
-        df_daily_info = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily/info_" + date_exam_day + ".csv" )
-        df_daily_info = self.ts_code_to_code(df_daily_info)
+        # df_daily_info = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily/info_" + date_exam_day + ".csv" )
+        # df_daily_info = self.ts_code_to_code(df_daily_info)
         df_pro_basic = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_basic.csv")
         df_pro_basic['on_market_days'] = df_pro_basic['list_date'].apply(lambda _d: (datetime.today() - datetime.strptime(str(_d), '%Y%m%d')).days)
 
-        df_rtn = pd.merge(df_pro_basic, df_daily_info, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+        # df_rtn = pd.merge(df_pro_basic, df_daily_info, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
 
 
        # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_20200820.csv
@@ -375,7 +375,7 @@ class Finlib:
         df_daily_stocks_basic['turnover_rate_f_perc_rank'] = df_daily_stocks_basic['turnover_rate_f'].rank(pct=True)  # 换手率（自由流通股）
        # df_daily_stocks_basic['dv_ttm_perc_rank'] = df_daily_stocks_basic['dv_ttm'].rank(pct=True) #股息率（TTM）（%）
 
-        df_rtn = pd.merge(df_rtn, df_daily_stocks_basic, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+        df_rtn = pd.merge(df_pro_basic, df_daily_stocks_basic, on=['code'], how='left', suffixes=('', '_x')).reset_index().drop('index', axis=1)
 
         df_rtn = self.add_ts_code_to_column(df_rtn)
         df_rtn = df_rtn.reset_index().drop('index', axis=1)
