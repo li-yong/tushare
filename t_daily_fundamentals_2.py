@@ -567,17 +567,17 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             # print(ind_csv)
 
             # > 100 bytes
-            if (not force_run_global) and fast_fetch and (os.path.exists(ind_csv)) and (os.stat(ind_csv).st_size > 100):
-                logging.info(__file__ + ": " + "file already have content, skip fetching, kick off from return df "+ind_csv)
+            # removed force_fetch checking. If want start fresh over, deleted the latest period folder. fund_base_source + "/individual/" + period
+            if fast_fetch \
+                    and (os.path.exists(ind_csv)) \
+                    and (os.stat(ind_csv).st_size > 100) \
+                    and finlib.Finlib().is_cached(ind_csv, day=14):
+                logging.info(__file__ + ": " + "file already have content and update in 14 days, skip fetching, kick off from return df "+ind_csv)
                 df_stock_list_rtn = df_stock_list_rtn[df_stock_list_rtn['ts_code'] != ts_code]
                 continue
 
 
-            # if (finlib.Finlib().is_cached(ind_csv, day=3)) and (not force_run_global) :
-            if finlib.Finlib().is_cached(ind_csv, day=14):
-                logging.info(__file__ + " " + "file updated in 14 day, not fetch again " + ind_csv)
-                continue
-            elif not os.path.exists(ind_csv):
+            if not os.path.exists(ind_csv):
                 open(ind_csv, "a").close()  # create empty
             else:  # exist but ctime is two days before
                 now = datetime.datetime.now()
