@@ -22,15 +22,20 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
 #########################################
 a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
 b = finlib.Finlib().load_fund_n_years(n_years=4)
 
 
 code = 'SH600519'
-code = 'SZ000911'
+# code = 'SZ000911'
 print(a[a['code']==code][['code','end_date','roe','eps']])
-print(b[b['code'] == code][['code', 'end_date', 'basic_eps', 'roe']])
+print(b[b['code'] == code][['code', 'end_date', 'basic_eps', 'roe', "fcff", "netdebt", "ebit_of_gr", "debt_to_assets",
+                            "rd_exp", "ocf_to_profit", "tr_yoy"
+                            ]])
 
 
 
