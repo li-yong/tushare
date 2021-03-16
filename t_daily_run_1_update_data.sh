@@ -268,8 +268,8 @@ fi
 #####################################
 #python t_daily_fundamentals_2.py --fetch_basic_daily
 if [ $full_or_daily == "DAILY" ]; then
-  python t_daily_fundamentals_2.py --fetch_basic_daily
-  python t_daily_fundamentals_2.py --fetch_info_daily
+  python t_daily_fundamentals_2.py --fetch_basic_daily --fast_fetch
+  python t_daily_fundamentals_2.py --fetch_info_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_new_share
   python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch #pro fundation tables. 10 tables.
   python t_daily_fundamentals_2.py --fetch_change_name

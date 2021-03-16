@@ -25,6 +25,15 @@ import akshare as ak
 #########################################
 
 
+dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'
+p = finlib.Finlib().get_last_4q_n_years(n_year=3)
+for i in p:
+    f = dir+"/"+i+".csv"
+    print(f)
+
+
+exit(0)
+
 
 # df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_AG.csv')
 df_hs300_candi = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/hs300_candidate_list.csv')

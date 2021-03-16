@@ -124,7 +124,7 @@ def _kdj(csv_f, period):
     if (_d2 - _k2) / abs(_d2) >= 0.1:  #d more than 10% of k. Means low price. undervalued
         if _k1 >= _d1:
             this_strength = round((_k1 - _d1) / abs(_d1), 2)
-            this_reason += "K cross over D,  K " + str(_k1) + ", D " + str(_d1) + ", strength " + str(this_strength) + "; "
+            this_reason += "K cross over D,  K " + str(round(_k1,0)) + ", D " + str(round(_d1,0)) + ", strength " + str(this_strength) + "; "
             this_action += 'BUY' + "; "
             print("K cross over D, should buy. " + csv_f)
 

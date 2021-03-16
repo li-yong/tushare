@@ -5092,6 +5092,18 @@ class Finlib:
         df = self.add_stock_name_to_df_us_hk(df=df, market=market)
         return(df)
 
+    def get_last_4q_n_years(self, n_year=3):
+        stb2 = self.get_year_month_quarter()
+        p = []  # p: ['20201231', '20191231', '20181231', '20171231', '20161231']
+
+        p.extend([stb2['ann_date_1q_before']])
+        p.extend([stb2['ann_date_2q_before']])
+        p.extend([stb2['ann_date_3q_before']])
+        p.extend([stb2['ann_date_4q_before']])
+        p.extend(stb2['full_period_list_yearly'][1:n_year + 1])
+
+        return(p)
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
