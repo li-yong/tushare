@@ -23,14 +23,7 @@ import matplotlib.pyplot as plt
 import akshare as ak
 
 #########################################
-
-
-dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'
-p = finlib.Finlib().get_last_4q_n_years(n_year=3)
-for i in p:
-    f = dir+"/"+i+".csv"
-    print(f)
-
+a = finlib.Finlib().load_fin_indicator_n_years(n_years=3)
 
 exit(0)
 

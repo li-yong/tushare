@@ -5104,6 +5104,48 @@ class Finlib:
 
         return(p)
 
+    def load_fund_n_years(self, n_years=3):
+
+        dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'
+        p = self.get_last_4q_n_years(n_year=n_years)
+
+        df_fund_n_years = pd.DataFrame()
+
+        for i in p:
+            f = dir + "/merged_all_" + i + ".csv"
+            # print(f)
+
+            _df = self.regular_read_csv_to_stdard_df(data_csv=f)
+            df_fund_n_years = df_fund_n_years.append(_df)
+            # print(df_fund_n_years.__len__())
+
+        df_fund_n_years = df_fund_n_years.reset_index().drop('index', axis=1)
+        df_a_stock = df_fund_n_years[df_fund_n_years['code'] == "SH600519"]
+
+        df_a_stock[['code', 'end_date', 'basic_eps', 'roe']]
+        
+        return(df_fund_n_years)
+
+
+    def load_fin_indicator_n_years(self, n_years=3):
+        dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source'
+        f = dir+"/fina_indicator.csv"
+        # _df = self.regular_read_csv_to_stdard_df(data_csv=f)
+        _df = pd.read_csv(f, converters={'end_date':str})
+
+        p = self.get_last_4q_n_years(n_year=n_years)
+
+        df_rtn = pd.DataFrame()
+        for i in p:
+            df_rtn = df_rtn.append(_df[_df['end_date']==i])
+
+        df_rtn = df_rtn.reset_index().drop('index', axis=1)
+        df_rtn = self.ts_code_to_code(df=df_rtn)
+        return (df_rtn)
+
+
+
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
