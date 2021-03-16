@@ -23,7 +23,16 @@ import matplotlib.pyplot as plt
 import akshare as ak
 
 #########################################
-a = finlib.Finlib().load_fin_indicator_n_years(n_years=3)
+a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
+b = finlib.Finlib().load_fund_n_years(n_years=4)
+
+
+code = 'SH600519'
+code = 'SZ000911'
+print(a[a['code']==code][['code','end_date','roe','eps']])
+print(b[b['code'] == code][['code', 'end_date', 'basic_eps', 'roe']])
+
+
 
 exit(0)
 

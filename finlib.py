@@ -5109,22 +5109,23 @@ class Finlib:
         dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'
         p = self.get_last_4q_n_years(n_year=n_years)
 
-        df_fund_n_years = pd.DataFrame()
+        df_rtn = pd.DataFrame()
 
         for i in p:
             f = dir + "/merged_all_" + i + ".csv"
             # print(f)
 
-            _df = self.regular_read_csv_to_stdard_df(data_csv=f)
-            df_fund_n_years = df_fund_n_years.append(_df)
+            # _df = self.df_rtn(data_csv=f)
+            df_rtn = df_rtn.append(pd.read_csv(f, converters={'end_date': str}))
             # print(df_fund_n_years.__len__())
 
-        df_fund_n_years = df_fund_n_years.reset_index().drop('index', axis=1)
-        df_a_stock = df_fund_n_years[df_fund_n_years['code'] == "SH600519"]
 
-        df_a_stock[['code', 'end_date', 'basic_eps', 'roe']]
-        
-        return(df_fund_n_years)
+        df_rtn = df_rtn.reset_index().drop('index', axis=1)
+        df_rtn = self.ts_code_to_code(df=df_rtn)
+
+
+
+        return(df_rtn)
 
 
     def load_fin_indicator_n_years(self, n_years=3):
