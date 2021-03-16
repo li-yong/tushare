@@ -1017,16 +1017,26 @@ class Finlib:
 
         df.columns = collist  # apply the new columns name to df. rename columns
 
-        for index, row in df.iterrows():
-            code = row['code']
-            # print("code "+code)
-            # try:
-            dcode = re.match('(\d{6})\.(.*)', code).group(1)  # group(1):600000,
-            mkt = re.match('(\d{6})\.(.*)', code).group(2)  # group(2):
-            df.at[index, 'code'] = mkt + dcode
-            # except:
-            #     logging.warning("exception convert ts_code to code, ts_code "+code)
 
+        def _tmp_lambda(ts_code):
+            regx = re.match('(\d{6})\.(.*)', ts_code)
+            #mkt + dcode
+            return(regx.group(2) + regx.group(1))
+
+        df['code'] = df['code'].apply(lambda _d:_tmp_lambda(_d))
+
+        #
+        # for index, row in df.iterrows():
+        #     code = row['code']
+        #     # print("code "+code)
+        #     # try:
+        #     regx = re.match('(\d{6})\.(.*)', code)
+        #     dcode = regx.group(1)  # group(1):600000,
+        #     mkt = regx.group(2)  # group(2):
+        #     df.at[index, 'code'] = mkt + dcode
+        #     # except:
+        #     #     logging.warning("exception convert ts_code to code, ts_code "+code)
+        #
 
         return df
 
@@ -3136,6 +3146,7 @@ class Finlib:
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
         df = self._remove_garbage_high_pledge_ration(df,statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
         df = self._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
+        df = self._remove_garbage_by_fund_n_years(df,n_years=1)
 
 
         #remove koudi, this affected the fundermental_2.py step6.
@@ -3315,6 +3326,38 @@ class Finlib:
 
         return(df)
 
+    def _remove_garbage_by_fund_n_years(self, df, n_years=3):
+        # a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
+
+        b = self.load_fund_n_years(n_years=n_years)[['code','eps','roe','fcff','ocf_to_profit',
+                                'grossprofit_margin','debt_to_assets'
+                                ]]
+        #
+        # code = 'SH600519'
+        # # code = 'SZ000911'
+
+        # print(a[a['code']==code][['code','end_date','roe','eps']])
+        # print(b[b['code'] == code][['code', 'end_date', 'basic_eps', 'roe', "fcff", "netdebt", "ebit_of_gr", "debt_to_assets",
+        #                             "rd_exp", "ocf_to_profit", "tr_yoy"
+        #                             ]])
+
+        # df_mean = b.groupby('code').mean().reset_index()
+        df_mean = b.groupby('code').mean()
+        df_mean_rank = df_mean.rank(pct=True).reset_index()
+
+        df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1)
+                              | (df_mean_rank['roe'] <= 0.3)
+                              | (df_mean_rank['fcff'] <= 0.3)
+                              | (df_mean_rank['ocf_to_profit'] <= 0.3)
+                              | (df_mean_rank['grossprofit_margin'] <= 0.1)
+                              | (df_mean_rank['debt_to_assets'] >= 0.3)
+                              ]
+
+        df_rtn = self._df_sub_by_code(df=df, df_sub=df_gar,byreason='_remove_garbage_by_fund_n_years')
+        # df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
+        # df_rtn.to_csv("~/del.csv")
+        # print(self.pprint(df_rtn[['code', 'name']]))
+        return (df_rtn)
 
     def remove_garbage_macd_ma(self,df):
         if df.empty:
@@ -5122,8 +5165,6 @@ class Finlib:
 
         df_rtn = df_rtn.reset_index().drop('index', axis=1)
         df_rtn = self.ts_code_to_code(df=df_rtn)
-
-
 
         return(df_rtn)
 

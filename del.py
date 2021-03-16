@@ -26,34 +26,8 @@ import akshare as ak
 pd.set_option('display.width', 1000)
 
 #########################################
-# a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
-b = finlib.Finlib().load_fund_n_years(n_years=4)
-
-
-code = 'SH600519'
-# code = 'SZ000911'
-
-# print(a[a['code']==code][['code','end_date','roe','eps']])
-print(b[b['code'] == code][['code', 'end_date', 'basic_eps', 'roe', "fcff", "netdebt", "ebit_of_gr", "debt_to_assets",
-                            "rd_exp", "ocf_to_profit", "tr_yoy"
-                            ]])
-
-# df_mean = b.groupby('code').mean().reset_index()
-df_mean = b.groupby('code').mean()
-df_mean_rank = df_mean.rank(pct=True).reset_index()
-df_gar = df_mean_rank[(df_mean_rank['eps']<=0.3)
-                      | (df_mean_rank['roe']<=0.3)
-                      | (df_mean_rank['fcff']<=0.3)
-                      | (df_mean_rank['ocf_to_profit']<=0.3)
-                      | (df_mean_rank['debt_to_assets']>=0.3)
-
-]
-
-df_rtn = finlib.Finlib()._df_sub_by_code(df=df_mean_rank, df_sub=df_gar)
-df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
-df_rtn.to_csv("~/del.csv")
-print(finlib.Finlib().pprint(df_rtn[['code','name']]))
-
+df_tmp = finlib.Finlib().load_fund_n_years(n_years=1)
+df = finlib.Finlib()._remove_garbage_by_fund_n_years(df_tmp,n_years=1)
 exit(0)
 
 

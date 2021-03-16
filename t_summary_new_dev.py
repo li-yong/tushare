@@ -976,7 +976,6 @@ def analyze_post_perf(operation='B'):
                 df_r = finlib.Finlib().adjust_column(df=df_r, col_name_list=['pc_'+day_p3[-4:]])
 
                 lines += ", "+str(day_p3[-4:])+": "+str(round(df_r['pc_'+day_p3[-4:]].mean(), 2))
-                print("hi3")
 
             lines += "\n"
             lines += finlib.Finlib().pprint(df_r)
