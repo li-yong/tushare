@@ -51,7 +51,8 @@ df_gar = df_mean_rank[(df_mean_rank['eps']<=0.3)
 
 df_rtn = finlib.Finlib()._df_sub_by_code(df=df_mean_rank, df_sub=df_gar)
 df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
-print(finlib.Finlib().pprint(df_rtn))
+df_rtn.to_csv("~/del.csv")
+print(finlib.Finlib().pprint(df_rtn[['code','name']]))
 
 exit(0)
 
