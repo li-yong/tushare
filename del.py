@@ -30,8 +30,16 @@ df_tv = finlib.Finlib().load_tv_fund(market='AG', period="d")
 
 df_tmp = finlib.Finlib().load_fund_n_years(n_years=1)
 
+df_tv = finlib.Finlib().add_stock_name_to_df(df_tv)
+df_tv = finlib.Finlib().add_ts_code_to_column(df=df_tv)
 
-df = finlib.Finlib()._remove_garbage_by_fund_n_years(df_tmp,n_years=1)
+
+_df = df_tv[['code','name','close','52 Week High']]
+_df['ratio']=df_tv['close']/df_tv['52 Week High']
+df_low_p = _df[_df['ratio']<0.5]
+df = finlib.Finlib().remove_garbage(df=df_low_p)
+# df = finlib.Finlib()._remove_garbage_by_fund_n_years(df_low_p,n_years=3)
+print(finlib.Finlib().pprint(df))
 exit(0)
 
 

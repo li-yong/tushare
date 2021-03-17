@@ -5127,7 +5127,9 @@ class Finlib:
             df = df[df['code'].str.startswith('SH') | df['code'].str.startswith('SZ')]
             df = df.reset_index().drop('index',axis=1)
 
-        df = self.add_stock_name_to_df_us_hk(df=df, market=market)
+        elif market == 'US':
+            df = self.add_stock_name_to_df_us_hk(df=df, market=market)
+
         return(df)
 
     def get_last_4q_n_years(self, n_year=3):
