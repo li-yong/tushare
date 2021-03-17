@@ -1025,19 +1025,6 @@ class Finlib:
 
         df['code'] = df['code'].apply(lambda _d:_tmp_lambda(_d))
 
-        #
-        # for index, row in df.iterrows():
-        #     code = row['code']
-        #     # print("code "+code)
-        #     # try:
-        #     regx = re.match('(\d{6})\.(.*)', code)
-        #     dcode = regx.group(1)  # group(1):600000,
-        #     mkt = regx.group(2)  # group(2):
-        #     df.at[index, 'code'] = mkt + dcode
-        #     # except:
-        #     #     logging.warning("exception convert ts_code to code, ts_code "+code)
-        #
-
         return df
 
     # usage example
@@ -5123,14 +5110,22 @@ class Finlib:
             csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest_"+period+".csv"
 
 
-        df = pd.read_csv(csv_f)
+        df = pd.read_csv(csv_f, converters={'Ticker':str})
         df = df.fillna(0)
+
 
         tv_col_name_dict = constant.TRADINGVIEW_COLS
 
         for c in df.columns:
             if c in tv_col_name_dict.keys() and tv_col_name_dict[c] != "xxxx":
                 df.rename(columns={c: tv_col_name_dict[c] }, inplace=True)
+
+        if market == 'AG':
+            df = df[~df['code'].str.startswith('200')]
+            df = df[~df['code'].str.startswith('900')]
+            df = self.add_market_to_code(df=df)
+            df = df[df['code'].str.startswith('SH') | df['code'].str.startswith('SZ')]
+            df = df.reset_index().drop('index',axis=1)
 
         df = self.add_stock_name_to_df_us_hk(df=df, market=market)
         return(df)

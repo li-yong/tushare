@@ -26,7 +26,11 @@ import akshare as ak
 pd.set_option('display.width', 1000)
 
 #########################################
+df_tv = finlib.Finlib().load_tv_fund(market='AG', period="d")
+
 df_tmp = finlib.Finlib().load_fund_n_years(n_years=1)
+
+
 df = finlib.Finlib()._remove_garbage_by_fund_n_years(df_tmp,n_years=1)
 exit(0)
 
