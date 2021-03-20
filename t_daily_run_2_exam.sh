@@ -751,6 +751,7 @@ python t_daily_index_candidates.py --index_name cn_szse --period_start '20210101
 #         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
 #############
 python t_summary_new_dev.py -x AG --operation B --action generate_report
+python t_summary_new_dev.py -x AG --operation B --action generate_report --remove_garbage
 python t_summary_new_dev.py -x AG --operation S --action generate_report
 
 #### Check performance of each day's selected.

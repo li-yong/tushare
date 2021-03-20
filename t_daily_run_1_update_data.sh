@@ -368,7 +368,7 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
   echo "updating HK/US all stocks daily from tushare "
-  python ~/tushare_ryan/t_fetch_us_hk_bar.py -x HK; #time consuming
+  #python ~/tushare_ryan/t_fetch_us_hk_bar.py -x HK; #time consuming
 
   #14000 companies, and tushare no longer have updates since 2020/04/27
   #python ~/tushare_ryan/t_fetch_us_hk_bar.py -x US;
