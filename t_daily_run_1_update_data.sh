@@ -120,7 +120,7 @@ fi
 ######################################
 echo "updating quarter fund data, update /home/ryan/DATA/pickle/*.pickle"
 echo "updating fundamentals/daily/basic_today.csv"
-python t_daily_fundamentals.py  --fetch_data_all;
+#python t_daily_fundamentals.py  --fetch_data_all;
 
 ######################################
 #

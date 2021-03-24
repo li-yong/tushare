@@ -22,8 +22,67 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
-# pd.set_option('display.max_columns', None)
+pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
+
+#########################################
+#########################################
+df = finlib.Finlib().load_price_n_days(ndays=20)
+
+df = finlib.Finlib().ts_code_to_code(df=df)
+df_rtn = pd.DataFrame()
+
+for code in df['code'].unique():
+    df_1 = df[df['code']==code].reset_index().drop('index', axis=1)
+
+    if df_1.__len__() < 5:
+        continue
+
+    df_1['vol_avg_5'] = df_1['vol'].rolling(window=5).mean()
+
+    # df_1['price_change_in_day'] = round((df_1['close'] - df_1['open'])*100/df_1['open'], 2)
+    df_1['price_change_across_day'] = round((df_1['close'] - df_1['close'].shift(1))*100/df_1['close'].shift(1), 2)
+    df_1['vol_change_across_day'] = round((df_1['vol'] - df_1['vol'].shift(1))*100/df_1['vol'].shift(1), 2)
+    df_1['vol_change_vs_avg_5'] = round((df_1['vol'] - df_1['vol_avg_5'].shift(1))*100/df_1['vol_avg_5'].shift(1), 2)
+    df_1['vp_chg_ratio']= round(df_1['vol_change_across_day'] / df_1['price_change_across_day'],2)
+    df_1['pct_chg_next_day']= df_1['pct_chg'].shift(-1)
+    df_1['corr']=round(df_1['pct_chg_next_day'].corr(df_1['vp_chg_ratio']),2)
+    df_1 = df_1.drop(columns=['open','high','low','pre_close','change'])
+
+    df_rtn = df_rtn.append(df_1.tail(1))
+    # print(str(code)+" pv_chg_ration / pct_chg_next_day cor " + str(df_1['corr'].iloc[-1]))
+
+print(1)
+df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+df_rtn.sort_values(by='corr', ascending=False)
+print(finlib.Finlib().pprint(df_rtn.sort_values(by='vp_chg_ratio', ascending=False).head(100)))
+
+#largest vol increase
+print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_across_day', ascending=False).head(10)))
+
+#smallest vol increase (compare to vol_day-1)
+print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_across_day', ascending=True).head(10)))
+
+#smallest vol increase (compare to vol_ma5)
+print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_vs_avg_5', ascending=True).head(10)))
+
+
+df_pin_bar_uppershadow = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_LONG_UPPER_SHADOW)
+df_pin_bar_leg = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_LONG_LOWER_SHADOW)
+df_pin_bar_guangtou = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU)
+df_pin_bar_guangjiao = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU)
+
+df_hammer= pd.merge(df_pin_bar_leg, df_pin_bar_guangtou, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+df_hammer_rev= pd.merge(df_pin_bar_uppershadow, df_pin_bar_guangjiao, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+
+#########################################
+
+
+csv = '/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210319.csv'
+df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
+
+df = df.sort_values(by='volume')
+df = finlib.Finlib().add_stock_name_to_df(df=df)
 
 #########################################
 df_tv = finlib.Finlib().load_tv_fund(market='AG', period="d")
