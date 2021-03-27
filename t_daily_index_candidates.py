@@ -190,11 +190,28 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
 
     logging.info("result saved to " + index_candiate_csv + " len " + str(len_merged))
 
+def szcz_on_market_days_filter():
+    df_basic = finlib.Finlib().get_today_stock_basic()
+
+    today = datetime.datetime.today()
+    y = str(today.year)
+    m = today.month
+
+    if m <= 5:
+        to_date =  datetime.datetime.strptime(y+'0430', "%Y%m%d")
+    else:
+        to_date = datetime.datetime.strptime(y+'1031', "%Y%m%d")
+
+    df_basic['on_market_days_to_next_index_resample_date']=df_basic['list_date'].apply(lambda _d: (to_date - datetime.datetime.strptime(str(_d), "%Y%m%d") ).days)
+
+    df_basic = df_basic[df_basic['on_market_days_to_next_index_resample_date'] > 180]
+    return(df_basic)
+
 
 def hs300_on_market_days_filter():
     #### filter with HS300 critiria
     df_all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment(code_name_only=False))
-
+    # df_all_basic = finlib.Finlib().get_today_stock_basic()
     print("all lens "+str(df_all.__len__()))
 
     today = datetime.datetime.today()
@@ -573,8 +590,14 @@ def main():
     all = finlib.Finlib().add_market_to_code(finlib.Finlib().get_A_stock_instrment())
     all_sz = all[all['code'].str.contains('SZ')]
     all_st = all[all['name'].str.contains('ST')]
-    my_szcz = finlib.Finlib()._df_sub_by_code(df=all_sz, df_sub=all_st,
+
+    my_szcz = pd.merge(all_sz, szcz_on_market_days_filter(),
+                        on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+
+    my_szcz = finlib.Finlib()._df_sub_by_code(df=my_szcz, df_sub=all_st,
                                               byreason='removing ST(special trade) from SZ mkt')
+
+
 
     # 对入围股票在最近半年的 A 股日均成交金额按从高到低排序，剔除排名后 10%的股票； Approximiately in all stock scope.
     my_szcz = pd.merge(my_szcz, df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.7],

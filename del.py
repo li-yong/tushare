@@ -29,43 +29,6 @@ pd.set_option('display.width', 1000)
 #time to market
 # df = finlib.Finlib().load_all_ts_pro()
 
-df_basic = finlib.Finlib().get_today_stock_basic()
-
-
-today = datetime.datetime.today()
-y = str(today.year)
-m = today.month
-
-to_date_first = datetime.datetime.strptime(y+'0430', "%Y%m%d")
-to_date_second = datetime.datetime.strptime(y+'1031', "%Y%m%d")
-
-# "每年 5 月下旬: 上一年5.1 到今年4.30 (期间新上市证券为上市第四个交易日以来)
-#
-#  11 月下旬:  上一
-# 年度 11 月 1 日至审核年度 10 月 31 日（期间新上市证券为上市第四
-# 个交易日以来）"
-
-if m <= 5:
-    to_date = to_date_first
-else:
-    to_date = to_date_second
-
-
-df_basic['on_market_days_to_next_index_resample_date']=df_basic['list_date'].apply(lambda _d: (to_date - datetime.datetime.strptime(str(_d), "%Y%m%d") ).days)
-
-df_chuangye = df_basic[df_basic['code'].str.contains("SZ300")]
-df_kechuang = df_basic[df_basic['code'].str.contains("SH688")]
-df_other = finlib.Finlib()._df_sub_by_code(df=df_basic, df_sub=df_chuangye)
-df_other = finlib.Finlib()._df_sub_by_code(df=df_other, df_sub=df_kechuang)
-
-#"科创板证券：上市时间超过一年。
-# 创业板证券：上市时间超过三年。
-# 其他证券：上市时间超过一个季度，除非该证券自上市以来日均总市值排在前 30 位。"
-
-df_chuangye_keep = df_chuangye[df_chuangye['on_market_days_to_next_index_resample_date'] > 3*365]
-df_kechuang_keep = df_kechuang[df_kechuang['on_market_days_to_next_index_resample_date'] > 1*365]
-df_other_keep = df_other[df_other['on_market_days_to_next_index_resample_date'] > 90]
-
 
 print(1)
 
