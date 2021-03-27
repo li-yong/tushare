@@ -456,7 +456,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
     pd.set_option("display.max_columns", 100)
     pd.set_option('expand_frame_repr', False)
 
-    f_fenghong = '/home/ryan/DATA/result/fenghong_score.csv'
+    # f_fenghong = '/home/ryan/DATA/result/fenghong_score.csv'
 
     base = '/home/ryan/DATA/result/today'
 
@@ -943,10 +943,10 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
         if 'df_increase_gap' in locals():
             arr.append('df_increase_gap')
 
-        df_fenghong = finlib.Finlib().regular_read_csv_to_stdard_df(f_fenghong)
-        df_fenghong = df_fenghong[df_fenghong['score'] >= 0.8]
-        df_fenghong = finlib.Finlib().remove_garbage(df_fenghong, code_field_name='code', code_format='C2D6')
-        logging.info(__file__+" "+"\t df_fenghong length " + str(df_fenghong.__len__()))
+        # df_fenghong = finlib.Finlib().regular_read_csv_to_stdard_df(f_fenghong)
+        # df_fenghong = df_fenghong[df_fenghong['score'] >= 0.8]
+        # df_fenghong = finlib.Finlib().remove_garbage(df_fenghong, code_field_name='code', code_format='C2D6')
+        # logging.info(__file__+" "+"\t df_fenghong length " + str(df_fenghong.__len__()))
 
         #df_ann=pd.DataFrame(columns=['code'])  #removed since ann stop working after julang info web adjusted. 20190228
 
@@ -1379,10 +1379,10 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"filte df_pv_break")
             df_pv_break = finlib.Finlib().df_filter(df_pv_break)
 
-        if 'df_fenghong' in locals():
-            df_fenghong = finlib.Finlib().add_market_to_code(df_fenghong)
-            df_fenghong = finlib.Finlib().df_filter(df_fenghong)
-            arr.append('df_fenghong')
+        # if 'df_fenghong' in locals():
+        #     df_fenghong = finlib.Finlib().add_market_to_code(df_fenghong)
+        #     df_fenghong = finlib.Finlib().df_filter(df_fenghong)
+        #     arr.append('df_fenghong')
 
         if 'df_ann' in locals():
             df_ann = finlib.Finlib().add_market_to_code(df_ann)
@@ -1643,7 +1643,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
     if 'df_pv_no_filter' in locals(): print(df_pv_no_filter.head(2))
 
     if stock_global in ['AG']:
-        if 'df_fenghong' in locals(): print(df_fenghong.head(2))
+        # if 'df_fenghong' in locals(): print(df_fenghong.head(2))
         #print(df_ann.head(2))
         if 'df_fund' in locals(): print(df_fund.head(2))
         if 'df_fund_2' in locals(): print(df_fund_2.head(2))
@@ -1824,11 +1824,11 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"After df_hen_cow, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
             #arr.remove('df_hen_cow')
 
-        if 'df_fenghong' in locals() and df_fenghong.__len__()>0:
-            df_combined_year = pd.concat([df_combined_year, df_fenghong], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
-            df_reduced_year = pd.merge(df_reduced_year, df_fenghong, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-            logging.info(__file__+" "+"After df_fenghong, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
-            #arr.remove('df_fenghong')
+        # if 'df_fenghong' in locals() and df_fenghong.__len__()>0:
+        #     df_combined_year = pd.concat([df_combined_year, df_fenghong], sort=False).drop_duplicates().reset_index().drop('index', axis=1)
+        #     df_reduced_year = pd.merge(df_reduced_year, df_fenghong, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+        #     logging.info(__file__+" "+"After df_fenghong, df_combined_year " + str(df_combined_year.__len__()) + ", df_reduced_year " + str(df_reduced_year.__len__()))
+        #     #arr.remove('df_fenghong')
 
         #gen quarterly df
         df_combined_quarter = pd.DataFrame()
