@@ -197,6 +197,27 @@ def hs300_on_market_days_filter():
 
     print("all lens "+str(df_all.__len__()))
 
+    today = datetime.datetime.today()
+    y = str(today.year)
+    m = today.month
+
+    to_date_first = datetime.datetime.strptime(y + '0430', "%Y%m%d")
+    to_date_second = datetime.datetime.strptime(y + '1031', "%Y%m%d")
+
+    # "每年 5 月下旬: 上一年5.1 到今年4.30 (期间新上市证券为上市第四个交易日以来)
+    #
+    #  11 月下旬:  上一
+    # 年度 11 月 1 日至审核年度 10 月 31 日（期间新上市证券为上市第四
+    # 个交易日以来）"
+
+    if m <= 5:
+        to_date = to_date_first
+    else:
+        to_date = to_date_second
+
+    df_all['on_market_days_to_next_index_resample_date'] = df_all['list_date'].apply(
+        lambda _d: (to_date - datetime.datetime.strptime(str(_d), "%Y%m%d")).days)
+
     df_hs300_filted_on_market_days=pd.DataFrame()
 
     mkt = df_all.market.unique()
@@ -209,11 +230,11 @@ def hs300_on_market_days_filter():
         calc_len += len_df_tmp_ori
 
         if m == "科创板": #688xxx
-            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 365]  #科创板证券：上市时间超过一年。
+            df_tmp = df_tmp[df_tmp['on_market_days_to_next_index_resample_date'] > 365]  #科创板证券：上市时间超过一年。
         elif m == "创业板": #300xxx
-            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 365*3]  #创业板证券：上市时间超过三年
+            df_tmp = df_tmp[df_tmp['on_market_days_to_next_index_resample_date'] > 365*3]  #创业板证券：上市时间超过三年
         elif m == "主板" or  m == "中小板" or m == 'CDR':  # 主板 000xxx, 600xxx,  中小板 002xxx, CDR 689
-            df_tmp = df_tmp[df_tmp['list_date_days_before'] > 90]  #其他证券：上市时间超过一个季度，除非该证券自上市以来日均总市值排在前 30 位。。
+            df_tmp = df_tmp[df_tmp['on_market_days_to_next_index_resample_date'] > 90]  #其他证券：上市时间超过一个季度，除非该证券自上市以来日均总市值排在前 30 位。。
 
         len_removed_for_a_mkt = len_df_tmp_ori - df_tmp.__len__()
 
@@ -436,8 +457,6 @@ def index_weight_wg(index_name):
 
 
 def main():
-
-
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
     logging.info(__file__+" "+"\n")
