@@ -3409,6 +3409,20 @@ class Finlib:
         df = df.reset_index().drop('index', axis=1)
         df_sub = df_sub.reset_index().drop('index', axis=1)
 
+        dir = "/home/ryan/DATA/result/garbage"
+        if byreason=='':
+            gar_csv = dir+"/"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
+        else:
+            gar_csv = dir+"/"+byreason+".csv"
+
+        if not os.path.isdir(dir):
+            os.mkdir(dir)
+
+        df_sub.to_csv(gar_csv, encoding='UTF-8', index=False)
+        logging.info("garbage df saved to "+gar_csv)
+
+        
+
         s_all = df['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
         s_sub = df_sub['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
 
