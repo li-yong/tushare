@@ -3413,7 +3413,7 @@ class Finlib:
         if byreason=='':
             gar_csv = dir+"/"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
         else:
-            gar_csv = dir+"/"+byreason+".csv"
+            gar_csv = dir+"/"+byreason+"_"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
 
         if not os.path.isdir(dir):
             os.mkdir(dir)
