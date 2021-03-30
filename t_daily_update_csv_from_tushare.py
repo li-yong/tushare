@@ -94,7 +94,11 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
     df_basic['list_date_dt'] = df_basic['list_date'].apply(lambda _d: datetime.strptime(str(_d), '%Y%m%d'))
     df_basic['list_date_days_before'] = df_basic['list_date_dt'].apply(lambda _d: (datetime.today() - _d).days)
 
-    df_basic = finlib.Finlib().remove_market_from_tscode(df_basic)
+    df_basic['ts_code_bak'] = df_basic['ts_code']
+    df_basic = finlib.Finlib().ts_code_to_code(df_basic)
+    df_basic = df_basic.rename(columns={"ts_code_bak": "ts_code"}, inplace=False)
+    df_basic = finlib.Finlib().adjust_column(df=df_basic, col_name_list=['code','ts_code','name'])
+
     df_basic = df_basic.reset_index().drop('index', axis=1)
     df_basic.to_csv(instrument_csv, encoding='UTF-8', index=False)  # len 3515
     logging.info(__file__+" "+"\nsaved to " + instrument_csv+" , len "+str(df_basic.__len__()))

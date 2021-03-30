@@ -918,7 +918,17 @@ class Finlib:
     def add_market_to_code(self, df, dot_f=False, tspro_format=False):
 
         # tspro_format : 600000.SH
+
+        if df.empty:
+            logging.warning("df is empty, in func finlib().add_market_to_code()")
+            return(df)
+
         df.code = df.code.astype(str)
+
+        if re.match('^SH',  df.code.iloc[0]) or re.match('^SZ',  df.code.iloc[0]) :
+            logging.warning("df code already has market, do nothing. First code "+df.code.iloc[0])
+            return(df)
+
 
         dot = ''
 
@@ -3405,7 +3415,8 @@ class Finlib:
             return(df)
 
         df_init_len = df.__len__()
-        
+
+
         df = df.reset_index().drop('index', axis=1)
         df_sub = df_sub.reset_index().drop('index', axis=1)
 
@@ -3421,7 +3432,7 @@ class Finlib:
         df_sub.to_csv(gar_csv, encoding='UTF-8', index=False)
         logging.info("garbage df saved to "+gar_csv)
 
-        
+
 
         s_all = df['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
         s_sub = df_sub['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
@@ -4348,7 +4359,7 @@ class Finlib:
                 csv_dir = "/home/ryan/DATA/DAY_Global/AG"
                 out_dir = "/home/ryan/DATA/result"
                 stock_list = self.get_A_stock_instrment()  # 603999
-                stock_list = self.add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # 603999.SH
+                # stock_list = self.add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # 603999.SH
                 stock_list = self.remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
             elif stock_global == 'HK':
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK"

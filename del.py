@@ -29,6 +29,8 @@ pd.set_option('display.width', 1000)
 #time to market
 # df = finlib.Finlib().load_all_ts_pro()
 
+df = finlib.Finlib().get_A_stock_instrment()
+df = finlib.Finlib().add_market_to_code(df=df)
 
 print(1)
 
