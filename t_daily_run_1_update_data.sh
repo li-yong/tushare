@@ -79,7 +79,7 @@ python t_daily_get_us_index.py
 
 
 # Need a running X server. Download 15 times a day.
-# env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
 
 
 

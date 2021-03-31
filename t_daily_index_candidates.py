@@ -393,19 +393,20 @@ def fetch_index_tradingview_selenium():
 
     opts = Options()
     browser = Chrome(options=opts)
-    browser.get('https://androidinvest.com/auth/login/')
+    browser.get('https://www.tradingview.com/#signin')
 
     # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    login_link = browser.find_element_by_partial_link_text('账号密码')
+    xpath = '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/div[1]/div[4]/div/span'
+    login_link = browser.find_element_by_xpath(xpath)
+    # login_link = browser.find_element_by_partial_link_text('Sign in')
     login_link.click()
 
-    usr_box =  browser.find_element_by_id('login_user_name')
-    pwd_box =  browser.find_element_by_id('login_user_pwd')
-    sub_btn = browser.find_element_by_id('btnLogin')
+    usr_box =  browser.find_element_by_name('username')
+    pwd_box =  browser.find_element_by_name('password')
+    sub_btn = browser.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div/div/div/div/div/form/div[5]/div[2]/button')
 
-    usr_box.send_keys('13651887669')
-    pwd_box.send_keys('fav@Apple!')
-
+    usr_box.send_keys('sunraise2005@gmail.com')
+    pwd_box.send_keys('fav8@Apple!_tv')
     sub_btn.click()
     # time.sleep(5)
 
@@ -492,6 +493,7 @@ def main():
     parser.add_option("--fetch_index_ts", action="store_true", default=False, dest="fetch_index_ts",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
     parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
+    fetch_index_tradingview_selenium()
 
     (options, args) = parser.parse_args()
     debug = options.debug
