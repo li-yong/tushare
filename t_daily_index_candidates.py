@@ -408,10 +408,85 @@ def fetch_index_tradingview_selenium():
     usr_box.send_keys('sunraise2005@gmail.com')
     pwd_box.send_keys('fav8@Apple!_tv')
     sub_btn.click()
-    # time.sleep(5)
+    WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
 
-    #wait maximum 10seconds to login
-    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+    browser.get('https://tradingview.com/screener/')
+    WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
+
+    # Set Column fields
+    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[3]/div[1]').click()
+
+    column_layout_list =  browser.find_elements_by_class_name('js-field-set-name')
+    for layout in column_layout_list:
+        print(layout.text)
+        if layout.text == 'MA_CROSS':
+            layout.click()
+
+    # dropdown_item_list =  browser.find_elements_by_class_name('tv-dropdown-behavior__item')
+
+    # Set period time window (4h, 1d etc)
+    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[7]/div[2]').click()
+    interval_list =  browser.find_elements_by_class_name('js-select-interval')
+    for i in interval_list:
+        print(i.text) #1W 1D 1h, 4h, 15m 5m  1m
+        if i.text == '1D':
+            i.click()
+
+
+
+    # Set market
+    market = 'CN'
+    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[8]/div[1]/img').click()
+    mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
+    for i in mkt_list:
+        print(i.text) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+
+        if market == 'USA' and i.text.find('USA (NAS') > -1:
+                i.click()
+        elif market == 'CN' and i.text.find('China ') > -1:
+                i.click()
+        elif market == 'HK' and i.text.find('Hong Kong') > -1:
+                i.click()
+
+    # Set Filter
+    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[12]/div[1]').click()
+    filter_list =  browser.find_elements_by_class_name('js-filter-set-name')
+    for f in filter_list:
+        print(f.text)
+        if f.text == 'sma_20_down_across_50':
+            f.click()
+
+    # down to file
+    # downloads/china_2021-03-31.csv
+    browser.find_element_by_class_name('tv-screener-toolbar__button--export').click()
+
+    #get result
+    #result table header.
+    columns = []
+
+
+    result_tbl =  browser.find_elements_by_class_name('tv-data-table')
+    tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')
+    for h in tbl_header:
+        print(h.text)
+        columns.append(h.text)
+
+    df = pd.DataFrame(columns=columns)
+
+    rows = result_tbl[1].find_elements_by_class_name('tv-data-table__row')
+    row_index = 0
+    for r in rows:
+        r_data_list = []
+        for c in r.find_elements_by_class_name('tv-data-table__cell'):
+            print(c.text)
+            r_data_list.append(c.text)
+
+        df.loc[row_index] = r_data_list
+        row_index += 1
+
+    print(1)
+
+
 
     for index_name in wg_index_dict.keys():
         code = wg_index_dict[index_name]['c']
