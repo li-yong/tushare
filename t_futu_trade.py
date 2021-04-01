@@ -135,7 +135,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
-        start=(datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+        start=(datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y-%m-%d"),
         end=datetime.datetime.today().strftime("%Y-%m-%d"),
         max_count=100)  #
 
@@ -143,14 +143,16 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
         logging.error(__file__+" "+'error:', data)
         return()
 
-    ma_value = data[-ma_period:]['close'].mean()
-    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_period "+str(ma_period)+" "+str(ma_value)+" at "+data.iloc[-1]['time_key'])
+    ma_value_b1 = data[-ma_period:]['close'].mean()
+    ma_value_nsub1_sum = data[-ma_period+1:]['close'].sum()
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
 
     return({
         'code':code,
         'ktype':ktype,
         'ma_period':ma_period,
-        'ma_value':ma_value,
+        'ma_value_b1':ma_value_b1,
+        'ma_value_nsub1_sum':ma_value_nsub1_sum,
         'time_key':data.iloc[-1]['time_key'],
     })
 
@@ -244,6 +246,10 @@ def main():
     host = "127.0.0.1"
     port = 11111
 
+    ktype =KLType.K_60M
+    ma_period =5
+    ma_period =21
+
     if simulator:
         trd_env = TrdEnv.SIMULATE
     else:
@@ -270,11 +276,10 @@ def main():
         logging.info(__file__+" "+"code "+code +" not has position")
 
     #init h1_ma5
-    h1_ma5_dict = get_current_ma(code=code, ktype=KLType.K_60M, ma_period=5)
-    h1_ma5 = h1_ma5_dict['ma_value']
+    h1_ma5_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
+    h1_ma5_nsub1_sum = h1_ma5_dict['ma_value_nsub1_sum']
 
     #check every minute, get realtime data
-    # min_cnt = 0
     p_less_ma5_cnt_in_a_row = 0
 
     while True:
@@ -296,9 +301,9 @@ def main():
         #update h1_ma5 at the 1st minute of a new hour
         now = datetime.datetime.now()
         if now.minute <= 3:
-            h1_ma5_dict = get_current_ma(code=code, ktype=KLType.K_60M, ma_period=5)
-            h1_ma5 = h1_ma5_dict['ma_value']
-            logging.info(__file__ + " renewed h1_ma5 at the begining of new hour. h1_ma5 "+str(h1_ma5))
+            h1_ma5_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
+            h1_ma5_nsub1_sum = h1_ma5_dict['ma_value_nsub1_sum']
+            logging.info(__file__ + " renewed h1_ma5 at the begining of new hour. h1_ma5_nsub1_sum "+str(h1_ma5_nsub1_sum))
 
 
         prices = get_current_price(['US.FUTU','HK.09977'])
@@ -310,6 +315,7 @@ def main():
 
         p_ask = stock.ask_price[0] #seller want to sell at this price.
         # p_bid = stock.bid_price[0] #buyer want to buy at this price.
+        h1_ma5 = (h1_ma5_nsub1_sum+p_ask)/ma_period
         logging.info(__file__+" "+"code "+code+", h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask)+" at "+stock['update_time'][0])
 
         if simulator:
@@ -346,7 +352,7 @@ def main():
             p_less_ma5_cnt_in_a_row = 0
             logging.info(__file__+" "+"code "+code+ " reset p_less_ma5_cnt_in_a_row tp 0. ")
 
-        logging.info(__file__ + " "+"code "+code + " this minute check completed.")
+        logging.info(__file__ + " "+"code "+code + " this minute check completed. h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask))
 
 
     trd_ctx_unlocked.close()
