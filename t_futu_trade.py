@@ -11,6 +11,10 @@ import tabulate
 import finlib
 import datetime
 
+import logging
+logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+
+
 #Depends on futu demon
 #Step1: /home/ryan/FutuOpenD_1.03_Ubuntu16.04/FutuOpenD &
 #Step2:  python3a $0
@@ -21,8 +25,13 @@ def pprint(df):
     print(tabulate.tabulate(df, headers='keys', tablefmt='psql'))
 
 
-def buy_limit(quote_ctx, trd_ctx, df_stock_info, code, drop_threshold=0.19, pwd_unlock='123456', trd_env=TrdEnv.SIMULATE, time_sleep=4):
+def place_sell_market_order(trd_ctx, code, qty, trd_env ):
+    ret, order_table = trd_ctx.place_order(qty=qty, code=code, trd_side=TrdSide.SELL,trd_env=trd_env, order_type=OrderType.MARKET)
+    print(1)
 
+
+
+def buy_limit(quote_ctx, trd_ctx, df_stock_info, code, drop_threshold=0.19, pwd_unlock='123456', trd_env=TrdEnv.SIMULATE, time_sleep=4):
     ###
     #ret, data = quote_ctx.get_market_snapshot(code)
     #df = df_market_snapshot[df_market_snapshot['code']==code]
@@ -69,11 +78,11 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
         max_count=100)  #
 
     if ret != RET_OK:
-        logging.error('error:', data)
+        logging.error(__file__+" "+'error:', data)
         return()
 
     ma_value = data[-ma_period:]['close'].mean()
-    logging.info("code "+code+", ktype "+ktype+", ma_period "+str(ma_period)+" "+str(ma_value)+" at "+data.iloc[-1]['time_key'])
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_period "+str(ma_period)+" "+str(ma_value)+" at "+data.iloc[-1]['time_key'])
 
     return({
         'code':code,
@@ -125,28 +134,35 @@ def test():
 
     #################################
 
-
-def get_persition_and_order(pwd_unlock,host="127.0.0.1", port=111111, market='HK'):
-
+def _get_trd_ctx(host="127.0.0.1", port=111111, market='HK'):
     if market == 'US':
         trd_ctx = OpenUSTradeContext(host=host, port=port)
     elif market == 'HK':
         trd_ctx = OpenHKTradeContext(host=host, port=port)
     else:
-        logging.fatal("unknow market, support (US,HK). get "+str(market))
+        logging.fatal(__file__ + " " + "unknown market, support (US,HK). get " + str(market))
+        raise Exception("unknown market, support (US,HK). get " + str(market))
 
-    #unlock trade
+    return(trd_ctx)
+
+
+def _unlock_trd_ctx(trd_ctx,pwd_unlock):
     ret, data = trd_ctx.unlock_trade(pwd_unlock)
     if ret != RET_OK:
+        logging.fatal(__file__ + " " + 'Failed to unlock trade')
         raise Exception('Failed to unlock trade')
+    return(trd_ctx)
+
+
+def get_persition_and_order(trd_ctx,market,trd_env):
 
     #checking orders(in queue)
-    ret, df_order_list = trd_ctx.order_list_query()
+    ret, df_order_list = trd_ctx.order_list_query(trd_env=trd_env)
     if ret != RET_OK:
         raise Exception("Cannot get order info ")
 
     #checking postion
-    ret, df_position_list = trd_ctx.position_list_query()
+    ret, df_position_list = trd_ctx.position_list_query(trd_env=trd_env)
     if ret != RET_OK:
         raise Exception("Failed to get position")
 
@@ -156,15 +172,19 @@ def get_persition_and_order(pwd_unlock,host="127.0.0.1", port=111111, market='HK
             'order_list':df_order_list,
         }
     )
-    print(0)
 
 
 def main():
     market = 'US'
     code = 'HK.09977'
     code = 'US.FUTU'
+    host = "127.0.0.1"
+    port = 11111
+    trd_env = TrdEnv.SIMULATE
 
-    rtn = get_persition_and_order(pwd_unlock='731024',host="127.0.0.1", port=11111, market=market)
+    trd_ctx_unlocked = _unlock_trd_ctx(trd_ctx=_get_trd_ctx(host=host, port=port,market=market), pwd_unlock=pwd_unlock)
+
+    rtn = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
 
     df_order_list = rtn['order_list']
     df_position_list = rtn['position_list']
@@ -176,24 +196,62 @@ def main():
     print(finlib.Finlib().pprint(position))
 
     if not code in df_position_list['code'].to_list():
-        logging.info("code "+code +" not has position")
+        logging.info(__file__+" "+"code "+code +" not has position")
 
-    h1_ma5 = get_current_ma(code=code, ktype=KLType.K_60M, ma_period=5)
+    #init h1_ma5
+    h1_ma5_dict = get_current_ma(code=code, ktype=KLType.K_60M, ma_period=5)
+    h1_ma5 = h1_ma5_dict['ma_value']
 
     #check every minute, get realtime data
-    min_cnt = 0
-    while min_cnt < 59:
-        time.sleep(60)
+    # min_cnt = 0
+    p_less_ma5_cnt_in_a_row = 0
+
+    while True:
+        #update h1_ma5 at the 1st minute of a new hour
+        now = datetime.datetime.now()
+        if now.minute <= 3:
+            h1_ma5_dict = get_current_ma(code=code, ktype=KLType.K_60M, ma_period=5)
+            h1_ma5 = h1_ma5_dict['ma_value']
+            logging.info(__file__ + "renewed h1_ma5 at the begining of new hour. h1_ma5 "+h1_ma5)
+
+        # logging.info(__file__+" "+"sleep 60 sec before check next.")
+        # time.sleep(60)
+        time.sleep(6) #ryan debug
         prices = get_current_price(['US.FUTU','HK.09977'])
         stock = prices[prices['code'] == code]
+        stock_lot_size = stock.iloc[0]['lot_size']
+        # print(finlib.Finlib().pprint(stock))
+
         p_ask = stock.ask_price[0] #seller want to sell at this price.
-        p_bid = stock.bid_price[0] #buyer want to buy at this price.
-        logging.info(" code "+code+ " ask price "+str(p_ask)+" at "+stock['update_time'][0])
+        # p_bid = stock.bid_price[0] #buyer want to buy at this price.
+        logging.info(__file__+" "+"code "+code+", h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask)+" at "+stock['update_time'][0])
 
-        if p_ask < 
+        if p_ask < h1_ma5:
+            p_less_ma5_cnt_in_a_row += 1
+
+            logging.info(__file__+" "+"code "+code+"alert! p_ask " +str(p_ask)+" < h1_ma5 " +str(h1_ma5) +
+                         " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
+
+            if p_less_ma5_cnt_in_a_row >= 3:
+                logging.info(__file__+" "+"code "+code++"proceeding to sell, p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
+                place_sell_market_order(trd_ctx=trd_ctx, code=code, qty=stock_lot_size,trd_env=trd_env)
+            else:
+                logging.info(__file__+" "+"code "+code++"hold to sell, p_less_ma5_cnt_in_a_row has not reach 3 yet" + str(p_less_ma5_cnt_in_a_row))
+
+            if p_ask <= h1_ma5 * 0.95:
+                logging.info(__file__+" "+"code "+code++"proceeding to sell, p_ask " +str(p_ask)+" <= h1_ma5*.095 " +str(h1_ma5*.095) +
+                         " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
+                place_sell_market_order(trd_ctx=trd_ctx, code=code, qty=stock_lot_size, trd_env=trd_env)
+            else:
+                logging.info(__file__+" "+"code "+code++"hold to sell,  p_ask " +str(p_ask)+" has not <= h1_ma5*.095 " +str(h1_ma5*.095) +
+                         " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
 
 
+        if p_ask >= h1_ma5 and p_less_ma5_cnt_in_a_row > 0:
+            p_less_ma5_cnt_in_a_row = 0
+            logging.info(__file__+" "+"code "+code++"reset p_less_ma5_cnt_in_a_row tp 0. ")
 
+        # logging.info(__file__ + " "+"code "+code+ + "this minute check completed.")
 
     print(1)
 
