@@ -178,6 +178,7 @@ exit(0)
 # finlib_indicator.Finlib_indicator().print_support_price_by_price_volume(code='SZ000568', market='AG')
 
 
+#from futu import *
 #
 # df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)
 # df1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA55_NEAR_MA21)
