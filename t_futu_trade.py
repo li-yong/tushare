@@ -298,8 +298,10 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
         # index 0 is the most recent order
         orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
 
+
+        this_order_string = finlib.Finlib().pprint(orders.head(1))
+
         last_order = orders.iloc[0]
-        this_order_string = finlib.Finlib().pprint(last_order)
 
         # last_order.order_id #6226957295081580411
         # last_order.code #HK.09977
@@ -314,12 +316,12 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
 
         if create_time_to_now.seconds <= 60*60*4: # 4 hours
             if not simulator:
-                logging.info("code "+code+" placed an order in 4 hours, will not create more orders.")
+                logging.info("code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(this_order_string)
                 return(dict_code)
 
             elif simulator and (last_order.order_status == 'SUBMITTED'):
-                logging.info("code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders.")
+                logging.info("code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(this_order_string)
                 return(dict_code)
 
@@ -367,7 +369,7 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
 
 
     if p_ask == 'N/A':
-        logging.info(__file__ + " " + "code " + code + ". Ask Price is N/A. Abort further check.")
+        logging.info(__file__ + " " + "code " + code + ". Ask Price is N/A. Abort further processing.")
         return(dict_code)
 
     h1_ma = (h1_ma_nsub1_sum + p_ask) / ma_period
