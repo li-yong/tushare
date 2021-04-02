@@ -183,6 +183,9 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
 
 
+
+
+
 def test():
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     # ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
@@ -260,6 +263,19 @@ def get_persition_and_order(trd_ctx,market,trd_env):
     )
 
 
+def sell_stock_if_p_below_hourly_ma(code,
+                                trd_ctx_unlocked,
+                                live_price_list,
+                                basic_info_list,
+                                position_list,
+                                ):
+    pass
+    pass
+
+
+
+
+
 def main():
     simulator = True
     market = Market.HK
@@ -270,7 +286,6 @@ def main():
 
     host = "127.0.0.1"
     port = 11111
-
 
 
     ktype =KLType.K_60M
@@ -298,26 +313,15 @@ def main():
     orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
     print(finlib.Finlib().pprint(orders))
 
-    position = df_position_list[df_position_list['code']==code].reset_index().drop('index', axis=1)
-    if not position.empty:
-        position_qty = position.qty[0]
-        position_can_sell_qty = position.can_sell_qty[0]
-        print(finlib.Finlib().pprint(position))
-    else:
-        position_qty = 0
-        position_can_sell_qty = 0
 
 
-    if not code in df_position_list['code'].to_list():
-        logging.info(__file__+" "+"code "+code +" not has position")
 
-
-    #init h1_ma5
-    h1_ma5_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
-    h1_ma5_nsub1_sum = h1_ma5_dict['ma_value_nsub1_sum']
+    #init h1_ma
+    h1_ma_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
+    h1_ma_nsub1_sum = h1_ma_dict['ma_value_nsub1_sum']
 
     #check every minute, get realtime data
-    p_less_ma5_cnt_in_a_row = 0
+    p_less_ma_cnt_in_a_row = 0
 
     while True:
 
@@ -338,14 +342,41 @@ def main():
         #update h1_ma5 at the 1st minute of a new hour
         now = datetime.datetime.now()
         if now.minute <= 3:
-            h1_ma5_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
-            h1_ma5_nsub1_sum = h1_ma5_dict['ma_value_nsub1_sum']
-            logging.info(__file__ + " renewed h1_ma5 at the begining of new hour. h1_ma5_nsub1_sum "+str(h1_ma5_nsub1_sum))
+            h1_ma_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
+            h1_ma_nsub1_sum = h1_ma_dict['ma_value_nsub1_sum']
+            logging.info(__file__ + " renewed h1_ma at the begining of new hour. h1_ma_nsub1_sum "+str(h1_ma_nsub1_sum))
 
 
-        prices = get_current_price(get_price_code_list)
-        stock = prices[prices['code'] == code]
+        df_live_price = get_current_price(get_price_code_list)
+        for code in get_price_code_list:
+            print(code)
+            sell_stock_if_p_below_hourly_ma(code=code, trd_ctx_unlocked=trd_ctx_unlocked,
+                                            live_price_list = df_live_price,
+                                            basic_info_list= df_stock_basicinfo,
+                                            position_list= df_position_list,
+                                            )
+
+
+        stock = df_live_price[df_live_price['code'] == code]
         stock_lot_size = stock.iloc[0]['lot_size']
+
+        ###################
+        #get position
+        ###################
+        if not code in df_position_list['code'].to_list():
+            logging.info(__file__ + " " + "code " + code + " not has position. Abort further processing.")
+            return()
+
+        position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
+        if not position.empty:
+            position_qty = position.qty[0]
+            position_can_sell_qty = position.can_sell_qty[0]
+            print(finlib.Finlib().pprint(position))
+        else:
+            position_qty = 0
+            position_can_sell_qty = 0
+
+
 
         sell_slot_size_1_of_4_position = int(position_can_sell_qty*0.25/stock_lot_size)*stock_lot_size
         # print(finlib.Finlib().pprint(stock))
@@ -357,18 +388,18 @@ def main():
             logging.info(__file__+" "+"code "+code+". Ask Price is N/A. Abort further check.")
             continue
 
-        h1_ma5 = (h1_ma5_nsub1_sum+p_ask)/ma_period
-        logging.info(__file__+" "+"code "+code+", h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask)+" at "+stock['update_time'][0])
+        h1_ma = (h1_ma_nsub1_sum+p_ask)/ma_period
+        logging.info(__file__+" "+"code "+code+", h1_ma "+str(h1_ma)+ " , ask price "+str(p_ask)+" at "+stock['update_time'][0])
 
         if simulator:
             rtn = place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=stock_lot_size, trd_env=trd_env)
             # rtn = place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=stock_lot_size, trd_env=trd_env)
 
 
-        if p_ask < h1_ma5:
+        if p_ask < h1_ma:
             p_less_ma5_cnt_in_a_row += 1
 
-            logging.info(__file__+" "+"code "+code+" alert! p_ask " +str(p_ask)+" < h1_ma5 " +str(h1_ma5) +
+            logging.info(__file__+" "+"code "+code+" alert! p_ask " +str(p_ask)+" < h1_ma " +str(h1_ma) +
                          " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
 
             if p_less_ma5_cnt_in_a_row >= 3:
@@ -379,22 +410,22 @@ def main():
             else:
                 logging.info(__file__+" "+"code "+code + " hold to sell, p_less_ma5_cnt_in_a_row has not reach 3 yet" + str(p_less_ma5_cnt_in_a_row))
 
-            if p_ask <= h1_ma5 * 0.95:
-                logging.info(__file__+" "+"code "+code+" proceeding to sell, p_ask " +str(p_ask)+" <= h1_ma5*.95 " +str(h1_ma5*.095) +
+            if p_ask <= h1_ma * 0.95:
+                logging.info(__file__+" "+"code "+code+" proceeding to sell, p_ask " +str(p_ask)+" <= h1_ma*.95 " +str(h1_ma*.95) +
                          " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
                 # place_sell_market_order(trd_ctx=trd_ctx_unlocked, code=code, qty=stock_lot_size, trd_env=trd_env)
                 place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position, trd_env=trd_env)
                 continue
             else:
-                logging.info(__file__+" "+"code "+code+" hold to sell,  p_ask " +str(p_ask)+" has not <= h1_ma5*.095 " +str(h1_ma5*.095) +
+                logging.info(__file__+" "+"code "+code+" hold to sell,  p_ask " +str(p_ask)+" has not <= h1_ma*.95 " +str(h1_ma*.95) +
                          " , p_less_ma5_cnt_in_a_row "+str(p_less_ma5_cnt_in_a_row))
 
 
-        if p_ask >= h1_ma5 and p_less_ma5_cnt_in_a_row > 0:
+        if p_ask >= h1_ma and p_less_ma5_cnt_in_a_row > 0:
             p_less_ma5_cnt_in_a_row = 0
             logging.info(__file__+" "+"code "+code+ " reset p_less_ma5_cnt_in_a_row tp 0. ")
 
-        logging.info(__file__ + " "+"code "+code + " this minute check completed. h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask))
+        logging.info(__file__ + " "+"code "+code + " this minute check completed. h1_ma "+str(h1_ma)+ " , ask price "+str(p_ask))
 
 
     trd_ctx_unlocked.close()
