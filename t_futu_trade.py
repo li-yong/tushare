@@ -120,6 +120,28 @@ def buy_limit(quote_ctx, trd_ctx, df_stock_info, code, drop_threshold=0.19, pwd_
     time.sleep(time_sleep)
 
 
+def get_stock_basicinfo(host, port, stock_list=None, market=Market.HK, securityType=SecurityType.STOCK):
+    quote_ctx = OpenQuoteContext(host=host, port=port)
+
+    if stock_list == None:
+        ret, data = quote_ctx.get_stock_basicinfo(market, securityType)
+        if ret == RET_OK:
+            print(data)
+        else:
+            print('error:', data)
+        print('******************************************')
+    else:
+        ret, data = quote_ctx.get_stock_basicinfo(market, securityType, stock_list)
+        if ret == RET_OK:
+            print(data)
+            print(data['name'][0])  # Take the first stock name
+            print(data['name'].values.tolist())  # Convert to list
+        else:
+            print('error:', data)
+
+    quote_ctx.close()  # After
+    return(data)
+
 def get_current_price(code_list=['HK.00700']):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(code_list)
@@ -198,14 +220,14 @@ def test():
 
     #################################
 
-def _get_trd_ctx(host="127.0.0.1", port=111111, market='HK'):
-    if market == 'US':
+def _get_trd_ctx(host="127.0.0.1", port=111111, market=Market.HK):
+    if market == Market.US:
         trd_ctx = OpenUSTradeContext(host=host, port=port)
-    elif market == 'HK':
+    elif market == Market.HK:
         trd_ctx = OpenHKTradeContext(host=host, port=port)
     else:
-        logging.fatal(__file__ + " " + "unknown market, support (US,HK). get " + str(market))
-        raise Exception("unknown market, support (US,HK). get " + str(market))
+        logging.fatal(__file__ + " " + "unknown market, support (Market.HK, Market.US). get " + str(market))
+        raise Exception("unknown market, support (Market.HK, Market.US). get " + str(market))
 
     return(trd_ctx)
 
@@ -240,11 +262,16 @@ def get_persition_and_order(trd_ctx,market,trd_env):
 
 def main():
     simulator = True
-    market = 'US'
+    market = Market.HK
+    # market = Market.US
     code = 'HK.09977'
-    code = 'US.FUTU'
+    # code = 'US.FUTU'
+    get_price_code_list = ['US.FUTU', 'HK.09977']
+
     host = "127.0.0.1"
     port = 11111
+
+
 
     ktype =KLType.K_60M
     ma_period =5
@@ -257,6 +284,10 @@ def main():
 
     pwd_unlock = '731024'
 
+    #General get lot
+    df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
+
+
     trd_ctx_unlocked = _unlock_trd_ctx(trd_ctx=_get_trd_ctx(host=host, port=port,market=market), pwd_unlock=pwd_unlock)
 
     rtn = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
@@ -268,12 +299,18 @@ def main():
     print(finlib.Finlib().pprint(orders))
 
     position = df_position_list[df_position_list['code']==code].reset_index().drop('index', axis=1)
-    position_qty = position.qty[0]
-    position_can_sell_qty = position.can_sell_qty[0]
-    print(finlib.Finlib().pprint(position))
+    if not position.empty:
+        position_qty = position.qty[0]
+        position_can_sell_qty = position.can_sell_qty[0]
+        print(finlib.Finlib().pprint(position))
+    else:
+        position_qty = 0
+        position_can_sell_qty = 0
+
 
     if not code in df_position_list['code'].to_list():
         logging.info(__file__+" "+"code "+code +" not has position")
+
 
     #init h1_ma5
     h1_ma5_dict = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
@@ -306,15 +343,20 @@ def main():
             logging.info(__file__ + " renewed h1_ma5 at the begining of new hour. h1_ma5_nsub1_sum "+str(h1_ma5_nsub1_sum))
 
 
-        prices = get_current_price(['US.FUTU','HK.09977'])
+        prices = get_current_price(get_price_code_list)
         stock = prices[prices['code'] == code]
         stock_lot_size = stock.iloc[0]['lot_size']
 
         sell_slot_size_1_of_4_position = int(position_can_sell_qty*0.25/stock_lot_size)*stock_lot_size
         # print(finlib.Finlib().pprint(stock))
 
-        p_ask = stock.ask_price[0] #seller want to sell at this price.
-        # p_bid = stock.bid_price[0] #buyer want to buy at this price.
+        p_ask = stock.iloc[0]['ask_price'] #seller want to sell at this price.
+        # p_bid = stock.iloc[0]['bid_price'] #buyer want to buy at this price.
+
+        if p_ask == 'N/A':
+            logging.info(__file__+" "+"code "+code+". Ask Price is N/A. Abort further check.")
+            continue
+
         h1_ma5 = (h1_ma5_nsub1_sum+p_ask)/ma_period
         logging.info(__file__+" "+"code "+code+", h1_ma5 "+str(h1_ma5)+ " , ask price "+str(p_ask)+" at "+stock['update_time'][0])
 
