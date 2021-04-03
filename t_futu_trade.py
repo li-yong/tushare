@@ -10,7 +10,7 @@ import pandas as pd
 import tabulate
 import finlib
 import datetime
-
+import pytz
 import logging
 logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
@@ -26,6 +26,7 @@ def pprint(df):
 
 
 def place_sell_market_order(trd_ctx, code, qty, trd_env ):
+    logging.info(__file__ + " place_sell_market_order " + "code " + code + " , qty " + str(qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=999999, qty=qty, code=code, trd_side=TrdSide.SELL,trd_env=trd_env, order_type=OrderType.MARKET)
 
     if not ret == RET_OK:
@@ -47,6 +48,7 @@ def place_sell_market_order(trd_ctx, code, qty, trd_env ):
 
 
 def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
+    logging.info(__file__+" place_sell_limit_order "+"code "+code+" , price "+str(price)+" , qty "+str(qty)+" , trd_env "+str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.SELL,trd_env=trd_env, order_type=OrderType.NORMAL)
 
     if not ret == RET_OK:
@@ -68,6 +70,8 @@ def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
 
 
 def place_buy_limit_order(trd_ctx, code, price, qty, trd_env ):
+    logging.info(__file__ + " place_buy_limit_order " + "code " + code + " , price " + str(price) + " , qty " + str(
+        qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.BUY,trd_env=trd_env, order_type=OrderType.NORMAL)
     print(finlib.Finlib().pprint(order_table))
     if not ret == RET_OK:
@@ -86,11 +90,6 @@ def place_buy_limit_order(trd_ctx, code, price, qty, trd_env ):
                      + " , trd_env " + str(trd_env)
                      )
     return(order_table)
-
-
-
-    print(1)
-
 
 
 def buy_limit(quote_ctx, trd_ctx, df_stock_info, code, drop_threshold=0.19, pwd_unlock='123456', trd_env=TrdEnv.SIMULATE, time_sleep=4):
@@ -125,19 +124,8 @@ def get_stock_basicinfo(host, port, stock_list=None, market=Market.HK, securityT
 
     if stock_list == None:
         ret, data = quote_ctx.get_stock_basicinfo(market, securityType)
-        if ret == RET_OK:
-            print(data)
-        else:
-            print('error:', data)
-        print('******************************************')
     else:
         ret, data = quote_ctx.get_stock_basicinfo(market, securityType, stock_list)
-        if ret == RET_OK:
-            print(data)
-            print(data['name'][0])  # Take the first stock name
-            print(data['name'].values.tolist())  # Convert to list
-        else:
-            print('error:', data)
 
     quote_ctx.close()  # After
     return(data)
@@ -183,7 +171,9 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
 
 
-
+def convert_dt_timezone(datetime_in, tz_in=pytz.timezone('America/New_York'), tz_out=pytz.timezone('Asia/Shanghai')):
+    dt_out = datetime_in.replace(tzinfo=tz_in).astimezone(tz_out)
+    return(dt_out)
 
 
 def test():
@@ -312,7 +302,20 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
         # last_order.create_time #'2021-04-02 11:44:05'
         # last_order.order_status #SUBMITTED
 
-        create_time_to_now = datetime.datetime.now() - datetime.datetime.strptime(last_order.create_time, "%Y-%m-%d %H:%M:%S")
+        lastorder_create_time = datetime.datetime.strptime(last_order.create_time, "%Y-%m-%d %H:%M:%S")
+
+        # US Market
+        if code.startswith('US.'):
+            lastorder_create_time = convert_dt_timezone(lastorder_create_time,
+                                                        tz_in=pytz.timezone('America/New_York'),
+                                                        tz_out=pytz.timezone('Asia/Shanghai'),
+                                                        )
+
+            create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) - lastorder_create_time
+
+        # not a US market. HK Market
+        else:
+            create_time_to_now = datetime.datetime.now() - lastorder_create_time
 
         if create_time_to_now.seconds <= 60*60*4: # 4 hours
             if not simulator:
@@ -368,8 +371,8 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
     ###################
 
 
-    if p_ask == 'N/A':
-        logging.info(__file__ + " " + "code " + code + ". Ask Price is N/A. Abort further processing.")
+    if p_ask == 'N/A' or p_ask == 0:
+        logging.info(__file__ + " " + "code " + code + ". Ask Price is "+ str(p_ask)+" . Abort further processing.")
         return(dict_code)
 
     h1_ma = (h1_ma_nsub1_sum + p_ask) / ma_period
@@ -393,7 +396,7 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
         elif p_ask <= h1_ma * 0.95:
             logging.info(
                 __file__ + " " + "code " + code + " proceeding to sell, p_ask " + str(p_ask) + " <= h1_ma*.95 " + str(
-                    h1_ma * .95) +
+                   round( h1_ma * .95, 2)) +
                 " , p_less_ma_cnt_in_a_row " + str(p_less_ma_cnt_in_a_row))
             # place_sell_market_order(trd_ctx=trd_ctx_unlocked, code=code, qty=stock_lot_size, trd_env=trd_env)
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
@@ -417,41 +420,40 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
 
 
 def main():
+    ############# ! IMPORTANT ! ######################
     simulator = True
-    market = Market.HK
-    # market = Market.US
+    ############# ! IMPORTANT ! ######################
 
-    host = "127.0.0.1"
-    port = 11111
+    market = Market.HK
+    market = Market.US
+    ktype =KLType.K_60M
+    # ma_period =5
+    ma_period =21
 
     if  market == Market.HK:
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
         get_price_code_list = ['US.FUTU', 'US.AAPL']
 
-
-    ktype =KLType.K_60M
-    ma_period =5
-    ma_period =21
-
     if simulator:
         trd_env = TrdEnv.SIMULATE
+        check_interval_sec = 15
     else:
         trd_env = TrdEnv.REAL
+        check_interval_sec = 60
 
+    host = "127.0.0.1"
+    port = 11111
     pwd_unlock = '731024'
 
     #General get lot
     df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
 
-
     trd_ctx_unlocked = _unlock_trd_ctx(trd_ctx=_get_trd_ctx(host=host, port=port,market=market), pwd_unlock=pwd_unlock)
 
-    rtn = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
-    df_order_list = rtn['order_list']
-    df_position_list = rtn['position_list']
+    _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
 
-
+    #populate code specification dictionary
     dict_code = {}
     for code in get_price_code_list:
         dict_code[code] = {
@@ -459,27 +461,11 @@ def main():
             'p_less_ma_cnt_in_a_row':0,
         }
 
-
    ############# Minutely Check ###############
     while True:
-
-        if simulator:
-            ts = 6
-        else:
-            ts = 60
-
-        logging.info(__file__ + " " + "sleep "+str(ts)+" sec before next check .")
-
-        try:
-            time.sleep(ts)
-        except:
-            trd_ctx_unlocked.close()
-            logging.info("caught exception, terminate trd_ctx_unlocked session")
-
-
         df_live_price = get_current_price(get_price_code_list)
-        for code in get_price_code_list:
 
+        for code in get_price_code_list:
             # update h1_ma5 at the 1st minute of a new hour
             now = datetime.datetime.now()
 
@@ -488,18 +474,25 @@ def main():
                 logging.info(__file__ + " code "+code+" renewed h1_ma_nsub1_sum " + str(dict_code[code]['h1_ma_nsub1_sum']))
 
             #check for each code
-            dict_code = sell_stock_if_p_below_hourly_ma_minutely_check(code=code,
-                                            simulator=simulator,
-                                            ma_period=ma_period,
-                                            trd_ctx_unlocked=trd_ctx_unlocked,
-                                            dict_code = dict_code,
-                                            df_live_price = df_live_price,
-                                            basic_info_list= df_stock_basicinfo,
-                                            df_position_list= df_position_list,
-                                            df_order_list= df_order_list,
-                                            )
+            try:
+                dict_code = sell_stock_if_p_below_hourly_ma_minutely_check(code=code,
+                                                simulator=simulator,
+                                                ma_period=ma_period,
+                                                trd_ctx_unlocked=trd_ctx_unlocked,
+                                                dict_code = dict_code,
+                                                df_live_price = df_live_price,
+                                                basic_info_list= df_stock_basicinfo,
+                                                df_position_list= _po['position_list'],
+                                                df_order_list= _po['order_list'],
+                                                )
 
-    trd_ctx_unlocked.close()
+            except KeyboardInterrupt:
+                trd_ctx_unlocked.close()
+                logging.info("caught exception, terminate trd_ctx_unlocked session")
+
+        logging.info(__file__ + " " + "sleep " + str(check_interval_sec) + " sec before next check .")
+        time.sleep(check_interval_sec)
+
     print("program completed, exiting.")
 
 
