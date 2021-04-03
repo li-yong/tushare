@@ -172,7 +172,16 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
 
 def convert_dt_timezone(datetime_in, tz_in=pytz.timezone('America/New_York'), tz_out=pytz.timezone('Asia/Shanghai')):
-    dt_out = datetime_in.replace(tzinfo=tz_in).astimezone(tz_out)
+    # dt_out = datetime_in.replace(tzinfo=tz_in).astimezone(tz=tz_out) # #incorrect convert
+    dt_out = tz_in.localize(datetime_in).astimezone(tz_out)
+
+    # ny = pytz.timezone('America/New_York')
+    # sh = pytz.timezone('Asia/Shanghai')
+    # din = datetime.datetime(2021, 1, 1, 21, 00, 00)
+    # a = ny.localize(din).astimezone(sh) # Convert correctly, and Daylight saving aware.
+    # b = din.replace(tzinfo=ny).astimezone(sh) #incorrect convert
+
+
     return(dt_out)
 
 
@@ -271,11 +280,6 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
         trd_env = TrdEnv.REAL
 
 
-    ###################
-    # get code spec
-    ###################
-    h1_ma_nsub1_sum = dict_code[code]['h1_ma_nsub1_sum']
-    p_less_ma_cnt_in_a_row = dict_code[code]['p_less_ma_cnt_in_a_row']
 
     ###################
     # get order
@@ -319,25 +323,16 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
 
         if create_time_to_now.seconds <= 60*60*4: # 4 hours
             if not simulator:
-                logging.info("code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
-                logging.info(this_order_string)
+                logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
+                logging.info(__file__ + " " + this_order_string)
                 return(dict_code)
 
-            elif simulator and (last_order.order_status == 'SUBMITTED'):
-                logging.info("code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
-                logging.info(this_order_string)
-                return(dict_code)
+            elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART')):
+                logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
+                logging.info(__file__ + " " + "latest order:\n"+this_order_string)
+                return(dict_code) 
 
 
-    ###################
-    # get live price
-    ###################
-    stock = df_live_price[df_live_price['code'] == code]
-    stock_lot_size = stock.iloc[0]['lot_size']
-
-    p_ask = stock.iloc[0]['ask_price']  # seller want to sell at this price.
-    p_last = stock.iloc[0]['last_price']  # seller want to sell at this price.
-    # p_bid = stock.iloc[0]['bid_price'] #buyer want to buy at this price.
 
     ###################
     # get position
@@ -345,7 +340,7 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
     if not code in df_position_list['code'].to_list():
         if simulator:
             logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create new order for simulator.")
-            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_last, code=code, qty=stock_lot_size,
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
                                         trd_env=trd_env)
             return (dict_code)
         else:
@@ -363,54 +358,77 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
     ###################
     # sell position
     ###################
+    stock_lot_size = dict_code[code]['stock_lot_size']
     sell_slot_size_1_of_4_position = int(position_can_sell_qty * 0.25 / stock_lot_size) * stock_lot_size
-    # print(finlib.Finlib().pprint(stock))
+
+    #trading one unit in REAL env.
+    if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
+        sell_slot_size_1_of_4_position = stock_lot_size
 
     ###################
     # evaluate p_ask with MA
     ###################
-
+    p_ask = dict_code[code]['p_ask']
+    p_bid = dict_code[code]['p_bid']
+    h1_ma = dict_code[code]['h1_ma']
 
     if p_ask == 'N/A' or p_ask == 0:
         logging.info(__file__ + " " + "code " + code + ". Ask Price is "+ str(p_ask)+" . Abort further processing.")
         return(dict_code)
 
-    h1_ma = (h1_ma_nsub1_sum + p_ask) / ma_period
-    logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask) + " at " +
-                 stock['update_time'][0])
+    logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
 
-    if p_ask < h1_ma:
-        p_less_ma_cnt_in_a_row += 1
+    if (p_ask < h1_ma) and (dict_code[code]['p_ask_last']  > dict_code[code]['h1_ma_last'] ):
+        logging.info(__file__ + " " + "code " + code + " alert! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+ ". proceeding to SELL")
 
-        logging.info(__file__ + " " + "code " + code + " alert! p_ask " + str(p_ask) + " < h1_ma " + str(h1_ma) +
-                     " , p_less_ma_cnt_in_a_row " + str(p_less_ma_cnt_in_a_row))
+        place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                               trd_env=trd_env)
 
-        if p_less_ma_cnt_in_a_row >= 3:
-            logging.info(__file__ + " " + "code " + code + " proceeding to sell, p_less_ma5_cnt_in_a_row " + str(
-                p_less_ma_cnt_in_a_row))
-            # place_sell_market_order(trd_ctx=trd_ctx_unlocked, code=code, qty=stock_lot_size,trd_env=trd_env)
-            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
-                                   trd_env=trd_env)
-            dict_code[code]['sell_oder_placed_time']=datetime.datetime.now()
+    if (p_bid > h1_ma) and (dict_code[code]['p_bid_last'] < dict_code[code]['h1_ma_last'] ):
+        logging.info(__file__ + " " + "code " + code + " alert! p_ask " + str(p_ask) + " UP across h1_ma " + str(h1_ma)+ ". proceeding to BUY")
 
-        elif p_ask <= h1_ma * 0.95:
-            logging.info(
-                __file__ + " " + "code " + code + " proceeding to sell, p_ask " + str(p_ask) + " <= h1_ma*.95 " + str(
-                   round( h1_ma * .95, 2)) +
-                " , p_less_ma_cnt_in_a_row " + str(p_less_ma_cnt_in_a_row))
-            # place_sell_market_order(trd_ctx=trd_ctx_unlocked, code=code, qty=stock_lot_size, trd_env=trd_env)
-            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
-                                   trd_env=trd_env)
-            dict_code[code]['sell_oder_placed_time'] = datetime.datetime.now()
+        place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
-
-    if p_ask >= h1_ma and p_less_ma_cnt_in_a_row > 0:
-        p_less_ma5_cnt_in_a_row = 0
-        logging.info(__file__ + " " + "code " + code + " reset p_less_ma_cnt_in_a_row tp 0. ")
 
     logging.info(
         __file__ + " " + "code " + code + " this minute check completed. h1_ma " + str(h1_ma) + " , ask price " + str(
-            p_ask)+" p_less_ma5_cnt_in_a_row " + str(p_less_ma_cnt_in_a_row))
+            p_ask))
+
+    return(dict_code)
+
+
+def hourly_ma_minutely_check(
+        code,
+        ma_period,
+        dict_code,
+        df_live_price,
+    ):
+
+
+    ###################
+    # get live price
+    ###################
+    stock = df_live_price[df_live_price['code'] == code]
+
+    dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
+    dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
+    dict_code[code]['h1_ma_last'] = dict_code[code]['h1_ma']
+
+    dict_code[code]['p_ask'] = stock.iloc[0]['ask_price']  # seller want to sell at this price.
+    dict_code[code]['p_last'] = stock.iloc[0]['last_price']  # seller want to sell at this price.
+    dict_code[code]['p_bid'] = stock.iloc[0]['bid_price'] #buyer want to buy at this price.
+
+    dict_code[code]['h1_ma'] = round((dict_code[code]['h1_ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
+
+    dict_code[code]['stock_lot_size'] = stock.iloc[0]['lot_size']
+
+    if dict_code[code]['p_ask']  < dict_code[code]['h1_ma']:
+        dict_code[code]['p_less_ma_cnt_in_a_row'] += 1
+        dict_code[code]['p_great_ma_cnt_in_a_row'] = 0
+
+    elif dict_code[code]['p_ask'] > dict_code[code]['h1_ma']:
+        dict_code[code]['p_great_ma_cnt_in_a_row'] += 1
+        dict_code[code]['p_less_ma_cnt_in_a_row'] = 0
 
     return(dict_code)
 
@@ -459,6 +477,10 @@ def main():
         dict_code[code] = {
             'h1_ma_nsub1_sum':0,
             'p_less_ma_cnt_in_a_row':0,
+            'p_great_ma_cnt_in_a_row':0,
+            'p_ask':0,
+            'p_bid':0,
+            'h1_ma':0,
         }
 
    ############# Minutely Check ###############
@@ -472,6 +494,12 @@ def main():
             if dict_code[code]['h1_ma_nsub1_sum'] == 0 or now.minute <= 3:
                 dict_code[code]['h1_ma_nsub1_sum'] = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)['ma_value_nsub1_sum']
                 logging.info(__file__ + " code "+code+" renewed h1_ma_nsub1_sum " + str(dict_code[code]['h1_ma_nsub1_sum']))
+
+            dict_code = hourly_ma_minutely_check(code=code,
+                                     ma_period=ma_period,
+                                     dict_code = dict_code,
+                                     df_live_price = df_live_price,
+                                )
 
             #check for each code
             try:
@@ -490,7 +518,7 @@ def main():
                 trd_ctx_unlocked.close()
                 logging.info("caught exception, terminate trd_ctx_unlocked session")
 
-        logging.info(__file__ + " " + "sleep " + str(check_interval_sec) + " sec before next check .")
+        logging.info(__file__ + " " + "sleep " + str(check_interval_sec) + " sec before next check.\n\n")
         time.sleep(check_interval_sec)
 
     print("program completed, exiting.")
