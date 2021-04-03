@@ -262,14 +262,11 @@ def get_persition_and_order(trd_ctx,market,trd_env):
     )
 
 
-def sell_stock_if_p_below_hourly_ma_minutely_check(
+def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         code,
         simulator,
-        ma_period,
         trd_ctx_unlocked,
         dict_code,
-        df_live_price,
-        basic_info_list,
         df_position_list,
         df_order_list,
     ):
@@ -325,12 +322,12 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
             if not simulator:
                 logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(__file__ + " " + this_order_string)
-                return(dict_code)
+                return()
 
             elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART')):
                 logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(__file__ + " " + "latest order:\n"+this_order_string)
-                return(dict_code) 
+                return()
 
 
 
@@ -342,10 +339,10 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create new order for simulator.")
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
                                         trd_env=trd_env)
-            return (dict_code)
+            return()
         else:
             logging.info(__file__ + " " + "code " + code + " not has position. Abort further processing.")
-            return (dict_code)
+            return()
 
     position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
@@ -373,19 +370,19 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
     h1_ma = dict_code[code]['h1_ma']
 
     if p_ask == 'N/A' or p_ask == 0:
-        logging.info(__file__ + " " + "code " + code + ". Ask Price is "+ str(p_ask)+" . Abort further processing.")
-        return(dict_code)
+        logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
+        return()
 
     logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
 
     if (p_ask < h1_ma) and (dict_code[code]['p_ask_last']  > dict_code[code]['h1_ma_last'] ):
-        logging.info(__file__ + " " + "code " + code + " alert! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+ ". proceeding to SELL")
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+ ". proceeding to SELL")
 
         place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                trd_env=trd_env)
 
     if (p_bid > h1_ma) and (dict_code[code]['p_bid_last'] < dict_code[code]['h1_ma_last'] ):
-        logging.info(__file__ + " " + "code " + code + " alert! p_ask " + str(p_ask) + " UP across h1_ma " + str(h1_ma)+ ". proceeding to BUY")
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " UP across h1_ma " + str(h1_ma)+ ". proceeding to BUY")
 
         place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
@@ -394,7 +391,7 @@ def sell_stock_if_p_below_hourly_ma_minutely_check(
         __file__ + " " + "code " + code + " this minute check completed. h1_ma " + str(h1_ma) + " , ask price " + str(
             p_ask))
 
-    return(dict_code)
+    return()
 
 
 def hourly_ma_minutely_check(
@@ -503,16 +500,14 @@ def main():
 
             #check for each code
             try:
-                dict_code = sell_stock_if_p_below_hourly_ma_minutely_check(code=code,
-                                                simulator=simulator,
-                                                ma_period=ma_period,
-                                                trd_ctx_unlocked=trd_ctx_unlocked,
-                                                dict_code = dict_code,
-                                                df_live_price = df_live_price,
-                                                basic_info_list= df_stock_basicinfo,
-                                                df_position_list= _po['position_list'],
-                                                df_order_list= _po['order_list'],
-                                                )
+                buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
+                    code=code,
+                    simulator=simulator,
+                    trd_ctx_unlocked=trd_ctx_unlocked,
+                    dict_code = dict_code,
+                    df_position_list= _po['position_list'],
+                    df_order_list= _po['order_list'],
+                )
 
             except KeyboardInterrupt:
                 trd_ctx_unlocked.close()
