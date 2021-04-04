@@ -27,7 +27,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# reduce webdriver session log for every request.
+from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
+from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
+SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
+
 import shutil
+
 ##############
 
 def tv_source(index_name,idict,period_start,period_end, ndays):
@@ -381,156 +387,49 @@ def fetch_index_wugui_selenium():
 ############
 def fetch_index_tradingview_selenium():
 
-    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
-
-    wg_index_dict = {
-        'hs300': {'c':'SH000300', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
-        'zz100': {'c':'SH000903', 'sheet': '中证100的成分股', },  # 中证100的历史估值和成分股估值权重下载
-        'zz500': {'c': 'SH000905', 'sheet': '中证500的成分股', },  # 中证500的历史估值和成分股估值权重下载
-        'szcz': {'c': 'SZ399001', 'sheet': '深证成指的成分股', },  # 深证成指的历史估值和成分股估值权重下载
-        'sz100': {'c': 'SZ399330', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
-    }
-
     opts = Options()
+    opts.add_argument("start-maximized")
     browser = Chrome(options=opts)
-    browser.get('https://www.tradingview.com/#signin')
 
-    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    xpath = '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/div[1]/div[4]/div/span'
-    login_link = browser.find_element_by_xpath(xpath)
-    # login_link = browser.find_element_by_partial_link_text('Sign in')
-    login_link.click()
-
-    usr_box =  browser.find_element_by_name('username')
-    pwd_box =  browser.find_element_by_name('password')
-    sub_btn = browser.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div/div/div/div/div/form/div[5]/div[2]/button')
-
-    usr_box.send_keys('sunraise2005@gmail.com')
-    pwd_box.send_keys('fav8@Apple!_tv')
-    sub_btn.click()
-    WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
+    browser = tv_login(browser=browser)
 
     browser.get('https://tradingview.com/screener/')
     WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
 
+    ######################################
     # Set Column fields
-    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[3]/div[1]').click()
-
-    column_layout_list =  browser.find_elements_by_class_name('js-field-set-name')
-    for layout in column_layout_list:
-        print(layout.text)
-        if layout.text == 'MA_CROSS':
-            layout.click()
-
+    ######################################
+    tv_screener_set_column_field(browser=browser, column_filed = 'MA_CROSS')
     # dropdown_item_list =  browser.find_elements_by_class_name('tv-dropdown-behavior__item')
 
+
+    ######################################
     # Set period time window (4h, 1d etc)
-    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[7]/div[2]').click()
-    interval_list =  browser.find_elements_by_class_name('js-select-interval')
-    for i in interval_list:
-        print(i.text) #1W 1D 1h, 4h, 15m 5m  1m
-        if i.text == '1D':
-            i.click()
+    ######################################
+    browser = tv_screener_set_interval(browser=browser, interval='1D')
 
 
-
+    ######################################
     # Set market
-    market = 'CN'
-    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[8]/div[1]/img').click()
-    mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
-    for i in mkt_list:
-        print(i.text) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+    ######################################
+    browser = tv_screener_set_market(browser=browser, market='CN')
 
-        if market == 'USA' and i.text.find('USA (NAS') > -1:
-                i.click()
-        elif market == 'CN' and i.text.find('China ') > -1:
-                i.click()
-        elif market == 'HK' and i.text.find('Hong Kong') > -1:
-                i.click()
 
+    ######################################
     # Set Filter
-    browser.find_element_by_xpath('/html/body/div[8]/div/div[2]/div[12]/div[1]').click()
-    filter_list =  browser.find_elements_by_class_name('js-filter-set-name')
-    for f in filter_list:
-        print(f.text)
-        if f.text == 'sma_20_down_across_50':
-            f.click()
+    ######################################
+    browser = tv_screener_set_filter(browser=browser, filter = 'sma_20_across_down_50')
 
-    # down to file
-    # downloads/china_2021-03-31.csv
-    browser.find_element_by_class_name('tv-screener-toolbar__button--export').click()
-
-    #get result
-    #result table header.
-    columns = []
+    ######################################
+    # get result
+    # result table header.
+    ######################################
+    df_result = tv_save_result_table(browser=browser, market='CN')
 
 
-    result_tbl =  browser.find_elements_by_class_name('tv-data-table')
-    tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')
-    for h in tbl_header:
-        print(h.text)
-        columns.append(h.text)
-
-    df = pd.DataFrame(columns=columns)
-
-    rows = result_tbl[1].find_elements_by_class_name('tv-data-table__row')
-    row_index = 0
-    for r in rows:
-        r_data_list = []
-        for c in r.find_elements_by_class_name('tv-data-table__cell'):
-            print(c.text)
-            r_data_list.append(c.text)
-
-        df.loc[row_index] = r_data_list
-        row_index += 1
 
     print(1)
 
-
-
-    for index_name in wg_index_dict.keys():
-        code = wg_index_dict[index_name]['c']
-        u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
-        f = "/home/ryan/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
-        f2 = wg_d+"/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
-        f_sl = wg_d+"/"+code+".xls"
-        logging.info("Download from wugui, index_name "+index_name+", url "+u)
-        browser.get(u)
-
-        #20210111_IndexData_SH000300.xls
-        while not os.path.exists(f):
-            logging.info("waiting download complete")
-            time.sleep(1)
-
-        shutil.move(f,f2)
-        logging.info(index_name+" downloaded. "+f)
-
-        if os.path.exists(f_sl):
-            os.unlink(f_sl)
-
-        os.symlink(f2, f_sl)
-        logging.info(index_name+",symbol link created. "+f_sl+" --> "+f2)
-
-        #### save the sheet to csv
-        logging.info("loading index from wugui, " + index_name)
-        df = pd.read_excel(f2, sheet_name=wg_index_dict[index_name]['sheet'])
-
-        df_rtn = df.rename(columns={
-            '股票代码': 'code',
-            '股票名': 'name',
-            '日期': 'date',
-            '收盘价_前复权': 'close',
-            'A股市值(亿)': 'mkt_cap',
-            '权重%': 'weight', })
-
-        df_rtn = df_rtn[['code', 'name', 'date', 'close', 'mkt_cap', 'weight', ]]
-        df_rtn.to_csv(wg_d+"/"+code+".csv", encoding='UTF-8', index=False)
-        logging.info("extracted the index "+index_name+" to csv. "+wg_d+"/"+code+".csv")
-
-        print(finlib.Finlib().pprint(df_rtn.head(2)))
-        #### save the sheet to csv
-
-    print("end of webdriver wugui index download.")
     browser.quit()
 
 
@@ -547,6 +446,157 @@ def index_weight_wg(index_name):
         'sz100': {'f': wg_d + '/SZ399330.csv' },  # 深证100的历史估值和成分股估值权重下载
     }
     return(pd.read_csv(wg_index_dict[index_name]['f']))
+
+
+def tv_login(browser):
+    browser.get('https://www.tradingview.com/#signin')
+
+    xpath = '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/div[1]/div[4]/div/span'
+    login_link = browser.find_element_by_xpath(xpath)
+    login_link.click()
+
+    usr_box =  browser.find_element_by_name('username')
+    pwd_box =  browser.find_element_by_name('password')
+    sub_btn = browser.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div/div/div/div/div/form/div[5]/div[2]/button')
+
+    usr_box.send_keys('sunraise2005@gmail.com')
+    pwd_box.send_keys('fav8@Apple!_tv')
+    sub_btn.click()
+    WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
+    return(browser)
+
+
+def tv_screener_set_interval(browser=browser, interval='1D'):
+    xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
+    obj_interval = browser.find_element_by_xpath(xp_interval)
+    interval = '1D'
+
+    obj_interval.click()
+    interval_list = browser.find_elements_by_class_name('js-select-interval')
+    for i in interval_list:
+        # print(i.text) #1W 1D 1h, 4h, 15m 5m  1m
+        if i.text == interval:
+            i.click()
+
+    time.sleep(1)
+    while obj_interval.text != interval:
+        logging.warning("interval has not set to " + interval)
+        time.sleep(1)
+    logging.info("interval has set to " + interval)
+    return(browser)
+
+def tv_screener_set_column_field(browser, column_filed = 'MA_CROSS'):
+    xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
+    obj_cf = browser.find_element_by_xpath(xp_cf)
+
+    obj_cf.click()
+    column_layout_list =  browser.find_elements_by_class_name('js-field-set-name')
+    for layout in column_layout_list:
+        # print(layout.text)
+        if layout.text == column_filed:
+            layout.click()
+
+    time.sleep(1)
+    while obj_cf.text != column_filed:
+        logging.warning("column filed has not set to "+column_filed)
+        time.sleep(1)
+    logging.info("column field has set to "+column_filed)
+    return(browser)
+
+def tv_screener_set_market(browser, market='CN'):
+    xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
+    obj_m = browser.find_element_by_xpath(xp_m)
+    market = 'CN' #['CN', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
+
+    obj_m.click()
+    mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
+    for i in mkt_list:
+        # print(i.text) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+
+        if market == 'US' and i.text.find('USA (NAS') > -1:
+                i.click()
+        elif market == 'CN' and i.text.find('China ') > -1:
+                i.click()
+        elif market == 'HK' and i.text.find('Hong Kong') > -1:
+                i.click()
+
+    time.sleep(1)
+    obj_m = browser.find_element_by_xpath(xp_m) #get element again ?
+    while obj_m.get_attribute('alt').upper() != market:
+        logging.warning("market has not set to "+market)
+        time.sleep(1)
+    logging.info("market has set to "+market)
+    return(browser)
+
+def tv_screener_set_filter(browser, filter):
+    xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
+    obj_f = browser.find_element_by_xpath(xp_f)
+
+    obj_f.click()
+    filter_list =  browser.find_elements_by_class_name('js-filter-set-name')
+    for f in filter_list:
+        # print(f.text)
+        if f.text == filter:
+            f.click()
+
+    time.sleep(1)
+    while obj_f.text != filter:
+        logging.warning("filter has not set to "+filter)
+        time.sleep(1)
+
+    logging.info("filter has set to "+filter)
+    return(browser)
+
+
+def tv_save_result_table(browser, market='CN'):
+    columns = []
+
+    result_tbl =  browser.find_elements_by_class_name('tv-data-table')
+    tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')
+    for h in tbl_header:
+        print(h.text)
+        columns.append(h.text)
+
+    df = pd.DataFrame(columns=columns)
+
+    rows = result_tbl[1].find_elements_by_class_name('tv-data-table__row')
+    row_index = 0
+    for r in rows:
+        r_data_list = []
+        for c in r.find_elements_by_class_name('tv-data-table__cell'):
+            # print(c.text)
+            r_data_list.append(c.text)
+
+        df.loc[row_index] = r_data_list
+        row_index += 1
+
+    if df.columns[0].startswith('TICKER'):
+        col_raw_code_name = [df.columns[0]]
+
+        df = pd.DataFrame([''] * df.__len__(), columns=["name"]).join(df)
+        df = pd.DataFrame([''] * df.__len__(), columns=["code"]).join(df)
+
+        for index, row in df.iterrows():
+            v = row[col_raw_code_name][0]
+            g = v.split('\n')
+            prefix = g[0]
+            code = g[1]
+            name = g[2]
+
+            #remove Delay (D) flag from code
+            if market == 'CN' and code.endswith('D'):
+                code = code.split('D')[0]
+
+            df.iloc[index]['code'] = code
+            df.iloc[index]['name'] = name
+
+
+        df = df.drop(col_raw_code_name, axis=1)
+
+        return(df)
+
+
+
 
 
 def main():

@@ -410,10 +410,12 @@ def hourly_ma_minutely_check(
     dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
     dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
     dict_code[code]['h1_ma_last'] = dict_code[code]['h1_ma']
+    dict_code[code]['update_time_last'] = dict_code[code]['update_time']
 
     dict_code[code]['p_ask'] = stock.iloc[0]['ask_price']  # seller want to sell at this price.
     dict_code[code]['p_last'] = stock.iloc[0]['last_price']  # seller want to sell at this price.
     dict_code[code]['p_bid'] = stock.iloc[0]['bid_price'] #buyer want to buy at this price.
+    dict_code[code]['update_time'] = stock.iloc[0]['update_time'] #buyer want to buy at this price.
 
     dict_code[code]['h1_ma'] = round((dict_code[code]['h1_ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
 
@@ -426,6 +428,16 @@ def hourly_ma_minutely_check(
     elif dict_code[code]['p_ask'] > dict_code[code]['h1_ma']:
         dict_code[code]['p_great_ma_cnt_in_a_row'] += 1
         dict_code[code]['p_less_ma_cnt_in_a_row'] = 0
+
+    logging.info("\n"+__file__ + " " + "code " + code + " "
+                 +" p_last "+str(dict_code[code]['p_last'])
+                 +" h1_ma " + str(dict_code[code]['h1_ma'])
+
+                 +" p_ask "+str(dict_code[code]['p_ask'])
+                 +" p_bid "+str(dict_code[code]['p_bid'])
+
+                 +" updated "+str(dict_code[code]['update_time'])
+                 )
 
     return(dict_code)
 
@@ -478,6 +490,7 @@ def main():
             'p_ask':0,
             'p_bid':0,
             'h1_ma':0,
+            'update_time':0,
         }
 
    ############# Minutely Check ###############
