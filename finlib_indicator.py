@@ -1302,6 +1302,7 @@ class Finlib_indicator:
 
     def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False):
         columns = []
+        delay_data_flag = True
 
         result_tbl = browser.find_elements_by_class_name('tv-data-table')
         tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')
@@ -1317,9 +1318,26 @@ class Finlib_indicator:
 
         rows = result_tbl[1].find_elements_by_class_name('tv-data-table__row')
         row_index = 0
+
+        #check if it's Delayed Data.
+        if rows.__len__()>0:
+            cell0_0 = rows[0].find_elements_by_class_name('tv-data-table__cell')[0]
+            try:
+                delay = cell0_0.find_element_by_class_name("tv-data-mode--delayed--for-screener")
+                logging.info("Dalay Data")
+            except:
+                logging.info("No delay of the data")
+                delay_data_flag = False
+
+
+
+
+
         for r in rows:
             r_data_list = []
             cells = r.find_elements_by_class_name('tv-data-table__cell')
+
+
 
             if parse_ticker_only:
                 r_data_list.append(cells[0].text)
@@ -1350,7 +1368,7 @@ class Finlib_indicator:
                     name = g[2]
 
                 # remove Delay (D) flag from code
-                if market == 'CN' and code.endswith('D'):
+                if delay_data_flag and code.endswith('D'):
                     code = code.split('D')[0]
 
                 df.iloc[index]['code'] = code
