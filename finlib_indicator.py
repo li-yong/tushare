@@ -46,6 +46,22 @@ pd.options.mode.chained_assignment = None
 # warnings.filterwarnings("default")
 
 
+
+
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# reduce webdriver session log for every request.
+from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
+from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
+SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
+
+
+
 class Finlib_indicator:
     def add_ma_ema_simple(self, df):
         logging.info("adding ma to df")
@@ -1169,7 +1185,211 @@ class Finlib_indicator:
 
             rtn = self.my_ma_koudi(df=df)
 
+    def tv_login(self, browser):
+        cookie_f = '/home/ryan/DATA/pickle/tradingview.cookie'
 
+        if finlib.Finlib().is_cached(cookie_f, day=2):
+            logging.info('tvlogin, load cookies from ' + cookie_f)
+
+            browser.get('https://www.tradingview.com/')
+            cookies = pickle.load(open(cookie_f, "rb"))
+            for cookie in cookies:
+                browser.add_cookie(cookie)
+
+            WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
+        else:
+            browser.get('https://www.tradingview.com/#signin')
+
+            xpath = '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/div[1]/div[4]/div/span'
+            login_link = browser.find_element_by_xpath(xpath)
+            login_link.click()
+
+            usr_box = browser.find_element_by_name('username')
+            pwd_box = browser.find_element_by_name('password')
+            sub_btn = browser.find_element_by_xpath(
+                '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/form/div[5]/div[2]/button')
+
+            usr_box.send_keys('sunraise2005@gmail.com')
+            pwd_box.send_keys('fav8@Apple!_tv')
+            sub_btn.click()
+            WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
+
+            pickle.dump(browser.get_cookies(), open(cookie_f, "wb"))
+            logging.info("tradingview login cookie saved to " + cookie_f)
+
+        return(browser)
+
+    def tv_screener_set_interval(self, browser, interval='1D'):
+        xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
+        obj_interval = browser.find_element_by_xpath(xp_interval)
+
+        obj_interval.click()
+        interval_list = browser.find_elements_by_class_name('js-select-interval')
+        for i in interval_list:
+            print(i.text)  # 1W 1D 1h, 4h, 15m 5m  1m
+            if i.text == interval:
+                i.click()
+
+        time.sleep(1)
+        while obj_interval.text != interval:
+            logging.warning("interval has not set to " + interval)
+            time.sleep(1)
+        logging.info("interval has set to " + interval)
+        return (browser)
+
+    def tv_screener_set_column_field(self, browser, column_filed='MA_CROSS'):
+        xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
+        obj_cf = browser.find_element_by_xpath(xp_cf)
+
+        obj_cf.click()
+        column_layout_list = browser.find_elements_by_class_name('js-field-set-name')
+        for layout in column_layout_list:
+            # print(layout.text)
+            if layout.text == column_filed:
+                layout.click()
+
+        time.sleep(1)
+        while obj_cf.text != column_filed:
+            logging.warning("column filed has not set to " + column_filed)
+            time.sleep(1)
+        logging.info("column field has set to " + column_filed)
+        return(browser)
+
+    def tv_screener_set_market(self, browser, market='CN'):
+        # market has to be in ['CN', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
+
+        xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
+        obj_m = browser.find_element_by_xpath(xp_m)
+
+        obj_m.click()
+        mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
+        for i in mkt_list:
+            # print(i.text) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+
+            if market == 'US' and i.text.find('USA (NAS') > -1:
+                i.click()
+            elif market == 'CN' and i.text.find('China ') > -1:
+                i.click()
+            elif market == 'HK' and i.text.find('Hong Kong') > -1:
+                i.click()
+
+        time.sleep(3)
+        obj_m = browser.find_element_by_xpath(xp_m)  # get element again ?
+        while obj_m.get_attribute('alt').upper() != market:
+            logging.warning("market has not set to " + market)
+            time.sleep(1)
+        logging.info("market has set to " + market)
+        return(browser)
+
+    def tv_screener_set_filter(self, browser, filter):
+        xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
+        obj_f = browser.find_element_by_xpath(xp_f)
+
+        obj_f.click()
+        filter_list = browser.find_elements_by_class_name('js-filter-set-name')
+        for f in filter_list:
+            print(f.text)
+            if f.text == filter:
+                f.click()
+
+        time.sleep(5)  # waiting filter result, sometime slow.
+        while obj_f.text != filter:
+            logging.warning("filter has not set to " + filter)
+            time.sleep(1)
+
+        logging.info("filter has set to " + filter)
+        return(browser)
+
+    def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False):
+        columns = []
+
+        result_tbl = browser.find_elements_by_class_name('tv-data-table')
+        tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')
+
+        if parse_ticker_only:
+            columns.append(tbl_header[0].text)
+        else:
+            for h in tbl_header:
+                # print(h.text)
+                columns.append(h.text)
+
+        df = pd.DataFrame(columns=columns)
+
+        rows = result_tbl[1].find_elements_by_class_name('tv-data-table__row')
+        row_index = 0
+        for r in rows:
+            r_data_list = []
+            cells = r.find_elements_by_class_name('tv-data-table__cell')
+
+            if parse_ticker_only:
+                r_data_list.append(cells[0].text)
+            else:
+                for c in cells:
+                    # print(c.text)
+                    r_data_list.append(c.text)
+
+            df.loc[row_index] = r_data_list
+            row_index += 1
+
+        if df.columns[0].startswith('TICKER'):
+            col_raw_code_name = [df.columns[0]]
+
+            df = pd.DataFrame([''] * df.__len__(), columns=["name_en"]).join(df)
+            df = pd.DataFrame([''] * df.__len__(), columns=["code"]).join(df)
+
+            for index, row in df.iterrows():
+                v = row[col_raw_code_name][0]
+                g = v.split('\n')
+
+                if g.__len__() == 2:  # US
+                    code = g[0]
+                    name = g[1]
+                elif g.__len__() == 3:  # CN
+                    prefix = g[0]
+                    code = g[1]
+                    name = g[2]
+
+                # remove Delay (D) flag from code
+                if market == 'CN' and code.endswith('D'):
+                    code = code.split('D')[0]
+
+                df.iloc[index]['code'] = code
+                df.iloc[index]['name_en'] = name
+
+            df = df.drop(col_raw_code_name, axis=1)
+            logging.info("result have parsed to df")
+
+            if market == 'CN':
+                df = finlib.Finlib().add_market_to_code(df)
+                df = finlib.Finlib().add_stock_name_to_df(df)
+            else:
+                df = finlib.Finlib().add_stock_name_to_df_us_hk(df)
+                # df = df.rename(columns={"name_en": "name"}, inplace=False)
+
+            return(df)
+
+    def tv_screener_start(self,browser, column_filed, interval, market, filter):
+        ######################################
+        # Set Column fields
+        ######################################
+        browser = self.tv_screener_set_column_field(browser=browser, column_filed=column_filed)
+
+        ######################################
+        # Set period time window (4h, 1d etc)
+        ######################################
+        browser = self.tv_screener_set_interval(browser=browser, interval=interval)
+
+        ######################################
+        # Set market
+        ######################################
+        browser = self.tv_screener_set_market(browser=browser, market=market)
+
+        ######################################
+        # Set Filter
+        ######################################
+        browser = self.tv_screener_set_filter(browser=browser, filter=filter)
+
+        return(browser)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
