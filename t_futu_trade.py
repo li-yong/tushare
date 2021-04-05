@@ -158,15 +158,25 @@ def get_current_price(code_list=['HK.00700']):
 
 def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+
+    start = (datetime.datetime.today() - datetime.timedelta(days=5)).strftime("%Y-%m-%d")
+    end = datetime.datetime.today().strftime("%Y-%m-%d")
+    extended_time = True
+    max_count= 100
+
+    ls = 'code' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
+    logging.info("get_current_ma/request_history_kline "+ls)
+
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
-        start=(datetime.datetime.today() - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
-        end=datetime.datetime.today().strftime("%Y-%m-%d"),
-        extended_time=True,
-        max_count=100)  #
+        start=start,
+        end=end,
+        extended_time=extended_time,
+        max_count=max_count)  #
 
     if ret != RET_OK:
-        logging.error(__file__+" "+'error:', data)
+        logging.fatal(__file__+" "+'error:', data)
+        raise Exception("Error on get_current_ma/request_history_kline."+ls )
         return()
 
     ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
@@ -532,7 +542,8 @@ def main():
     if  market == Market.HK:
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
-        get_price_code_list = ['US.FUTU', 'US.AAPL']
+        get_price_code_list = ['US.FUTU', 'US.AAPL', 'US.KDP']
+        # get_price_code_list = ['US.MDU']
 
     if simulator:
         # trd_env = TrdEnv.SIMULATE
