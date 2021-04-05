@@ -169,8 +169,8 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
         logging.error(__file__+" "+'error:', data)
         return()
 
-    ma_value_b1 = data[-ma_period:]['close'].mean()
-    ma_value_nsub1_sum = data[-ma_period+1:]['close'].sum()
+    ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
+    ma_value_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)
     logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
 
     return({
@@ -283,8 +283,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         simulator,
         trd_ctx_unlocked,
         dict_code,
-        df_position_list,
-        df_order_list,
+        market,
     ):
 
     if simulator:
@@ -292,7 +291,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         trd_env = TrdEnv.REAL
 
-
+    _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
+    df_order_list = _po['order_list']
+    df_position_list = _po['position_list']
 
     ###################
     # get order
@@ -340,10 +341,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                 logging.info(__file__ + " " + this_order_string)
                 return()
 
-            elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART')):
+            elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
                 logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(__file__ + " " + "latest order:\n"+this_order_string)
                 return()
+            elif simulator:
+                logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
+
+
 
 
 
@@ -384,6 +389,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     p_ask = dict_code[code]['p_ask']
     p_bid = dict_code[code]['p_bid']
     h1_ma = dict_code[code]['h1_ma']
+    ma_period = dict_code[code]['ma_period']
 
     if p_ask == 'N/A' or p_ask == 0:
         logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
@@ -392,7 +398,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
 
     if (p_ask < h1_ma) and (dict_code[code]['p_ask_last']  > dict_code[code]['h1_ma_last'] ):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+ ". proceeding to SELL")
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+". proceeding to SELL")
 
         place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                trd_env=trd_env)
@@ -404,7 +410,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
 
     logging.info(
-        __file__ + " " + "code " + code + " this minute check completed. h1_ma " + str(h1_ma) + " , ask price " + str(
+        __file__ + " " + "code " + code + ", this minute check completed. h1_ma_"+ str(ma_period)+" " + str(h1_ma)+" , ask price " + str(
             p_ask))
 
     return()
@@ -529,7 +535,7 @@ def main():
         get_price_code_list = ['US.FUTU', 'US.AAPL']
 
     if simulator:
-        trd_env = TrdEnv.SIMULATE
+        # trd_env = TrdEnv.SIMULATE
         check_interval_sec = 15
     else:
         logging.info("WILL RUN IN REAL ACCOUNT, continue? [YES]")
@@ -538,7 +544,7 @@ def main():
         if confirm != "YES":
             exit(0)
 
-        trd_env = TrdEnv.REAL
+        # trd_env = TrdEnv.REAL
         check_interval_sec = 60
 
     host = "127.0.0.1"
@@ -546,11 +552,9 @@ def main():
     pwd_unlock = '731024'
 
     #General get lot
-    df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
+    # df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
 
     trd_ctx_unlocked = _unlock_trd_ctx(trd_ctx=_get_trd_ctx(host=host, port=port,market=market), pwd_unlock=pwd_unlock)
-
-    _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
 
     #populate code specification dictionary
     dict_code = {}
@@ -592,7 +596,9 @@ def main():
             now = datetime.datetime.now()
 
             if dict_code[code]['h1_ma_nsub1_sum'] == 0 or now.minute <= 3:
-                dict_code[code]['h1_ma_nsub1_sum'] = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)['ma_value_nsub1_sum']
+                _ = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
+                dict_code[code]['h1_ma_nsub1_sum'] = _['ma_value_nsub1_sum']
+                dict_code[code]['ma_period'] = _['ma_period']
                 logging.info(__file__ + " code "+code+" renewed h1_ma_nsub1_sum " + str(dict_code[code]['h1_ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,
@@ -608,8 +614,7 @@ def main():
                     simulator=simulator,
                     trd_ctx_unlocked=trd_ctx_unlocked,
                     dict_code = dict_code,
-                    df_position_list= _po['position_list'],
-                    df_order_list= _po['order_list'],
+                    market= market,
                 )
 
             except KeyboardInterrupt:
