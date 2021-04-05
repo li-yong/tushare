@@ -414,6 +414,7 @@ def fetch_index_tradingview_selenium():
     ######################################
 
     column_filed = 'ALL'
+    column_filed = 'column_short'
     interval = '1D'
     market = 'US'
     market = 'HK'

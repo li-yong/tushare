@@ -1319,16 +1319,8 @@ class Finlib_indicator:
         obj_m.click()
         self.tv_wait_page_to_ready(browser, timeout=10)
 
-        #scroll down entire window 200 from current position
-        browser.execute_script("window.scrollTo(0, window.scrollY + 200);")
-
-        # mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
-
-        # obj_m.find_elements_by_class_name("sb-scrollbar")
-        # browser.find_element_by_class_name("tv-dropdown__body").find_element_by_class_name("sb-scrollbar")
-        # browser.find_element_by_class_name("tv-dropdown__body").sendKeys(Keys.PAGE_DOWN);
-        # browser.find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-control-select__option-wrap")
-        # browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-dropdown-behavior__item")
+        # #scroll down entire window 200 from current position
+        # browser.execute_script("window.scrollTo(0, window.scrollY + 200);")
 
         scroll_bar = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("sb-scrollbar")
         scroll_bar.location
@@ -1348,9 +1340,8 @@ class Finlib_indicator:
 
             for i in mkt_list:
 
-
                 im = i.get_attribute("data-market")
-                print(im) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+                # print(im) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
 
                 if market == 'US' and im == "america" and i.is_displayed():
                     i.click()
@@ -1367,11 +1358,11 @@ class Finlib_indicator:
 
         self.tv_wait_page_to_ready(browser, timeout=10)
 
-        # time.sleep(3)
-        obj_m = browser.find_element_by_xpath(xp_m)  # get element again ?
+        obj_m = browser.find_element_by_xpath(xp_m)  # get element again. otherwise staled obj
         while obj_m.get_attribute('alt').upper() != market:
             logging.warning("market has not set to " + market)
             time.sleep(1)
+            obj_m = browser.find_element_by_xpath(xp_m) #refresh
         logging.info("market has set to " + market)
         return(browser)
 
