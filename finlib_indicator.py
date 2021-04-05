@@ -1270,19 +1270,17 @@ class Finlib_indicator:
     def tv_screener_set_column_field(self, browser, column_filed='MA_CROSS'):
         xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
 
-
         try:
             obj_cf = browser.find_element_by_xpath(xp_cf)
         except:
             logging.warning("get column_filed error, "+xp_cf+" retry in 10sec")
             time.sleep(10)
-            obj_cf = browser.find_element_by_xpath(xp_cf)
 
-        if obj_cf.text == column_filed:
+        if browser.find_element_by_xpath(xp_cf).text == column_filed:
             logging.info("column field already be " + column_filed)
             return(browser)
 
-        obj_cf.click()
+        browser.find_element_by_xpath(xp_cf).click()
         self.tv_wait_page_to_ready(browser, timeout=10)
 
         column_layout_list = browser.find_elements_by_class_name('js-field-set-name')
@@ -1358,11 +1356,11 @@ class Finlib_indicator:
 
         self.tv_wait_page_to_ready(browser, timeout=10)
 
-        obj_m = browser.find_element_by_xpath(xp_m)  # get element again. otherwise staled obj
-        while obj_m.get_attribute('alt').upper() != market:
+        # obj_m =   # get element again. otherwise staled obj
+        while browser.find_element_by_xpath(xp_m).get_attribute('alt').upper() != market:
             logging.warning("market has not set to " + market)
             time.sleep(1)
-            obj_m = browser.find_element_by_xpath(xp_m) #refresh
+            # obj_m = browser.find_element_by_xpath(xp_m) #refresh
         logging.info("market has set to " + market)
         return(browser)
 
@@ -1401,7 +1399,8 @@ class Finlib_indicator:
         logging.info("filter has set to " + filter)
         return(browser)
 
-    def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False):
+
+    def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False, max_row = 20):
         columns = []
         delay_data_flag = True
 
@@ -1431,10 +1430,14 @@ class Finlib_indicator:
                 delay_data_flag = False
 
 
-
-
-
+        r_cnt = 0
         for r in rows:
+            if (max_row > 0) and (r_cnt > max_row):
+                break
+
+            r_cnt += 1
+
+
             r_data_list = []
             cells = r.find_elements_by_class_name('tv-data-table__cell')
 
@@ -1487,6 +1490,38 @@ class Finlib_indicator:
 
 
         return(df)
+
+    def tv_screener_export(self, browser):
+        for e in browser.find_elements_by_class_name("tv-screener-toolbar__button"):
+            tx = e.get_attribute("data-name")
+            if tx == 'screener-export-data':
+                e.click()
+
+
+        # update file link
+        f = "/home/ryan/Downloads/" + datetime.datetime.today().strftime("%Y%m%d") + "_IndexData_" + code + ".xls"
+
+        # 20210125_IndexData_CSI931087.xls
+
+        f2 = wg_d + "/" + datetime.datetime.today().strftime("%Y%m%d") + "_IndexData_" + code + ".xls"
+        f_sl = wg_d + "/" + code + ".xls"
+        logging.info("Download from wugui, index_name " + index_name + ", url " + u)
+        browser.get(u)
+
+        # 20210111_IndexData_SH000300.xls
+        while not os.path.exists(f):
+            logging.info("waiting download complete, expecting " + f)
+            time.sleep(1)
+
+        shutil.move(f, f2)
+        logging.info(index_name + " downloaded. " + f)
+
+        if os.path.exists(f_sl):
+            os.unlink(f_sl)
+
+        os.symlink(f2, f_sl)
+        logging.info(index_name + ",symbol link created. " + f_sl + " --> " + f2)
+
 
     def tv_screener_start(self,browser, column_filed, interval, market, filter):
         ######################################

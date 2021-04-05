@@ -160,7 +160,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
-        start=(datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y-%m-%d"),
+        start=(datetime.datetime.today() - datetime.timedelta(days=5)).strftime("%Y-%m-%d"),
         end=datetime.datetime.today().strftime("%Y-%m-%d"),
         extended_time=True,
         max_count=100)  #
@@ -506,11 +506,13 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
 
     df.to_csv(csv_f, encoding='UTF-8', index=False)
     logging.info("TV filter "+filter+" output appened to "+csv_f +" ,stock numbers in result "+str(df_result.__len__()))
-
+    return(df_result)
 
 def main():
     ############# ! IMPORTANT ! ######################
     simulator = True
+    # simulator = False
+
     ############# ! IMPORTANT ! ######################
 
     market = Market.HK
@@ -519,6 +521,7 @@ def main():
     # ma_period =5
     ma_period =21
     tv_source = True
+    tv_source = False
 
     if  market == Market.HK:
         get_price_code_list = ['HK.00700', 'HK.09977']
@@ -529,6 +532,12 @@ def main():
         trd_env = TrdEnv.SIMULATE
         check_interval_sec = 15
     else:
+        logging.info("WILL RUN IN REAL ACCOUNT, continue? [YES]")
+        confirm = input()
+
+        if confirm != "YES":
+            exit(0)
+
         trd_env = TrdEnv.REAL
         check_interval_sec = 60
 

@@ -412,23 +412,10 @@ def fetch_index_tradingview_selenium():
     ######################################
     # Set Filters
     ######################################
+    # finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='US', filter='ALL_of_The_market_US' )
+    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='HK', filter='ALL_of_The_market' )
+    # finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='CN, filter='ALL_of_The_market' )
 
-    column_filed = 'ALL'
-    column_filed = 'column_short'
-    interval = '1D'
-    market = 'US'
-    market = 'HK'
-    # market = 'CN'
-    filter = 'ALL_of_The_market2'
-    # filter = 'ALL_of_The_market_US'
-
-    finlib_indicator.Finlib_indicator().tv_screener_start(
-        browser=browser,
-        column_filed=column_filed,
-        interval=interval,
-        market=market,
-        filter=filter
-    )
 
     ######################################
     # Parse result to a dataframe
