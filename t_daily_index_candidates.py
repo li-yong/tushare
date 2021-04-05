@@ -389,11 +389,12 @@ def fetch_index_wugui_selenium():
 def fetch_index_tradingview_selenium():
 
     opts = Options()
-    opts.add_argument("start-maximized")
+    # opts.add_argument("start-maximized")
     opts.add_argument("--log-level=0")
     # opts.headless = True
     # opts.add_experimental_option("excludeSwitches", ["enable-logging"])
     browser = Chrome(options=opts)
+
 
     ######################################
     # Login TV and go to screener page
@@ -401,21 +402,24 @@ def fetch_index_tradingview_selenium():
     browser = finlib_indicator.Finlib_indicator().tv_login(browser=browser)
 
     browser.get('https://tradingview.com/screener/')
-    WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
 
+    finlib_indicator.Finlib_indicator().tv_wait_page_to_ready(browser,timeout=10)
+    logging.info("page load complete")
+    WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
+    logging.info("Title ready")
+    time.sleep(10)
 
     ######################################
     # Set Filters
     ######################################
 
-    column_filed = 'price_diff_interval'
-    column_filed = 'MA_CROSS'
-    column_filed = 'column_short'
-
-    interval = '1h'
+    column_filed = 'ALL'
+    interval = '1D'
     market = 'US'
-    filter = 'sma_20_across_down_50'
-    filter = 'sma_20_above_50'
+    market = 'HK'
+    # market = 'CN'
+    filter = 'ALL_of_The_market2'
+    # filter = 'ALL_of_The_market_US'
 
     finlib_indicator.Finlib_indicator().tv_screener_start(
         browser=browser,
@@ -428,14 +432,7 @@ def fetch_index_tradingview_selenium():
     ######################################
     # Parse result to a dataframe
     ######################################
-    # df_result = tv_save_result_table(browser=browser, market='CN')
-    df_result = finlib_indicator.Finlib_indicator().tv_save_result_table(browser=browser, market='US', parse_ticker_only=True)
-    print(finlib.Finlib().pprint(df_result.head(2)))
-
-
-
-
-
+    df_result = finlib_indicator.Finlib_indicator().tv_save_result_table(browser=browser, market=market, parse_ticker_only=True)
 
     browser.quit()
 

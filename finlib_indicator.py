@@ -61,6 +61,9 @@ from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logg
 SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
 
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import ActionChains
+
 
 class Finlib_indicator:
     def add_ma_ema_simple(self, df):
@@ -1221,7 +1224,18 @@ class Finlib_indicator:
 
     def tv_screener_set_interval(self, browser, interval='1D'):
         xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
-        obj_interval = browser.find_element_by_xpath(xp_interval)
+
+        try:
+            obj_interval = browser.find_element_by_xpath(xp_interval)
+        except:
+            logging.warning("get interval error, "+xp_interval+" retry in 10sec")
+            time.sleep(10)
+            obj_cf = browser.find_element_by_xpath(xp_interval)
+
+        if obj_interval.text == interval:
+            logging.info("interval already be " + interval)
+            return (browser)
+
 
         obj_interval.click()
         interval_list = browser.find_elements_by_class_name('js-select-interval')
@@ -1237,16 +1251,48 @@ class Finlib_indicator:
         logging.info("interval has set to " + interval)
         return (browser)
 
+
+    def tv_wait_page_to_ready(self,browser,timeout):
+        _bs = browser.execute_script("return document.readyState")
+        t = 0
+
+        while _bs != "complete":
+            print("page readystate: " + _bs)
+            time.sleep(1)
+            t += 1
+
+            if t> timeout:
+                print("timeout, page not ready,readystate: " + _bs)
+                break
+
+        return()
+
     def tv_screener_set_column_field(self, browser, column_filed='MA_CROSS'):
         xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
-        obj_cf = browser.find_element_by_xpath(xp_cf)
+
+
+        try:
+            obj_cf = browser.find_element_by_xpath(xp_cf)
+        except:
+            logging.warning("get column_filed error, "+xp_cf+" retry in 10sec")
+            time.sleep(10)
+            obj_cf = browser.find_element_by_xpath(xp_cf)
+
+        if obj_cf.text == column_filed:
+            logging.info("column field already be " + column_filed)
+            return(browser)
 
         obj_cf.click()
+        self.tv_wait_page_to_ready(browser, timeout=10)
+
         column_layout_list = browser.find_elements_by_class_name('js-field-set-name')
         for layout in column_layout_list:
             # print(layout.text)
             if layout.text == column_filed:
                 layout.click()
+                self.tv_wait_page_to_ready(browser, timeout=10)
+                break
+
 
         time.sleep(1)
         while obj_cf.text != column_filed:
@@ -1259,21 +1305,69 @@ class Finlib_indicator:
         # market has to be in ['CN', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
 
         xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
-        obj_m = browser.find_element_by_xpath(xp_m)
+        try:
+            obj_m = browser.find_element_by_xpath(xp_m)
+        except:
+            logging.warning("get market error, "+xp_m+" retry in 10sec")
+            time.sleep(10)
+            obj_cf = browser.find_element_by_xpath(xp_m)
+
+        if obj_m.get_attribute('alt').upper() == market:
+            logging.info("market already be " + market)
+            return(browser)
 
         obj_m.click()
-        mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
-        for i in mkt_list:
-            # print(i.text) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+        self.tv_wait_page_to_ready(browser, timeout=10)
 
-            if market == 'US' and i.text.find('USA (NAS') > -1:
-                i.click()
-            elif market == 'CN' and i.text.find('China ') > -1:
-                i.click()
-            elif market == 'HK' and i.text.find('Hong Kong') > -1:
-                i.click()
+        #scroll down entire window 200 from current position
+        browser.execute_script("window.scrollTo(0, window.scrollY + 200);")
 
-        time.sleep(3)
+        # mkt_list = browser.find_elements_by_class_name('tv-screener-market-select__item-title')
+
+        # obj_m.find_elements_by_class_name("sb-scrollbar")
+        # browser.find_element_by_class_name("tv-dropdown__body").find_element_by_class_name("sb-scrollbar")
+        # browser.find_element_by_class_name("tv-dropdown__body").sendKeys(Keys.PAGE_DOWN);
+        # browser.find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-control-select__option-wrap")
+        # browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-dropdown-behavior__item")
+
+        scroll_bar = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("sb-scrollbar")
+        scroll_bar.location
+
+        action = ActionChains(browser)
+        # action.move_to_element(scroll_bar).click()
+
+        mkt_clicked = False
+        for j in range(100):
+            if mkt_clicked:
+                break
+
+            action.drag_and_drop_by_offset(source=scroll_bar, xoffset=0, yoffset=10)
+            action.perform()
+
+            mkt_list = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-control-select__option-wrap")
+
+            for i in mkt_list:
+
+
+                im = i.get_attribute("data-market")
+                print(im) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+
+                if market == 'US' and im == "america" and i.is_displayed():
+                    i.click()
+                    mkt_clicked = True
+                    break
+                elif market == 'CN' and im == "china" and i.is_displayed():
+                    i.click()
+                    mkt_clicked = True
+                    break
+                elif market == 'HK' and im == "hongkong" and i.is_displayed():
+                    i.click()
+                    mkt_clicked = True
+                    break
+
+        self.tv_wait_page_to_ready(browser, timeout=10)
+
+        # time.sleep(3)
         obj_m = browser.find_element_by_xpath(xp_m)  # get element again ?
         while obj_m.get_attribute('alt').upper() != market:
             logging.warning("market has not set to " + market)
@@ -1283,14 +1377,30 @@ class Finlib_indicator:
 
     def tv_screener_set_filter(self, browser, filter):
         xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
-        obj_f = browser.find_element_by_xpath(xp_f)
+        try:
+            obj_f = browser.find_element_by_xpath(xp_f)
+        except:
+            logging.warning("get filter error, "+xp_f+" retry in 10sec")
+            time.sleep(10)
+            obj_cf = browser.find_element_by_xpath(xp_f)
+
+        if obj_f.text == filter:
+            logging.info("filter already be " + filter)
+            return(browser)
 
         obj_f.click()
+        self.tv_wait_page_to_ready(browser, timeout=10)
+
         filter_list = browser.find_elements_by_class_name('js-filter-set-name')
         for f in filter_list:
             print(f.text)
             if f.text == filter:
                 f.click()
+                self.tv_wait_page_to_ready(browser, timeout=10)
+                break
+                time.sleep(3)
+
+
 
         time.sleep(5)  # waiting filter result, sometime slow.
         while obj_f.text != filter:
@@ -1374,17 +1484,18 @@ class Finlib_indicator:
                 df.iloc[index]['code'] = code
                 df.iloc[index]['name_en'] = name
 
-            df = df.drop(col_raw_code_name, axis=1)
-            logging.info("result have parsed to df")
+        df = df.drop(col_raw_code_name, axis=1)
+        logging.info("result have parsed to df")
 
-            if market == 'CN':
-                df = finlib.Finlib().add_market_to_code(df)
-                df = finlib.Finlib().add_stock_name_to_df(df)
-            else:
-                df = finlib.Finlib().add_stock_name_to_df_us_hk(df)
-                # df = df.rename(columns={"name_en": "name"}, inplace=False)
+        if market == 'CN':
+            df = finlib.Finlib().add_market_to_code(df)
+            df = finlib.Finlib().add_stock_name_to_df(df)
+        else:
+            df = finlib.Finlib().add_stock_name_to_df_us_hk(df)
+            # df = df.rename(columns={"name_en": "name"}, inplace=False)
 
-            return(df)
+
+        return(df)
 
     def tv_screener_start(self,browser, column_filed, interval, market, filter):
         ######################################

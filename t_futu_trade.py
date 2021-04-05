@@ -9,10 +9,25 @@ import pandas as pd
 # import time
 import tabulate
 import finlib
+import finlib_indicator
 import datetime
 import pytz
 import logging
 logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+
+
+
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# reduce webdriver session log for every request.
+from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
+from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
+SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
 
 #Depends on futu demon
@@ -147,6 +162,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
         code, ktype=ktype,
         start=(datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y-%m-%d"),
         end=datetime.datetime.today().strftime("%Y-%m-%d"),
+        extended_time=True,
         max_count=100)  #
 
     if ret != RET_OK:
@@ -441,9 +457,55 @@ def hourly_ma_minutely_check(
 
     return(dict_code)
 
+def tv_init():
+    opts = Options()
+    # opts.add_argument("start-maximized")
+    opts.add_argument("--log-level=0")
+    # opts.headless = True
+    # opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+    browser = Chrome(options=opts)
+
+    ######################################
+    # Login TV and go to screener page
+    ######################################
+    browser = finlib_indicator.Finlib_indicator().tv_login(browser=browser)
+
+    browser.get('https://tradingview.com/screener/')
+    WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
+    return(browser)
 
 
+def tv_monitor_minutely(browser, column_filed,interval,market,filter):
+    finlib_indicator.Finlib_indicator().tv_screener_start(
+        browser=browser,
+        column_filed=column_filed,
+        interval=interval,
+        market=market,
+        filter=filter
+    )
 
+    ######################################
+    # Parse result to a dataframe
+    ######################################
+    select_date_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S")
+    df_result = finlib_indicator.Finlib_indicator().tv_save_result_table(browser=browser, market=market, parse_ticker_only=True)
+    # print(finlib.Finlib().pprint(df_result.head(2)))
+
+    df_result_a = pd.DataFrame.from_dict({
+        'datetime':[select_date_time],
+        'filter':[filter],
+        "code_list":[','.join(df_result['code'].to_list())],
+    })
+
+    csv_f = "/home/ryan/DATA/result/tv_filter_monitor.csv"
+    if os.path.isfile(csv_f):
+        df = pd.read_csv(csv_f)
+        df = df.append(df_result_a)
+    else:
+        df = df_result_a
+
+    df.to_csv(csv_f, encoding='UTF-8', index=False)
+    logging.info("TV filter "+filter+" output appened to "+csv_f +" ,stock numbers in result "+str(df_result.__len__()))
 
 
 def main():
@@ -456,6 +518,7 @@ def main():
     ktype =KLType.K_60M
     # ma_period =5
     ma_period =21
+    tv_source = True
 
     if  market == Market.HK:
         get_price_code_list = ['HK.00700', 'HK.09977']
@@ -493,8 +556,26 @@ def main():
             'update_time':0,
         }
 
+
+    ############## TV
+    if tv_source:
+        browser = tv_init()
+
+
    ############# Minutely Check ###############
     while True:
+        if tv_source:
+            # df_sma_20_across_up_50 = tv_monitor_minutely(browser, 'column_short', '1h', market, 'sma_20_across_up_50')
+            # df_sma_20_across_down_50 = tv_monitor_minutely(browser, 'column_short', '1h', market,'sma_20_across_down_50')
+
+            df_p_across_up_20 = tv_monitor_minutely(browser, 'column_short', '1h', market, 'p_across_up_sma20')
+            logging.info("Head of df_p_across_up_20"+finlib.Finlib().pprint(df_p_across_up_20.head(2)))
+
+
+            df_p_across_down_sma20 = tv_monitor_minutely(browser, 'column_short', '1h', market,'p_across_down_sma20')
+            logging.info("Head of df_sma_20_across_down_50" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
+
+
         df_live_price = get_current_price(get_price_code_list)
 
         for code in get_price_code_list:
