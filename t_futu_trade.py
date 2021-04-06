@@ -407,14 +407,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
 
-    if (p_ask < h1_ma) and (dict_code[code]['p_ask_last']  > dict_code[code]['h1_ma_last'] ):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " DOWN across h1_ma " + str(h1_ma)+". proceeding to SELL")
+    if (h1_ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['h1_ma_last'] > 0):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN h1_ma " + str(h1_ma)+". proceeding to SELL")
 
         place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                trd_env=trd_env)
 
-    if (p_bid > h1_ma) and (dict_code[code]['p_bid_last'] < dict_code[code]['h1_ma_last'] ):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " UP across h1_ma " + str(h1_ma)+ ". proceeding to BUY")
+    if (p_bid > h1_ma > 0) and (dict_code[code]['h1_ma_last'] > dict_code[code]['p_bid_last'] > 0):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP h1_ma " + str(h1_ma)+ ". proceeding to BUY")
 
         place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
@@ -532,7 +532,7 @@ def main():
     ############# ! IMPORTANT ! ######################
 
     market = Market.HK
-    market = Market.US
+    # market = Market.US
     ktype =KLType.K_60M
     # ma_period =5
     ma_period =21
@@ -549,7 +549,7 @@ def main():
         # trd_env = TrdEnv.SIMULATE
         check_interval_sec = 15
     else:
-        logging.info("WILL RUN IN REAL ACCOUNT, continue? [YES]")
+        logging.info("WILL RUN IN REAL ACCOUNT, type REAL_ACCOUNT to continue: ")
         confirm = input()
 
         if confirm != "YES":
