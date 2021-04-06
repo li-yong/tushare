@@ -716,7 +716,7 @@ def main():
             # update h1_ma5 at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if dict_code[code]['h1_ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds <= k_renew_interval_second[ktype]:
+            if dict_code[code]['h1_ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds >= k_renew_interval_second[ktype]:
                 t_last_k_renew = now
                 _ = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['h1_ma_nsub1_sum'] = _['ma_value_nsub1_sum']
