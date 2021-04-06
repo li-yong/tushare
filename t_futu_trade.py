@@ -603,6 +603,7 @@ def main():
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
+    parser.add_option("--ktype", default="K_60M", dest="ktype",type="str", help="Kline type. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
 
 
     (options, args) = parser.parse_args()
@@ -625,7 +626,7 @@ def main():
     # market = Market.SH
     # market = Market.SZ
     market = options.market
-    ktype =KLType.K_60M
+    ktype =options.ktype
     ma_period =options.ma_period
     tv_source = options.tv_source
 
