@@ -164,7 +164,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     extended_time = True
     max_count= 100
 
-    ls = 'code' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
+    ls = 'code ' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
     logging.info("get_current_ma/request_history_kline "+ls)
 
     ret, data, page_req_key = quote_ctx.request_history_kline(
@@ -176,7 +176,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
     if ret != RET_OK:
         logging.fatal(__file__+" "+'error:', data)
-        raise Exception("Error on get_current_ma/request_history_kline."+ls )
+        raise Exception("Error on get_current_ma/request_history_kline. "+ls )
 
 
     while page_req_key != None:  # 请求后面的所有结果
@@ -188,7 +188,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
         if ret != RET_OK:
             logging.fatal(__file__ + " " + 'error:', data)
-            raise Exception("Error on get_current_ma/request_history_kline." + ls)
+            raise Exception("Error on get_current_ma/request_history_kline. " + ls)
         else:
             data = data.append(data_n)
 
@@ -589,8 +589,7 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
     return(df_result)
 
 def main():
-    logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',
-                        datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+    logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
     logging.info(__file__+" "+"\n")
     logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
@@ -675,6 +674,20 @@ def main():
             'update_time':0,
         }
 
+    k_renew_interval_second = {
+        'K_1M':1*60,
+        'K_3M':3*60,
+        'K_5M':5*60,
+        'K_15M':15*60,
+        'K_30M':30*60,
+        'K_60M':60*60,
+        'K_DAY':24*60*60,
+        'K_WEEK':24*60*60*7,
+        'K_MON':24*60*60*7*30,
+        'K_QUARTER':24*60*60*7*90,
+        'K_YEAR':24*60*60*7*365,
+    }
+
 
     ############## TV
     if tv_source:
@@ -682,6 +695,8 @@ def main():
 
 
    ############# Minutely Check ###############
+    t_last_k_renew = datetime.datetime.now()
+
     while True:
         if tv_source:
             # df_sma_20_across_up_50 = tv_monitor_minutely(browser, 'column_short', '1h', market, 'sma_20_across_up_50')
@@ -701,7 +716,8 @@ def main():
             # update h1_ma5 at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if dict_code[code]['h1_ma_nsub1_sum'] == 0 or now.minute <= 3:
+            if dict_code[code]['h1_ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds <= k_renew_interval_second[ktype]:
+                t_last_k_renew = now
                 _ = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['h1_ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
