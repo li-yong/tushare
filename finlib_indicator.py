@@ -1188,33 +1188,43 @@ class Finlib_indicator:
 
             rtn = self.my_ma_koudi(df=df)
 
-    def tv_login(self, browser):
+    def tv_login(self, browser,target_uri='https://www.tradingview.com/'):
         cookie_f = '/home/ryan/DATA/pickle/tradingview.cookie'
 
         if finlib.Finlib().is_cached(cookie_f, day=2):
             logging.info('tvlogin, load cookies from ' + cookie_f)
 
             browser.get('https://www.tradingview.com/')
-            cookies = pickle.load(open(cookie_f, "rb"))
-            for cookie in cookies:
-                browser.add_cookie(cookie)
+            # time.sleep(10)
+            self.tv_wait_page_to_ready(browser=browser, timeout=10)
 
-            WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
+            with open(cookie_f, "rb") as f:
+                cookies = pickle.load(f)
+
+            for c in cookies:
+                browser.add_cookie(c)
+
+            browser.get(target_uri)
+            self.tv_wait_page_to_ready(browser=browser, timeout=10)
+
+
         else:
-            browser.get('https://www.tradingview.com/#signin')
+            browser.get(target_uri+'#signin')
 
-            xpath = '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/div[1]/div[4]/div/span'
-            login_link = browser.find_element_by_xpath(xpath)
-            login_link.click()
+            browser.find_element_by_class_name('tv-signin-dialog__toggle-email').click()
+
 
             usr_box = browser.find_element_by_name('username')
             pwd_box = browser.find_element_by_name('password')
-            sub_btn = browser.find_element_by_xpath(
-                '/html/body/div[10]/div/div[2]/div/div/div/div/div/div/form/div[5]/div[2]/button')
+
 
             usr_box.send_keys('sunraise2005@gmail.com')
             pwd_box.send_keys('fav8@Apple!_tv')
-            sub_btn.click()
+
+            browser.find_element_by_class_name('tv-button__loader').click()
+
+            time.sleep(10)
+
             WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
 
             pickle.dump(browser.get_cookies(), open(cookie_f, "wb"))
@@ -1299,8 +1309,10 @@ class Finlib_indicator:
         logging.info("column field has set to " + column_filed)
         return(browser)
 
-    def tv_screener_set_market(self, browser, market='CN'):
-        # market has to be in ['CN', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
+    def tv_screener_set_market(self, browser, market='US'):
+        # market has to be in ['SH','SZ', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
+        if market in  ['SH', 'SZ']:
+            market = 'CN'
 
         xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
         try:
@@ -1345,7 +1357,7 @@ class Finlib_indicator:
                     i.click()
                     mkt_clicked = True
                     break
-                elif market == 'CN' and im == "china" and i.is_displayed():
+                elif (market == 'CN') and im == "china" and i.is_displayed():
                     i.click()
                     mkt_clicked = True
                     break
@@ -1403,6 +1415,9 @@ class Finlib_indicator:
     def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False, max_row = 20):
         columns = []
         delay_data_flag = True
+
+        if market in ['SH','SZ']:
+            market = 'CN'
 
         result_tbl = browser.find_elements_by_class_name('tv-data-table')
         tbl_header = result_tbl[0].find_elements_by_class_name('tv-data-table__th')

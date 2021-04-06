@@ -549,9 +549,8 @@ def tv_init():
     ######################################
     # Login TV and go to screener page
     ######################################
-    browser = finlib_indicator.Finlib_indicator().tv_login(browser=browser)
+    browser = finlib_indicator.Finlib_indicator().tv_login(browser=browser, target_uri='https://tradingview.com/screener/')
 
-    browser.get('https://tradingview.com/screener/')
     WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
     return(browser)
 
@@ -688,11 +687,11 @@ def main():
             # df_sma_20_across_down_50 = tv_monitor_minutely(browser, 'column_short', '1h', market,'sma_20_across_down_50')
 
             df_p_across_up_20 = tv_monitor_minutely(browser, 'column_short', '1h', market, 'p_across_up_sma20')
-            logging.info("Head of df_p_across_up_20"+finlib.Finlib().pprint(df_p_across_up_20.head(2)))
+            logging.info("Head of df_p_across_up_20:\n"+finlib.Finlib().pprint(df_p_across_up_20.head(2)))
 
 
             df_p_across_down_sma20 = tv_monitor_minutely(browser, 'column_short', '1h', market,'p_across_down_sma20')
-            logging.info("Head of df_sma_20_across_down_50" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
+            logging.info("Head of df_p_across_down_sma20:\n" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
 
 
         df_live_price = get_current_price(get_price_code_list)
