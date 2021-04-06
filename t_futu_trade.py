@@ -13,8 +13,8 @@ import finlib_indicator
 import datetime
 import pytz
 import logging
-logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
+from optparse import OptionParser
 
 
 from selenium.webdriver import Chrome
@@ -159,7 +159,7 @@ def get_current_price(code_list=['HK.00700']):
 def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
 
-    start = (datetime.datetime.today() - datetime.timedelta(days=5)).strftime("%Y-%m-%d")
+    start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
     extended_time = True
     max_count= 100
@@ -177,10 +177,30 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     if ret != RET_OK:
         logging.fatal(__file__+" "+'error:', data)
         raise Exception("Error on get_current_ma/request_history_kline."+ls )
-        return()
+
+
+    while page_req_key != None:  # 请求后面的所有结果
+        ret, data_n, page_req_key = quote_ctx.request_history_kline(code, ktype=ktype,
+        start=start,
+        end=end,
+        extended_time=extended_time,
+        max_count=max_count, page_req_key=page_req_key)  # 请求翻页后的数据
+
+        if ret != RET_OK:
+            logging.fatal(__file__ + " " + 'error:', data)
+            raise Exception("Error on get_current_ma/request_history_kline." + ls)
+        else:
+            data = data.append(data_n)
+
+    if data.__len__() < ma_period:
+        logging.info(finlib.Finlib().pprint(data))
+        logging.error("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
+        raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
 
     ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
     ma_value_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)
+
+    logging.info('*************************************')
     logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
 
     return({
@@ -253,6 +273,12 @@ def _get_trd_ctx(host="127.0.0.1", port=111111, market=Market.HK):
         trd_ctx = OpenUSTradeContext(host=host, port=port)
     elif market == Market.HK:
         trd_ctx = OpenHKTradeContext(host=host, port=port)
+
+    elif market == Market.SH:
+        trd_ctx = OpenCNTradeContext(host=host, port=port)
+
+    elif market == Market.SZ:
+        trd_ctx = OpenCNTradeContext(host=host, port=port)
     else:
         logging.fatal(__file__ + " " + "unknown market, support (Market.HK, Market.US). get " + str(market))
         raise Exception("unknown market, support (Market.HK, Market.US). get " + str(market))
@@ -301,6 +327,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         trd_env = TrdEnv.REAL
 
+    do_not_place_order = False
+
     _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
     df_order_list = _po['order_list']
     df_position_list = _po['position_list']
@@ -317,7 +345,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
 
 
-        this_order_string = finlib.Finlib().pprint(orders.head(1))
+        this_order_string = finlib.Finlib().pprint(orders.head(1)[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
 
         last_order = orders.iloc[0]
 
@@ -349,12 +377,13 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             if not simulator:
                 logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(__file__ + " " + this_order_string)
-                return()
+                do_not_place_order = True
 
             elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
                 logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
                 logging.info(__file__ + " " + "latest order:\n"+this_order_string)
-                return()
+                do_not_place_order = True
+
             elif simulator:
                 logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
 
@@ -370,14 +399,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create new order for simulator.")
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
                                         trd_env=trd_env)
-            return()
+            return()#return after place a test order
         else:
             logging.info(__file__ + " " + "code " + code + " not has position. Abort further processing.")
-            return()
+            do_not_place_order = True
 
     position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
-    cur_pos="current position:\n"+finlib.Finlib().pprint(position)
+    cur_pos="current position:\n"+finlib.Finlib().pprint(position[[ 'code','stock_name', 'qty','can_sell_qty','position_side','unrealized_pl','realized_pl' ]])
     # print(cur_pos)
     logging.info(cur_pos)
     position_qty = position.qty[0]
@@ -401,27 +430,49 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     h1_ma = dict_code[code]['h1_ma']
     ma_period = dict_code[code]['ma_period']
 
+    if h1_ma < p_ask:
+        symbol_ha_ma_p_ask = "<"
+    elif h1_ma == p_ask:
+        symbol_ha_ma_p_ask = "="
+    else:
+        symbol_ha_ma_p_ask = ">"
+
+
+    if dict_code[code]['h1_ma_last'] < dict_code[code]['p_ask_last']:
+        symbol_ha_ma_p_ask_last = "<"
+    elif dict_code[code]['h1_ma_last'] == dict_code[code]['p_ask_last']:
+        symbol_ha_ma_p_ask_last = "="
+    else:
+        symbol_ha_ma_p_ask_last = ">"
+
+
     if p_ask == 'N/A' or p_ask == 0:
         logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
         return()
 
     logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
 
+
     if (h1_ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['h1_ma_last'] > 0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN h1_ma " + str(h1_ma)+". proceeding to SELL")
-
-        place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
-                               trd_env=trd_env)
-
+        if do_not_place_order:
+            logging.info("do_not_place_order = True is set, so order didn't placed.")
+        else:
+            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                                   trd_env=trd_env)
     if (p_bid > h1_ma > 0) and (dict_code[code]['h1_ma_last'] > dict_code[code]['p_bid_last'] > 0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP h1_ma " + str(h1_ma)+ ". proceeding to BUY")
+        if not do_not_place_order:
+            logging.info("do_not_place_order = True is set, so order didn't placed.")
+        else:
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
-        place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
+    logging.info('*************************************')
 
     logging.info(
         __file__ + " " + "code " + code + ", this minute check completed. h1_ma_"+ str(ma_period)+" " + str(h1_ma)+" , ask price " + str(
-            p_ask))
+            p_ask)+ ". this_last: "+symbol_ha_ma_p_ask+symbol_ha_ma_p_ask_last)
 
     return()
 
@@ -444,12 +495,26 @@ def hourly_ma_minutely_check(
     dict_code[code]['h1_ma_last'] = dict_code[code]['h1_ma']
     dict_code[code]['update_time_last'] = dict_code[code]['update_time']
 
-    dict_code[code]['p_ask'] = stock.iloc[0]['ask_price']  # seller want to sell at this price.
+    if stock.iloc[0]['ask_price']  in ['N/A', 0]:
+        logging.warning(__file__ + " " + "code " + code + " invalid ask price "+str(stock.iloc[0]['ask_price']))
+        dict_code[code]['p_ask']  = 0
+        dict_code[code]['h1_ma'] = -1
+
+    else:
+        dict_code[code]['p_ask'] = stock.iloc[0]['ask_price']  # seller want to sell at this price.
+        dict_code[code]['h1_ma'] = round((dict_code[code]['h1_ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
+
+
+
+    if stock.iloc[0]['bid_price']  in ['N/A', 0]:
+        logging.warning(__file__ + " " + "code " + code + " invalid bid price "+str(stock.iloc[0]['bid_price']))
+        dict_code[code]['p_bid'] = 0
+    else:
+        dict_code[code]['p_bid'] = stock.iloc[0]['bid_price']  # buyer want to buy at this price.
+
     dict_code[code]['p_last'] = stock.iloc[0]['last_price']  # seller want to sell at this price.
-    dict_code[code]['p_bid'] = stock.iloc[0]['bid_price'] #buyer want to buy at this price.
     dict_code[code]['update_time'] = stock.iloc[0]['update_time'] #buyer want to buy at this price.
 
-    dict_code[code]['h1_ma'] = round((dict_code[code]['h1_ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
 
     dict_code[code]['stock_lot_size'] = stock.iloc[0]['lot_size']
 
@@ -525,25 +590,57 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
     return(df_result)
 
 def main():
+    logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',
+                        datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+
+    logging.info(__file__+" "+"\n")
+    logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
+
+    parser = OptionParser()
+    # parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
+    parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
+    parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
+    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US|HK|SH|SZ]")
+    parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
+    parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
+    parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
+
+
+    (options, args) = parser.parse_args()
+
+    host = options.host
+    port = options.port
+    pwd_unlock = '731024'
+
     ############# ! IMPORTANT ! ######################
     simulator = True
-    # simulator = False
+
+    if options.real:
+        simulator = False
+
 
     ############# ! IMPORTANT ! ######################
 
-    market = Market.HK
+    # market = Market.HK
     # market = Market.US
+    # market = Market.SH
+    # market = Market.SZ
+    market = options.market
     ktype =KLType.K_60M
-    # ma_period =5
-    ma_period =21
-    tv_source = True
-    tv_source = False
+    ma_period =options.ma_period
+    tv_source = options.tv_source
 
-    if  market == Market.HK:
+    if market == Market.HK:
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
-        get_price_code_list = ['US.FUTU', 'US.AAPL', 'US.KDP']
+        get_price_code_list = ['US.FUTU', 'US.AAPL']
         # get_price_code_list = ['US.MDU']
+    elif market == Market.SH:
+        get_price_code_list = ['SH.600519']
+    elif market == Market.SZ:
+        get_price_code_list = ['SZ.000001']
+    else:
+        logging.fatal("Unknow market. "+str(market))
 
     if simulator:
         # trd_env = TrdEnv.SIMULATE
@@ -552,15 +649,13 @@ def main():
         logging.info("WILL RUN IN REAL ACCOUNT, type REAL_ACCOUNT to continue: ")
         confirm = input()
 
-        if confirm != "YES":
+        if confirm != "REAL_ACCOUNT":
             exit(0)
 
         # trd_env = TrdEnv.REAL
         check_interval_sec = 60
 
-    host = "127.0.0.1"
-    port = 11111
-    pwd_unlock = '731024'
+
 
     #General get lot
     # df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
