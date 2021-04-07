@@ -433,19 +433,19 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ma_period = dict_code[code]['ma_period']
 
     if h1_ma < p_ask:
-        symbol_ha_ma_p_ask = "<"
+        symbol_ma_p_ask = ">"
     elif h1_ma == p_ask:
-        symbol_ha_ma_p_ask = "="
+        symbol_ma_p_ask = "="
     else:
-        symbol_ha_ma_p_ask = ">"
+        symbol_ma_p_ask = "<"
 
 
     if dict_code[code]['h1_ma_last'] < dict_code[code]['p_ask_last']:
-        symbol_ha_ma_p_ask_last = "<"
+        symbol_ma_p_ask_last = ">"
     elif dict_code[code]['h1_ma_last'] == dict_code[code]['p_ask_last']:
-        symbol_ha_ma_p_ask_last = "="
+        symbol_ma_p_ask_last = "="
     else:
-        symbol_ha_ma_p_ask_last = ">"
+        symbol_ma_p_ask_last = "<"
 
 
     if p_ask == 'N/A' or p_ask == 0:
@@ -473,8 +473,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info('*************************************')
 
     logging.info(
-        __file__ + " " + "code " + code + ", this minute check completed. h1_ma_"+ str(ma_period)+" " + str(h1_ma)+" , ask price " + str(
-            p_ask)+ ". this_last: "+symbol_ha_ma_p_ask+symbol_ha_ma_p_ask_last)
+        __file__ + " " + "code " + code + ", this minute check completed. ask price "+ str(p_ask)+" " + str(h1_ma)+" , ma_ " + str(ma_period
+            )+ ". this_last: "+symbol_ma_p_ask+symbol_ma_p_ask_last)
 
     return()
 
