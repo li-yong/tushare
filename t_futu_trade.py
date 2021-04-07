@@ -429,12 +429,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ###################
     p_ask = dict_code[code]['p_ask']
     p_bid = dict_code[code]['p_bid']
-    h1_ma = dict_code[code]['h1_ma']
+    ma = dict_code[code]['ma']
+    ktype = dict_code[code]['ktype']
     ma_period = dict_code[code]['ma_period']
 
-    if h1_ma < p_ask:
+
+    if ma < p_ask:
         symbol_ma_p_ask = ">"
-    elif h1_ma == p_ask:
+    elif ma == p_ask:
         symbol_ma_p_ask = "="
     else:
         symbol_ma_p_ask = "<"
@@ -452,18 +454,18 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
         return()
 
-    logging.info(__file__ + " " + "code " + code + ", h1_ma " + str(h1_ma) + " , ask price " + str(p_ask))
+    logging.info(__file__ + " " + "code " + code + ", ma " + str(ma) + " , ask price " + str(p_ask))
 
 
-    if (h1_ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['h1_ma_last'] > 0):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN h1_ma " + str(h1_ma)+". proceeding to SELL")
+    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['h1_ma_last'] > 0):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + str(ma)+". proceeding to SELL")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
-    if (p_bid > h1_ma > 0) and (dict_code[code]['h1_ma_last'] > dict_code[code]['p_bid_last'] > 0):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP h1_ma " + str(h1_ma)+ ". proceeding to BUY")
+    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) + str(ma)+ ". proceeding to BUY")
         if not do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
@@ -473,14 +475,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info('*************************************')
 
     logging.info(
-        __file__ + " " + "code " + code + ", this minute check completed. ask price "+ str(p_ask)+" " + str(h1_ma)+" , ma_ " + str(ma_period
-            )+ ". this_last: "+symbol_ma_p_ask+symbol_ma_p_ask_last)
+        __file__ + " " + "code " + code + ", this minute check completed. ask "+ str(p_ask)+" " + str(ma)+" MA_"+ktype+"_"+str(ma_period)+ ". this_last: "+symbol_ma_p_ask+symbol_ma_p_ask_last)
 
     return()
 
 
 def hourly_ma_minutely_check(
         code,
+        ktype,
         ma_period,
         dict_code,
         df_live_price,
@@ -492,19 +494,22 @@ def hourly_ma_minutely_check(
     ###################
     stock = df_live_price[df_live_price['code'] == code]
 
+    dict_code[code]['ktype'] = ktype
+    dict_code[code]['ma_period'] = ma_period
+
     dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
     dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
-    dict_code[code]['h1_ma_last'] = dict_code[code]['h1_ma']
+    dict_code[code]['ma_last'] = dict_code[code]['ma']
     dict_code[code]['update_time_last'] = dict_code[code]['update_time']
 
     if stock.iloc[0]['ask_price']  in ['N/A', 0]:
         logging.warning(__file__ + " " + "code " + code + " invalid ask price "+str(stock.iloc[0]['ask_price']))
         dict_code[code]['p_ask']  = 0
-        dict_code[code]['h1_ma'] = -1
+        dict_code[code]['ma'] = -1
 
     else:
         dict_code[code]['p_ask'] = stock.iloc[0]['ask_price']  # seller want to sell at this price.
-        dict_code[code]['h1_ma'] = round((dict_code[code]['h1_ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
+        dict_code[code]['ma'] = round((dict_code[code]['ma_nsub1_sum'] + stock.iloc[0]['ask_price'] ) / ma_period, 2)
 
 
 
@@ -530,7 +535,7 @@ def hourly_ma_minutely_check(
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
                  +" p_last "+str(dict_code[code]['p_last'])
-                 +" h1_ma " + str(dict_code[code]['h1_ma'])
+                 +" MA_" +ktype+"_"+ma_period + str(dict_code[code]['ma'])
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
@@ -721,11 +726,13 @@ def main():
             if dict_code[code]['h1_ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds >= k_renew_interval_second[ktype]:
                 t_last_k_renew = now
                 _ = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
-                dict_code[code]['h1_ma_nsub1_sum'] = _['ma_value_nsub1_sum']
+                dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
-                logging.info(__file__ + " code "+code+" renewed h1_ma_nsub1_sum " + str(dict_code[code]['h1_ma_nsub1_sum']))
+                dict_code[code]['ktype'] = _['ktype']
+                logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,
+                                     ktype = ktype,
                                      ma_period=ma_period,
                                      dict_code = dict_code,
                                      df_live_price = df_live_price,
