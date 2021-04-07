@@ -192,6 +192,8 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
         else:
             data = data.append(data_n)
 
+    quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+    
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
         logging.error("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
@@ -213,7 +215,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     })
 
 
-    quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+
 
 
 
