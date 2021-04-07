@@ -161,7 +161,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
     start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
-    extended_time = True
+    extended_time = False # Futu App calculate MA without extended time. Compliance with Futu App.
     max_count= 100
 
     ls = 'code ' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
@@ -204,6 +204,8 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
 
     logging.info('*************************************')
     logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
+
+    print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(ma_period)))
 
     return({
         'code':code,
@@ -442,9 +444,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         symbol_ma_p_ask = "<"
 
 
-    if dict_code[code]['h1_ma_last'] < dict_code[code]['p_ask_last']:
+    if dict_code[code]['ma_last'] < dict_code[code]['p_ask_last']:
         symbol_ma_p_ask_last = ">"
-    elif dict_code[code]['h1_ma_last'] == dict_code[code]['p_ask_last']:
+    elif dict_code[code]['ma_last'] == dict_code[code]['p_ask_last']:
         symbol_ma_p_ask_last = "="
     else:
         symbol_ma_p_ask_last = "<"
@@ -454,10 +456,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
         return()
 
-    logging.info(__file__ + " " + "code " + code + ", ma " + str(ma) + " , ask price " + str(p_ask))
+    logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask))
 
 
-    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['h1_ma_last'] > 0):
+    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['ma_last'] > 0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + str(ma)+". proceeding to SELL")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
@@ -525,17 +527,17 @@ def hourly_ma_minutely_check(
 
     dict_code[code]['stock_lot_size'] = stock.iloc[0]['lot_size']
 
-    if dict_code[code]['p_ask']  < dict_code[code]['h1_ma']:
+    if dict_code[code]['p_ask']  < dict_code[code]['ma']:
         dict_code[code]['p_less_ma_cnt_in_a_row'] += 1
         dict_code[code]['p_great_ma_cnt_in_a_row'] = 0
 
-    elif dict_code[code]['p_ask'] > dict_code[code]['h1_ma']:
+    elif dict_code[code]['p_ask'] > dict_code[code]['ma']:
         dict_code[code]['p_great_ma_cnt_in_a_row'] += 1
         dict_code[code]['p_less_ma_cnt_in_a_row'] = 0
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
                  +" p_last "+str(dict_code[code]['p_last'])
-                 +" MA_" +ktype+"_"+ma_period + str(dict_code[code]['ma'])
+                 +" MA_" +ktype+"_"+str(ma_period) + str(dict_code[code]['ma'])
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
@@ -640,6 +642,7 @@ def main():
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
         get_price_code_list = ['US.FUTU', 'US.AAPL']
+        get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
         get_price_code_list = ['SH.600519']
@@ -672,12 +675,12 @@ def main():
     dict_code = {}
     for code in get_price_code_list:
         dict_code[code] = {
-            'h1_ma_nsub1_sum':0,
+            'ma_nsub1_sum':0,
             'p_less_ma_cnt_in_a_row':0,
             'p_great_ma_cnt_in_a_row':0,
             'p_ask':0,
             'p_bid':0,
-            'h1_ma':0,
+            'ma':0,
             'update_time':0,
         }
 
@@ -720,10 +723,10 @@ def main():
         df_live_price = get_current_price(get_price_code_list)
 
         for code in get_price_code_list:
-            # update h1_ma5 at the 1st minute of a new hour
+            # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if dict_code[code]['h1_ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds >= k_renew_interval_second[ktype]:
+            if dict_code[code]['ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds >= k_renew_interval_second[ktype]:
                 t_last_k_renew = now
                 _ = get_current_ma(code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
