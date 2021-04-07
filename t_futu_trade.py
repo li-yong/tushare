@@ -459,14 +459,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask))
 
 
-    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['ma_last'] > 0):
+    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['ma_last'] > 0) and (dict_code[code]['live_p_df']['open_price'] > p_ask):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + str(ma)+". proceeding to SELL")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
-    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0):
+    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0) and (p_bid > dict_code[code]['live_p_df']['open_price']):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) + str(ma)+ ". proceeding to BUY")
         if not do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
@@ -526,6 +526,7 @@ def hourly_ma_minutely_check(
 
 
     dict_code[code]['stock_lot_size'] = stock.iloc[0]['lot_size']
+    dict_code[code]['live_p_df'] = stock.iloc[0]
 
     if dict_code[code]['p_ask']  < dict_code[code]['ma']:
         dict_code[code]['p_less_ma_cnt_in_a_row'] += 1
@@ -642,7 +643,7 @@ def main():
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
         get_price_code_list = ['US.FUTU', 'US.AAPL']
-        get_price_code_list = ['US.FUTU']
+        # get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
         get_price_code_list = ['SH.600519']
