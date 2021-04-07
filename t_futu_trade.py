@@ -193,7 +193,7 @@ def get_current_ma(code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
             data = data.append(data_n)
 
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
-    
+
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
         logging.error("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
@@ -418,7 +418,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # sell position
     ###################
     stock_lot_size = dict_code[code]['stock_lot_size']
-    sell_slot_size_1_of_4_position = int(position_can_sell_qty * 0.25 / stock_lot_size) * stock_lot_size
+    sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
 
     #trading one unit in REAL env.
     if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
