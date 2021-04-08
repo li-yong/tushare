@@ -149,7 +149,7 @@ def get_current_price( host, port, code_list=['HK.00700']):
     quote_ctx = OpenQuoteContext(host=host, port=port)
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(code_list)
     if ret != RET_OK:
-        raise Exception('Failed to get_market_snapshot')
+        raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
 
     quote_ctx.close()
     return(df_market_snapshot)
@@ -304,12 +304,12 @@ def get_persition_and_order(trd_ctx,market,trd_env):
     #checking orders(in queue)
     ret, df_order_list = trd_ctx.order_list_query(trd_env=trd_env)
     if ret != RET_OK:
-        raise Exception("Cannot get order info ")
+        raise Exception("Cannot get order info, "+df_order_list)
 
     #checking postion
     ret, df_position_list = trd_ctx.position_list_query(trd_env=trd_env)
     if ret != RET_OK:
-        raise Exception("Failed to get position")
+        raise Exception("Failed to get position. "+df_position_list)
 
     return(
         {   'market':market,
@@ -808,10 +808,18 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    while True:
+        try:
+            main()
+        except:
+            logging.info("caught exception, restart main()")
+
     exit(0)
 
 
+
+
+def _extreme_low_price_JianLou():
 
     #prepareprint(
     quote_ctx = OpenQuoteContext(host=ip, port=port)
@@ -859,7 +867,7 @@ if __name__ == '__main__':
     ### Buy according to df_input
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(df_input['code'].tolist())
     if ret != RET_OK:
-        raise Exception('Failed to get_market_snapshot')
+        raise Exception('Failed to get_market_snapshot.'+df_market_snapshot)
 
     ret, data = trd_ctx_hk.unlock_trade(pwd_unlock)
     if ret != RET_OK:
