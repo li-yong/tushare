@@ -162,7 +162,7 @@ def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5,
     start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
     extended_time = False # Futu App calculate MA without extended time. Compliance with Futu App.
-    max_count= 100
+    max_count= 1000
 
     ls = 'code ' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
     logging.info("get_current_ma/request_history_kline "+ls)
@@ -237,7 +237,7 @@ def convert_dt_timezone(datetime_in, tz_in=pytz.timezone('America/New_York'), tz
 
 
 def test():
-    quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+    quote_ctx = OpenQuoteContext(host, port)
     # ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
     ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.BROKER], subscribe_push=False)
     # 先订阅经纪队列类型。订阅成功后FutuOpenD将持续收到服务器的推送，False代表暂时不需要推送给脚本
@@ -438,22 +438,50 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ma = dict_code[code]['ma']
     ktype = dict_code[code]['ktype']
     ma_period = dict_code[code]['ma_period']
-
+    last_ma_bar_close = dict_code[code]['last_ma_bar'].iloc[0]['close']
 
     if ma < p_ask:
-        symbol_ma_p_ask = ">"
+        symbol_Ask_ma = ">"
     elif ma == p_ask:
-        symbol_ma_p_ask = "="
+        symbol_Ask_ma = "="
     else:
-        symbol_ma_p_ask = "<"
+        symbol_Ask_ma = "<"
+
+    if ma < p_bid:
+        symbol_Bid_ma = ">"
+    elif ma == p_bid:
+        symbol_Bid_ma = "="
+    else:
+        symbol_Bid_ma = "<"
 
 
     if dict_code[code]['ma_last'] < dict_code[code]['p_ask_last']:
-        symbol_ma_p_ask_last = ">"
+        symbol_Ask_maLast = ">"
     elif dict_code[code]['ma_last'] == dict_code[code]['p_ask_last']:
-        symbol_ma_p_ask_last = "="
+        symbol_Ask_maLast = "="
     else:
-        symbol_ma_p_ask_last = "<"
+        symbol_Ask_maLast = "<"
+
+    if dict_code[code]['ma_last'] < dict_code[code]['p_bid_last']:
+        symbol_Bid_maLast = ">"
+    elif dict_code[code]['ma_last'] == dict_code[code]['p_bid_last']:
+        symbol_Bid_maLast = "="
+    else:
+        symbol_Bid_maLast = "<"
+
+    if last_ma_bar_close > p_ask:
+        symbol_Ask_lastClose = "<"
+    elif last_ma_bar_close == p_ask:
+        symbol_Ask_lastClose = "<"
+    else:
+        symbol_Ask_lastClose = ">"
+
+    if last_ma_bar_close > p_bid:
+        symbol_Bid_lastClose = "<"
+    elif last_ma_bar_close == p_ask:
+        symbol_Bid_lastClose = "<"
+    else:
+        symbol_Bid_lastClose = ">"
 
 
     if p_ask == 'N/A' or p_ask == 0:
@@ -462,8 +490,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
 
-    last_ma_bar_close = dict_code[code]['last_ma_bar'].iloc[0]['close']
 
+    # BUY Condition:  a<><
     if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
@@ -473,6 +501,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             os.system("beep -f 555 -l 1000 -r 5")
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
+
+    # SELL Condition:  b><>
     if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if not do_not_place_order:
@@ -486,7 +516,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info('*************************************')
 
     logging.info(
-        __file__ + " " + "code " + code + ", this minute check completed. ask "+ str(p_ask)+" " + str(ma)+" MA_"+ktype+"_"+str(ma_period)+ ". this_last: "+symbol_ma_p_ask+symbol_ma_p_ask_last)
+        __file__ + " " + "code " + code + " this_ck_done. "
+        + "bid "+ str(p_bid)+ ", ask "+ str(p_ask)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+", last_close "+str(last_ma_bar_close)
+        + ". a"+symbol_Ask_ma + symbol_Ask_maLast + symbol_Ask_lastClose
+        + ", b"+symbol_Bid_ma + symbol_Bid_maLast + symbol_Bid_lastClose
+    )
+
 
     return()
 
