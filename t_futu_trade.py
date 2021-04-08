@@ -423,6 +423,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     stock_lot_size = dict_code[code]['stock_lot_size']
     sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
 
+    if sell_slot_size_1_of_4_position < stock_lot_size:
+        sell_slot_size_1_of_4_position = stock_lot_size
+
     #trading one unit in REAL env.
     if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
         sell_slot_size_1_of_4_position = stock_lot_size
