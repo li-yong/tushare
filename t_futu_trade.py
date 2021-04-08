@@ -469,6 +469,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 1000 -r 5")
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
     if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
@@ -476,6 +478,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         if not do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 1000 -r 5")
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
 
