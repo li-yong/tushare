@@ -491,8 +491,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
 
 
-    # BUY Condition:  a<><
-    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] > dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
+    # BUY Condition:  a<><  a<=<
+    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
@@ -502,8 +502,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
-    # SELL Condition:  b><>
-    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] > dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
+    # SELL Condition:  b><>  b>=>
+    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if not do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
@@ -582,7 +582,7 @@ def hourly_ma_minutely_check(
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
                  +" p_last "+str(dict_code[code]['p_last'])
-                 +" MA_" +ktype+"_"+str(ma_period) + str(dict_code[code]['ma'])
+                 +" MA_" +ktype+"_"+str(ma_period) +" "+ str(dict_code[code]['ma'])
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
