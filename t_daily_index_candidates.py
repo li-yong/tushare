@@ -461,7 +461,7 @@ def main():
     parser.add_option("--fetch_index_ts", action="store_true", default=False, dest="fetch_index_ts",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
     parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
-    fetch_index_tradingview_selenium()
+    #
 
     (options, args) = parser.parse_args()
     debug = options.debug
@@ -492,7 +492,7 @@ def main():
     }
 
     if fetch_index_ts:
-        finlib.Finlib().load_index(index_code=idict[index_name],index_name=index_name, force_run=True)
+        fetch_index_tradingview_selenium()
         exit()
 
     if fetch_index_wg:
