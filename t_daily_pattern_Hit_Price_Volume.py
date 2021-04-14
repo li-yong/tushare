@@ -733,102 +733,86 @@ logging.info(__file__+" "+"Today Talib and PV B no filter length " + str(df.__le
 #os._exit(0)
 
 
-
-
-
 ### Filter with DB records
-engine = create_engine('mysql://root:admin888.@_@@127.0.0.1/ryan_stock_db?charset=utf8')
-
-query_buy_sql = "SELECT * FROM `pattern_perf` \
-    WHERE `2mea` > 0.02 AND `5mea`> `2mea` \
-    AND `2uc`> `2dc`*3 \
-    AND `2uc`> 10 "
-
-query_buy_sql += "ORDER BY `2uc`-`2dc`"
-
-query_sell_sql = "SELECT * FROM `pattern_perf` \
-    WHERE `2mea` < -0.02 AND `2mea`> `5mea` \
-    AND `2dc`> `2uc`*3 \
-    AND `2dc`> 10 "
-
-query_sell_sql += "ORDER BY `2dc`-`2uc`"
-
-logging.info(__file__+" "+"query ideal BUY code/pattern perf in DB")
-idea_buy_stock_in_db = pd.read_sql_query(query_buy_sql, engine, index_col='ID')
-idea_buy_stock_in_db.rename(columns={'pattern': 'op_rsn', 'stockID': 'code'}, inplace=True)
-logging.info(__file__+" "+"query ideal BUY code/pattern perf in DB, got record # " + str(idea_buy_stock_in_db.__len__()))
-
-logging.info(__file__+" "+"query ideal SELL code/pattern perf in DB")
-idea_sell_stock_in_db = pd.read_sql_query(query_sell_sql, engine, index_col='ID')
-idea_sell_stock_in_db.rename(columns={'pattern': 'op_rsn', 'stockID': 'code'}, inplace=True)
-logging.info(__file__+" "+"query ideal SELL code/pattern perf in DB, got record # " + str(idea_sell_stock_in_db.__len__()))
-
-#print df.head(2)
-#print idea_buy_stock_in_db.head(2)
-#print idea_sell_stock_in_db.head(2)
-#logging.info(idea_buy_stock_in_db.columns)
-#logging.info(__file__+" "+"----")
-#logging.info(df.columns)
-
-#inner returns records exist in left and right df
-#df_buy = pd.merge(df, idea_buy_stock_in_db, left_on=['op_rsn'], right_on=['op_rsn'], how='inner')
-
-df_buy = pd.merge(df, idea_buy_stock_in_db, left_on=['op_rsn', 'code'], right_on=['op_rsn', 'code'], how='inner')
-df_sell = pd.merge(df, idea_sell_stock_in_db, left_on=['op_rsn', 'code'], right_on=['op_rsn', 'code'], how='inner')
-
-df_buy.drop_duplicates(inplace=True)
-df_sell.drop_duplicates(inplace=True)
-
-logging.info(__file__+" "+"inner merge with today hit, record # " + str(df_buy.__len__()))
-
-cols = df_buy.columns.tolist()
-cols = [
-    'code',
-    'date',
-    'op',
-    'op_rsn',
-    'op_strength',
-    'close_p',
-    '2mea',
-    '5mea',
-    '10mea',
-    '20mea',
-    '60mea',
-    '120mea',
-    '2uc',
-    '2dc',
-    '5uc',
-    '5dc',
-    '10uc',
-    '10dc',
-    '20uc',
-    '20dc',
-    #'up_cnt_60d','dn_cnt_60d','up_cnt_120d','dn_cnt_120d',
-]
-df_buy = df_buy[cols]
-df_buy.sort_values('2mea', ascending=False)
-
-df_sell = df_sell[cols]
-df_sell.sort_values('2mea', ascending=True)
-
-engine.dispose()
-
-#save filtered ptn(talib+pv) result to csv
-result_csv_buy = "/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_" + stock_global + ".csv"
-result_csv_sell = "/home/ryan/DATA/result/today/talib_and_pv_db_sell_filtered_" + stock_global + ".csv"
-
-#df_buy = df_buy.loc[df['close_p'] != 0.0 ]
-#df_sell = df_sell.loc[df['close_p'] != 0.0 ]
-
-if stock_global != 'dev':
-    df_buy = pd.merge(df_code_name_map, df_buy, on='code', how='inner')
-    df_sell = pd.merge(df_code_name_map, df_sell, on='code', how='inner')
-
-df_buy.to_csv(result_csv_buy, index=False)
-df_sell.to_csv(result_csv_sell, index=False)
-
-logging.info(__file__+" "+"Today Talib and PV B filtered result saved to " + result_csv_buy)
-logging.info(__file__+" "+"Today Talib and PV S filtered result saved to " + result_csv_sell)
+# engine = create_engine('mysql://root:admin888.@_@@127.0.0.1/ryan_stock_db?charset=utf8')
+#
+# query_buy_sql = "SELECT * FROM `pattern_perf` \
+#     WHERE `2mea` > 0.02 AND `5mea`> `2mea` \
+#     AND `2uc`> `2dc`*3 \
+#     AND `2uc`> 10 "
+#
+# query_buy_sql += "ORDER BY `2uc`-`2dc`"
+#
+# query_sell_sql = "SELECT * FROM `pattern_perf` \
+#     WHERE `2mea` < -0.02 AND `2mea`> `5mea` \
+#     AND `2dc`> `2uc`*3 \
+#     AND `2dc`> 10 "
+#
+# query_sell_sql += "ORDER BY `2dc`-`2uc`"
+#
+# logging.info(__file__+" "+"query ideal BUY code/pattern perf in DB")
+# idea_buy_stock_in_db = pd.read_sql_query(query_buy_sql, engine, index_col='ID')
+# idea_buy_stock_in_db.rename(columns={'pattern': 'op_rsn', 'stockID': 'code'}, inplace=True)
+# logging.info(__file__+" "+"query ideal BUY code/pattern perf in DB, got record # " + str(idea_buy_stock_in_db.__len__()))
+#
+# logging.info(__file__+" "+"query ideal SELL code/pattern perf in DB")
+# idea_sell_stock_in_db = pd.read_sql_query(query_sell_sql, engine, index_col='ID')
+# idea_sell_stock_in_db.rename(columns={'pattern': 'op_rsn', 'stockID': 'code'}, inplace=True)
+# logging.info(__file__+" "+"query ideal SELL code/pattern perf in DB, got record # " + str(idea_sell_stock_in_db.__len__()))
+#
+# df_buy = pd.merge(df, idea_buy_stock_in_db, left_on=['op_rsn', 'code'], right_on=['op_rsn', 'code'], how='inner')
+# df_sell = pd.merge(df, idea_sell_stock_in_db, left_on=['op_rsn', 'code'], right_on=['op_rsn', 'code'], how='inner')
+#
+# df_buy.drop_duplicates(inplace=True)
+# df_sell.drop_duplicates(inplace=True)
+#
+# logging.info(__file__+" "+"inner merge with today hit, record # " + str(df_buy.__len__()))
+#
+# cols = df_buy.columns.tolist()
+# cols = [
+#     'code',
+#     'date',
+#     'op',
+#     'op_rsn',
+#     'op_strength',
+#     'close_p',
+#     '2mea',
+#     '5mea',
+#     '10mea',
+#     '20mea',
+#     '60mea',
+#     '120mea',
+#     '2uc',
+#     '2dc',
+#     '5uc',
+#     '5dc',
+#     '10uc',
+#     '10dc',
+#     '20uc',
+#     '20dc',
+#     #'up_cnt_60d','dn_cnt_60d','up_cnt_120d','dn_cnt_120d',
+# ]
+# df_buy = df_buy[cols]
+# df_buy.sort_values('2mea', ascending=False)
+#
+# df_sell = df_sell[cols]
+# df_sell.sort_values('2mea', ascending=True)
+#
+# engine.dispose()
+#
+# #save filtered ptn(talib+pv) result to csv
+# result_csv_buy = "/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_" + stock_global + ".csv"
+# result_csv_sell = "/home/ryan/DATA/result/today/talib_and_pv_db_sell_filtered_" + stock_global + ".csv"
+#
+# if stock_global != 'dev':
+#     df_buy = pd.merge(df_code_name_map, df_buy, on='code', how='inner')
+#     df_sell = pd.merge(df_code_name_map, df_sell, on='code', how='inner')
+#
+# df_buy.to_csv(result_csv_buy, index=False)
+# df_sell.to_csv(result_csv_sell, index=False)
+#
+# logging.info(__file__+" "+"Today Talib and PV B filtered result saved to " + result_csv_buy)
+# logging.info(__file__+" "+"Today Talib and PV S filtered result saved to " + result_csv_sell)
 
 logging.info(__file__+" "+"Script completed")
 os._exit(0)
