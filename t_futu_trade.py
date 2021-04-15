@@ -85,8 +85,7 @@ def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
 
 
 def place_buy_limit_order(trd_ctx, code, price, qty, trd_env ):
-    logging.info(__file__ + " place_buy_limit_order " + "code " + code + " , price " + str(price) + " , qty " + str(
-        qty) + " , trd_env " + str(trd_env))
+    logging.info(__file__ + " place_buy_limit_order " + "code " + code + " , price " + str(price) + " , qty " + str(qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.BUY,trd_env=trd_env, order_type=OrderType.NORMAL)
     print(finlib.Finlib().pprint(order_table))
     if not ret == RET_OK:
@@ -401,7 +400,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ###################
     if not code in df_position_list['code'].to_list():
         if simulator:
-            logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create new order for simulator.")
+            logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create a new order for simulator.")
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
                                         trd_env=trd_env)
             return()#return after place a test order
@@ -507,9 +506,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
     # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
-    if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
+    if True or (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
-        if not do_not_place_order:
+        if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
         else:
             # beep, last 1sec, repeat 5 times.
