@@ -440,19 +440,21 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ma_period = dict_code[code]['ma_period']
     last_ma_bar_close = dict_code[code]['last_ma_bar'].iloc[0]['close']
 
-    if ma < p_ask:
+    range = 0.01
+
+    if ma*(1-range) < p_ask:
         symbol_Ask_ma = ">"
-    elif ma == p_ask:
+    elif ma*(1-range) == p_ask:
         symbol_Ask_ma = "="
     else:
-        symbol_Ask_ma = "<"
+        symbol_Ask_ma = "<" #To sell
 
-    if ma < p_bid:
+    if ma*(1+range) < p_bid:
         symbol_Bid_ma = ">"
-    elif ma == p_bid:
+    elif ma*(1+range) == p_bid:
         symbol_Bid_ma = "="
     else:
-        symbol_Bid_ma = "<"
+        symbol_Bid_ma = "<" #To buy
 
 
     if dict_code[code]['ma_last'] < dict_code[code]['p_ask_last']:
@@ -493,7 +495,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
     # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
-    if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) :
+    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
@@ -505,7 +507,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
     # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
-    if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) :
+    if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if not do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
