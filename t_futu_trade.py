@@ -506,7 +506,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
     # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
-    if True or (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
+    if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
             logging.info("do_not_place_order = True is set, so order didn't placed.")
