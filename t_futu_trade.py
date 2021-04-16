@@ -13,6 +13,8 @@ import finlib_indicator
 import datetime
 import pytz
 import logging
+import traceback
+
 
 from optparse import OptionParser
 
@@ -149,8 +151,9 @@ def get_current_price( host, port, code_list=['HK.00700']):
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(code_list)
     if ret != RET_OK:
         raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
-
     quote_ctx.close()
+
+
     return(df_market_snapshot)
 
 
@@ -349,14 +352,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     orders_sell = orders[orders['trd_side']=='SELL']
 
     if not orders_buy.empty:
-        last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).iloc[0]
-        last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time, "%Y-%m-%d %H:%M:%S")
-        last_buy_order_string = finlib.Finlib().pprint(last_buy_order[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+        last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+        last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time[0], "%Y-%m-%d %H:%M:%S")
+        last_buy_order_string = finlib.Finlib().pprint(last_buy_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
 
     if not orders_sell.empty:
-        last_sell_order = orders_sell.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).iloc[0]
-        last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time, "%Y-%m-%d %H:%M:%S")
-        last_sell_order_string = finlib.Finlib().pprint(last_sell_order[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+        last_sell_order = orders_sell.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+        last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time[0], "%Y-%m-%d %H:%M:%S")
+        last_sell_order_string = finlib.Finlib().pprint(last_sell_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
 
     if last_sell_order_create_time > last_buy_order_create_time:
         last_order = last_sell_order
@@ -410,7 +413,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " lastest order" + last_order_string)
             do_not_place_order = True
 
-        elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
+        elif simulator and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
             logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " " + "latest order:\n"+last_order_string)
             do_not_place_order = True
@@ -578,31 +581,31 @@ def hourly_ma_minutely_check(
 
     dict_code[code]['ktype'] = ktype
     dict_code[code]['ma_period'] = ma_period
+    dict_code[code]['p_last_last'] = dict_code[code]['p_last']
 
     dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
     dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
     dict_code[code]['ma_last'] = dict_code[code]['ma']
     dict_code[code]['update_time_last'] = dict_code[code]['update_time']
 
-    if stock_daily_snap.iloc[0]['ask_price']  in ['N/A', 0]:
-        logging.warning(__file__ + " " + "code " + code + " invalid ask price "+str(stock_daily_snap.iloc[0]['ask_price']))
-        dict_code[code]['p_ask']  = 0
-        dict_code[code]['ma'] = -1
+    dict_code[code]['ma'] = round((dict_code[code]['ma_nsub1_sum'] + stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
+    dict_code[code]['p_last'] = stock_daily_snap.iloc[0]['last_price']  # seller want to sell at this price.
+    dict_code[code]['update_time'] = stock_daily_snap.iloc[0]['update_time'] #buyer want to buy at this price.
 
+
+    if stock_daily_snap.iloc[0]['ask_price'] in ['N/A', 0]:
+        logging.warning(__file__ + " " + "code " + code + " invalid ask price "+str(stock_daily_snap.iloc[0]['ask_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as ask_price")
+        dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['last_price']
     else:
         dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['ask_price']  # seller want to sell at this price.
-        dict_code[code]['ma'] = round((dict_code[code]['ma_nsub1_sum'] + stock_daily_snap.iloc[0]['ask_price'] ) / ma_period, 2)
 
 
 
     if stock_daily_snap.iloc[0]['bid_price']  in ['N/A', 0]:
-        logging.warning(__file__ + " " + "code " + code + " invalid bid price "+str(stock_daily_snap.iloc[0]['bid_price']))
-        dict_code[code]['p_bid'] = 0
+        logging.warning(__file__ + " " + "code " + code + " invalid bid price "+str(stock_daily_snap.iloc[0]['bid_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as bid_price")
+        dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['last_price']
     else:
         dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['bid_price']  # buyer want to buy at this price.
-
-    dict_code[code]['p_last'] = stock_daily_snap.iloc[0]['last_price']  # seller want to sell at this price.
-    dict_code[code]['update_time'] = stock_daily_snap.iloc[0]['update_time'] #buyer want to buy at this price.
 
 
 
@@ -757,6 +760,7 @@ def main():
             'ma_nsub1_sum':0,
             'p_less_ma_cnt_in_a_row':0,
             'p_great_ma_cnt_in_a_row':0,
+            'p_last':0,
             'p_ask':0,
             'p_bid':0,
             'ma':0,
@@ -845,8 +849,10 @@ if __name__ == '__main__':
     while True:
         try:
             main()
-        except:
+        except Exception:
+            logging.info(traceback.format_exc())
             logging.info("caught exception, restart main()")
+
 
     exit(0)
 
