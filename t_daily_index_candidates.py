@@ -395,7 +395,6 @@ def fetch_index_tradingview_selenium():
 
     browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
 
-
     ######################################
     # Login TV and go to screener page
     ######################################
@@ -421,25 +420,18 @@ def fetch_index_tradingview_selenium():
     finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='US', filter='ALL_of_The_market_US' )
     f_us = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval='1D', symbol_link_f=tv_d+'/americ_latest_d.csv')
 
-
-
     market = 'CN'
     finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='CN', filter='ALL_of_The_market')
     f_cn = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval='1D', symbol_link_f=tv_d+'/china_latest_d.csv')
-
-
 
     market = 'HK'
     finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market=market, filter='ALL_of_The_market' )
     f_hk = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d,interval='1D', symbol_link_f=tv_d+'/hongkong_latest_d.csv')
 
-
-    ######################################
-    # Parse result to a dataframe
-    ######################################
-
     browser.quit()
-
+    
+    logging.info("fetch_index_tradingview_selenium completed")
+    return()
 
 
 
