@@ -20,17 +20,18 @@ import sys
 import constant
 from scipy import stats
 
-from selenium.webdriver import Chrome
-from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # reduce webdriver session log for every request.
-from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
-from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
-SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
+logging.getLogger("urllib3").setLevel(logging.WARNING)  # This supress post/get log in console.
+#
+# from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
+# from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
+# SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
 import shutil
 import pickle
@@ -315,8 +316,8 @@ def fetch_index_wugui_selenium():
         'tech_advance': {'c': 'CSI931087', 'sheet': '科技龙头的成分股', },  # 科技龙头
     }
 
-    opts = Options()
-    browser = Chrome(options=opts)
+    opts = webdriver.ChromeOptions()
+    browser = webdriver.Chrome(options=opts)
     browser.get('https://androidinvest.com/auth/login/')
 
     # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
@@ -385,15 +386,14 @@ def fetch_index_wugui_selenium():
     browser.quit()
 
 
+
+
+
 ############
 def fetch_index_tradingview_selenium():
+    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = "/home/ryan/Downloads/chrome_tmp_del/"
 
-    opts = Options()
-    # opts.add_argument("start-maximized")
-    opts.add_argument("--log-level=0")
-    # opts.headless = True
-    # opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-    browser = Chrome(options=opts)
+    browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
 
 
     ######################################
@@ -412,15 +412,25 @@ def fetch_index_tradingview_selenium():
     ######################################
     # Set Filters
     ######################################
-    # finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='US', filter='ALL_of_The_market_US' )
-    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='HK', filter='ALL_of_The_market' )
-    # finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='CN, filter='ALL_of_The_market' )
+    tv_d = '/home/ryan/DATA/pickle/Stock_Fundamental/TradingView'
+
+    market = 'HK'
+    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market=market, filter='ALL_of_The_market' )
+    f_hk = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/hk_latest_d.csv')
+
+
+    market = 'US'
+    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='US', filter='ALL_of_The_market_US' )
+    f_us = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/americ_latest_d.csv')
+
+    market = 'CN'
+    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='CN', filter='ALL_of_The_market')
+    f_cn = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/china_latest_d.csv')
 
 
     ######################################
     # Parse result to a dataframe
     ######################################
-    df_result = finlib_indicator.Finlib_indicator().tv_save_result_table(browser=browser, market=market, parse_ticker_only=True)
 
     browser.quit()
 

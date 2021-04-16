@@ -16,6 +16,8 @@ import collections
 import stat
 import constant
 from scipy import stats
+import shutil
+from selenium import webdriver
 
 # import matplotlib.pyplot as plt
 # from pandas.plotting import register_matplotlib_converters
@@ -1506,36 +1508,65 @@ class Finlib_indicator:
 
         return(df)
 
-    def tv_screener_export(self, browser):
+    def newChromeBrowser(self, headless=False):
+        # reduce webdriver session log for every request.
+        logging.getLogger("urllib3").setLevel(logging.WARNING)  # This supress post/get log in console.
+
+        options = webdriver.ChromeOptions()
+        if headless:
+            options.add_argument('headless')
+
+        # Download Path
+        prefs = {}
+        prefs["profile.default_content_settings.popups"] = 0
+        prefs["download.default_directory"] = os.getenv('CHROME_TMP_DOWNLOAD_DIR')
+        options.add_experimental_option("prefs", prefs)
+        browser = webdriver.Chrome(options=options)
+
+        return browser
+
+
+    def empty_chrome_tmp_download_dir(self):
+        downloadPath = os.getenv('CHROME_TMP_DOWNLOAD_DIR')
+        if os.path.isdir(downloadPath):
+            os.rmdir(downloadPath)
+            logging.info("rmdir "+downloadPath)
+
+        os.mkdir(downloadPath)
+        logging.info("mkdir "+downloadPath)
+
+        return(downloadPath)
+
+    def tv_screener_export(self, browser, to_dir, symbol_link_f=None):
+        dir = self.empty_chrome_tmp_download_dir()
+
         for e in browser.find_elements_by_class_name("tv-screener-toolbar__button"):
             tx = e.get_attribute("data-name")
             if tx == 'screener-export-data':
                 e.click()
 
-
-        # update file link
-        f = "/home/ryan/Downloads/" + datetime.datetime.today().strftime("%Y%m%d") + "_IndexData_" + code + ".xls"
-
-        # 20210125_IndexData_CSI931087.xls
-
-        f2 = wg_d + "/" + datetime.datetime.today().strftime("%Y%m%d") + "_IndexData_" + code + ".xls"
-        f_sl = wg_d + "/" + code + ".xls"
-        logging.info("Download from wugui, index_name " + index_name + ", url " + u)
-        browser.get(u)
-
         # 20210111_IndexData_SH000300.xls
-        while not os.path.exists(f):
-            logging.info("waiting download complete, expecting " + f)
+        while not os.listdir(dir):
+            logging.info("waiting download complete")
             time.sleep(1)
 
-        shutil.move(f, f2)
-        logging.info(index_name + " downloaded. " + f)
+        fr_file = dir+"/"+os.listdir(dir)[0]
+        to_file = to_dir+"/"+os.listdir(dir)[0]
 
-        if os.path.exists(f_sl):
-            os.unlink(f_sl)
+        shutil.move(fr_file, to_file)
+        logging.info("downloaded to  " + to_file)
 
-        os.symlink(f2, f_sl)
-        logging.info(index_name + ",symbol link created. " + f_sl + " --> " + f2)
+        if symbol_link_f:
+            if os.path.exists(symbol_link_f):
+                os.unlink(symbol_link_f)
+
+            os.symlink(to_file, symbol_link_f)
+            logging.info("symbol link created. " + symbol_link_f + " --> " + to_file)
+
+
+        return(to_file)
+
+
 
 
     def tv_screener_start(self,browser, column_filed, interval, market, filter):
