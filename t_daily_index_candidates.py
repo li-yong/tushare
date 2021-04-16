@@ -391,7 +391,7 @@ def fetch_index_wugui_selenium():
 
 ############
 def fetch_index_tradingview_selenium():
-    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = "/home/ryan/Downloads/chrome_tmp_del/"
+    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = "/home/ryan/Downloads/chrome_tmp_del"
 
     browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
 
@@ -407,25 +407,31 @@ def fetch_index_tradingview_selenium():
     logging.info("page load complete")
     WebDriverWait(browser, 10).until(EC.title_contains("Screener"))
     logging.info("Title ready")
-    time.sleep(10)
+    # time.sleep(10)
 
     ######################################
     # Set Filters
     ######################################
     tv_d = '/home/ryan/DATA/pickle/Stock_Fundamental/TradingView'
 
-    market = 'HK'
-    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market=market, filter='ALL_of_The_market' )
-    f_hk = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/hk_latest_d.csv')
 
+   # have to fetch in US->CN->HK sequence. only support scroll down. not up.
 
     market = 'US'
     finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='US', filter='ALL_of_The_market_US' )
-    f_us = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/americ_latest_d.csv')
+    f_us = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval='1D', symbol_link_f=tv_d+'/americ_latest_d.csv')
+
+
 
     market = 'CN'
     finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market='CN', filter='ALL_of_The_market')
-    f_cn = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, symbol_link_f=tv_d+'/china_latest_d.csv')
+    f_cn = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval='1D', symbol_link_f=tv_d+'/china_latest_d.csv')
+
+
+
+    market = 'HK'
+    finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval='1D',market=market, filter='ALL_of_The_market' )
+    f_hk = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d,interval='1D', symbol_link_f=tv_d+'/hongkong_latest_d.csv')
 
 
     ######################################

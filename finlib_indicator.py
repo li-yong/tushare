@@ -1313,7 +1313,7 @@ class Finlib_indicator:
 
     def tv_screener_set_market(self, browser, market='US'):
         # market has to be in ['SH','SZ', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
-        if market in  ['SH', 'SZ']:
+        if market in ['SH', 'SZ', 'CN']:
             market = 'CN'
 
         xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
@@ -1537,7 +1537,7 @@ class Finlib_indicator:
 
         return(downloadPath)
 
-    def tv_screener_export(self, browser, to_dir, symbol_link_f=None):
+    def tv_screener_export(self, browser, to_dir, interval, symbol_link_f=None):
         dir = self.empty_chrome_tmp_download_dir()
 
         for e in browser.find_elements_by_class_name("tv-screener-toolbar__button"):
@@ -1551,7 +1551,7 @@ class Finlib_indicator:
             time.sleep(1)
 
         fr_file = dir+"/"+os.listdir(dir)[0]
-        to_file = to_dir+"/"+os.listdir(dir)[0]
+        to_file = to_dir+"/"+interval+"_"+os.listdir(dir)[0]
 
         shutil.move(fr_file, to_file)
         logging.info("downloaded to  " + to_file)
