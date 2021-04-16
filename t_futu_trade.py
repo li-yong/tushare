@@ -730,6 +730,7 @@ def main():
         get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
         get_price_code_list = ['US.FUTU', 'US.AAPL']
+        get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS']
         # get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
