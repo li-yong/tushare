@@ -477,7 +477,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ma_period = dict_code[code]['ma_period']
     last_ma_bar_close = dict_code[code]['last_ma_bar'].iloc[0]['close']
 
-    range = 0.01
+    range = 0.005
 
     if ma*(1-range) < p_ask:
         symbol_Ask_ma = ">"
