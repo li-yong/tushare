@@ -594,19 +594,17 @@ def hourly_ma_minutely_check(
 
 
     if stock_daily_snap.iloc[0]['ask_price'] in ['N/A', 0]:
-        logging.warning(__file__ + " " + "code " + code + " invalid ask price "+str(stock_daily_snap.iloc[0]['ask_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as ask_price")
+        logging.info(__file__ + " " + "code " + code + " invalid ask price "+str(stock_daily_snap.iloc[0]['ask_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as ask_price")
         dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['last_price']
     else:
         dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['ask_price']  # seller want to sell at this price.
 
 
-
     if stock_daily_snap.iloc[0]['bid_price']  in ['N/A', 0]:
-        logging.warning(__file__ + " " + "code " + code + " invalid bid price "+str(stock_daily_snap.iloc[0]['bid_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as bid_price")
+        logging.info(__file__ + " " + "code " + code + " invalid bid price "+str(stock_daily_snap.iloc[0]['bid_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as bid_price")
         dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['last_price']
     else:
         dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['bid_price']  # buyer want to buy at this price.
-
 
 
     if dict_code[code]['p_ask']  < dict_code[code]['ma']:
