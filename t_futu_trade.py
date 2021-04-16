@@ -337,6 +337,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         trd_env = TrdEnv.REAL
 
     do_not_place_order = False
+    do_not_place_order_reason = "None"
 
     _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
     df_order_list = _po['order_list']
@@ -414,17 +415,18 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " lastest order" + last_order_string)
             do_not_place_order = True
+            do_not_place_order_reason = "code " + code + ", REAL env, placed order in 4 hours"
+            return()
 
         elif simulator and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
             logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " " + "latest order:\n"+last_order_string)
             do_not_place_order = True
+            do_not_place_order_reason = "code " + code + ", SIM env, UNfilled order in 4 hours"
+            return()
 
         elif simulator:
             logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
-
-
-
 
 
     ###################
@@ -437,8 +439,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                         trd_env=trd_env)
             return()#return after place a test order
         else:
-            logging.info(__file__ + " " + "code " + code + " not has position. Abort further processing.")
+            logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
             do_not_place_order = True
+            do_not_place_order_reason = "code " + code + " no position"
+
 
     position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
@@ -516,10 +520,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         symbol_Bid_lastClose = ">"
 
-
-    if p_ask == 'N/A' or p_ask == 0:
-        logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
-        return()
+    # Will not run to this now. p_ask will be p_last if NA/0
+    # if p_ask == 'N/A' or p_ask == 0:
+    #     logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
+    #     return()
 
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
 
@@ -529,7 +533,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
-            logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
+            logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
         else:
@@ -543,9 +547,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
-            logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
+            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
-            logging.info("will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 1000 -r 5")
