@@ -1252,7 +1252,7 @@ class Finlib_indicator:
         obj_interval.click()
         interval_list = browser.find_elements_by_class_name('js-select-interval')
         for i in interval_list:
-            print(i.text)  # 1W 1D 1h, 4h, 15m 5m  1m
+            print(i.text)  # 1M 1W 1D 1h, 4h, 15m 5m  1m
             if i.text == interval:
                 i.click()
 
