@@ -354,6 +354,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     orders_buy = orders[orders['trd_side']=='BUY']
     orders_sell = orders[orders['trd_side']=='SELL']
 
+    last_order = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+
     if not orders_buy.empty:
         last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
         last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time[0], "%Y-%m-%d %H:%M:%S")
@@ -418,7 +420,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             do_not_place_order_reason = "code " + code + ", REAL env, placed order in 4 hours"
             return()
 
-        elif simulator and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
+        elif simulator and (not last_order.empty) and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
             logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " " + "latest order:\n"+last_order_string)
             do_not_place_order = True
