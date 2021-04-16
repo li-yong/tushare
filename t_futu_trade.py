@@ -323,11 +323,13 @@ def get_persition_and_order(trd_ctx,market,trd_env):
 
 def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         code,
+        k_renew_interval_second,
         simulator,
         trd_ctx_unlocked,
         dict_code,
         market,
     ):
+
 
     if simulator:
         trd_env = TrdEnv.SIMULATE
@@ -528,7 +530,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
-        elif last_sell_create_time_to_now.seconds < 60*3:
+        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
@@ -542,7 +544,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
-        elif last_buy_create_time_to_now.seconds < 60*3:
+        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
             logging.info("will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
@@ -827,6 +829,7 @@ def main():
             try:
                 buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                     code=code,
+                    k_renew_interval_second=k_renew_interval_second,
                     simulator=simulator,
                     trd_ctx_unlocked=trd_ctx_unlocked,
                     dict_code = dict_code,
