@@ -1529,7 +1529,7 @@ class Finlib_indicator:
     def empty_chrome_tmp_download_dir(self):
         downloadPath = os.getenv('CHROME_TMP_DOWNLOAD_DIR')
         if os.path.isdir(downloadPath):
-            os.rmdir(downloadPath)
+            shutil.rmtree(downloadPath)
             logging.info("rmdir "+downloadPath)
 
         os.mkdir(downloadPath)
@@ -1547,11 +1547,16 @@ class Finlib_indicator:
 
         # 20210111_IndexData_SH000300.xls
         while not os.listdir(dir):
-            logging.info("waiting download complete")
-            time.sleep(1)
+            logging.info("waiting download complete, file not appear")
+            time.sleep(5)
+
+        while (os.listdir(dir)[0].rfind(".crdownload") > 1): #the index position of .crdownload, -1 if not include .crdownload
+            logging.info("waiting download complete, file in .crdownload")
+            time.sleep(5)
 
         fr_file = dir+"/"+os.listdir(dir)[0]
         to_file = to_dir+"/"+interval+"_"+os.listdir(dir)[0]
+        time.sleep(10) #wait 10 seconds to let the download file completed.
 
         shutil.move(fr_file, to_file)
         logging.info("downloaded to  " + to_file)
