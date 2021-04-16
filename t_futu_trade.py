@@ -300,7 +300,7 @@ def _unlock_trd_ctx(trd_ctx,pwd_unlock):
 
 def get_persition_and_order(trd_ctx,market,trd_env):
 
-    #checking orders(in queue)
+    #checking orders(in queue) 查询今日订单
     ret, df_order_list = trd_ctx.order_list_query(trd_env=trd_env)
     if ret != RET_OK:
         raise Exception("Cannot get order info, "+df_order_list)
@@ -340,56 +340,83 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ###################
     # get order
     ###################
+
+    last_buy_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+    last_sell_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+
     orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
+    orders_buy = orders[orders['trd_side']=='BUY']
+    orders_sell = orders[orders['trd_side']=='SELL']
 
-    if orders.empty:
-        logging.info("no orders there on code "+code)
+    if not orders_buy.empty:
+        last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).iloc[0]
+        last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time, "%Y-%m-%d %H:%M:%S")
+        last_buy_order_string = finlib.Finlib().pprint(last_buy_order[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+
+    if not orders_sell.empty:
+        last_sell_order = orders_sell.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).iloc[0]
+        last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time, "%Y-%m-%d %H:%M:%S")
+        last_sell_order_string = finlib.Finlib().pprint(last_sell_order[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+
+    if last_sell_order_create_time > last_buy_order_create_time:
+        last_order = last_sell_order
+        last_order_string = last_sell_order_string
+    elif last_buy_order_create_time > last_sell_order_create_time:
+        last_order = last_buy_order
+        last_order_string = last_buy_order_string
+    elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
+        raise Exception("the last buy and sell order creation time are equal.")
+
+
+    # index 0 is the most recent order
+    # orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
+
+    # last_order = orders.iloc[0]
+
+    # last_order.order_id #6226957295081580411
+    # last_order.code #HK.09977
+    # last_order.stock_name #凤祥股份
+    # last_order.trd_side  # BUY
+    # last_order.qty #1000.0
+    # last_order.price #2.5
+    # last_order.create_time #'2021-04-02 11:44:05'
+    # last_order.order_status #SUBMITTED
+
+
+    # US Market
+    if code.startswith('US.'):
+        last_buy_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                                      - convert_dt_timezone(last_buy_order_create_time,
+                                                            tz_in=pytz.timezone('America/New_York'),
+                                                            tz_out=pytz.timezone('Asia/Shanghai'),
+                                                    )
+
+
+        last_sell_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                                       - convert_dt_timezone(last_sell_order_create_time,
+                                                             tz_in=pytz.timezone('America/New_York'),
+                                                             tz_out=pytz.timezone('Asia/Shanghai'),
+                                                    )
+
+
+    # not a US market. HK Market
     else:
-        # index 0 is the most recent order
-        orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
+        last_buy_create_time_to_now = datetime.datetime.now() - last_buy_order_create_time
+        last_sell_create_time_to_now = datetime.datetime.now() - last_sell_order_create_time
 
+    if last_buy_create_time_to_now.seconds <= 60*60*4 or last_sell_create_time_to_now.seconds <= 60*60*4: # 4 hours
+        if not simulator:
+            logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " lastest order" + last_order_string)
+            do_not_place_order = True
 
-        this_order_string = finlib.Finlib().pprint(orders.head(1)[[ 'code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+        elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
+            logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " " + "latest order:\n"+last_order_string)
+            do_not_place_order = True
 
-        last_order = orders.iloc[0]
-
-        # last_order.order_id #6226957295081580411
-        # last_order.code #HK.09977
-        # last_order.stock_name #凤祥股份
-        # last_order.trd_side  # BUY
-        # last_order.qty #1000.0
-        # last_order.price #2.5
-        # last_order.create_time #'2021-04-02 11:44:05'
-        # last_order.order_status #SUBMITTED
-
-        lastorder_create_time = datetime.datetime.strptime(last_order.create_time, "%Y-%m-%d %H:%M:%S")
-
-        # US Market
-        if code.startswith('US.'):
-            lastorder_create_time = convert_dt_timezone(lastorder_create_time,
-                                                        tz_in=pytz.timezone('America/New_York'),
-                                                        tz_out=pytz.timezone('Asia/Shanghai'),
-                                                        )
-
-            create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) - lastorder_create_time
-
-        # not a US market. HK Market
-        else:
-            create_time_to_now = datetime.datetime.now() - lastorder_create_time
-
-        if create_time_to_now.seconds <= 60*60*4: # 4 hours
-            if not simulator:
-                logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
-                logging.info(__file__ + " " + this_order_string)
-                do_not_place_order = True
-
-            elif simulator and (last_order.order_status not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
-                logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
-                logging.info(__file__ + " " + "latest order:\n"+this_order_string)
-                do_not_place_order = True
-
-            elif simulator:
-                logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
+        elif simulator:
+            logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
 
 
 
@@ -494,10 +521,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
     # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
-    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) :
+    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
         if do_not_place_order:
-            logging.info("do_not_place_order = True is set, so order didn't placed.")
+            logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
+        elif last_sell_create_time_to_now.seconds < 60*3:
+            logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 1000 -r 5")
@@ -509,7 +538,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0) :
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
-            logging.info("do_not_place_order = True is set, so order didn't placed.")
+            logging.info("will not place order. do_not_place_order "+str(do_not_place_order))
+        elif last_buy_create_time_to_now.seconds < 60*3:
+            logging.info("will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 1000 -r 5")
