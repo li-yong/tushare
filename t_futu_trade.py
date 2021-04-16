@@ -435,16 +435,20 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # get position
     ###################
     if not code in df_position_list['code'].to_list():
-        if simulator:
-            logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create a new order for simulator.")
-            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
-                                        trd_env=trd_env)
-            return()#return after place a test order
-        else:
-            logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
-            do_not_place_order = True
-            do_not_place_order_reason = "code " + code + " no position"
-
+        # if simulator:
+        #     logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create a new order for simulator.")
+        #     place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
+        #                                 trd_env=trd_env)
+        #     return()#return after place a test order
+        # else:
+        #     logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
+        #     do_not_place_order = True
+        #     do_not_place_order_reason = "code " + code + " no position"
+        #
+        logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
+        do_not_place_order = True
+        do_not_place_order_reason = "code " + code + " no position"
+        return()
 
     position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
