@@ -435,6 +435,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # get position
     ###################
     if not code in df_position_list['code'].to_list():
+        logging.info(__file__ + " " + "code " + code + " no position, will short on sell.")
         # if simulator:
         #     logging.info(__file__ + " " + "code " + code + " SIMULATOR, no position, create a new order for simulator.")
         #     place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=dict_code[code]['p_ask'], code=code, qty=dict_code[code]['stock_lot_size'],
@@ -445,31 +446,36 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         #     do_not_place_order = True
         #     do_not_place_order_reason = "code " + code + " no position"
         #
-        logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
-        do_not_place_order = True
-        do_not_place_order_reason = "code " + code + " no position"
-        return()
 
-    position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
+        #short the  if no position.
+        # logging.info(__file__ + " " + "code " + code + " no position. Abort further processing.")
+        # do_not_place_order = True
+        # do_not_place_order_reason = "code " + code + " no position"
+        # return()
+        sell_slot_size_1_of_4_position = dict_code[code]['stock_lot_size']
 
-    cur_pos="current position:\n"+finlib.Finlib().pprint(position[[ 'code','stock_name', 'qty','can_sell_qty','position_side','unrealized_pl','realized_pl' ]])
-    # print(cur_pos)
-    logging.info(cur_pos)
-    position_qty = position.qty[0]
-    position_can_sell_qty = position.can_sell_qty[0]
+    else:
 
-    ###################
-    # sell position
-    ###################
-    stock_lot_size = dict_code[code]['stock_lot_size']
-    sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
+        position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
-    if sell_slot_size_1_of_4_position < stock_lot_size:
-        sell_slot_size_1_of_4_position = stock_lot_size
+        cur_pos="current position:\n"+finlib.Finlib().pprint(position[[ 'code','stock_name', 'qty','can_sell_qty','position_side','unrealized_pl','realized_pl' ]])
+        # print(cur_pos)
+        logging.info(cur_pos)
+        position_qty = position.qty[0]
+        position_can_sell_qty = position.can_sell_qty[0]
 
-    #trading one unit in REAL env.
-    if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
-        sell_slot_size_1_of_4_position = stock_lot_size
+        ###################
+        # sell position
+        ###################
+        stock_lot_size = dict_code[code]['stock_lot_size']
+        sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
+
+        if sell_slot_size_1_of_4_position < stock_lot_size:
+            sell_slot_size_1_of_4_position = stock_lot_size
+
+        #trading one unit in REAL env.
+        if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
+            sell_slot_size_1_of_4_position = stock_lot_size
 
     ###################
     # evaluate p_ask with MA
