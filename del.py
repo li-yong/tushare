@@ -26,6 +26,12 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 
 #########################################
+df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
+df_us_1W = finlib.Finlib().load_tv_fund(market='US', period='1W')
+
+print(1)
+
+#########################################
 #time to market
 # df = finlib.Finlib().load_all_ts_pro()
 
@@ -159,6 +165,7 @@ df_gar_2 = df[df['roe']<3]
 df_gar_3 = df[df['roe_pe']<0.5]
 
 # df = finlib.Finlib().load_tv_fund(market='us',period='d')
+
 
 
 
