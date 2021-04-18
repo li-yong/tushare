@@ -40,13 +40,13 @@ import pickle
 
 def tv_source(index_name,idict,period_start,period_end, ndays):
     # index file is get by t_daily_get_us_index.py from WikiPedia.
-    df_nas100 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
-    df_spx500 = pd.read_csv('/home/ryan/DATA/pickle/INDEX_US_HK/sp500.csv')
+    df_nas100 = pd.read_csv(os.path.expanduser("~")+'/DATA/pickle/INDEX_US_HK/nasdqa100.csv')
+    df_spx500 = pd.read_csv(os.path.expanduser("~")+'/DATA/pickle/INDEX_US_HK/sp500.csv')
 
     # the file is downloaded manually in Chrome Save Page WE addon. Contains all US market stocks (7000+) and all columns (200+)
-    df_mkt_us = pd.read_csv('/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/america_latest.csv').sort_values(
+    df_mkt_us = pd.read_csv(os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/TradingView/america_latest.csv').sort_values(
         by='Market Capitalization', ascending=False)
-    df_mkt_cn = pd.read_csv('/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest.csv',converters={'Ticker': str}).sort_values(
+    df_mkt_cn = pd.read_csv(os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/TradingView/china_latest.csv',converters={'Ticker': str}).sort_values(
         by='Market Capitalization', ascending=False)
 
     if index_name == 'nasdaq100':
@@ -166,7 +166,7 @@ def compare_with_official_index_list(df_my_index,df_offical_index, index_name,pe
                                                                            ])
 
     len_merged = df_merged.__len__()
-    index_candiate_csv = "/home/ryan/DATA/result/"+index_name+"_candidate_list.csv"
+    index_candiate_csv = os.path.expanduser("~")+"/DATA/result/"+index_name+"_candidate_list.csv"
 
     sort_col_name = ''
     if "total_mv_perc" in df_merged.columns:
@@ -272,7 +272,7 @@ def hs300_on_market_days_filter():
 
 def get_hs300_total_share_weighted():
     #沪深300指数是按照自由流通量加权计算指数，样本股在指数中的权重由其自由流通量决定
-    basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
+    basic_dir = os.path.expanduser("~")+"/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
     df_basic = pd.read_csv(basic_dir + "/basic_" + finlib.Finlib().get_last_trading_day() + ".csv")
 
     #free_share 自由流通股本 （万）.   自由流通量 =样本总股本 - 非自由流通股本
@@ -305,7 +305,7 @@ def get_hs300_total_share_weighted():
 ############
 def fetch_index_wugui_selenium():
 
-    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+    wg_d = os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
 
     wg_index_dict = {
         'hs300': {'c':'SH000300', 'sheet': '沪深300的成分股', },  # 沪深300的历史估值和成分股估值权重下载
@@ -340,7 +340,7 @@ def fetch_index_wugui_selenium():
     for index_name in wg_index_dict.keys():
         code = wg_index_dict[index_name]['c']
         u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
-        f = "/home/ryan/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+        f = os.path.expanduser("~")+"/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
 
         # 20210125_IndexData_CSI931087.xls
 
@@ -391,7 +391,7 @@ def fetch_index_wugui_selenium():
 
 ############
 def fetch_index_tradingview_selenium():
-    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = "/home/ryan/Downloads/chrome_tmp_del"
+    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = os.path.expanduser("~")+"/Downloads/chrome_tmp_del"
 
     browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
 
@@ -411,7 +411,7 @@ def fetch_index_tradingview_selenium():
     ######################################
     # Set Filters
     ######################################
-    tv_d = '/home/ryan/DATA/pickle/Stock_Fundamental/TradingView'
+    tv_d = os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/TradingView'
 
 
    # have to fetch in US->CN->HK sequence. only support scroll down. not up.
@@ -442,7 +442,7 @@ def fetch_index_tradingview_selenium():
 def index_weight_wg(index_name):
     #files are manually downloaded from https://androidinvest.com/chinaindicesdown/SH000300/
 
-    wg_d = '/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
+    wg_d = os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/WuGuiLiangHua'
 
     wg_index_dict = {
         'hs300': {'f': wg_d + '/SH000300.csv' },  # 沪深300的历史估值和成分股估值权重下载
@@ -470,7 +470,7 @@ def main():
     parser.add_option("-n", "--ndays",default=0, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
-    parser.add_option("--fetch_index_ts", action="store_true", default=False, dest="fetch_index_ts",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
+    parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
     parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
     #
@@ -485,7 +485,7 @@ def main():
     period_start = options.period_start
     period_end = options.period_end
     ndays = options.ndays
-    fetch_index_ts = options.fetch_index_ts
+    fetch_index_tv = options.fetch_index_tv
     fetch_index_wg = options.fetch_index_wg
 
 
@@ -503,7 +503,7 @@ def main():
 
     }
 
-    if fetch_index_ts:
+    if fetch_index_tv:
         fetch_index_tradingview_selenium()
         exit()
 

@@ -1191,7 +1191,8 @@ class Finlib_indicator:
             rtn = self.my_ma_koudi(df=df)
 
     def tv_login(self, browser,target_uri='https://www.tradingview.com/'):
-        cookie_f = '/home/ryan/DATA/pickle/tradingview.cookie'
+
+        cookie_f = os.path.expanduser("~")+'/DATA/pickle/tradingview.cookie'
 
         if finlib.Finlib().is_cached(cookie_f, day=2):
             logging.info('tvlogin, load cookies from ' + cookie_f)
