@@ -391,7 +391,7 @@ def fetch_index_wugui_selenium():
 
 ############
 def fetch_index_tradingview_selenium():
-    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = os.path.expanduser("~")+"/Downloads/chrome_tmp_del"
+    os.environ['CHROME_TMP_DOWNLOAD_DIR'] = os.path.abspath(os.path.expanduser("~")+"/Downloads/chrome_tmp_del")
 
     browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
 
