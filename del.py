@@ -29,6 +29,24 @@ pd.set_option('display.width', 1000)
 df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
 df_us_1W = finlib.Finlib().load_tv_fund(market='US', period='1W')
 
+df=df_us_1D
+df = df[df['Total Debt (MRQ)']<=df['Total Revenue (FY)']]
+df = df[df['Basic EPS (TTM)']>0]
+df = df[df['roe_ttm']>5]
+df = df[df['pe_ttm']>5]
+df = df[df['ps']>5]
+
+cols=['code','name','Enterprise Value (MRQ)','EBITDA (TTM)','Enterprise Value/EBITDA (TTM)',
+      'roe_ttm','ps','pe_ttm','Operating Margin (TTM)','vola_month',
+      'Total Revenue (FY)', 'Total Debt (MRQ)',
+      '52 Week High','close','52 Week Low',
+      ]
+df[cols].describe()
+
+
+df_us_1D[df_us_1D['code'].isin(['BILI','FUTU','MSFT','DIS','TWLO','DELL'])][cols]
+
+
 print(1)
 
 #########################################

@@ -736,19 +736,37 @@ def main():
     ma_period =options.ma_period
     tv_source = options.tv_source
 
+
     if market == Market.HK:
+        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')
         get_price_code_list = ['HK.00700', 'HK.09977']
+        get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
     elif market == Market.US:
-        get_price_code_list = ['US.FUTU', 'US.AAPL']
-        get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
-                               'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
-                               'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
+        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')
+        get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
+        # get_price_code_list = ['US.FUTU', 'US.AAPL']
+        # get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
+        #                        'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
+        #                        'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
+
         # get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
-        get_price_code_list = ['SH.600519']
+        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+        _ = finlib.Finlib().remove_market_from_tscode(stock_list)
+        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
+        _ = _[_['code'].str.contains('SH')]['code']
+        get_price_code_list = _.to_list()
+
+        # get_price_code_list = ['SH.600519']
     elif market == Market.SZ:
-        get_price_code_list = ['SZ.000001']
+        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+        _ = finlib.Finlib().remove_market_from_tscode(stock_list)
+        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
+        _ = _[_['code'].str.contains('SZ')]['code']
+        get_price_code_list = _.to_list()
+
+        # get_price_code_list = ['SZ.000001']
     else:
         logging.fatal("Unknow market. "+str(market))
 

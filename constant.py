@@ -251,18 +251,18 @@ TRADINGVIEW_COLS = {
     "Relative Volume" : "xxxx",  #相对成交量
     "Operating Margin (TTM)" : "xxxx",  #营业利润率
     "Gross Margin (TTM)" : "xxxx",  #毛利率
-    "Volatility Month" : "xxxx",  #月波动率
-    "Average Day Range (14)" : "xxxx",  #Average Day Range (14)
-    "Volatility" : "xxxx",  #波动率
+    "Volatility Month" : "vola_month",  #月波动率
+    "Average Day Range (14)" : "adr_14",  #Average Day Range (14)
+    "Volatility" : "vola",  #波动率
     "Sector" : "xxxx",  #板块
-    "Average True Range (14)" : "xxxx",  #真实波幅均值ATR
+    "Average True Range (14)" : "atr_14",  #真实波幅均值ATR
     "Change 15m, %" : "xxxx",  #涨跌幅15分钟
     "Change 1h, %" : "xxxx",  #涨跌幅1小时
     "Change 5m, %" : "xxxx",  #涨跌幅5分钟
     "Pre-market Change from Open %" : "xxxx",  #盘前涨跌%
     "Post-market Change %" : "xxxx",  #盘后帐跌%
     "Change 1m, %" : "xxxx",  #涨跌幅1m
-    "Volume*Price" : "xxxx",  #成交量*价格
+    "Volume*Price" : "amount",  #成交量*价格
     "1-Month Pivot Camarilla P" : "xxxx",  #1个月枢轴点 卡玛利亚 P
     "1-Month Pivot Camarilla R2" : "xxxx",  #1个月枢轴点 卡玛利亚 R2
     "1-Month Pivot Camarilla R1" : "xxxx",  #1个月枢轴点 卡玛利亚 R1
@@ -270,9 +270,9 @@ TRADINGVIEW_COLS = {
     "YTD Performance" : "xxxx",  #年初至今表现
     "Williams Percent Range (14)" : "xxxx",  #威廉百分比变动
     "Weekly Performance" : "xxxx",  #单周表现
-    "Volume Weighted Moving Average (20)" : "xxxx",  #成交量加权移动平均线
-    "Volume Weighted Average Price" : "xxxx",  #成交量加权平均价格
-    "Volatility Week" : "xxxx",  #周波动率
+    "Volume Weighted Moving Average (20)" : "vwma_20",  #成交量加权移动平均线
+    "Volume Weighted Average Price" : "vmap",  #成交量加权平均价格
+    "Volatility Week" : "vola_week",  #周波动率
     "Upcoming Earnings Date" : "xxxx",  #将近收益日期
     "Ultimate Oscillator (7, 14, 28)" : "xxxx",  #终极震荡指标UO
     "Total Shares Outstanding (MRQ)" : "xxxx",  #已发行股票总数
