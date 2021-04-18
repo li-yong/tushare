@@ -24,7 +24,7 @@ from selenium import webdriver
 # register_matplotlib_converters()
 
 # import pandas
-import mysql.connector
+# import mysql.connector
 from sqlalchemy import create_engine
 import re
 import math
@@ -32,7 +32,7 @@ from datetime import datetime, timedelta
 from scipy import stats
 import sys
 import traceback
-from jaqs.data.dataapi import DataApi
+# from jaqs.data.dataapi import DataApi
 import glob
 import stockstats
 

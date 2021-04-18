@@ -27,12 +27,12 @@ from datetime import datetime, timedelta
 from scipy import stats
 import sys
 import traceback
-from jaqs.data.dataapi import DataApi
+# from jaqs.data.dataapi import DataApi
 import glob
 
 import logging
 import yaml
-logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+logging.basicConfig(filename='del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 import warnings
 import constant
