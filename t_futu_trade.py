@@ -738,11 +738,11 @@ def main():
 
 
     if market == Market.HK:
-        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')
-        get_price_code_list = ['HK.00700', 'HK.09977']
+        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
+        # get_price_code_list = ['HK.00700', 'HK.09977']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
     elif market == Market.US:
-        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')
+        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
         # get_price_code_list = ['US.FUTU', 'US.AAPL']
         # get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
@@ -752,16 +752,14 @@ def main():
         # get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
-        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-        _ = finlib.Finlib().remove_market_from_tscode(stock_list)
+        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SH')]['code']
         get_price_code_list = _.to_list()
 
         # get_price_code_list = ['SH.600519']
     elif market == Market.SZ:
-        stock_list, csv_dir, out_dir = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-        _ = finlib.Finlib().remove_market_from_tscode(stock_list)
+        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SZ')]['code']
         get_price_code_list = _.to_list()
