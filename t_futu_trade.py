@@ -152,6 +152,7 @@ def get_current_price( host, port, code_list=['HK.00700']):
     quote_ctx.close()
 
     if ret != RET_OK:
+        #Failed to get_market_snapshot, 此协议请求太频繁，触发了频率限制，请稍后再试
         raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
 
     return(df_market_snapshot)
@@ -297,9 +298,11 @@ def _get_trd_ctx(host="127.0.0.1", port=111111, market=Market.HK):
 
 def _unlock_trd_ctx(trd_ctx,pwd_unlock):
     ret, data = trd_ctx.unlock_trade(pwd_unlock)
+
     if ret != RET_OK:
-        logging.fatal(__file__ + " " + 'Failed to unlock trade')
-        raise Exception('Failed to unlock trade')
+        #g=连接个数超过128，请关闭无用连接
+        logging.fatal(__file__ + " " + 'Failed to unlock trade. ' + data)
+        raise Exception('Failed to unlock trade. '+data)
     return(trd_ctx)
 
 
@@ -945,22 +948,27 @@ def _extreme_low_price_JianLou():
     ### Buy according to df_input
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(df_input['code'].tolist())
     if ret != RET_OK:
+        quote_ctx.close()
         raise Exception('Failed to get_market_snapshot.'+df_market_snapshot)
 
     ret, data = trd_ctx_hk.unlock_trade(pwd_unlock)
+    trd_ctx_hk.close()
     if ret != RET_OK:
         raise Exception('Failed to unlock trade, HK')
 
     ret, data = trd_ctx_us.unlock_trade(pwd_unlock)
+    trd_ctx_us.close()
     if ret != RET_OK:
         raise Exception('Failed to unlock trade, US')
 
     #checking account
     ret, df_accinfo_hk = trd_ctx_hk.accinfo_query(trd_env=trd_env)
+    trd_ctx_hk.close()
     if ret != RET_OK:
         raise Exception("Cannot get account info, HK")
 
     ret, df_accinfo_us = trd_ctx_us.accinfo_query(trd_env=trd_env)
+    trd_ctx_us.close()
     if ret != RET_OK:
         raise Exception("Cannot get account info, US")
     '''
@@ -984,19 +992,23 @@ def _extreme_low_price_JianLou():
     #checking orders(in queue)
     ret, df_order_list_hk = trd_ctx_hk.order_list_query(trd_env=trd_env)
     if ret != RET_OK:
+        trd_ctx_hk.close()
         raise Exception("Cannot get order info, HK")
 
     ret, df_order_list_us = trd_ctx_us.order_list_query(trd_env=trd_env)
     if ret != RET_OK:
+        trd_ctx_us.close()
         raise Exception("Cannot get order info, US")
 
     #checking postion
     ret, df_position_list_hk = trd_ctx_hk.position_list_query(trd_env=trd_env)
     if ret != RET_OK:
+        trd_ctx_hk.close()
         raise Exception("Failed to get position, HK")
 
     ret, df_position_list_us = trd_ctx_us.position_list_query(trd_env=trd_env)
     if ret != RET_OK:
+        trd_ctx_us.close()
         raise Exception("Failed to get position, US")
 
     i_cnt = 1
