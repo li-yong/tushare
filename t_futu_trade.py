@@ -823,6 +823,7 @@ def main():
             'p_bid':0,
             'ma':0,
             'update_time':0,
+            't_last_k_renew':datetime.datetime.now(),
         }
 
     k_renew_interval_second = {
@@ -867,13 +868,14 @@ def main():
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if dict_code[code]['ma_nsub1_sum'] == 0 or (now - t_last_k_renew).seconds >= k_renew_interval_second[ktype]:
+            if dict_code[code]['ma_nsub1_sum'] == 0 or (now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]:
                 t_last_k_renew = now
                 _ = get_current_ma(host=host, port=port, code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
                 dict_code[code]['ktype'] = _['ktype']
                 dict_code[code]['last_ma_bar'] = _['last_ma_bar']
+                dict_code[code]['t_last_k_renew'] = now
                 logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,
