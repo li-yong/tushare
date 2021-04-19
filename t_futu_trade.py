@@ -149,10 +149,10 @@ def get_stock_basicinfo(host, port, stock_list=None, market=Market.HK, securityT
 def get_current_price( host, port, code_list=['HK.00700']):
     quote_ctx = OpenQuoteContext(host=host, port=port)
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(code_list)
-    if ret != RET_OK:
-        raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
     quote_ctx.close()
 
+    if ret != RET_OK:
+        raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
 
     return(df_market_snapshot)
 
@@ -177,6 +177,7 @@ def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5,
         max_count=max_count)  #
 
     if ret != RET_OK:
+        quote_ctx.close()
         logging.fatal(__file__+" "+'error:', data)
         raise Exception("Error on get_current_ma/request_history_kline. "+ls )
 
@@ -189,6 +190,7 @@ def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5,
         max_count=max_count, page_req_key=page_req_key)  # 请求翻页后的数据
 
         if ret != RET_OK:
+            quote_ctx.close()
             logging.fatal(__file__ + " " + 'error:', data)
             raise Exception("Error on get_current_ma/request_history_kline. " + ls)
         else:
