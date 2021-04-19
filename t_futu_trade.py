@@ -754,7 +754,7 @@ def main():
         _ = _[_['code'].str.contains('SH')]['code']
         get_price_code_list = _.to_list()
 
-        get_price_code_list = ['SH.600809']
+        # get_price_code_list = ['SH.600809']
     elif market == Market.SZ:
         _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
