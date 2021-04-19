@@ -768,7 +768,7 @@ def main():
 
     #### fetch
     if options.fetch_history_bar:
-        start = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
+        start = (datetime.datetime.today() - datetime.timedelta(days=700)).strftime("%Y-%m-%d")
         end = datetime.datetime.today().strftime("%Y-%m-%d")
 
         for code in get_price_code_list:
