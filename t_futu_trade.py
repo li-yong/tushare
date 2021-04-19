@@ -847,7 +847,6 @@ def main():
 
 
    ############# Minutely Check ###############
-    t_last_k_renew = datetime.datetime.now()
 
     while True:
         if tv_source:
@@ -868,8 +867,9 @@ def main():
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if dict_code[code]['ma_nsub1_sum'] == 0 or (now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]:
-                t_last_k_renew = now
+            if (dict_code[code]['ma_nsub1_sum'] == 0) \
+                    or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
+                    or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300) :
                 _ = get_current_ma(host=host, port=port, code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
