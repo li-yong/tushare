@@ -199,11 +199,11 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
-def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
+def get_current_ma(host, port, code, ktype=KLType.K_60M, ma_period=5, ):
     start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
-    data = get_history_bar(host, port, code='HK.00700', start=start, end=end, ktype=KLType.K_60M, extended_time=False)
+    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=KLType.K_60M, extended_time=False)
 
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
@@ -754,7 +754,7 @@ def main():
         _ = _[_['code'].str.contains('SH')]['code']
         get_price_code_list = _.to_list()
 
-        # get_price_code_list = ['SH.600519']
+        get_price_code_list = ['SH.600809']
     elif market == Market.SZ:
         _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
