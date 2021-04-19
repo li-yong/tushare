@@ -166,7 +166,7 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     ls = 'code ' + str(code) + " ktype " + str(ktype) + " start " + str(start) + " end " + str(
         end) + ' extended_time ' + str(extended_time) + " max_count " + str(max_count)
-    logging.info("get_current_ma/request_history_kline " + ls)
+    logging.info("request_history_kline " + ls)
 
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
@@ -178,20 +178,22 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
     if ret != RET_OK:
         quote_ctx.close()
         logging.fatal(__file__ + " " + 'error:', data)
-        raise Exception("Error on get_current_ma/request_history_kline. " + ls)
+        raise Exception("Error on request_history_kline. " + ls)
 
     while page_req_key != None:  # 请求后面的所有结果
-        ret, data_n, page_req_key = quote_ctx.request_history_kline(code, ktype=ktype,
+        ret, data_n, page_req_key = quote_ctx.request_history_kline(code,
+                                                                    ktype=ktype,
                                                                     start=start,
                                                                     end=end,
                                                                     extended_time=extended_time,
                                                                     max_count=max_count,
-                                                                    page_req_key=page_req_key)  # 请求翻页后的数据
+                                                                    page_req_key=page_req_key,
+                                                                    )  # 请求翻页后的数据
 
         if ret != RET_OK:
             quote_ctx.close()
             logging.fatal(__file__ + " " + 'error:', data)
-            raise Exception("Error on get_current_ma/request_history_kline. " + ls)
+            raise Exception("Error on request_history_kline. " + ls)
         else:
             data = data.append(data_n)
 
@@ -199,11 +201,11 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
-def get_current_ma(host, port, code, ktype=KLType.K_60M, ma_period=5, ):
+def get_current_ma(host, port, code, ktype, ma_period=5, ):
     start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
-    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=KLType.K_60M, extended_time=False)
+    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
 
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
