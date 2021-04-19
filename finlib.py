@@ -27,12 +27,12 @@ from datetime import datetime, timedelta
 from scipy import stats
 import sys
 import traceback
-# from jaqs.data.dataapi import DataApi
+from jaqs.data.dataapi import DataApi
 import glob
 
 import logging
 import yaml
-logging.basicConfig(filename='del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 import warnings
 import constant
@@ -5127,8 +5127,7 @@ class Finlib:
 
     #input: na
     #output:
-    def load_tv_fund(self, market='US', period='1D'):
-        # america_latest_1D.csv  america_latest_1M.csv  america_latest_1W.csv
+    def load_tv_fund(self, market='US', period='d'):
 
         if market == 'US':
             csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/america_latest_"+period+".csv"

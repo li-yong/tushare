@@ -157,18 +157,16 @@ def get_current_price( host, port, code_list=['HK.00700']):
 
     return(df_market_snapshot)
 
+def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
+    # extended_time = False  # Futu App calculate MA without extended time. Compliance with Futu App.
 
-
-def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
     quote_ctx = OpenQuoteContext(host=host, port=port)
 
-    start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
-    end = datetime.datetime.today().strftime("%Y-%m-%d")
-    extended_time = False # Futu App calculate MA without extended time. Compliance with Futu App.
-    max_count= 1000
+    max_count = 1000
 
-    ls = 'code ' + str(code)+" ktype "+str(ktype)+" start "+str(start)+" end "+str(end) + ' extended_time '+str(extended_time)+" max_count "+str(max_count)
-    logging.info("get_current_ma/request_history_kline "+ls)
+    ls = 'code ' + str(code) + " ktype " + str(ktype) + " start " + str(start) + " end " + str(
+        end) + ' extended_time ' + str(extended_time) + " max_count " + str(max_count)
+    logging.info("get_current_ma/request_history_kline " + ls)
 
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
@@ -179,16 +177,16 @@ def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5,
 
     if ret != RET_OK:
         quote_ctx.close()
-        logging.fatal(__file__+" "+'error:', data)
-        raise Exception("Error on get_current_ma/request_history_kline. "+ls )
-
+        logging.fatal(__file__ + " " + 'error:', data)
+        raise Exception("Error on get_current_ma/request_history_kline. " + ls)
 
     while page_req_key != None:  # 请求后面的所有结果
         ret, data_n, page_req_key = quote_ctx.request_history_kline(code, ktype=ktype,
-        start=start,
-        end=end,
-        extended_time=extended_time,
-        max_count=max_count, page_req_key=page_req_key)  # 请求翻页后的数据
+                                                                    start=start,
+                                                                    end=end,
+                                                                    extended_time=extended_time,
+                                                                    max_count=max_count,
+                                                                    page_req_key=page_req_key)  # 请求翻页后的数据
 
         if ret != RET_OK:
             quote_ctx.close()
@@ -198,6 +196,14 @@ def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5,
             data = data.append(data_n)
 
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+
+    return(data)
+
+def get_current_ma(host, port, code='HK.00700', ktype=KLType.K_60M, ma_period=5, ):
+    start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+    end = datetime.datetime.today().strftime("%Y-%m-%d")
+
+    data = get_history_bar(host, port, code='HK.00700', start=start, end=end, ktype=KLType.K_60M, extended_time=False)
 
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
@@ -696,6 +702,7 @@ def main():
     # parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
+    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US|HK|SH|SZ]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
@@ -727,7 +734,6 @@ def main():
     ma_period =options.ma_period
     tv_source = options.tv_source
 
-
     if market == Market.HK:
         stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
         # get_price_code_list = ['HK.00700', 'HK.09977']
@@ -758,6 +764,30 @@ def main():
         # get_price_code_list = ['SZ.000001']
     else:
         logging.fatal("Unknow market. "+str(market))
+
+
+    #### fetch
+    if options.fetch_history_bar:
+        start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+        end = datetime.datetime.today().strftime("%Y-%m-%d")
+
+        for code in get_price_code_list:
+            for i in range(10):
+                date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
+                csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+market+"/"+code+"_1m_"+date_p+".csv"
+
+                if finlib.Finlib().is_cached(csv_f, day=10):
+                    continue
+
+                logging.info("fetching date "+ str(date_p)+" "+code)
+                df = get_history_bar(host=host, port=port, code=code, start=date_p, end=date_p, ktype=KLType.K_1M, extended_time=True)
+                df.to_csv(csv_f, encoding='UTF-8', index=False)
+                logging.info("fetched, saved to "+ csv_f)
+
+
+
+        exit()
+
 
     if simulator:
         # trd_env = TrdEnv.SIMULATE

@@ -50,7 +50,7 @@ US:
     #- YUMC: 百胜中国
     #- BA: 波音
     - BILL: Bill
-    - BTCmain: BTC
+    #- BTCmain: BTC
     #- PYPL: PayPal
     - CLDR: Cloudera
     - BILI: 哔哩哔哩
@@ -88,7 +88,7 @@ US:
     #- PINS: Pinterest
     - DELL: DELL
     - NOW: ServiceNow
-    - XLK: 高科技指数ETF-SPDR
+    #- XLK: 高科技指数ETF-SPDR
     - GOOG: Google
     #- NTAP: NetApp
     #- HAS: Hasbro
