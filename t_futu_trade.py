@@ -768,21 +768,21 @@ def main():
 
     #### fetch
     if options.fetch_history_bar:
-        start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+        start = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
         end = datetime.datetime.today().strftime("%Y-%m-%d")
 
         for code in get_price_code_list:
-            for i in range(10):
-                date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-                csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+market+"/"+code+"_1m_"+date_p+".csv"
+            # for i in range(10):
+            # date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
+            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+market+"/"+code+"_1m_"+start+"_"+end+".csv"
 
-                if finlib.Finlib().is_cached(csv_f, day=10):
-                    continue
+            if finlib.Finlib().is_cached(csv_f, day=10):
+                continue
 
-                logging.info("fetching date "+ str(date_p)+" "+code)
-                df = get_history_bar(host=host, port=port, code=code, start=date_p, end=date_p, ktype=KLType.K_1M, extended_time=True)
-                df.to_csv(csv_f, encoding='UTF-8', index=False)
-                logging.info("fetched, saved to "+ csv_f)
+            logging.info("fetching date "+ start+" "+end+" "+code)
+            df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M, extended_time=True)
+            df.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info("fetched, saved to "+ csv_f)
 
 
 
