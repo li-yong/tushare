@@ -1664,7 +1664,7 @@ class Finlib_indicator:
         df_g_p4 = df[df.grid == 4]
         logging.info(market + " grid  4 stocks len " + str(df_g_p4.__len__()))
 
-        return(df)
+        return(df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

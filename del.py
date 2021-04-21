@@ -28,9 +28,12 @@ pd.set_option('display.width', 1000)
 #########################################
 
 for market in ['AG','HK','US']:
-    _ = finlib_indicator.Finlib_indicator().grid_market_overview(market=market)
+    logging.info("\n==== "+market+" ====")
+    (df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market)
+    logging.info("")
 
-if market=='AG':
+if market=='AG' or True:
+    df = finlib_indicator.Finlib_indicator().grid_market_overview(market='AG')
     df = df[df['code'] == 'SH600519']
     code = df['code'][0]
     p = df['close'][0]
@@ -41,7 +44,7 @@ if market=='AG':
 
     logging.info("BATCH code " + str(code) + " current price " + str(p) + " , grid " + str(grid) + " , cash " + str(c) + " stock " + str(1 - c))
 
-
+exit(0)
 
 #########################################
 df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
