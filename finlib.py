@@ -5127,10 +5127,12 @@ class Finlib:
 
     #input: na
     #output:
-    def load_tv_fund(self, market='US', period='d'):
+    def load_tv_fund(self, market='US', period='1D'):
 
         if market == 'US':
             csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/america_latest_"+period+".csv"
+        elif market == 'HK':
+            csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/hongkong_latest_"+period+".csv"
         elif market == 'AG':
             csv_f = "/home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest_"+period+".csv"
 

@@ -26,6 +26,24 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 
 #########################################
+
+for market in ['AG','HK','US']:
+    _ = finlib_indicator.Finlib_indicator().grid_market_overview(market=market)
+
+if market=='AG':
+    df = df[df['code'] == 'SH600519']
+    code = df['code'][0]
+    p = df['close'][0]
+    high = df['3-Month High'][0]
+    low = df['3-Month Low'][0]
+    c = df['grid_cash_perc'][0]
+    grid = df['grid'][0]
+
+    logging.info("BATCH code " + str(code) + " current price " + str(p) + " , grid " + str(grid) + " , cash " + str(c) + " stock " + str(1 - c))
+
+
+
+#########################################
 df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
 df_us_1W = finlib.Finlib().load_tv_fund(market='US', period='1W')
 

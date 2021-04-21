@@ -1598,6 +1598,74 @@ class Finlib_indicator:
 
         return(browser)
 
+
+
+
+    def _get_grid_spec(self,market='AG', period='1D'):
+
+        df = finlib.Finlib().load_tv_fund(market=market, period=period)
+
+        code = df['code']
+        p = df['close']
+        high = df['3-Month High']
+        low = df['3-Month Low']
+        atr_14d = df['atr_14']
+
+        delta = high - low
+
+        df['l1'] = high
+        df['l2'] = round(low + delta * 0.764, 2)
+        df['l3'] = round(low + delta * 0.618, 2)
+        df['l4'] = round(low + delta * 0.5, 2)
+        df['l5'] = round(low + delta * 0.382, 2)
+        df['l6'] = round(low + delta * 0.236, 2)
+        df['l7'] = low
+
+
+        df.loc[df.close < df.l7, ['grid_cash_perc', 'grid']]=[0,-4]
+        df.loc[(df.l7 <= df.close) & (df.close< df.l6), ['grid_cash_perc', 'grid']]=[0.235, -3]
+        df.loc[(df.l6 <= df.close) & (df.close< df.l5), ['grid_cash_perc', 'grid']]=[0.382, -2]
+        df.loc[(df.l5 <= df.close) & (df.close< df.l4), ['grid_cash_perc', 'grid']]=[0.5, -1]
+        df.loc[(df.l4 <= df.close) & (df.close< df.l3), ['grid_cash_perc', 'grid']]=[0.618, 1]
+        df.loc[(df.l3 <= df.close) & (df.close< df.l2), ['grid_cash_perc', 'grid']]=[0.764, 2]
+        df.loc[(df.l2 <= df.close) & (df.close< df.l1), ['grid_cash_perc', 'grid']]=[1, 3]
+        df.loc[df.l1 <= df.close, ['grid_cash_perc', 'grid']]=[1, 4]
+
+        return(df)
+
+    def grid_market_overview(self,market):
+
+        df = self._get_grid_spec(market=market, period='1D')
+
+        df = df[['code', 'close', '3-Month High', '3-Month Low', 'grid_cash_perc', 'grid']]
+
+        if market == 'AG':
+            df = finlib.Finlib().add_stock_name_to_df(df)
+        elif market == 'US':
+            df = finlib.Finlib().add_stock_name_to_df_us_hk(df, market='US')
+        elif market == 'HK':
+            df = finlib.Finlib().add_stock_name_to_df_us_hk(df, market='HK')
+
+        df_g_n4 = df[df.grid == -4]
+        logging.info(market + " grid -4 stocks len " + str(df_g_n4.__len__()))
+        df_g_n3 = df[df.grid == -3]
+        logging.info(market + " grid -3 stocks len " + str(df_g_n3.__len__()))
+        df_g_n2 = df[df.grid == -2]
+        logging.info(market + " grid -2 stocks len " + str(df_g_n2.__len__()))
+        df_g_n1 = df[df.grid == -1]
+        logging.info(market + " grid -1 stocks len " + str(df_g_n1.__len__()))
+
+        df_g_p1 = df[df.grid == 1]
+        logging.info(market + " grid  1 stocks len " + str(df_g_p1.__len__()))
+        df_g_p2 = df[df.grid == 2]
+        logging.info(market + " grid  2 stocks len " + str(df_g_p2.__len__()))
+        df_g_p3 = df[df.grid == 3]
+        logging.info(market + " grid  3 stocks len " + str(df_g_p3.__len__()))
+        df_g_p4 = df[df.grid == 4]
+        logging.info(market + " grid  4 stocks len " + str(df_g_p4.__len__()))
+
+        return(df)
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
