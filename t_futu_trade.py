@@ -205,28 +205,33 @@ def get_current_ma(host, port, code, ktype, ma_period=5, ):
     start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
-    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
+    # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
+    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=True) #ryan debug
 
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
         logging.error("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
         raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
 
-    ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
+    # ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
+    # ma_value_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
     ma_value_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)
 
     logging.info('*************************************')
-    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
+    # logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period))
 
-    print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(ma_period).reset_index().drop('index',axis=1)))
+    # print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(ma_period).reset_index().drop('index',axis=1)))
+    print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
 
     return({
         'code':code,
         'ktype':ktype,
         'ma_period':ma_period,
-        'ma_value_b1':ma_value_b1,
+        # 'ma_value_b1':ma_value_b1,
         'ma_value_nsub1_sum':ma_value_nsub1_sum,
         'time_key':data.iloc[-1]['time_key'],
+        # 'time_key':data.iloc[-2]['time_key'],
         'last_ma_bar': data.tail(1).reset_index().drop('index',axis=1)
     })
 
@@ -748,7 +753,7 @@ def main():
         #                        'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
         #                        'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
 
-        # get_price_code_list = ['US.FUTU']
+        get_price_code_list = ['US.FUTU']
         # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
         _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
@@ -824,6 +829,7 @@ def main():
             'ma':0,
             'update_time':0,
             't_last_k_renew':datetime.datetime.now(),
+            't_last_k_time_key':datetime.datetime.now(),
         }
 
     k_renew_interval_second = {
@@ -867,16 +873,31 @@ def main():
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if (dict_code[code]['ma_nsub1_sum'] == 0) \
-                    or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
-                    or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300) :
+            if code.startswith("US"):
+                last_ma_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                                              - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
+                                                                    tz_in=pytz.timezone('America/New_York'),
+                                                                    tz_out=pytz.timezone('Asia/Shanghai'),
+                                                                    )
+            else:
+                last_ma_bar_time_to_now = datetime.datetime.now() - dict_code[code]['t_last_k_time_key']
+
+
+            # if (dict_code[code]['ma_nsub1_sum'] == 0)  or ((now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] <= 59):
+            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_ma_bar_time_to_now > k_renew_interval_second[ktype]):
+            # if (dict_code[code]['ma_nsub1_sum'] == 0) \
+            #         or (now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] == 1 \
+            #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
+            #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300
+            # ):
                 _ = get_current_ma(host=host, port=port, code=code, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
                 dict_code[code]['ktype'] = _['ktype']
                 dict_code[code]['last_ma_bar'] = _['last_ma_bar']
                 dict_code[code]['t_last_k_renew'] = now
-                logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
+                dict_code[code]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
+                # logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,
                                      ktype = ktype,
