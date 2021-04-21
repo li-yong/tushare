@@ -1655,8 +1655,6 @@ class Finlib_indicator:
 
         df = self._get_grid_spec(market=market,high_field=high_field,low_field=low_field, period='1D')
 
-        # df = df[['code', 'close', 'mcap','volatility',  'grid_cash_perc', 'grid',"l1","l2","l3","l4","l5","l6","l7"]]
-
         if market == 'AG':
             df = finlib.Finlib().add_stock_name_to_df(df)
         elif market == 'US':
@@ -1683,6 +1681,12 @@ class Finlib_indicator:
         logging.info(market + " grid  4 stocks len " + str(df_g_p4.__len__()))
 
         return(df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4)
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    def w_shape_exam(self, df):
+        pass
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
