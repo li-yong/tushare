@@ -235,8 +235,9 @@ DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE = "right max slop degree"
 ##################
 TRADINGVIEW_COLS = {
     "Ticker" : "code",  #商品代码,
+    "Description" : "description",  #Name
     "Last" : "close",  #最新价
-    "Market Capitalization" : "xxxx",  #市场价值
+    "Market Capitalization" : "mcap",  #市场价值
     "Rating" : "xxxx",  #评级
     "Exchange" : "xxxx",  #交易所
     "Industry" : "xxxx",  #行业
@@ -253,7 +254,7 @@ TRADINGVIEW_COLS = {
     "Gross Margin (TTM)" : "xxxx",  #毛利率
     "Volatility Month" : "vola_month",  #月波动率
     "Average Day Range (14)" : "adr_14",  #Average Day Range (14)
-    "Volatility" : "vola",  #波动率
+    "Volatility" : "volatility",  #波动率
     "Sector" : "xxxx",  #板块
     "Average True Range (14)" : "atr_14",  #真实波幅均值ATR
     "Change 15m, %" : "xxxx",  #涨跌幅15分钟

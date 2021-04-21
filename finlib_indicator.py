@@ -1601,14 +1601,14 @@ class Finlib_indicator:
 
 
 
-    def _get_grid_spec(self,market='AG', period='1D'):
+    def _get_grid_spec(self,market='AG', high_field='52 Week High', low_field='52 Week Low', period='1D'):
 
         df = finlib.Finlib().load_tv_fund(market=market, period=period)
 
         code = df['code']
         p = df['close']
-        high = df['3-Month High']
-        low = df['3-Month Low']
+        high = df[high_field]
+        low = df[low_field]
         atr_14d = df['atr_14']
 
         delta = high - low
@@ -1621,23 +1621,41 @@ class Finlib_indicator:
         df['l6'] = round(low + delta * 0.236, 2)
         df['l7'] = low
 
+        cols =  ['grid_cash_perc', 'grid','grid_support','grid_resistance','grid_perc_to_support']
 
-        df.loc[df.close < df.l7, ['grid_cash_perc', 'grid']]=[0,-4]
-        df.loc[(df.l7 <= df.close) & (df.close< df.l6), ['grid_cash_perc', 'grid']]=[0.235, -3]
-        df.loc[(df.l6 <= df.close) & (df.close< df.l5), ['grid_cash_perc', 'grid']]=[0.382, -2]
-        df.loc[(df.l5 <= df.close) & (df.close< df.l4), ['grid_cash_perc', 'grid']]=[0.5, -1]
-        df.loc[(df.l4 <= df.close) & (df.close< df.l3), ['grid_cash_perc', 'grid']]=[0.618, 1]
-        df.loc[(df.l3 <= df.close) & (df.close< df.l2), ['grid_cash_perc', 'grid']]=[0.764, 2]
-        df.loc[(df.l2 <= df.close) & (df.close< df.l1), ['grid_cash_perc', 'grid']]=[1, 3]
-        df.loc[df.l1 <= df.close, ['grid_cash_perc', 'grid']]=[1, 4]
+        idx = df.close < df.l7
+        df.loc[idx, cols]=[0,-4,None,df.loc[idx].l7,None]
 
-        return(df)
+        idx = (df.l7 <= df.close) & (df.close< df.l6)
+        df.loc[idx,cols]=[0.235, -3, df.loc[idx].l7, df.loc[idx].l6, round((df.loc[idx].close-df.loc[idx].l7)*100/df.loc[idx].close,4)]
 
-    def grid_market_overview(self,market):
+        idx = (df.l6 <= df.close) & (df.close < df.l5)
+        df.loc[idx, cols]=[0.382, -2, df.loc[idx].l6, df.loc[idx].l5, round((df.loc[idx].close-df.loc[idx].l6)*100/df.loc[idx].close,4)]
 
-        df = self._get_grid_spec(market=market, period='1D')
+        idx = (df.l5 <= df.close) & (df.close< df.l4)
+        df.loc[idx, cols]=[0.5, -1, df.loc[idx].l5, df.loc[idx].l4, round((df.loc[idx].close-df.loc[idx].l5)*100/df.loc[idx].close,4)]
 
-        df = df[['code', 'close', '3-Month High', '3-Month Low', 'grid_cash_perc', 'grid']]
+        idx = (df.l4 <= df.close) & (df.close< df.l3)
+        df.loc[idx, cols]=[0.618, 1, df.loc[idx].l4, df.loc[idx].l3, round((df.loc[idx].close-df.loc[idx].l4)*100/df.loc[idx].close,4)]
+
+        idx=(df.l3 <= df.close) & (df.close< df.l2)
+        df.loc[idx, cols]=[0.764, 2, df.loc[idx].l3, df.loc[idx].l2, round((df.loc[idx].close-df.loc[idx].l3)*100/df.loc[idx].close,4)]
+
+        idx=(df.l2 <= df.close) & (df.close< df.l1)
+        df.loc[idx, cols]=[1, 3, df.loc[idx].l2, df.loc[idx].l1, round((df.loc[idx].close-df.loc[idx].l2)*100/df.loc[idx].close,4)]
+
+        idx=df.l1 <= df.close
+        df.loc[idx, cols]=[1, 4,df.loc[idx].l1,None, round((df.loc[idx].close-df.loc[idx].l1)*100/df.loc[idx].close,4)]
+
+        cols=['code', 'mcap','volatility']+cols+['close',high_field, low_field,"l1","l2","l3","l4","l5","l6","l7" ,'description']
+
+        return(df[cols])
+
+    def grid_market_overview(self,market,high_field='52 Week High', low_field='52 Week Low'):
+
+        df = self._get_grid_spec(market=market,high_field=high_field,low_field=low_field, period='1D')
+
+        # df = df[['code', 'close', 'mcap','volatility',  'grid_cash_perc', 'grid',"l1","l2","l3","l4","l5","l6","l7"]]
 
         if market == 'AG':
             df = finlib.Finlib().add_stock_name_to_df(df)
@@ -1646,22 +1664,22 @@ class Finlib_indicator:
         elif market == 'HK':
             df = finlib.Finlib().add_stock_name_to_df_us_hk(df, market='HK')
 
-        df_g_n4 = df[df.grid == -4]
+        df_g_n4 = df[df.grid == -4].reset_index().drop('index', axis=1)
         logging.info(market + " grid -4 stocks len " + str(df_g_n4.__len__()))
-        df_g_n3 = df[df.grid == -3]
+        df_g_n3 = df[df.grid == -3].reset_index().drop('index', axis=1)
         logging.info(market + " grid -3 stocks len " + str(df_g_n3.__len__()))
-        df_g_n2 = df[df.grid == -2]
+        df_g_n2 = df[df.grid == -2].reset_index().drop('index', axis=1)
         logging.info(market + " grid -2 stocks len " + str(df_g_n2.__len__()))
-        df_g_n1 = df[df.grid == -1]
+        df_g_n1 = df[df.grid == -1].reset_index().drop('index', axis=1)
         logging.info(market + " grid -1 stocks len " + str(df_g_n1.__len__()))
 
-        df_g_p1 = df[df.grid == 1]
+        df_g_p1 = df[df.grid == 1].reset_index().drop('index', axis=1)
         logging.info(market + " grid  1 stocks len " + str(df_g_p1.__len__()))
-        df_g_p2 = df[df.grid == 2]
+        df_g_p2 = df[df.grid == 2].reset_index().drop('index', axis=1)
         logging.info(market + " grid  2 stocks len " + str(df_g_p2.__len__()))
-        df_g_p3 = df[df.grid == 3]
+        df_g_p3 = df[df.grid == 3].reset_index().drop('index', axis=1)
         logging.info(market + " grid  3 stocks len " + str(df_g_p3.__len__()))
-        df_g_p4 = df[df.grid == 4]
+        df_g_p4 = df[df.grid == 4].reset_index().drop('index', axis=1)
         logging.info(market + " grid  4 stocks len " + str(df_g_p4.__len__()))
 
         return(df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4)
