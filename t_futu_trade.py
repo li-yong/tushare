@@ -201,8 +201,9 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
-def get_current_ma(host, port, code, ktype, ma_period=5, ):
-    start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, ):
+
+    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * ma_period / 24*60*60) +2)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
@@ -894,7 +895,7 @@ def main():
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300
             # ):
-                _ = get_current_ma(host=host, port=port, code=code, ktype=ktype, ma_period=ma_period)
+                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype, ma_period=ma_period)
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
                 dict_code[code]['ktype'] = _['ktype']
