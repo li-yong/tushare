@@ -715,6 +715,7 @@ def main():
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
     parser.add_option("--ktype", default="K_60M", dest="ktype",type="str", help="Kline type. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="debug ")
 
 
     (options, args) = parser.parse_args()
@@ -745,6 +746,8 @@ def main():
         stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
         # get_price_code_list = ['HK.00700', 'HK.09977']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
+        if options.debug:
+            get_price_code_list = ['HK.00700', 'HK.09977']
     elif market == Market.US:
         stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
@@ -753,22 +756,23 @@ def main():
         #                        'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
         #                        'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
 
-        get_price_code_list = ['US.FUTU']
-        # get_price_code_list = ['US.MDU']
+        if options.debug:
+            get_price_code_list = ['US.FUTU']
+            # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
         _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SH')]['code']
         get_price_code_list = _.to_list()
-
-        # get_price_code_list = ['SH.600809']
+        if options.debug:
+            get_price_code_list = ['SH.600809']
     elif market == Market.SZ:
         _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SZ')]['code']
         get_price_code_list = _.to_list()
-
-        # get_price_code_list = ['SZ.000001']
+        if options.debug:
+            get_price_code_list = ['SZ.000001']
     else:
         logging.fatal("Unknow market. "+str(market))
 
@@ -873,7 +877,7 @@ def main():
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if code.startswith("US"):
+            if market == 'US':
                 last_ma_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
                                               - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
                                                                     tz_in=pytz.timezone('America/New_York'),
@@ -884,7 +888,7 @@ def main():
 
 
             # if (dict_code[code]['ma_nsub1_sum'] == 0)  or ((now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] <= 59):
-            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_ma_bar_time_to_now > k_renew_interval_second[ktype]):
+            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_ma_bar_time_to_now.seconds > k_renew_interval_second[ktype]):
             # if (dict_code[code]['ma_nsub1_sum'] == 0) \
             #         or (now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] == 1 \
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
@@ -934,6 +938,7 @@ if __name__ == '__main__':
         except Exception:
             logging.info(traceback.format_exc())
             logging.info("caught exception, restart main()")
+            time.sleep(1)
 
 
     exit(0)
