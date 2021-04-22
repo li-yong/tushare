@@ -203,7 +203,7 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
 def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, ):
 
-    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * ma_period / 24*60*60)+2)).strftime("%Y-%m-%d")
+    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * ma_period/24/60/60)+2)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
