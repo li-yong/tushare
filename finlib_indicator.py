@@ -1613,13 +1613,13 @@ class Finlib_indicator:
 
         delta = high - low
 
-        df['l1'] = high
+        df['l1'] = round(high,2)
         df['l2'] = round(low + delta * 0.764, 2)
         df['l3'] = round(low + delta * 0.618, 2)
         df['l4'] = round(low + delta * 0.5, 2)
         df['l5'] = round(low + delta * 0.382, 2)
         df['l6'] = round(low + delta * 0.236, 2)
-        df['l7'] = low
+        df['l7'] = round(low,2)
 
         cols =  ['grid_cash_perc', 'grid','grid_support','grid_resistance','grid_perc_to_support']
 
