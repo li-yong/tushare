@@ -1610,8 +1610,13 @@ class Finlib_indicator:
         high = df[high_field]
         low = df[low_field]
         atr_14d = df['atr_14']
+        df['volatility'] = df['volatility'].apply(lambda _d: round(_d,2))
+
+
 
         delta = high - low
+        df['eq_pos'] = round((high - p) / delta, 3) #current price to high, equity position percentage.
+        df['cs_pos'] = round((p - low) / delta, 3) #current price to low, cash position percentage.
 
         df['l1'] = round(high,2)
         df['l2'] = round(low + delta * 0.764, 2)
@@ -1621,35 +1626,42 @@ class Finlib_indicator:
         df['l6'] = round(low + delta * 0.236, 2)
         df['l7'] = round(low,2)
 
-        cols =  ['grid_cash_perc', 'grid','grid_support','grid_resistance','grid_perc_to_support']
+        cols = ['grid_cash_perc', 'grid','grid_support','grid_resistance','grid_perc_to_support','grid_perc_to_resistance']
 
         idx = df.close < df.l7
-        df.loc[idx, cols]=[0,-4,None,df.loc[idx].l7,None]
+        df.loc[idx, cols]=[0,-4,None,df.loc[idx].l7,None,round((df.loc[idx].l7-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx = (df.l7 <= df.close) & (df.close< df.l6)
-        df.loc[idx,cols]=[0.235, -3, df.loc[idx].l7, df.loc[idx].l6, round((df.loc[idx].close-df.loc[idx].l7)*100/df.loc[idx].close,4)]
+        df.loc[idx,cols]=[0.235, -3, df.loc[idx].l7, df.loc[idx].l6, round((df.loc[idx].close-df.loc[idx].l7)*100/df.loc[idx].close,1), round((df.loc[idx].l6-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx = (df.l6 <= df.close) & (df.close < df.l5)
-        df.loc[idx, cols]=[0.382, -2, df.loc[idx].l6, df.loc[idx].l5, round((df.loc[idx].close-df.loc[idx].l6)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[0.382, -2, df.loc[idx].l6, df.loc[idx].l5, round((df.loc[idx].close-df.loc[idx].l6)*100/df.loc[idx].close,1), round((df.loc[idx].l5-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx = (df.l5 <= df.close) & (df.close< df.l4)
-        df.loc[idx, cols]=[0.5, -1, df.loc[idx].l5, df.loc[idx].l4, round((df.loc[idx].close-df.loc[idx].l5)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[0.5, -1, df.loc[idx].l5, df.loc[idx].l4, round((df.loc[idx].close-df.loc[idx].l5)*100/df.loc[idx].close,1), round((df.loc[idx].l4-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx = (df.l4 <= df.close) & (df.close< df.l3)
-        df.loc[idx, cols]=[0.618, 1, df.loc[idx].l4, df.loc[idx].l3, round((df.loc[idx].close-df.loc[idx].l4)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[0.618, 1, df.loc[idx].l4, df.loc[idx].l3, round((df.loc[idx].close-df.loc[idx].l4)*100/df.loc[idx].close,1), round((df.loc[idx].l3-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx=(df.l3 <= df.close) & (df.close< df.l2)
-        df.loc[idx, cols]=[0.764, 2, df.loc[idx].l3, df.loc[idx].l2, round((df.loc[idx].close-df.loc[idx].l3)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[0.764, 2, df.loc[idx].l3, df.loc[idx].l2, round((df.loc[idx].close-df.loc[idx].l3)*100/df.loc[idx].close,1), round((df.loc[idx].l2-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx=(df.l2 <= df.close) & (df.close< df.l1)
-        df.loc[idx, cols]=[1, 3, df.loc[idx].l2, df.loc[idx].l1, round((df.loc[idx].close-df.loc[idx].l2)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[1, 3, df.loc[idx].l2, df.loc[idx].l1, round((df.loc[idx].close-df.loc[idx].l2)*100/df.loc[idx].close,1), round((df.loc[idx].l1-df.loc[idx].close)*100/df.loc[idx].close,1)]
 
         idx=df.l1 <= df.close
-        df.loc[idx, cols]=[1, 4,df.loc[idx].l1,None, round((df.loc[idx].close-df.loc[idx].l1)*100/df.loc[idx].close,4)]
+        df.loc[idx, cols]=[1, 4,df.loc[idx].l1,None, round((df.loc[idx].close-df.loc[idx].l1)*100/df.loc[idx].close,1), None]
 
-        cols=['code', 'mcap','volatility']+cols+['close',high_field, low_field,"l1","l2","l3","l4","l5","l6","l7" ,'description']
+        df['grid_perc_resis_spt_dist']=df['grid_perc_to_resistance']-df['grid_perc_to_support']
+        cols=['code', 'mcap','volatility']+cols+['close',high_field, low_field,'eq_pos','cs_pos','grid_perc_resis_spt_dist',"l1","l2","l3","l4","l5","l6","l7" ,'description']
 
-        return(df[cols])
+        df = df[cols]
+        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'name', 'close', 'eq_pos', 'cs_pos','grid_perc_resis_spt_dist',
+                                                                 'grid_perc_to_support', 'grid_perc_to_resistance',
+                                                                 'mcap', 'volatility', 'grid', 'grid_support',
+                                                                 'grid_resistance', ])
+
+        return(df)
 
     def grid_market_overview(self,market,high_field='52 Week High', low_field='52 Week Low'):
 

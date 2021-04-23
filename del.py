@@ -37,7 +37,14 @@ for market in ['AG','HK','US']:
     # low_field ='3-Month Low'
 
     (df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field)
+
     print(finlib.Finlib().pprint(df_g_n3.head(10)))
+
+
+
+
+    df_g_p3.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
+
     logging.info("")
 
 exit(0)
