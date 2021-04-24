@@ -148,12 +148,22 @@ def get_stock_basicinfo(host, port, stock_list=None, market=Market.HK, securityT
 
 def get_current_price( host, port, code_list=['HK.00700']):
     quote_ctx = OpenQuoteContext(host=host, port=port)
+    mkt_state = quote_ctx.get_global_state()
+
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(code_list)
     quote_ctx.close()
 
     if ret != RET_OK:
-        #Failed to get_market_snapshot, 此协议请求太频繁，触发了频率限制，请稍后再试
+        # "行情权限不足"
+        #  Failed to get_market_snapshot, 此协议请求太频繁，触发了频率限制，请稍后再试
         raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
+
+        # if df_market_snapshot.find("行情权限不足") > -1:
+        #     pass #ignore this error
+        # else:
+        #     "行情权限不足"
+        #     #Failed to get_market_snapshot, 此协议请求太频繁，触发了频率限制，请稍后再试
+        #     raise Exception('Failed to get_market_snapshot, '+df_market_snapshot)
 
     return(df_market_snapshot)
 
@@ -293,30 +303,62 @@ def test():
     #################################
 
 def _get_trd_ctx(host="127.0.0.1", port=111111, market=Market.HK):
+    trd_ctx_us = None
+    trd_ctx_hk = None
+    trd_ctx_cn = None
+
     if market == Market.US:
-        trd_ctx = OpenUSTradeContext(host=host, port=port)
+        trd_ctx_us = OpenUSTradeContext(host=host, port=port)
     elif market == Market.HK:
-        trd_ctx = OpenHKTradeContext(host=host, port=port)
-
+        trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
     elif market == Market.SH:
-        trd_ctx = OpenCNTradeContext(host=host, port=port)
-
+        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
     elif market == Market.SZ:
-        trd_ctx = OpenCNTradeContext(host=host, port=port)
+        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
+    elif market == 'ALL':
+        trd_ctx_us = OpenUSTradeContext(host=host, port=port)
+        trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
+        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
+    elif market in ['HK_US', 'US_HK']:
+        trd_ctx_us = OpenUSTradeContext(host=host, port=port)
+        trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
+    elif market =='AG':
+        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
+
     else:
         logging.fatal(__file__ + " " + "unknown market, support (Market.HK, Market.US). get " + str(market))
         raise Exception("unknown market, support (Market.HK, Market.US). get " + str(market))
 
-    return(trd_ctx)
+    return(
+        {
+            "trd_ctx_us":trd_ctx_us,
+            "trd_ctx_hk":trd_ctx_hk,
+            "trd_ctx_cn":trd_ctx_cn,
+        }
+           )
 
 
 def _unlock_trd_ctx(trd_ctx,pwd_unlock):
-    ret, data = trd_ctx.unlock_trade(pwd_unlock)
+    # ret, data = trd_ctx.unlock_trade(pwd_unlock)
+    if trd_ctx['trd_ctx_us'] is not None:
+        ret, data = trd_ctx['trd_ctx_us'].unlock_trade(pwd_unlock)
+        if ret != RET_OK:
+            logging.fatal(__file__ + " " + 'Failed to unlock trade US. ' + data)
+            raise Exception('Failed to unlock trade US. '+data)
 
-    if ret != RET_OK:
-        #g=连接个数超过128，请关闭无用连接
-        logging.fatal(__file__ + " " + 'Failed to unlock trade. ' + data)
-        raise Exception('Failed to unlock trade. '+data)
+    if trd_ctx['trd_ctx_hk'] is not None:
+        ret, data =trd_ctx['trd_ctx_hk'].unlock_trade(pwd_unlock)
+        if ret != RET_OK:
+            logging.fatal(__file__ + " " + 'Failed to unlock trade HK. ' + data)
+            raise Exception('Failed to unlock trade HK. '+data)
+
+    if trd_ctx['trd_ctx_cn'] is not None:
+        ret, data =trd_ctx['trd_ctx_cn'].unlock_trade(pwd_unlock)
+        if ret != RET_OK:
+            logging.fatal(__file__ + " " + 'Failed to unlock trade CN. ' + data)
+            raise Exception('Failed to unlock trade CN. '+data)
+
+
     return(trd_ctx)
 
 
@@ -700,6 +742,77 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
     logging.info("TV filter "+filter+" output appened to "+csv_f +" ,stock numbers in result "+str(df_result.__len__()))
     return(df_result)
 
+
+
+
+def get_chk_code_list(market,debug):
+
+    hk = _get_chk_code_list(market='HK', debug=debug)
+    us = _get_chk_code_list(market='US', debug=debug)
+    sh = _get_chk_code_list(market='SH', debug=debug)
+    sz = _get_chk_code_list(market='SZ', debug=debug)
+
+    if market == "ALL":
+        return(hk+us+sh+sz)
+    elif market == 'HK':
+        return(hk )
+
+    elif market == 'US':
+        return(us)
+    elif market in ('US_HK', 'HK_US'):
+        return( hk+us)
+
+    elif market == 'SH':
+        return( sh  )
+
+    elif market == 'SZ':
+        return( sz )
+
+    elif market == 'AG':
+        return( sh+sz)
+    else:
+        logging.info("unknown market "+str(market))
+        exit()
+
+
+def _get_chk_code_list(market,debug):
+    if market == Market.HK:
+        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
+        # get_price_code_list = ['HK.00700', 'HK.09977']
+        get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
+        if debug:
+            get_price_code_list = ['HK.00700', 'HK.09977']
+    elif market == Market.US:
+        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
+        get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
+        # get_price_code_list = ['US.FUTU', 'US.AAPL']
+        # get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
+        #                        'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
+        #                        'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
+
+        if debug:
+            get_price_code_list = ['US.FUTU']
+            # get_price_code_list = ['US.MDU']
+    elif market == Market.SH:
+        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
+        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
+        _ = _[_['code'].str.contains('SH')]['code']
+        get_price_code_list = _.to_list()
+        if debug:
+            get_price_code_list = ['SH.600809']
+    elif market == Market.SZ:
+        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
+        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
+        _ = _[_['code'].str.contains('SZ')]['code']
+        get_price_code_list = _.to_list()
+        if debug:
+            get_price_code_list = ['SZ.000001']
+    else:
+        logging.fatal("Unknow market. "+str(market))
+
+    return(get_price_code_list)
+
+
 def main():
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
@@ -711,7 +824,7 @@ def main():
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
     parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar")
-    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US|HK|SH|SZ]")
+    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US|HK|SH|SZ|ALL]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
@@ -743,40 +856,7 @@ def main():
     ma_period =options.ma_period
     tv_source = options.tv_source
 
-    if market == Market.HK:
-        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
-        # get_price_code_list = ['HK.00700', 'HK.09977']
-        get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
-        if options.debug:
-            get_price_code_list = ['HK.00700', 'HK.09977']
-    elif market == Market.US:
-        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
-        get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
-        # get_price_code_list = ['US.FUTU', 'US.AAPL']
-        # get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
-        #                        'US.ADBE','US.PYPL','US.NFLX','US.KO','US.AMZN','US.GOOG','US.TSM',
-        #                        'US.BABA','US.NIO','US.MCD','US.IBM','US.PDD','US.MMM','US.UBER']
-
-        if options.debug:
-            get_price_code_list = ['US.FUTU']
-            # get_price_code_list = ['US.MDU']
-    elif market == Market.SH:
-        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
-        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
-        _ = _[_['code'].str.contains('SH')]['code']
-        get_price_code_list = _.to_list()
-        if options.debug:
-            get_price_code_list = ['SH.600809']
-    elif market == Market.SZ:
-        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
-        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
-        _ = _[_['code'].str.contains('SZ')]['code']
-        get_price_code_list = _.to_list()
-        if options.debug:
-            get_price_code_list = ['SZ.000001']
-    else:
-        logging.fatal("Unknow market. "+str(market))
-
+    get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
 
     #### fetch
     if options.fetch_history_bar:

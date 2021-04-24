@@ -42,8 +42,6 @@ for market in ['AG','HK','US']:
     finlib.Finlib().get_ts_field(ts_code='601995.SH', ann_date='20201231', field='roe', big_memory=False)
 
 
-
-
     df_g_p4.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
 
     logging.info("")
