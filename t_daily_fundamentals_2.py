@@ -475,8 +475,10 @@ def fetch_pro_fund(fast_fetch=False):
         fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
         fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
 
+
     if debug_global:  # ryan debug start of fetching
-        stock_list = stock_list[stock_list["code"] == "600519.SH"]
+        # stock_list = stock_list[stock_list["code"] == "600519.SH"]
+        stock_list = stock_list[stock_list["code"] == "SH601995"]
         # stock_list=stock_list[stock_list['code']=='300081.SZ']
         # stock_list=stock_list[stock_list['code']=='000333.SZ']  #2019-04-20
         # stock_list=stock_list[stock_list['code']=='603888.SH']  #2019-04-20
@@ -490,6 +492,7 @@ def fetch_pro_fund(fast_fetch=False):
     # select = datetime.datetime.today().day%2  # avoid too many requests a day
 
     # if (select == 0)  or fast_fetch or force_run_global: #'save_only' runs on the HK VPS.
+    stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list,code_col='code')
 
     # not fetching/calculating fundermental data at month 6,9, 11, 12
     if not finlib.Finlib().get_report_publish_status()["process_fund_or_not"]:
@@ -4225,7 +4228,7 @@ def main():
         # _fetch_stk_holdertrade(fast_fetch=fast_fetch_f) #don't have 2000 api credits
         fetch_pro_fund(fast_fetch=fast_fetch_f)
         fetch_basic_quarterly()
-        _fetch_pro_pledge_stat()
+        _fetch_pro_pledge_stat_detail()
 
     elif merge_individual_f:
         # generate source/individual_per_stock/*_basic.csv from source/basic.csv

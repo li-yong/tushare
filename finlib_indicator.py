@@ -1601,7 +1601,7 @@ class Finlib_indicator:
 
 
 
-    def _get_grid_spec(self,market='AG', high_field='52 Week High', low_field='52 Week Low', period='1D'):
+    def _get_grid_spec(self,market='AG', high_field='52 Week High', low_field='52 Week Low', period='1D',all_columns=True):
 
         df = finlib.Finlib().load_tv_fund(market=market, period=period)
 
@@ -1655,17 +1655,18 @@ class Finlib_indicator:
         df['grid_perc_resis_spt_dist']=df['grid_perc_to_resistance']-df['grid_perc_to_support']
         cols=['code', 'mcap','volatility']+cols+['close',high_field, low_field,'eq_pos','cs_pos','grid_perc_resis_spt_dist',"l1","l2","l3","l4","l5","l6","l7" ,'description']
 
-        df = df[cols]
-        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'name', 'close', 'eq_pos', 'cs_pos','grid_perc_resis_spt_dist',
-                                                                 'grid_perc_to_support', 'grid_perc_to_resistance',
-                                                                 'mcap', 'volatility', 'grid', 'grid_support',
-                                                                 'grid_resistance', ])
+        if not all_columns:
+            df = df[cols]
+            df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'name', 'close', 'eq_pos', 'cs_pos','grid_perc_resis_spt_dist',
+                                                                     'grid_perc_to_support', 'grid_perc_to_resistance',
+                                                                     'mcap', 'volatility', 'grid', 'grid_support',
+                                                                     'grid_resistance', ])
 
         return(df)
 
-    def grid_market_overview(self,market,high_field='52 Week High', low_field='52 Week Low'):
+    def grid_market_overview(self,market,high_field='52 Week High', low_field='52 Week Low',all_columns=True):
 
-        df = self._get_grid_spec(market=market,high_field=high_field,low_field=low_field, period='1D')
+        df = self._get_grid_spec(market=market,high_field=high_field,low_field=low_field, period='1D',all_columns=all_columns)
 
         if market == 'AG':
             df = finlib.Finlib().add_stock_name_to_df(df)

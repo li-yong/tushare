@@ -36,14 +36,15 @@ for market in ['AG','HK','US']:
     # high_field='3-Month High'
     # low_field ='3-Month Low'
 
-    (df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field)
+    (df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=True)
 
     print(finlib.Finlib().pprint(df_g_n3.head(10)))
+    finlib.Finlib().get_ts_field(ts_code='601995.SH', ann_date='20201231', field='roe', big_memory=False)
 
 
 
 
-    df_g_p3.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
+    df_g_p4.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
 
     logging.info("")
 
