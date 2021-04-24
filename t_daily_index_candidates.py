@@ -28,6 +28,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 # reduce webdriver session log for every request.
 logging.getLogger("urllib3").setLevel(logging.WARNING)  # This supress post/get log in console.
+
 #
 # from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
 # from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging

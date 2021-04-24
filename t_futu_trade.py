@@ -31,11 +31,9 @@ from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGE
 from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
 SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
-
-#Depends on futu demon
-#Step1: /home/ryan/FutuOpenD_1.03_Ubuntu16.04/FutuOpenD &
-#Step2:  python3a $0
-# /usr/bin/python3a: symbolic link to /hdd2/anaconda3/bin/python3
+logging.getLogger("FTConsoleLog").setLevel(logging.WARNING)  #
+# logging.getLogger("FTFileLog").setLevel(logging.WARNING)  #
+# logging.getLogger("Futu").setLevel(logging.WARNING)  #
 
 
 def pprint(df):
@@ -321,32 +319,23 @@ def test():
 
     #################################
 
-def _get_trd_ctx(host="127.0.0.1", port=111111, market=Market.HK):
+def _get_trd_ctx(host="127.0.0.1", port=111111, market=['US','HK','AG']):
     trd_ctx_us = None
     trd_ctx_hk = None
     trd_ctx_cn = None
 
-    if market == Market.US:
+    if 'US' in market:
         trd_ctx_us = OpenUSTradeContext(host=host, port=port)
-    elif market == Market.HK:
+
+    if 'HK' in market:
         trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
-    elif market == Market.SH:
-        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
-    elif market == Market.SZ:
-        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
-    elif market == 'ALL':
-        trd_ctx_us = OpenUSTradeContext(host=host, port=port)
-        trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
-        trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
-    elif market in ['HK_US', 'US_HK']:
-        trd_ctx_us = OpenUSTradeContext(host=host, port=port)
-        trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
-    elif market =='AG':
+
+    if 'AG' in market:
         trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
 
-    else:
-        logging.fatal(__file__ + " " + "unknown market, support (Market.HK, Market.US). get " + str(market))
-        raise Exception("unknown market, support (Market.HK, Market.US). get " + str(market))
+    if ('US' not in market) and ('HK' not in market) and ('AG' not in market) :
+        logging.fatal(__file__ + " " + "unknown market, support (US,HK,AG). get " + str(market))
+        raise Exception("unknown market, support (US,HK,AG). get " + str(market))
 
     return(
         {
@@ -382,11 +371,10 @@ def _unlock_trd_ctx(trd_ctx,pwd_unlock):
 
 
 def get_persition_and_order(trd_ctx,market,trd_env):
-    mkt = market.split("_")
     df_order_list = pd.DataFrame()
     df_position_list = pd.DataFrame()
 
-    if 'HK' in mkt:
+    if 'HK' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_hk = trd_ctx['trd_ctx_hk'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -402,7 +390,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         else:
             df_position_list = df_position_list.append(df_position_list_hk).reset_index().drop('index', axis=1)
 
-    if 'US' in mkt:
+    if 'US' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_us = trd_ctx['trd_ctx_us'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -418,7 +406,8 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         else:
             df_position_list = df_position_list.append(df_position_list_us).reset_index().drop('index', axis=1)
 
-    if 'SH' in mkt or 'SZ' in mkt or 'AG' in mkt:
+    # if 'SH' in mkt or 'SZ' in mkt or 'AG' in mkt:
+    if 'AG' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_cn = trd_ctx['trd_ctx_cn'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -470,6 +459,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     last_buy_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
     last_sell_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+
 
     orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
     orders_buy = orders[orders['trd_side']=='BUY']
@@ -807,32 +797,17 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
 
 def get_chk_code_list(market,debug):
 
-    hk = _get_chk_code_list(market='HK', debug=debug)
-    us = _get_chk_code_list(market='US', debug=debug)
-    sh = _get_chk_code_list(market='SH', debug=debug)
-    sz = _get_chk_code_list(market='SZ', debug=debug)
+    rtn_list=[]
 
-    if market == "ALL":
-        return(hk+us+sh+sz)
-    elif market == 'HK':
-        return(hk )
+    if 'US' in market:
+        rtn_list += _get_chk_code_list(market='US', debug=debug)
+    if 'HK' in market:
+        rtn_list += _get_chk_code_list(market='HK', debug=debug)
+    if 'AG' in market:
+        rtn_list += _get_chk_code_list(market='SH', debug=debug)
+        rtn_list += _get_chk_code_list(market='SZ', debug=debug)
 
-    elif market == 'US':
-        return(us)
-    elif market in ('US_HK', 'HK_US'):
-        return( hk+us)
-
-    elif market == 'SH':
-        return( sh  )
-
-    elif market == 'SZ':
-        return( sz )
-
-    elif market == 'AG':
-        return( sh+sz)
-    else:
-        logging.info("unknown market "+str(market))
-        exit()
+    return(rtn_list)
 
 
 def _get_chk_code_list(market,debug):
@@ -873,6 +848,83 @@ def _get_chk_code_list(market,debug):
     return(get_price_code_list)
 
 
+def get_quote_previlege(host='127.0.0.1',port=11111):
+    ag_p = hk_p = us_p = False
+
+    quote_ctx = OpenQuoteContext(host=host, port=port)
+    ret_ag, data = quote_ctx.get_market_snapshot(['SH.600519'])
+    ret_hk, data = quote_ctx.get_market_snapshot(['HK.00700'])
+    ret_us, data = quote_ctx.get_market_snapshot(['US.AAPL'])
+    quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+
+    if ret_ag == 0:  ag_p = True
+    if ret_hk == 0:  hk_p = True
+    if ret_us == 0:  us_p = True
+
+    return({
+        'ag_quote_previlege':ag_p,
+        'hk_quote_previlege':hk_p,
+        'us_quote_previlege':us_p,
+    })
+
+
+def get_market_state(host='127.0.0.1',port=11111):
+    quote_ctx = OpenQuoteContext(host=host, port=port)
+    ret, data = quote_ctx.get_global_state()
+    if not ret == RET_OK:
+        logging.error('error:', data)
+    quote_ctx.close()
+
+    return({
+        'ag_state':data['market_sh'],
+        'hk_state':data['market_hk'],
+        'us_state':data['market_us'],
+    })
+
+def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
+    # logging.info("market before proceeding: "+market_str)
+    market = market_str.split("_")
+    mkt_state = get_market_state(host=host, port=port)
+    if (not debug) and ('AG' in market) and ( mkt_state['ag_state'] in ['CLOSED','REST',]):
+        market.remove('AG')
+        logging.info("remove AG, not in trading hours, "+str(mkt_state['ag_state']))
+    if (not debug) and ('HK' in market) and (mkt_state['hk_state'] in ['CLOSED','REST',]):
+        market.remove('HK')
+        logging.info("remove HK, not in trading hours, " + str(mkt_state['hk_state']))
+    if (not debug) and ('US' in market) and (mkt_state['us_state'] in ['CLOSED','REST','AFTER_HOURS_END']):
+        market.remove('US')
+        logging.info("remove US, not in trading hours, " + str(mkt_state['us_state']))
+
+    quote_previlege = get_quote_previlege()
+    if ('AG' in market) and (not quote_previlege['ag_quote_previlege']):
+        market.remove('AG')
+        logging.info("remove AG, FutuOpenD doesn't have quote previlege" )
+    if ('HK' in market) and (not quote_previlege['hk_quote_previlege']):
+        market.remove('HK')
+        logging.info("remove HK, FutuOpenD doesn't have quote previlege" )
+    if ('US' in market) and (not quote_previlege['us_quote_previlege']):
+        market.remove('US')
+        logging.info("remove US, FutuOpenD doesn't have quote previlege" )
+
+    # logging.info("market after proceeding: " + str(market))
+
+    return(market)
+
+def init_dict_code(dict_code,code):
+    dict_code[code] = {
+        'ma_nsub1_sum': 0,
+        'p_less_ma_cnt_in_a_row': 0,
+        'p_great_ma_cnt_in_a_row': 0,
+        'p_last': 0,
+        'p_ask': 0,
+        'p_bid': 0,
+        'ma': 0,
+        'update_time': 0,
+        't_last_k_renew': datetime.datetime.now(),
+        't_last_k_time_key': datetime.datetime.now(),
+    }
+    return(dict_code)
+
 def main():
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
@@ -884,7 +936,7 @@ def main():
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
     parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar")
-    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US|HK|SH|SZ|ALL]")
+    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US_HK_AG]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
@@ -911,10 +963,16 @@ def main():
     # market = Market.US
     # market = Market.SH
     # market = Market.SZ
-    market = options.market
+    # market = options.market
     ktype =options.ktype
     ma_period =options.ma_period
     tv_source = options.tv_source
+
+
+    market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
+    if market == []:
+        logging.fatal("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
+        exit()
 
     get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
 
@@ -926,7 +984,7 @@ def main():
         for code in get_price_code_list:
             # for i in range(10):
             # date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+market+"/"+code+"_1m_"+start+"_"+end+".csv"
+            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
 
             if finlib.Finlib().is_cached(csv_f, day=10):
                 continue
@@ -964,18 +1022,8 @@ def main():
     #populate code specification dictionary
     dict_code = {}
     for code in get_price_code_list:
-        dict_code[code] = {
-            'ma_nsub1_sum':0,
-            'p_less_ma_cnt_in_a_row':0,
-            'p_great_ma_cnt_in_a_row':0,
-            'p_last':0,
-            'p_ask':0,
-            'p_bid':0,
-            'ma':0,
-            'update_time':0,
-            't_last_k_renew':datetime.datetime.now(),
-            't_last_k_time_key':datetime.datetime.now(),
-        }
+        dict_code = init_dict_code(dict_code, code)
+
 
     k_renew_interval_second = {
         'K_1M':1*60,
@@ -1000,7 +1048,7 @@ def main():
    ############# Minutely Check ###############
 
     while True:
-        if tv_source:
+        if tv_source and False: #market is a list now. no longer a string.
             # df_sma_20_across_up_50 = tv_monitor_minutely(browser, 'column_short', '1h', market, 'sma_20_across_up_50')
             # df_sma_20_across_down_50 = tv_monitor_minutely(browser, 'column_short', '1h', market,'sma_20_across_down_50')
 
@@ -1011,14 +1059,20 @@ def main():
             df_p_across_down_sma20 = tv_monitor_minutely(browser, 'column_short', '1h', market,'p_across_down_sma20')
             logging.info("Head of df_p_across_down_sma20:\n" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
 
-
+        market = get_avilable_market(host=host, port=port, debug=options.debug, market_str=options.market)
+        get_price_code_list = get_chk_code_list(market=market, debug=options.debug)
         df_live_price = get_current_price(host=host, port=port, code_list=get_price_code_list)
 
+
+
         for code in get_price_code_list:
+            if code not in dict_code.keys():
+                dict_code = init_dict_code(dict_code, code)
+                logging.info("initialized code "+code+ " to dict_code")
+
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            # if market == 'US':
             if code.startswith('US.'):
                 last_ma_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
                                               - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
