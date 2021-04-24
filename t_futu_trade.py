@@ -43,6 +43,8 @@ def pprint(df):
 
 
 def place_sell_market_order(trd_ctx, code, qty, trd_env ):
+    trd_ctx = get_ctx_from_code(trd_ctx,code)
+
     logging.info(__file__ + " place_sell_market_order " + "code " + code + " , qty " + str(qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=999999, qty=qty, code=code, trd_side=TrdSide.SELL,trd_env=trd_env, order_type=OrderType.MARKET)
 
@@ -65,6 +67,8 @@ def place_sell_market_order(trd_ctx, code, qty, trd_env ):
 
 
 def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
+    trd_ctx = get_ctx_from_code(trd_ctx,code)
+
     logging.info(__file__+" place_sell_limit_order "+"code "+code+" , price "+str(price)+" , qty "+str(qty)+" , trd_env "+str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.SELL,trd_env=trd_env, order_type=OrderType.NORMAL)
 
@@ -85,8 +89,20 @@ def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
                      )
     return()
 
+def get_ctx_from_code(trd_ctx, code):
+    if 'code'.startswith('HK.'):
+        trd_ctx = trd_ctx['trd_ctx_hk']
+    elif 'code'.startswith('US.'):
+        trd_ctx = trd_ctx['trd_ctx_us']
+    elif 'code'.startswith('SH.'):
+        trd_ctx = trd_ctx['trd_ctx_cn']
+    elif 'code'.startswith('SZ.'):
+        trd_ctx = trd_ctx['trd_ctx_cn']
+    return(trd_ctx)
 
-def place_buy_limit_order(trd_ctx, code, price, qty, trd_env ):
+def place_buy_limit_order(trd_ctx, code, price, qty, trd_env):
+    trd_ctx = get_ctx_from_code(trd_ctx,code)
+
     logging.info(__file__ + " place_buy_limit_order " + "code " + code + " , price " + str(price) + " , qty " + str(qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.BUY,trd_env=trd_env, order_type=OrderType.NORMAL)
     print(finlib.Finlib().pprint(order_table))
@@ -109,6 +125,9 @@ def place_buy_limit_order(trd_ctx, code, price, qty, trd_env ):
 
 
 def buy_limit(quote_ctx, trd_ctx, df_stock_info, code, drop_threshold=0.19, pwd_unlock='123456', trd_env=TrdEnv.SIMULATE, time_sleep=4):
+    trd_ctx = get_ctx_from_code(trd_ctx,code)
+
+
     ###
     #ret, data = quote_ctx.get_market_snapshot(code)
     #df = df_market_snapshot[df_market_snapshot['code']==code]
@@ -363,16 +382,57 @@ def _unlock_trd_ctx(trd_ctx,pwd_unlock):
 
 
 def get_persition_and_order(trd_ctx,market,trd_env):
+    mkt = market.split("_")
+    df_order_list = pd.DataFrame()
+    df_position_list = pd.DataFrame()
 
-    #checking orders(in queue) 查询今日订单
-    ret, df_order_list = trd_ctx.order_list_query(trd_env=trd_env)
-    if ret != RET_OK:
-        raise Exception("Cannot get order info, "+df_order_list)
+    if 'HK' in mkt:
+        #checking orders(in queue) 查询今日订单
+        ret, df_order_list_hk = trd_ctx['trd_ctx_hk'].order_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Cannot get HK order info, "+df_order_list_hk)
+        else:
+            df_order_list = df_order_list.append(df_order_list_hk).reset_index().drop('index', axis=1)
 
-    #checking postion
-    ret, df_position_list = trd_ctx.position_list_query(trd_env=trd_env)
-    if ret != RET_OK:
-        raise Exception("Failed to get position. "+df_position_list)
+
+        #checking postion
+        ret, df_position_list_hk = trd_ctx['trd_ctx_hk'].position_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Failed to get HK position. "+df_position_list_hk)
+        else:
+            df_position_list = df_position_list.append(df_position_list_hk).reset_index().drop('index', axis=1)
+
+    if 'US' in mkt:
+        #checking orders(in queue) 查询今日订单
+        ret, df_order_list_us = trd_ctx['trd_ctx_us'].order_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Cannot get US order info, "+df_order_list_us)
+        else:
+            df_order_list = df_order_list.append(df_order_list_us).reset_index().drop('index', axis=1)
+
+
+        #checking postion
+        ret, df_position_list_us = trd_ctx['trd_ctx_us'].position_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Failed to get US position. "+df_position_list_us)
+        else:
+            df_position_list = df_position_list.append(df_position_list_us).reset_index().drop('index', axis=1)
+
+    if 'SH' in mkt or 'SZ' in mkt or 'AG' in mkt:
+        #checking orders(in queue) 查询今日订单
+        ret, df_order_list_cn = trd_ctx['trd_ctx_cn'].order_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Cannot get CN order info, "+df_order_list_cn)
+        else:
+            df_order_list = df_order_list.append(df_order_list_cn).reset_index().drop('index', axis=1)
+
+        #checking postion
+        ret, df_position_list_cn = trd_ctx['trd_ctx_cn'].position_list_query(trd_env=trd_env)
+        if ret != RET_OK:
+            raise Exception("Failed to get CN position. "+df_position_list_cn)
+        else:
+            df_position_list = df_position_list.append(df_position_list_cn).reset_index().drop('index', axis=1)
+
 
     return(
         {   'market':market,
