@@ -907,6 +907,9 @@ def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
         logging.info("remove US, FutuOpenD doesn't have quote previlege" )
 
     # logging.info("market after proceeding: " + str(market))
+    if market == []:
+        logging.fatal("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
+        exit()
 
     return(market)
 
@@ -970,10 +973,6 @@ def main():
 
 
     market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
-    if market == []:
-        logging.fatal("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
-        exit()
-
     get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
 
     #### fetch
@@ -1062,8 +1061,6 @@ def main():
         market = get_avilable_market(host=host, port=port, debug=options.debug, market_str=options.market)
         get_price_code_list = get_chk_code_list(market=market, debug=options.debug)
         df_live_price = get_current_price(host=host, port=port, code_list=get_price_code_list)
-
-
 
         for code in get_price_code_list:
             if code not in dict_code.keys():
