@@ -1018,7 +1018,8 @@ def main():
             # update ma at the 1st minute of a new hour
             now = datetime.datetime.now()
 
-            if market == 'US':
+            # if market == 'US':
+            if code.startswith('US.'):
                 last_ma_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
                                               - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
                                                                     tz_in=pytz.timezone('America/New_York'),
