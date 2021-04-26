@@ -938,6 +938,8 @@ def get_atr(code, df_tv_all):
     [market,code]=code.split(".")
     if market =='HK':
         code = str(int(code)) # '00700' --> '700'
+    elif market in ['SH','SZ']:
+        code = market+code
 
     atr_14 = df_tv_all[df_tv_all.code == code]['atr_14'].values[0]
     return(atr_14)
