@@ -567,6 +567,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         logging.info(cur_pos)
         position_qty = position.qty[0]
         position_can_sell_qty = position.can_sell_qty[0]
+        position_cost_price = position.cost_price[0]  # cheng beng
 
         ###################
         # Buy/Sell position
@@ -642,6 +643,18 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     #     return()
 
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
+
+    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
+        p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
+        if p_delta >0 and p_delta > dict_code[code]['atr_14']:
+            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
+
+
+        if p_delta < 0 and abs(p_delta) > dict_code[code]['atr_14']:
+            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                                   trd_env=trd_env)
 
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
@@ -920,7 +933,20 @@ def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
 
     return(market)
 
-def init_dict_code(dict_code,code):
+def get_atr(code, df_tv_all):
+    #code: US.FUTU -->  market: US, code:FUTU (TradingView format)
+    [market,code]=code.split(".")
+    if market =='HK':
+        code = str(int(code)) # '00700' --> '700'
+
+    atr_14 = df_tv_all[df_tv_all.code == code]['atr_14'].values[0]
+    return(atr_14)
+
+
+
+def init_dict_code(dict_code,code,df_tv_all):
+    atr_14 = get_atr(code,df_tv_all)
+
     dict_code[code] = {
         'ma_nsub1_sum': 0,
         'p_less_ma_cnt_in_a_row': 0,
@@ -932,6 +958,7 @@ def init_dict_code(dict_code,code):
         'update_time': 0,
         't_last_k_renew': datetime.datetime.now(),
         't_last_k_time_key': datetime.datetime.now(),
+        'atr_14':atr_14
     }
     return(dict_code)
 
@@ -1019,6 +1046,13 @@ def main():
         check_interval_sec = 60
 
 
+    #load tv df
+    df_tv_us = finlib.Finlib().load_tv_fund(market='US', period='1D')
+    df_tv_hk = finlib.Finlib().load_tv_fund(market='HK', period='1D')
+    df_tv_cn = finlib.Finlib().load_tv_fund(market='AG', period='1D')
+    df_tv_all = df_tv_us.append(df_tv_hk).append(df_tv_cn).reset_index().drop('index', axis=1)
+
+
 
     #General get lot
     # df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
@@ -1028,8 +1062,7 @@ def main():
     #populate code specification dictionary
     dict_code = {}
     for code in get_price_code_list:
-        dict_code = init_dict_code(dict_code, code)
-
+        dict_code = init_dict_code(dict_code, code,df_tv_all)
 
     k_renew_interval_second = {
         'K_1M':1*60,
@@ -1071,7 +1104,7 @@ def main():
 
         for code in get_price_code_list:
             if code not in dict_code.keys():
-                dict_code = init_dict_code(dict_code, code)
+                dict_code = init_dict_code(dict_code, code,df_tv_all)
                 logging.info("initialized code "+code+ " to dict_code")
 
             # update ma at the 1st minute of a new hour
