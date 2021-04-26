@@ -88,15 +88,17 @@ def place_sell_limit_order(trd_ctx, code, price, qty, trd_env ):
     return()
 
 def get_ctx_from_code(trd_ctx, code):
-    if 'code'.startswith('HK.'):
-        trd_ctx = trd_ctx['trd_ctx_hk']
-    elif 'code'.startswith('US.'):
-        trd_ctx = trd_ctx['trd_ctx_us']
-    elif 'code'.startswith('SH.'):
-        trd_ctx = trd_ctx['trd_ctx_cn']
-    elif 'code'.startswith('SZ.'):
-        trd_ctx = trd_ctx['trd_ctx_cn']
-    return(trd_ctx)
+    if code.startswith('HK.'):
+        rtn = trd_ctx['trd_ctx_hk']
+    elif code.startswith('US.'):
+        rtn = trd_ctx['trd_ctx_us']
+    elif code.startswith('SH.'):
+        rtn = trd_ctx['trd_ctx_cn']
+    elif code.startswith('SZ.'):
+        rtn = trd_ctx['trd_ctx_cn']
+    else:
+        logging.fatal('unknown code '+str(code))
+    return(rtn)
 
 def place_buy_limit_order(trd_ctx, code, price, qty, trd_env):
     trd_ctx = get_ctx_from_code(trd_ctx,code)
