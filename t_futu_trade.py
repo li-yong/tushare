@@ -564,7 +564,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
         position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
-        cur_pos="current position:\n"+finlib.Finlib().pprint(position[[ 'code','stock_name', 'qty','can_sell_qty','position_side','unrealized_pl','realized_pl' ]])
+        cur_pos="current position:\n"+finlib.Finlib().pprint(position[['code','stock_name', 'qty','cost_price','can_sell_qty','position_side','unrealized_pl','realized_pl']])
         # print(cur_pos)
         logging.info(cur_pos)
         position_qty = position.qty[0]
@@ -643,11 +643,13 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # if p_ask == 'N/A' or p_ask == 0:
     #     logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
     #     return()
+    p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
     logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
+    logging.info(__file__ + " " + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['atr_14'],2)))
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
-        p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
+
         if p_delta >0 and p_delta > dict_code[code]['atr_14']:
             logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
