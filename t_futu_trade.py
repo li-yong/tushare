@@ -239,7 +239,13 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
         logging.error("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
-        raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
+        return(
+            {
+                'code': code,
+                'rtn_code': RET_ERROR,
+            }
+        )
+        # raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
 
     # ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
     # ma_value_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
@@ -254,6 +260,7 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     return({
         'code':code,
+        'rtn_code':0,
         'ktype':ktype,
         'ma_period':ma_period,
         # 'ma_value_b1':ma_value_b1,
@@ -1087,7 +1094,10 @@ def main():
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300
             # ):
-                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype, ma_period=ma_period)
+                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
+                                   ktype=ktype, ma_period=ma_period)
+                if _['rtn_code'] == RET_ERROR:
+                    continue
                 dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
                 dict_code[code]['ktype'] = _['ktype']
@@ -1113,8 +1123,7 @@ def main():
                     dict_code = dict_code,
                     market= market,
                 )
-
-            except KeyboardInterrupt:
+            except Exception:
                 for k in trd_ctx_unlocked.keys():
                     trd_ctx_unlocked[k].close()
                 # trd_ctx_unlocked.close()
