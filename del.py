@@ -32,14 +32,54 @@ for market in ['AG','HK','US']:
     logging.info("\n==== "+market+" ====")
     high_field='52 Week High'
     low_field='52 Week Low'
-    #
-    # high_field='3-Month High'
-    # low_field ='3-Month Low'
 
-    (df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=True)
+    # all_column = False
+    all_column = True
+    (df_52week,df_g_n4,df_g_n3_52week,df_g_n2,df_g_n1,df_g_p1_52week,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
 
-    print(finlib.Finlib().pprint(df_g_n3.head(10)))
+    cols = ['code','name', 'eq_pos','roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)','atr_14','vola_month','volatility']
+    print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
+    print(finlib.Finlib().pprint(df_g_p1_52week[cols].head(2)))  #grid == 1
+
+    print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
+    print(finlib.Finlib().pprint(df_g_n3_52week[cols].head(2)))  #grid == -3
+
+
+
+    ###################
+    high_field='3-Month High'
+    low_field ='3-Month Low'
+
+    # all_column = False
+    all_column = True
+    (df_3month,df_g_n4,df_g_n3_3month,df_g_n2,df_g_n1,df_g_p1_3month,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
+
+    print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
+    print(finlib.Finlib().pprint(df_g_p1_3month[cols].head(2)))  #grid == 1
+
+    print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
+    print(finlib.Finlib().pprint(df_g_n3_3month[cols].head(2)))  #grid == -3
+
+    df = pd.merge(df_52week, df_3month, on='code', how='inner', suffixes=("", "_3M"))
+    df_llrh = df[(df.grid==-3) & (df.grid_3M==1)][cols]  #long low, recent high
+    df_lhrl = df[(df.grid==1) & (df.grid_3M==-3)][cols]  #long high, recent low
+
     finlib.Finlib().get_ts_field(ts_code='601995.SH', ann_date='20201231', field='roe', big_memory=False)
+
+    #
+    print("roe_ttm", "pe_ttm",'Operating Margin (TTM)','Gross Margin (TTM)')
+    _ = df_g_p4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]
+    print('p4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+
+
+    _ = df_g_p3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_p2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_p1[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+
+    _ = df_g_n1[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
 
 
     df_g_p4.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)

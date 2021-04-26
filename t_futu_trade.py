@@ -1115,7 +1115,9 @@ def main():
                 )
 
             except KeyboardInterrupt:
-                trd_ctx_unlocked.close()
+                for k in trd_ctx_unlocked.keys():
+                    trd_ctx_unlocked[k].close()
+                # trd_ctx_unlocked.close()
                 logging.info("caught exception, terminate trd_ctx_unlocked session")
 
         logging.info(__file__ + " " + "sleep " + str(check_interval_sec) + " sec before next check.\n\n")
