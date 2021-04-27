@@ -342,7 +342,7 @@ def _get_trd_ctx(host="127.0.0.1", port=111111, market=['US','HK','AG']):
     if 'AG' in market:
         trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
 
-    if ('US' not in market) and ('HK' not in market) and ('AG' not in market) :
+    if market.__len__() > 0 and ('US' not in market) and ('HK' not in market) and ('AG' not in market):
         logging.fatal(__file__ + " " + "unknown market, support (US,HK,AG). get " + str(market))
         raise Exception("unknown market, support (US,HK,AG). get " + str(market))
 
@@ -934,8 +934,8 @@ def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
 
     # logging.info("market after proceeding: " + str(market))
     if market == []:
-        logging.fatal("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
-        exit()
+        logging.warning("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
+        # exit()
 
     return(market)
 
@@ -1107,6 +1107,11 @@ def main():
             logging.info("Head of df_p_across_down_sma20:\n" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
 
         market = get_avilable_market(host=host, port=port, debug=options.debug, market_str=options.market)
+        logging.info("Market is empty, sleep and continue")
+        time.sleep(5)
+        continue
+
+
         get_price_code_list = get_chk_code_list(market=market, debug=options.debug)
         df_live_price = get_current_price(host=host, port=port, code_list=get_price_code_list)
 
