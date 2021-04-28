@@ -1107,9 +1107,10 @@ def main():
             logging.info("Head of df_p_across_down_sma20:\n" + finlib.Finlib().pprint(df_p_across_down_sma20.head(2)))
 
         market = get_avilable_market(host=host, port=port, debug=options.debug, market_str=options.market)
-        logging.info("Market is empty, sleep and continue")
-        time.sleep(5)
-        continue
+        if market == []:
+            logging.info("Market is empty, sleep and continue. market "+str(market))
+            time.sleep(5)
+            continue
 
 
         get_price_code_list = get_chk_code_list(market=market, debug=options.debug)
