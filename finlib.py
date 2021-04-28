@@ -3586,6 +3586,9 @@ class Finlib:
         if 'datetime' in df.columns:
             df.rename(columns={"datetime": "date"}, inplace=True)
 
+        if 'trade_date' in df.columns:
+            df.rename(columns={"trade_date": "date"}, inplace=True)
+
         if 'Code' in df.columns:
             df.rename(columns={"Code": "code"}, inplace=True)
         if 'Date' in df.columns:
@@ -4027,8 +4030,11 @@ class Finlib:
             rtn_df = pd.read_csv(data_csv_fp, encoding="utf-8")
 
 
-        elif dir in ["/home/ryan/DATA/pickle/daily_update_source", "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily"]:
+        elif dir in ["/home/ryan/DATA/pickle/daily_update_source"]:
             rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str},encoding="utf-8"))
+
+        elif dir in ["/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily"]:
+            rtn_df = pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str},encoding="utf-8")
 
         elif data_csv_fp =="/home/ryan/DATA/pickle/instrument_A.csv":
             add_market = True
@@ -4643,6 +4649,35 @@ class Finlib:
 
         return(df_circ_mv_market_cap)
 
+    def get_daily_info(self):
+        # this is market level info, not a stock level info. No use as of 20210429
+        dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily"
+        csv_f = dir+"/info_"+ self.get_last_trading_day()+".csv"
+        df = self.regular_read_csv_to_stdard_df(data_csv=csv_f)
+        return(df)
+
+    def get_daily_amount_mktcap(self):
+        #ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount
+        dir = "/home/ryan/DATA/pickle/daily_update_source"
+        csv_f = dir+"/ag_daily_"+ self.get_last_trading_day()+".csv"
+        df_amount = self.regular_read_csv_to_stdard_df(data_csv=csv_f)
+
+        #ts_code,trade_date,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,dv_ratio,dv_ttm,total_share,float_share,free_share,total_mv,circ_mv
+        dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
+        csv_f = dir+"/basic_"+ self.get_last_trading_day()+".csv"
+        df_mktcap = self.regular_read_csv_to_stdard_df(data_csv=csv_f)
+
+        df = pd.merge(df_amount, df_mktcap,  on=['code','date'], how='inner', suffixes=('', '_mktcap'))
+        df = self.adjust_column(df=df,col_name_list=['code','date','amount','total_mv','circ_mv','pe','pe_ttm','close','pct_chg','turnover_rate','turnover_rate_f','volume_ratio'])
+
+        return(df)
+
+    def add_amount_mktcap(self,df):
+        df_amt_mktcap = self.get_daily_amount_mktcap()[['code','amount','total_mv','circ_mv']]
+        df = pd.merge(df, df_amt_mktcap,  on=['code'], how='left', suffixes=('', '_mktcap'))
+
+        df = self.adjust_column(df=df,col_name_list=['code','amount','total_mv','circ_mv'])
+        return(df)
 
     def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
