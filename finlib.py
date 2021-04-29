@@ -4689,28 +4689,23 @@ class Finlib:
             df = df.sort_values('total_mv', ascending=False)
         return(df)
 
-    def get_tr_pe(self): #tr_yoy 营业总收入同比增长率(%)
-        df_daily = self.get_last_n_days_daily_basic(ndays=1, dayE=self.get_last_trading_day())
-
-        df_ts_all = self.add_ts_code_to_column(df=self.load_fund_n_years())
-        # df_ts_all = self.load_all_ts_pro()
-
-        df_fund = df_ts_all[
-            df_ts_all['end_date'] == self.get_report_publish_status()['completed_year_rpt_date']]
-        df_yoy_mean = df_ts_all[['ts_code', 'tr_yoy']].groupby('ts_code').mean()
-
-        df = pd.merge(df_fund, df_yoy_mean, left_on='ts_code', right_on='ts_code', suffixes=('', '_mean'))
-        df = pd.merge(df, df_daily, left_on='ts_code', right_on='ts_code')
-        df['tr_mean_pe'] = round(df['tr_yoy_mean'] / df['pe_ttm'], 2)
+    def get_tr_pe(self, df_daily=None, df_ts_all=None): #tr_yoy 营业总收入同比增长率(%)
+        # df_fund = df_ts_all[df_ts_all['end_date'] == self.get_report_publish_status()['completed_year_rpt_date']]
+        df_yoy_mean = df_ts_all[['ts_code', 'tr_yoy']].groupby('ts_code').mean().reset_index()
+        # df = pd.merge(df_fund, df_yoy_mean, left_on='ts_code', right_on='ts_code', suffixes=('', '_mean'))
+        df = pd.merge(df_yoy_mean, df_daily, left_on='ts_code', right_on='ts_code')
+        # df['tr_mean_pe'] = round(df['tr_yoy'] / df['pe_ttm'], 2)
         df['tr_pe'] = round(df['tr_yoy'] / df['pe_ttm'], 2)
-        df_target = df[['ts_code', 'name', 'tr_pe', 'tr_mean_pe', 'tr_yoy', 'tr_yoy_mean', 'pe_ttm']].sort_values(
-            by='tr_pe', ascending=False)
+        df_target = df[['ts_code','tr_pe', 'tr_yoy', 'pe_ttm']].sort_values(by='tr_pe', ascending=False)
         df_target = self.ts_code_to_code(df=df_target)
+
+        # a = df[df.ts_code=='000858.SZ']
+        # b = df_target[df_target.code=='SZ000858']
         # print(finlib.Finlib().pprint(df_target.head(100)))
         return(df_target)
 
-    def add_tr_pe(self,df):
-        df_trpe = self.get_tr_pe()[['code','tr_pe', 'tr_mean_pe']]
+    def add_tr_pe(self,df,df_daily,df_ts_all):
+        df_trpe = self.get_tr_pe(df_daily=df_daily, df_ts_all=df_ts_all)[['code','tr_pe', 'tr_mean_pe']]
         df = pd.merge(df, df_trpe,  on=['code'], how='left', suffixes=('', '_trpe'))
         df = self.adjust_column(df=df,col_name_list=['code','tr_mean_pe'])
         return(df)

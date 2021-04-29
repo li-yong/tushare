@@ -1881,6 +1881,10 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         pass
 
+    df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+    df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+    # df_ts_all = self.load_all_ts_pro()
+
     dict_df = {}
 
     logging.info(__file__+" "+"------ Combination 1 -------")
@@ -1908,8 +1912,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         logging.info(__file__+" "+"sorting " + a)
         tmp = my_sort(tmp, debug=debug)
-        tmp = finlib.Finlib().add_amount_mktcap(df=tmp
-        tmp = finlib.Finlib().add_tr_pe(df=tmp)
+        tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+        tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
         tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
         len = str(tmp.__len__())
@@ -2004,7 +2008,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
             tmp = my_sort(tmp, debug=debug)
             tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
-            tmp = finlib.Finlib().add_tr_pe(df=tmp)
+            tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
 
             tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
