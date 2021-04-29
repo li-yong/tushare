@@ -699,6 +699,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
         logging.info(d)
         tmp_df = combin_filter(eval(d), debug=debug)
 
+
         if remove_garbage:
             tmp_df = finlib.Finlib().remove_garbage(df=tmp_df)
 
@@ -742,6 +743,9 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
         logging.info(__file__ + " " + "sorting " + a)
         tmp = my_sort(tmp, debug=debug)
+        tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+        tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+
         len = str(tmp.__len__())
 
         # tmp_df=tmp_df.head(10)  #list all, as the final result should be keep for a long time. archive.
@@ -770,7 +774,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             rst = "\n==== " + str(cheap_cnt) + " cheap " + str(expensive_cnt) + " exp, " + str(short_term) + "s " + str(middle_term) + "m " + str(long_term) + "l " + "len " + len + ". " + a
             # rst += "\n"+str(tmp) + "\n"
 
-            rst += "\n" + tabulate(tmp, headers="keys", tablefmt="psql") + "\n"
+            rst += "\n" + tabulate(tmp, headers="keys", tablefmt="psql", disable_numparse=True) + "\n"
 
             fh = open(rpt, "a")
             fh.write(rst)
@@ -854,6 +858,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             if "date" in tmp.columns:
                 tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
             tmp = my_sort(tmp, debug=debug)
+            tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+            tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
             comb_df_name = comb_df_name + "_" + subset[subset.__len__() - 1]
 
@@ -862,7 +868,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
                 logging.info(("saved combined df " + comb_df_name))
                 rst = "\n==== " + str(cheap_cnt) + " cheap " + str(expensive_cnt) + " exp, " + str(short_term) + "s " + str(middle_term) + "m " + str(long_term) + "l " + "len " + str(tmp.__len__()) + ". " + ", ".join(set(subset))
 
-                rst += "\n" + tabulate(tmp, headers="keys", tablefmt="psql") + "\n"
+                rst += "\n" + tabulate(tmp, headers="keys", tablefmt="psql", disable_numparse=True) + "\n"
                 fh = open(rpt, "a")
                 fh.write(rst)
                 fh.close()

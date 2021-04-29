@@ -47,6 +47,8 @@ warnings.filterwarnings("default")
 # 2018.01.31  15:24, removed a lot DEL_ functions and committed to the git.
 
 
+pd.options.display.float_format = '{:.2f}'.format
+
 class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
     """ A mysql.connector Converter that handles Numpy types """
     def _float32_to_mysql(self, value):
@@ -4290,7 +4292,7 @@ class Finlib:
         return (rtn_df)
 
     def pprint(self, df):
-        str = tabulate.tabulate(df, headers='keys', tablefmt='psql')
+        str = tabulate.tabulate(df, headers='keys', tablefmt='psql', disable_numparse=True)
         #logging.info(str)
         return(str)
 
@@ -4673,19 +4675,23 @@ class Finlib:
 
         return(df)
 
-    def add_amount_mktcap(self,df):
+    def add_amount_mktcap(self,df,sorted_by_mktcap=True):
         df_amt_mktcap = self.get_daily_amount_mktcap()[['code','amount','total_mv','circ_mv']]
         df = pd.merge(df, df_amt_mktcap,  on=['code'], how='left', suffixes=('', '_mktcap'))
 
         df = self.adjust_column(df=df,col_name_list=['code','amount','total_mv','circ_mv'])
+
+        if sorted_by_mktcap:
+            df = df.sort_values('total_mv', ascending=False)
         return(df)
 
     def df_format_column(self, df, precision="%.1e"):
         for i in df.dtypes.iteritems():
             col_name = i[0]
             col_data_type = i[1]  # dtype('float64')
-            if col_data_type.name in ['float64', 'int64']:
-                logging.info("converting column "+col_name)
+            # if col_data_type.name in ['float64', 'int64'] and df[col_name].describe()['mean'] > 1E3: # number > 1000
+            if col_name in ['amount', 'total_mv','circ_mv','mkt_cap','net_amount']: #
+                # logging.info("converting column "+col_name)
                 df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
 
         return(df)
