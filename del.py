@@ -30,12 +30,13 @@ import akshare as ak
 df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
 df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
 
-df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list']
+df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
 tmp = finlib.Finlib().add_amount_mktcap(df=df_selected)
 tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
 tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
 print(finlib.Finlib().pprint(tmp))
+exit()
 
 #########################################
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
