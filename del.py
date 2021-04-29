@@ -22,12 +22,16 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
+
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 
 ###########################
 df = finlib.Finlib().get_daily_amount_mktcap()
 df = finlib.Finlib().add_amount_mktcap(df=df)
+
+df1 = finlib.Finlib().df_format_column(df=df,precision='%.1e')
+print(df1.head(2))
 
 ###########################
 # fund_all = finlib.Finlib().load_all_ts_pro()

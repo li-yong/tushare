@@ -10,6 +10,7 @@ import os
 import os.path
 import pandas as pd
 import time
+from decimal import Decimal
 import numpy as np
 import tabulate
 import akshare as ak
@@ -4677,6 +4678,16 @@ class Finlib:
         df = pd.merge(df, df_amt_mktcap,  on=['code'], how='left', suffixes=('', '_mktcap'))
 
         df = self.adjust_column(df=df,col_name_list=['code','amount','total_mv','circ_mv'])
+        return(df)
+
+    def df_format_column(self, df, precision="%.1e"):
+        for i in df.dtypes.iteritems():
+            col_name = i[0]
+            col_data_type = i[1]  # dtype('float64')
+            if col_data_type.name in ['float64', 'int64']:
+                logging.info("converting column "+col_name)
+                df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
+
         return(df)
 
     def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,debug=False, force_run=False):
