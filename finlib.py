@@ -4705,7 +4705,7 @@ class Finlib:
         return(df_target)
 
     def add_tr_pe(self,df,df_daily,df_ts_all):
-        df_trpe = self.get_tr_pe(df_daily=df_daily, df_ts_all=df_ts_all)[['code','tr_pe', 'tr_pe']]
+        df_trpe = self.get_tr_pe(df_daily=df_daily, df_ts_all=df_ts_all)[['code','tr_pe']]
         df = pd.merge(df, df_trpe,  on=['code'], how='left', suffixes=('', '_trpe'))
         df = self.adjust_column(df=df,col_name_list=['code','tr_pe'])
         return(df)
