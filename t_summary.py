@@ -1908,7 +1908,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
         logging.info(__file__+" "+"sorting " + a)
         tmp = my_sort(tmp, debug=debug)
-        tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+        tmp = finlib.Finlib().add_amount_mktcap(df=tmp
+        tmp = finlib.Finlib().add_tr_pe(df=tmp)
         tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
         len = str(tmp.__len__())
@@ -2000,8 +2001,11 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
             if 'date' in tmp.columns:
                 tmp = tmp[tmp['date'] >= day_3_before_date_ymd]
+
             tmp = my_sort(tmp, debug=debug)
             tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+            tmp = finlib.Finlib().add_tr_pe(df=tmp)
+
             tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
             comb_df_name = comb_df_name + "_" + subset[subset.__len__() - 1]
