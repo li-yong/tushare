@@ -263,10 +263,8 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     logging.info('*************************************')
     logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , previous MA "+str(ma_b1)+" at "+data.iloc[-1]['time_key'])
-    # logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period))
 
-    # print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(ma_period).reset_index().drop('index',axis=1)))
-    logging.info(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
+    # logging.info(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
 
     return({
         'code':code,
