@@ -48,7 +48,10 @@ for market in ['AG','HK','US']:
     all_column = True
     (df_52week,df_g_n4,df_g_n3_52week,df_g_n2,df_g_n1,df_g_p1_52week,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
 
-    cols = ['code','name', 'eq_pos','roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)','atr_14','vola_month','volatility']
+    cols = ['code','name', 'grid', 'eq_pos','roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)','atr_14','vola_month','volatility']
+    # cols += ['cs_pos','grid_perc_resis_spt_dist',"l1","l2","l3","l4","l5","l6","l7" ,'description']
+    cols += ['grid_support','grid_resistance','grid_perc_to_support','grid_perc_to_resistance']
+
     print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
     print(finlib.Finlib().pprint(df_g_p1_52week[cols].head(2)))  #grid == 1
 
@@ -57,7 +60,7 @@ for market in ['AG','HK','US']:
 
     df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
 
-    pd.merge()
+    # ddf_rtnf = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'tr_pe'])
 
 
 
@@ -69,11 +72,24 @@ for market in ['AG','HK','US']:
     all_column = True
     (df_3month,df_g_n4,df_g_n3_3month,df_g_n2,df_g_n1,df_g_p1_3month,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
 
+
+    print("==========  52 Week Hold ========")
+    df_hold_52week = pd.merge(df_52week, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    print(df_hold_52week)
+
+    print("==========  3 month Hold ========")
+    df_hold_3month = pd.merge(df_3month, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    print(df_hold_3month)
+
+
     print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
     print(finlib.Finlib().pprint(df_g_p1_3month[cols].head(2)))  #grid == 1
 
     print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
     print(finlib.Finlib().pprint(df_g_n3_3month[cols].head(2)))  #grid == -3
+
+
+
 
     df = pd.merge(df_52week, df_3month, on='code', how='inner', suffixes=("", "_3M"))
     df_llrh = df[(df.grid==-3) & (df.grid_3M==1)][cols]  #long low, recent high

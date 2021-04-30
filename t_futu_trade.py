@@ -566,7 +566,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     stock_lot_size = dict_code[code]['stock_lot_size']
 
     if not code in df_position_list['code'].to_list():
-        logging.info(__file__ + " " + "code " + code + " no position, will short on sell.")
+        # logging.info(__file__ + " " + "code " + code + " no position, will short on sell.")
         sell_slot_size_1_of_4_position = stock_lot_size
 
     else:
@@ -648,7 +648,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     #     return()
     p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
-    logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
+    # logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
     logging.info( "p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['atr_14'],2)))
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
