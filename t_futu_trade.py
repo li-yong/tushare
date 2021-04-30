@@ -627,15 +627,6 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         symbol_Bid_ma = "<" #To buy
 
 
-    if previous_ma < last_bar_close:
-        symbol_Ask_maLast = ">"
-        symbol_Bid_maLast = ">"
-    elif previous_ma == last_bar_close:
-        symbol_Ask_maLast = "="
-        symbol_Bid_maLast = "="
-    else:
-        symbol_Ask_maLast = "<"
-        symbol_Bid_maLast = "<"
 
     if last_bar_close > p_ask:
         symbol_Ask_lastClose = "<"
@@ -711,8 +702,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(
         __file__ + " " + code + " this_ck_done. "
         +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
-        + ". a"+symbol_Ask_ma + symbol_Ask_maLast + symbol_Ask_lastClose
-        + ", b"+symbol_Bid_ma + symbol_Bid_maLast + symbol_Bid_lastClose
+        + ". a"+symbol_Ask_ma +  symbol_Ask_lastClose
+        + ", b"+symbol_Bid_ma +  symbol_Bid_lastClose
         + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
     )
 
