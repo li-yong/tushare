@@ -105,7 +105,7 @@ def place_buy_limit_order(trd_ctx, code, price, qty, trd_env):
 
     logging.info(__file__ + " place_buy_limit_order " + "code " + code + " , price " + str(price) + " , qty " + str(qty) + " , trd_env " + str(trd_env))
     ret, order_table = trd_ctx.place_order(price=price, qty=qty, code=code, trd_side=TrdSide.BUY,trd_env=trd_env, order_type=OrderType.NORMAL)
-    print(finlib.Finlib().pprint(order_table))
+    # print(finlib.Finlib().pprint(order_table))
     if not ret == RET_OK:
         logging.info(__file__+" "+"code "+code+" place_buy_limit_order failed, "+str(order_table))
     else:
