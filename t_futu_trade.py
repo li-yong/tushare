@@ -627,18 +627,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         symbol_Bid_ma = "<" #To buy
 
 
-    if dict_code[code]['ma_last'] < dict_code[code]['p_ask_last']:
+    if previous_ma < last_bar_close:
         symbol_Ask_maLast = ">"
-    elif dict_code[code]['ma_last'] == dict_code[code]['p_ask_last']:
-        symbol_Ask_maLast = "="
-    else:
-        symbol_Ask_maLast = "<"
-
-    if dict_code[code]['ma_last'] < dict_code[code]['p_bid_last']:
         symbol_Bid_maLast = ">"
-    elif dict_code[code]['ma_last'] == dict_code[code]['p_bid_last']:
+    elif previous_ma == last_bar_close:
+        symbol_Ask_maLast = "="
         symbol_Bid_maLast = "="
     else:
+        symbol_Ask_maLast = "<"
         symbol_Bid_maLast = "<"
 
     if last_bar_close > p_ask:
@@ -680,7 +676,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
     # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_bar_close > p_ask):
     # if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) and (dict_code[code]['last_bar']['close'].values[0] >= dict_code[code]['ma_last']):
-    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['last_bar']['close'].values[0] >= dict_code[code]['ma_last'] >0):
+    # if (ma*(1-range) > p_ask > 0 ) and (last_bar_close >= dict_code[code]['ma_last'] >0):
+    if (ma*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma >0):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_bar_close " + str(last_bar_close) +". proceeding to SELL")
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
@@ -695,7 +692,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
     # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_bar_close):
     # if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_bar']['close'].values[0]  ):
-    if (p_bid > ma*(1+range) > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_bar']['close'].values[0] >0 ):
+    # if (p_bid > ma*(1+range) > 0)  and (dict_code[code]['ma_last'] >= last_bar_close >0 ):
+    if (p_bid > ma*(1+range) > 0)  and (previous_ma >= last_bar_close >0 ):
         logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_bar_close " + str(last_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
@@ -742,7 +740,7 @@ def hourly_ma_minutely_check(
 
     dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
     dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
-    dict_code[code]['ma_last'] = dict_code[code]['ma']
+    # dict_code[code]['ma_last'] = dict_code[code]['ma']
     dict_code[code]['update_time_last'] = dict_code[code]['update_time']
 
     dict_code[code]['ma'] = round((dict_code[code]['ma_nsub1_sum'] + stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
