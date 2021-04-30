@@ -646,7 +646,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
     # logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
-    logging.info( "p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['atr_14'],2)))
+    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['atr_14'],2)))
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
 
