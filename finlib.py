@@ -51,6 +51,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 
 pd.options.display.float_format = '{:.2f}'.format
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
     """ A mysql.connector Converter that handles Numpy types """

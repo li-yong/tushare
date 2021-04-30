@@ -220,7 +220,7 @@ def step1_generate_df(output_csv,date_exam_day):
 
 
 
-    df_exam_day_all = pd.merge(df_daily_stocks_basic, df_daily_stocks_price, on=['code','trade_date'], how='inner', suffixes=('', '_x'))
+    df_exam_day_all = pd.merge(df_daily_stocks_basic, df_daily_stocks_price, on=['code','date'], how='inner', suffixes=('', '_x'))
     df_exam_day_all = finlib.Finlib().add_stock_name_to_df(df=df_exam_day_all, ts_pro_format=False)
 
 

@@ -189,6 +189,11 @@ def get_current_price( host, port, code_list=['HK.00700']):
 def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
     # extended_time = False  # Futu App calculate MA without extended time. Compliance with Futu App.
 
+    # Even extended_time==True, HK.00700 didn't return extended time at the morning 9:00-9:20, not sure BMP previlege caused?
+    # 218  HK.00700  2021-04-29 15:57:00 634.00 633.50 634.50 633.50      0.00           0.00    72200   45776100.00        -0.16      634.50
+    # 219  HK.00700  2021-04-29 16:00:00 634.00 631.50 634.50 631.50      0.00           0.00  1879000 1186806500.00        -0.32      633.50
+    # 220  HK.00700  2021-04-30 09:33:00 627.50 623.00 627.50 622.50      0.00           0.00  1082000  677740767.00        -1.35      631.50
+
     quote_ctx = OpenQuoteContext(host=host, port=port)
 
     max_count = 1000
@@ -236,6 +241,9 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
+
+    # data are Bars, e.g K_3M.
+    # data don't contain current time bar. eg.K_3M, at 9.54~9.57, bar 9.57 is growing, data return bars end at 9.54.
     data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=True) #ryan debug
 
     if data.__len__() < ma_period:
@@ -249,27 +257,28 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         )
         # raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
 
-    # ma_value_b1 = round(data[-ma_period:]['close'].mean(),2)
-    # ma_value_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
-    ma_value_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)
+    ma_b1 = round(data[-ma_period:]['close'].mean(),2)  # previous MA value
+    # ma_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
+    ma_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)  # use to calculate right_now MA.
 
     logging.info('*************************************')
-    # logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_value_b1 "+str(ma_value_b1)+" at "+data.iloc[-1]['time_key'])
-    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_value_nsub1_sum "+str(ma_value_nsub1_sum)+", ma_period "+str(ma_period))
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , previous MA "+str(ma_b1)+" at "+data.iloc[-1]['time_key'])
+    # logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period))
 
     # print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(ma_period).reset_index().drop('index',axis=1)))
-    print(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
+    logging.info(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
 
     return({
         'code':code,
         'rtn_code':0,
         'ktype':ktype,
         'ma_period':ma_period,
-        # 'ma_value_b1':ma_value_b1,
-        'ma_value_nsub1_sum':ma_value_nsub1_sum,
+        'ma_b1':ma_b1,
+        'ma_b1_time_key': data.iloc[-2]['time_key'],
+        'ma_nsub1_sum':ma_nsub1_sum,
         'time_key':data.iloc[-1]['time_key'],
         # 'time_key':data.iloc[-2]['time_key'],
-        'last_ma_bar': data.tail(1).reset_index().drop('index',axis=1)
+        'last_bar': data.tail(1).reset_index().drop('index',axis=1)
     })
 
 
@@ -587,12 +596,19 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ###################
     # evaluate p_ask with MA
     ###################
+    p_current = dict_code[code]['p_last']
+    time_current= dict_code[code]['update_time']
+
+    p_last_bar_close = dict_code[code]['p_last_last']
     p_ask = dict_code[code]['p_ask']
     p_bid = dict_code[code]['p_bid']
     ma = dict_code[code]['ma']
+
     ktype = dict_code[code]['ktype']
     ma_period = dict_code[code]['ma_period']
-    last_ma_bar_close = dict_code[code]['last_ma_bar'].iloc[0]['close']
+    last_bar_close = dict_code[code]['last_bar'].iloc[0]['close']
+    previous_ma = dict_code[code]['previous_ma']
+    previous_ma_time_key = dict_code[code]['t_last_k_time_key']
 
     range = 0.005
 
@@ -625,16 +641,16 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         symbol_Bid_maLast = "<"
 
-    if last_ma_bar_close > p_ask:
+    if last_bar_close > p_ask:
         symbol_Ask_lastClose = "<"
-    elif last_ma_bar_close == p_ask:
+    elif last_bar_close == p_ask:
         symbol_Ask_lastClose = "<"
     else:
         symbol_Ask_lastClose = ">"
 
-    if last_ma_bar_close > p_bid:
+    if last_bar_close > p_bid:
         symbol_Bid_lastClose = "<"
-    elif last_ma_bar_close == p_ask:
+    elif last_bar_close == p_ask:
         symbol_Bid_lastClose = "<"
     else:
         symbol_Bid_lastClose = ">"
@@ -662,10 +678,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_ma_bar_close > p_ask):
-    # if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) and (dict_code[code]['last_ma_bar']['close'].values[0] >= dict_code[code]['ma_last']):
-    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['last_ma_bar']['close'].values[0] >= dict_code[code]['ma_last'] >0):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) +". proceeding to SELL")
+    # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_bar_close > p_ask):
+    # if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) and (dict_code[code]['last_bar']['close'].values[0] >= dict_code[code]['ma_last']):
+    if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['last_bar']['close'].values[0] >= dict_code[code]['ma_last'] >0):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_bar_close " + str(last_bar_close) +". proceeding to SELL")
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
@@ -677,10 +693,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_ma_bar_close):
-    # if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_ma_bar']['close'].values[0]  ):
-    if (p_bid > ma*(1+range) > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_ma_bar']['close'].values[0] >0 ):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_ma_bar_close " + str(last_ma_bar_close) + ". proceeding to BUY")
+    # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_bar_close):
+    # if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_bar']['close'].values[0]  ):
+    if (p_bid > ma*(1+range) > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_bar']['close'].values[0] >0 ):
+        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_bar_close " + str(last_bar_close) + ". proceeding to BUY")
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
@@ -694,12 +710,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info('*************************************')
 
     logging.info(
-        __file__ + " " + "code " + code + " this_ck_done. "
-        + "bid "+ str(p_bid)+ ", ask "+ str(p_ask)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+", last_close "+str(last_ma_bar_close)
+        __file__ + " " + code + " this_ck_done. "
+        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
         + ". a"+symbol_Ask_ma + symbol_Ask_maLast + symbol_Ask_lastClose
         + ", b"+symbol_Bid_ma + symbol_Bid_maLast + symbol_Bid_lastClose
+        + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
     )
-
 
     return()
 
@@ -839,10 +855,9 @@ def get_chk_code_list(market,debug):
 def _get_chk_code_list(market,debug):
     if market == Market.HK:
         stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
-        # get_price_code_list = ['HK.00700', 'HK.09977']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
         if debug:
-            get_price_code_list = ['HK.00700', 'HK.09977']
+            get_price_code_list = ['HK.00700']
     elif market == Market.US:
         stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
@@ -1125,17 +1140,17 @@ def main():
             now = datetime.datetime.now()
 
             if code.startswith('US.'):
-                last_ma_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                last_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
                                               - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
                                                                     tz_in=pytz.timezone('America/New_York'),
                                                                     tz_out=pytz.timezone('Asia/Shanghai'),
                                                                     )
             else:
-                last_ma_bar_time_to_now = datetime.datetime.now() - dict_code[code]['t_last_k_time_key']
+                last_bar_time_to_now = datetime.datetime.now() - dict_code[code]['t_last_k_time_key']
 
 
             # if (dict_code[code]['ma_nsub1_sum'] == 0)  or ((now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] <= 59):
-            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_ma_bar_time_to_now.seconds > k_renew_interval_second[ktype]):
+            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype]):
             # if (dict_code[code]['ma_nsub1_sum'] == 0) \
             #         or (now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] == 1 \
             #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
@@ -1145,12 +1160,13 @@ def main():
                                    ktype=ktype, ma_period=ma_period)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                dict_code[code]['ma_nsub1_sum'] = _['ma_value_nsub1_sum']
+                dict_code[code]['ma_nsub1_sum'] = _['ma_nsub1_sum']
                 dict_code[code]['ma_period'] = _['ma_period']
                 dict_code[code]['ktype'] = _['ktype']
-                dict_code[code]['last_ma_bar'] = _['last_ma_bar']
+                dict_code[code]['last_bar'] = _['last_bar']
                 dict_code[code]['t_last_k_renew'] = now
                 dict_code[code]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
+                dict_code[code]['previous_ma'] = _['ma_b1']
                 # logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,

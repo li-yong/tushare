@@ -24,22 +24,20 @@ import akshare as ak
 
 
 
-###########################
-# fund_all = finlib.Finlib().load_all_ts_pro()
+########################### Evaluate tr/pe ratio
+def evaluate_tr_pe():
+    df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+    df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
 
-df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
-df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+    df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+    tmp = finlib.Finlib().add_amount_mktcap(df=df_selected)
+    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
-df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
-tmp = finlib.Finlib().add_amount_mktcap(df=df_selected)
-tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
-tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
-
-print(finlib.Finlib().pprint(tmp))
-exit()
+    print(finlib.Finlib().pprint(tmp))
+    exit()
 
 #########################################
-np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 for market in ['AG','HK','US']:
     logging.info("\n==== "+market+" ====")
@@ -56,6 +54,10 @@ for market in ['AG','HK','US']:
 
     print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
     print(finlib.Finlib().pprint(df_g_n3_52week[cols].head(2)))  #grid == -3
+
+    df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+
+    pd.merge()
 
 
 
@@ -87,11 +89,11 @@ for market in ['AG','HK','US']:
 
     _ = df_g_p3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_p2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
-    _ = df_g_p1[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_p1_3month[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
 
     _ = df_g_n1[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_n2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
-    _ = df_g_n3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n3_3month[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_n4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
 
 
