@@ -674,11 +674,11 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    # if (ma > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last'] > 0) and ( last_bar_close > p_ask):
-    # if (ma*(1-range) > p_ask > 0 ) and (dict_code[code]['p_ask_last'] >= dict_code[code]['ma_last']*(1-range) > 0) and (dict_code[code]['last_bar']['close'].values[0] >= dict_code[code]['ma_last']):
-    # if (ma*(1-range) > p_ask > 0 ) and (last_bar_close >= dict_code[code]['ma_last'] >0):
     if (ma*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma >0):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)+ ", last_bar_close " + str(last_bar_close) +". proceeding to SELL")
+        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)
+                     + ", last_bar_close " + str(last_bar_close) +". proceeding to SELL"
+                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     )
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
@@ -690,11 +690,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    # if (p_bid > ma > 0) and (dict_code[code]['ma_last'] >= dict_code[code]['p_bid_last'] > 0) and (p_bid > last_bar_close):
-    # if (p_bid > ma*(1+range) > 0) and (dict_code[code]['ma_last']*(1+range) >= dict_code[code]['p_bid_last'] > 0)  and (dict_code[code]['ma_last'] >= dict_code[code]['last_bar']['close'].values[0]  ):
-    # if (p_bid > ma*(1+range) > 0)  and (dict_code[code]['ma_last'] >= last_bar_close >0 ):
     if (p_bid > ma*(1+range) > 0)  and (previous_ma >= last_bar_close >0 ):
-        logging.info(__file__ + " " + "code " + code + " ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)+ ", last_bar_close " + str(last_bar_close) + ". proceeding to BUY")
+        logging.info(__file__ + " "
+                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)
+                     + ". proceeding to BUY"
+                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     )
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
