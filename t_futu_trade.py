@@ -571,10 +571,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
         position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
 
-        cur_pos="current position:\n"+finlib.Finlib().pprint(position[['code','stock_name', 'qty','cost_price','can_sell_qty','position_side','unrealized_pl','realized_pl']])
-        # print(cur_pos)
-        logging.info(cur_pos)
-        position_qty = position.qty[0]
+        # cur_pos="current position:\n"+finlib.Finlib().pprint(position[['code','stock_name', 'qty','cost_price','can_sell_qty','position_side','unrealized_pl','realized_pl']])
+        # logging.info(cur_pos)
+        # position_qty = position.qty[0]
         position_can_sell_qty = position.can_sell_qty[0]
         position_cost_price = position.cost_price[0]  # cheng beng
 
