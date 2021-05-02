@@ -32,10 +32,16 @@ rm -f wei_pan_la_sheng_*.csv
 
 rm -rf /home/ryan/DATA/pickle/Stock_Fundamental/ak_share
 
-rm -f report_202103*
-rm -f report_202104*
-rm -f report*_202103*
-rm -f daily_basic_202104*
-rm -f report*202104[0-1]*
-rm -f wei_pan_la_sheng/*
+
+
+rm -f report*20210[1-4]*
+rm -f daily_basic_20210[1-4]*
+rm -f garbage/*20210[1-4]*
+rm -fr result_new_dev_B/*20210[1-4]*
+rm -fr result_new_dev_S/*20210[1-4]*
+
+rm -f wei_pan_la_sheng/*20210[1-4]*
+rm -f basic_summary/*20210[1-4]*
+rm -f basic_summary/*2020*
+
 
