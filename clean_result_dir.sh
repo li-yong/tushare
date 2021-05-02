@@ -25,15 +25,6 @@ rm -f fib_plot/*
 
 
 
-cd /home/ryan/DATA/pickle/Stock_Fundamental/akshare/source
-rm -f ag_spot_*.csv
-rm -f ag_kcb_spot_*.csv
-rm -f wei_pan_la_sheng_*.csv
-
-rm -rf /home/ryan/DATA/pickle/Stock_Fundamental/ak_share
-
-
-
 rm -f report*20210[1-4]*
 rm -f daily_basic_20210[1-4]*
 rm -f garbage/*20210[1-4]*
@@ -44,4 +35,14 @@ rm -f wei_pan_la_sheng/*20210[1-4]*
 rm -f basic_summary/*20210[1-4]*
 rm -f basic_summary/*2020*
 
+
+
+
+
+cd /home/ryan/DATA/pickle/Stock_Fundamental/akshare/source
+rm -f ag_spot_*.csv
+rm -f ag_kcb_spot_*.csv
+rm -f wei_pan_la_sheng_*.csv
+
+rm -rf /home/ryan/DATA/pickle/Stock_Fundamental/ak_share
 
