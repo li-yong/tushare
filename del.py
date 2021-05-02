@@ -38,8 +38,7 @@ def evaluate_tr_pe():
     exit()
 
 #########################################
-
-for market in ['AG','HK','US']:
+def evaluate_grid(market='AG'):
     logging.info("\n==== "+market+" ====")
     high_field='52 Week High'
     low_field='52 Week Low'
@@ -75,7 +74,16 @@ for market in ['AG','HK','US']:
 
     print("==========  52 Week Hold ========")
     df_hold_52week = pd.merge(df_52week, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
-    print(df_hold_52week)
+
+    df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+    df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+
+    tmp = finlib.Finlib().add_amount_mktcap(df=df_hold_52week)
+    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+    print(tmp)
+
+
 
     print("==========  3 month Hold ========")
     df_hold_3month = pd.merge(df_3month, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
@@ -93,7 +101,10 @@ for market in ['AG','HK','US']:
 
     df = pd.merge(df_52week, df_3month, on='code', how='inner', suffixes=("", "_3M"))
     df_llrh = df[(df.grid==-3) & (df.grid_3M==1)][cols]  #long low, recent high
+    print(finlib.Finlib().pprint(df_llrh.head(30)))
+
     df_lhrl = df[(df.grid==1) & (df.grid_3M==-3)][cols]  #long high, recent low
+    print(finlib.Finlib().pprint(df_lhrl.head(30)))
 
     finlib.Finlib().get_ts_field(ts_code='601995.SH', ann_date='20201231', field='roe', big_memory=False)
 
@@ -117,41 +128,35 @@ for market in ['AG','HK','US']:
 
     logging.info("")
 
-exit(0)
+    exit(0)
 
 #########################################
-df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
-df_us_1W = finlib.Finlib().load_tv_fund(market='US', period='1W')
+def tv_filter():
+    df_us_1D = finlib.Finlib().load_tv_fund(market='US', period='1D')
+    df_us_1W = finlib.Finlib().load_tv_fund(market='US', period='1W')
 
-df=df_us_1D
-df = df[df['Total Debt (MRQ)']<=df['Total Revenue (FY)']]
-df = df[df['Basic EPS (TTM)']>0]
-df = df[df['roe_ttm']>5]
-df = df[df['pe_ttm']>5]
-df = df[df['ps']>5]
+    df=df_us_1D
+    df = df[df['Total Debt (MRQ)']<=df['Total Revenue (FY)']]
+    df = df[df['Basic EPS (TTM)']>0]
+    df = df[df['roe_ttm']>5]
+    df = df[df['pe_ttm']>5]
+    df = df[df['ps']>5]
 
-cols=['code','name','Enterprise Value (MRQ)','EBITDA (TTM)','Enterprise Value/EBITDA (TTM)',
-      'roe_ttm','ps','pe_ttm','Operating Margin (TTM)','vola_month',
-      'Total Revenue (FY)', 'Total Debt (MRQ)',
-      '52 Week High','close','52 Week Low',
-      ]
-df[cols].describe()
-
-
-df_us_1D[df_us_1D['code'].isin(['BILI','FUTU','MSFT','DIS','TWLO','DELL'])][cols]
+    cols=['code','name','Enterprise Value (MRQ)','EBITDA (TTM)','Enterprise Value/EBITDA (TTM)',
+          'roe_ttm','ps','pe_ttm','Operating Margin (TTM)','vola_month',
+          'Total Revenue (FY)', 'Total Debt (MRQ)',
+          '52 Week High','close','52 Week Low',
+          ]
+    df[cols].describe()
 
 
-print(1)
+    df_us_1D[df_us_1D['code'].isin(['BILI','FUTU','MSFT','DIS','TWLO','DELL'])][cols]
 
-#########################################
-#time to market
-# df = finlib.Finlib().load_all_ts_pro()
 
-df = finlib.Finlib().get_A_stock_instrment()
-df = finlib.Finlib().add_market_to_code(df=df)
+    print(1)
 
-print(1)
 
+evaluate_grid(market='AG')
 
 #########################################
 df = finlib.Finlib().load_price_n_days(ndays=20)

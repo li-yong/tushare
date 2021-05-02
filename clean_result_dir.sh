@@ -31,3 +31,11 @@ rm -f ag_kcb_spot_*.csv
 rm -f wei_pan_la_sheng_*.csv
 
 rm -rf /home/ryan/DATA/pickle/Stock_Fundamental/ak_share
+
+rm -f report_202103*
+rm -f report_202104*
+rm -f report*_202103*
+rm -f daily_basic_202104*
+rm -f report*202104[0-1]*
+rm -f wei_pan_la_sheng/*
+

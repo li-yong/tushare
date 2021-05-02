@@ -4554,7 +4554,7 @@ class Finlib:
             ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
             logging.info("get_last_n_days_daily_basic, using specifed dayS and dayE, ingore ndays. Use caculated ndays "+str(ndays))
         elif (dayE is not None) and (ndays is not None):
-            dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
+            dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
         elif (dayS is None) and (dayE is None) and (ndays is not None):
             dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
             dayE = datetime.today().strftime("%Y%m%d")
@@ -4707,7 +4707,7 @@ class Finlib:
 
     def add_tr_pe(self,df,df_daily,df_ts_all):
         df_trpe = self.get_tr_pe(df_daily=df_daily, df_ts_all=df_ts_all)[['code','tr_pe']]
-        df = pd.merge(df, df_trpe,  on=['code'], how='left', suffixes=('', '_trpe'))
+        df = pd.merge(df, df_trpe,  on=['code'], how='inner', suffixes=('', '_trpe'))
         df = self.adjust_column(df=df,col_name_list=['code','tr_pe'])
         return(df)
 
