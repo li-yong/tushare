@@ -111,18 +111,22 @@ if [ $fetch_or_exam == "EXAM" ]; then
     #/home/ryan/DATA/result/selected/us_junxian_barstyle.csv
     python t_daily_junxian_barstyle.py -x US --selected
     python t_daily_junxian_barstyle.py -x US --selected --show_result
+    python t_daily_junxian_barstyle.py -x US --selected --check_my_ma
+
 
 
     ############ HK 
     #/home/ryan/DATA/result/selected/hk_junxian_barstyle.csv
     python t_daily_junxian_barstyle.py -x HK --selected
     python t_daily_junxian_barstyle.py -x HK --selected --show_result
+    python t_daily_junxian_barstyle.py -x HK --selected --check_my_ma
 
 
     ############ AG
     #/home/ryan/DATA/result/selected/ag_junxian_barstyle.csv
     python t_daily_junxian_barstyle.py -x AG --selected
     python t_daily_junxian_barstyle.py -x AG --selected --show_result
+    python t_daily_junxian_barstyle.py -x AG --selected --check_my_ma
 
 
 

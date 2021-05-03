@@ -4979,6 +4979,9 @@ class Finlib:
 
     def add_stock_name_to_df_us_hk(self, df, market='US'):
         market = market.upper()
+
+        # name_df = self.load_tv_fund(market=market, period='1D')
+
         name_csv = "/home/ryan/DATA/result/wei_pan_la_sheng"+ "/" + market + "_spot_link.csv"
         name_df = pd.read_csv(name_csv, encoding="utf-8", converters={'code': str})
         name_df = name_df[['code','name']]

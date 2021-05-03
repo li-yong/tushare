@@ -1149,11 +1149,11 @@ class Finlib_indicator:
 
         ############## Get live price before market closure.
 
-        if stock_global == 'HK_HOLD':
+        if stock_global in ['HK_HOLD','HK']:
             in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
-        elif stock_global == 'AG_HOLD':
+        elif stock_global in ['AG_HOLD','AG']:
             in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='AG', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
-        elif stock_global == 'US_HOLD':
+        elif stock_global in ['US_HOLD','US']:
             in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
 
         logging.info("loaded in_day_price_df")
