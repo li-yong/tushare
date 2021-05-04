@@ -607,7 +607,21 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     previous_ma = dict_code[code]['previous_ma']
     previous_ma_time_key = dict_code[code]['t_last_k_time_key']
 
-    range = 0.005
+    range = 0.00005
+
+    if p_current < ma:
+        sybmol_close_ma = "<"
+    elif p_current ==  ma:
+        sybmol_close_ma = "="
+    else:
+        sybmol_close_ma = ">"
+
+    if last_bar_close < previous_ma:
+        sybmol_close_ma_previous = "<"
+    elif last_bar_close == previous_ma:
+        sybmol_close_ma_previous = "="
+    else:
+        sybmol_close_ma_previous = ">"
 
     if ma*(1-range) < p_ask:
         symbol_Ask_ma = ">"
@@ -699,8 +713,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(
         __file__ + " " + code + " this_ck_done. "
         +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
-        + ". a"+symbol_Ask_ma +  symbol_Ask_lastClose
-        + ", b"+symbol_Bid_ma +  symbol_Bid_lastClose
+        + ". ask "+symbol_Ask_ma +  symbol_Ask_lastClose
+        + ", bid "+symbol_Bid_ma +  symbol_Bid_lastClose
+        + ", close_ma_prev_vs_current "+sybmol_close_ma_previous +  sybmol_close_ma
         + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
     )
 
