@@ -545,7 +545,7 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     ma_b2 = round(data[-ma_period-2:-2]['close'].mean(),2)  # previous-2 MA value
     ma_b2_time_key = data.iloc[-3]['time_key']
-    close_b2 = data.iloc[-2]['close']
+    close_b2 = data.iloc[-3]['close']
 
     # ma_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
     ma_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)  # use to calculate right_now MA.
