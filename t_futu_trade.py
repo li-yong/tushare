@@ -194,15 +194,15 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     p_last_bar_close = dict_code[code]['p_last_last']
     p_ask = dict_code[code]['p_ask']
     p_bid = dict_code[code]['p_bid']
-    ma_short = dict_code[code][ktype_short]['ma']
-    ma_long = dict_code[code][ktype_long]['ma']
+    ma_short = dict_code[code]['short'][ktype_short]['ma']
+    ma_long = dict_code[code]['long'][ktype_long]['ma']
 
     # ktype = dict_code[code]['ktype']
-    ma_period_short = dict_code[code]['ma_period_short']
-    ma_period_long = dict_code[code]['ma_period_long']
-    last_bar_close = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['last_bar'].iloc[0]['close']
-    previous_ma_short = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
-    previous_ma_short_time_key = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+    ma_period_short = dict_code[code]['short']['ma_period_short']
+    ma_period_long = dict_code[code]['long']['ma_period_long']
+    last_bar_close = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['last_bar'].iloc[0]['close']
+    previous_ma_short = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
+    previous_ma_short_time_key = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
 
     range = 0.00005
 
@@ -259,19 +259,19 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code][ktype_short]['atr_14'],2)))
 
 
-    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code][ktype_short]['atr_14'] > 0:
+    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['short'][ktype_short]['atr_14'] > 0:
 
-        if p_delta >0 and p_delta > dict_code[code][ktype_short]['atr_14']:
-            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code][ktype_short]['atr_14']))
+        if p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
+            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
 
-        if p_delta < 0 and abs(p_delta) > dict_code[code][ktype_short]['atr_14']:
-            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code][ktype_short]['atr_14']))
+        if p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
+            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
-    bma = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']
+    bma = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
     if (ma_short*(1-range) > p_ask > 0 ) and (bma['ma_b0'] > bma['close_b0'] >0) and (bma['close_b1'] > bma['ma_b1']):
         logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
@@ -771,8 +771,8 @@ def hourly_ma_minutely_check(
     dict_code[code]['p_bid_last'] = dict_code[code]['df_live_price']['bid_price'].values[0]
     dict_code[code]['update_time_last'] = dict_code[code]['df_live_price']['update_time'].values[0]
 
-    dict_code[code][ktype_short]['ma'] = round((dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period_short, 2)
-    dict_code[code][ktype_long]['ma']= round((dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period_long, 2)
+    dict_code[code]['short'][ktype_short]['ma'] = round((dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period_short, 2)
+    dict_code[code]['long'][ktype_long]['ma']= round((dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period_long, 2)
     dict_code[code]['p_last'] = dict_code[code]['df_live_price'].iloc[0]['last_price']  # seller want to sell at this price.
     dict_code[code]['update_time'] = dict_code[code]['df_live_price'].iloc[0]['update_time'] #buyer want to buy at this price.
 
@@ -793,16 +793,16 @@ def hourly_ma_minutely_check(
 
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
-                 +"MA_"+ktype_short+"_"+str(ma_period_short) +": ma/p_last "+ str(dict_code[code][ktype_short]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
-                 + " , ma_b0/close_b0 " + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
-                 +str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
-                 + dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
-                 + " , ma_b1/close_b1 " + str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
-                 +str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
-                 + dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
-                 + " , ma_b2/close_b2 " + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
-                 + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
-                 +dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
+                 +"MA_"+ktype_short+"_"+str(ma_period_short) +": ma/p_last "+ str(dict_code[code]['short'][ktype_short]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
+                 + " , ma_b0/close_b0 " + str(dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
+                 +str( dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
+                 + dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+                 + " , ma_b1/close_b1 " + str( dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
+                 +str( dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
+                 + dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
+                 + " , ma_b2/close_b2 " + str(dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
+                 + str(dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
+                 +dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
@@ -814,16 +814,16 @@ def hourly_ma_minutely_check(
 
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
-                 +"MA_"+ktype_long+"_"+str(ma_period_long) +": ma/p_last "+ str(dict_code[code][ktype_long]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
-                 + " , ma_b0/close_b0 " + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
-                 +str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
-                 + dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
-                 + " , ma_b1/close_b1 " + str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
-                 +str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
-                 + dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
-                 + " , ma_b2/close_b2 " + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
-                 + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
-                 +dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
+                 +"MA_"+ktype_long+"_"+str(ma_period_long) +": ma/p_last "+ str(dict_code[code]['long'][ktype_long]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
+                 + " , ma_b0/close_b0 " + str(dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
+                 +str( dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
+                 + dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+                 + " , ma_b1/close_b1 " + str( dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
+                 +str( dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
+                 + dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
+                 + " , ma_b2/close_b2 " + str(dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
+                 + str(dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
+                 +dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
@@ -1017,21 +1017,22 @@ def get_atr(code, df_tv_all):
 
 
 
-def init_dict_code(dict_code,code,ktype_short, ktype_long, df_tv_all):
+def init_dict_code(dict_code,code,ktype_short, ktype_long,ma_period_short,ma_period_long, df_tv_all):
     atr_14 = get_atr(code,df_tv_all)
 
-    dict_code[code] = {
+    dict_code[code] = {'short':{
         ktype_short:{'history_bars_and_ma':{'bars_and_ma':{'ma_nsub1_sum':0}},
                      'atr_14': atr_14,
                      't_last_k_renew': datetime.datetime.now(),
                      't_last_k_time_key': datetime.datetime.now(),
-                     },
+                     },},
+        'long':{
 
         ktype_long: {'history_bars_and_ma': {'bars_and_ma': {'ma_nsub1_sum': 0}},
                       'atr_14': atr_14,
                      't_last_k_renew': datetime.datetime.now(),
                      't_last_k_time_key': datetime.datetime.now(),
-                      },
+                      },},
 
     }
     #
@@ -1154,7 +1155,7 @@ def main():
     #populate code specification dictionary
     dict_code = {}
     for code in get_price_code_list:
-        dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,df_tv_all)
+        dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,ma_period_short,ma_period_long,df_tv_all)
 
     k_renew_interval_second = {
         'K_1M':1*60,
@@ -1202,7 +1203,7 @@ def main():
 
         for code in get_price_code_list:
             if code not in dict_code.keys():
-                dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,df_tv_all)
+                dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,ma_period_short,ma_period_long,df_tv_all)
                 logging.info("initialized code "+code+ " to dict_code")
 
             # update ma at the 1st minute of a new hour
@@ -1210,39 +1211,40 @@ def main():
 
             if code.startswith('US.'):
                 last_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
-                                              - convert_dt_timezone(dict_code[code][ktype_short]['t_last_k_time_key'],
+                                              - convert_dt_timezone(dict_code[code]['short'][ktype_short]['t_last_k_time_key'],
                                                                     tz_in=pytz.timezone('America/New_York'),
                                                                     tz_out=pytz.timezone('Asia/Shanghai'),
                                                                     )
             else:
-                last_bar_time_to_now = datetime.datetime.now() - dict_code[code][ktype_short]['t_last_k_time_key']
+                last_bar_time_to_now = datetime.datetime.now() - dict_code[code]['short'][ktype_short]['t_last_k_time_key']
 
 
              #handling ktype_short
-            if (dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
+            if (dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
                 _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
                                    ktype=ktype_short, ma_period=ma_period_short)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                # accessing : dict_code[code]['history_bars_and_ma']['K_3M']
-                dict_code[code][ktype_short]['history_bars_and_ma'] ={"bars_and_ma":_,
+                # accessing : dict_code[code]['K_3M'][21]['history_bars_and_ma']
+                dict_code[code]['short'][ktype_short] ={'history_bars_and_ma':{"bars_and_ma":_,
                                 't_last_k_renew':now,
                                 't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
-                                }
+                                },
+                        }
 
 
             # handling ktype_long
-            if (dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
+            if (dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
                 _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
                                    ktype=ktype_long, ma_period=ma_period_long)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                dict_code[code][ktype_long] ={
-                    'history_bars_and_ma':{"bars_and_ma":_,
+                dict_code[code]['long'][ktype_long] ={'history_bars_and_ma':{"bars_and_ma":_,
                                 't_last_k_renew':now,
                                 't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
                                 },
                 }
+
 
             #handling df_live_price
             dict_code[code]['df_live_price'] = df_live_price[df_live_price['code'] == code]
