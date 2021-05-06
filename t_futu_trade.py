@@ -271,12 +271,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
-
+    bma = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    if (ma_short*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma_short >0):
+    if (ma_short*(1-range) > p_ask > 0 ) and (bma['ma_b0'] > bma['close_b0'] >0) and (bma['close_b1'] > bma['ma_b1']):
         logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
-                     + ", last_bar_close " + str(last_bar_close) +". proceeding to SELL"
-                     + ".  Previous "+str(previous_ma_short_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma_short)
+                     + ". proceeding to SELL"
+                     + ".  Previous "+str(bma['ma_b0_time_key']) +" close "+str(bma['close_b0']) + " ma "+str(bma['ma_b0'])
                      )
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
@@ -289,11 +289,13 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    if (p_bid > ma_short*(1+range) > 0)  and (previous_ma_short >= last_bar_close >0 ):
+    # if (p_bid > ma_short*(1+range) > 0)  and (previous_ma_short >= last_bar_close >0 ):
+    if (p_bid > ma_short*(1+range) > 0) and (bma['close_b0'] >= bma['ma_b0']  > 0) and ( bma['ma_b1'] > bma['close_b1']):
+
         logging.info(__file__ + " "
                      + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period_short) +" "+ str(ma_short)
                      + ". proceeding to BUY"
-                     + ".  Previous "+str(previous_ma_short_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma_short)
+                     + ".  Previous "+str(bma['ma_b0_time_key']) +" close "+str( bma['ma_b0'] ) + " ma "+str(bma['ma_b0'])
                      )
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
