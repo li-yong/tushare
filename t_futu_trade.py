@@ -40,6 +40,287 @@ def pprint(df):
     print(tabulate.tabulate(df, headers='keys', tablefmt='psql'))
 
 
+def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
+        code,
+        k_renew_interval_second,
+        simulator,
+        trd_ctx_unlocked,
+        ktype_short,
+        ktype_long,
+        dict_code,
+        market,
+    ):
+
+
+    if simulator:
+        trd_env = TrdEnv.SIMULATE
+    else:
+        trd_env = TrdEnv.REAL
+
+    do_not_place_order = False
+    do_not_place_order_reason = "None"
+
+    _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
+    df_order_list = _po['order_list']
+    df_position_list = _po['position_list']
+
+    ###################
+    # get order
+    ###################
+
+    last_buy_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+    last_sell_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+
+
+    orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
+    orders_buy = orders[orders['trd_side']=='BUY']
+    orders_sell = orders[orders['trd_side']=='SELL']
+
+    last_order = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+
+    if not orders_buy.empty:
+        last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+        last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time[0], "%Y-%m-%d %H:%M:%S")
+        last_buy_order_string = finlib.Finlib().pprint(last_buy_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+
+    if not orders_sell.empty:
+        last_sell_order = orders_sell.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+        last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time[0], "%Y-%m-%d %H:%M:%S")
+        last_sell_order_string = finlib.Finlib().pprint(last_sell_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
+
+    if last_sell_order_create_time > last_buy_order_create_time:
+        last_order = last_sell_order
+        last_order_string = last_sell_order_string
+    elif last_buy_order_create_time > last_sell_order_create_time:
+        last_order = last_buy_order
+        last_order_string = last_buy_order_string
+    elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
+        raise Exception("the last buy and sell order creation time are equal.")
+
+
+    # index 0 is the most recent order
+    # orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
+
+    # last_order = orders.iloc[0]
+
+    # last_order.order_id #6226957295081580411
+    # last_order.code #HK.09977
+    # last_order.stock_name #凤祥股份
+    # last_order.trd_side  # BUY
+    # last_order.qty #1000.0
+    # last_order.price #2.5
+    # last_order.create_time #'2021-04-02 11:44:05'
+    # last_order.order_status #SUBMITTED
+
+
+    # US Market
+    if code.startswith('US.'):
+        last_buy_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                                      - convert_dt_timezone(last_buy_order_create_time,
+                                                            tz_in=pytz.timezone('America/New_York'),
+                                                            tz_out=pytz.timezone('Asia/Shanghai'),
+                                                    )
+
+
+        last_sell_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
+                                       - convert_dt_timezone(last_sell_order_create_time,
+                                                             tz_in=pytz.timezone('America/New_York'),
+                                                             tz_out=pytz.timezone('Asia/Shanghai'),
+                                                    )
+
+
+    # not a US market. HK Market
+    else:
+        last_buy_create_time_to_now = datetime.datetime.now() - last_buy_order_create_time
+        last_sell_create_time_to_now = datetime.datetime.now() - last_sell_order_create_time
+
+    if last_buy_create_time_to_now.seconds <= 60*60*4 or last_sell_create_time_to_now.seconds <= 60*60*4: # 4 hours
+        if not simulator:
+            logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " lastest order" + last_order_string)
+            do_not_place_order = True
+            do_not_place_order_reason = "code " + code + ", REAL env, placed order in 4 hours"
+            return()
+
+        elif simulator and (not last_order.empty) and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
+            logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " " + "latest order:\n"+last_order_string)
+            do_not_place_order = True
+            do_not_place_order_reason = "code " + code + ", SIM env, UNfilled order in 4 hours"
+            return()
+
+        elif simulator:
+            logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
+
+
+    ###################
+    # get position
+    ###################
+    stock_lot_size = dict_code[code]['stock_lot_size']
+
+    if not code in df_position_list['code'].to_list():
+        # logging.info(__file__ + " " + "code " + code + " no position, will short on sell.")
+        sell_slot_size_1_of_4_position = stock_lot_size
+
+    else:
+
+        position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
+
+        # cur_pos="current position:\n"+finlib.Finlib().pprint(position[['code','stock_name', 'qty','cost_price','can_sell_qty','position_side','unrealized_pl','realized_pl']])
+        # logging.info(cur_pos)
+        # position_qty = position.qty[0]
+        position_can_sell_qty = position.can_sell_qty[0]
+        position_cost_price = position.cost_price[0]  # cheng beng
+
+        ###################
+        # Buy/Sell position
+        ###################
+        stock_lot_size = dict_code[code]['stock_lot_size']
+        sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
+
+        if sell_slot_size_1_of_4_position < stock_lot_size:
+            sell_slot_size_1_of_4_position = stock_lot_size
+
+        #trading one unit in REAL env.
+        if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
+            sell_slot_size_1_of_4_position = stock_lot_size
+
+    ###################
+    # evaluate p_ask with MA
+    ###################
+    p_current = dict_code[code]['p_last']
+    time_current= dict_code[code]['update_time']
+
+    p_last_bar_close = dict_code[code]['p_last_last']
+    p_ask = dict_code[code]['p_ask']
+    p_bid = dict_code[code]['p_bid']
+    ma_short = dict_code[code][ktype_short]['ma']
+    ma_long = dict_code[code][ktype_long]['ma']
+
+    # ktype = dict_code[code]['ktype']
+    ma_period = dict_code[code]['ma_period']
+    last_bar_close = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['last_bar'].iloc[0]['close']
+    previous_ma = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
+    previous_ma_time_key = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+
+    range = 0.00005
+
+    if p_current < ma_short:
+        sybmol_close_ma = "<"
+    elif p_current ==  ma_short:
+        sybmol_close_ma = "="
+    else:
+        sybmol_close_ma = ">"
+
+    if last_bar_close < previous_ma:
+        sybmol_close_ma_previous = "<"
+    elif last_bar_close == previous_ma:
+        sybmol_close_ma_previous = "="
+    else:
+        sybmol_close_ma_previous = ">"
+
+    if ma_short*(1-range) < p_ask:
+        symbol_Ask_ma = ">"
+    elif ma_short*(1-range) == p_ask:
+        symbol_Ask_ma = "="
+    else:
+        symbol_Ask_ma = "<" #To sell
+
+    if ma_short*(1+range) < p_bid:
+        symbol_Bid_ma = ">"
+    elif ma_short*(1+range) == p_bid:
+        symbol_Bid_ma = "="
+    else:
+        symbol_Bid_ma = "<" #To buy
+
+
+
+    if last_bar_close > p_ask:
+        symbol_Ask_lastClose = "<"
+    elif last_bar_close == p_ask:
+        symbol_Ask_lastClose = "<"
+    else:
+        symbol_Ask_lastClose = ">"
+
+    if last_bar_close > p_bid:
+        symbol_Bid_lastClose = "<"
+    elif last_bar_close == p_ask:
+        symbol_Bid_lastClose = "<"
+    else:
+        symbol_Bid_lastClose = ">"
+
+    # Will not run to this now. p_ask will be p_last if NA/0
+    # if p_ask == 'N/A' or p_ask == 0:
+    #     logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
+    #     return()
+    p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
+
+    # logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
+    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code][ktype_short]['atr_14'],2)))
+
+
+    #dict_code[code]['df_history_bars']
+
+    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
+
+        if p_delta >0 and p_delta > dict_code[code]['atr_14']:
+            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
+
+
+        if p_delta < 0 and abs(p_delta) > dict_code[code]['atr_14']:
+            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                                   trd_env=trd_env)
+
+
+    # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
+    if (ma_short*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma >0):
+        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)
+                     + ", last_bar_close " + str(last_bar_close) +". proceeding to SELL"
+                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     )
+        if do_not_place_order:
+            logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
+            logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
+        else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 1000 -r 5")
+            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                                   trd_env=trd_env)
+
+    # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
+    if (p_bid > ma_short*(1+range) > 0)  and (previous_ma >= last_bar_close >0 ):
+        logging.info(__file__ + " "
+                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)
+                     + ". proceeding to BUY"
+                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     )
+        if do_not_place_order:
+            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
+            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+        else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 1000 -r 5")
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
+
+
+    logging.info('*************************************')
+
+    logging.info(
+        __file__ + " " + code + " this_ck_done. "
+        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
+        + ". ask "+symbol_Ask_ma +  symbol_Ask_lastClose
+        + ", bid "+symbol_Bid_ma +  symbol_Bid_lastClose
+        + ", close_ma_prev_vs_current "+sybmol_close_ma_previous +  sybmol_close_ma
+        + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+    )
+
+    return()
+
+
 def place_sell_market_order(trd_ctx, code, qty, trd_env ):
     trd_ctx = get_ctx_from_code(trd_ctx,code)
 
@@ -257,12 +538,23 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         )
         # raise Exception("request_history_kline, data length "+str(data.__len__())+" less than ma_period "+str(ma_period))
 
-    ma_b1 = round(data[-ma_period:]['close'].mean(),2)  # previous MA value
+    ma_b0 = round(data[-ma_period:]['close'].mean(),2)  # current MA value
+    ma_b0_time_key = data.iloc[-1]['time_key']
+
+    ma_b1 = round(data[-ma_period-1:-1]['close'].mean(),2)  # previous-1 MA value
+    ma_b1_time_key = data.iloc[-2]['time_key']
+
+    ma_b2 = round(data[-ma_period-2:-2]['close'].mean(),2)  # previous-2 MA value
+    ma_b2_time_key = data.iloc[-3]['time_key']
+
     # ma_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
     ma_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)  # use to calculate right_now MA.
 
     logging.info('*************************************')
-    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , previous MA "+str(ma_b1)+" at "+data.iloc[-1]['time_key'])
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_b0 "+str(ma_b1)+" at "+ma_b0_time_key
+                 +" , ma_b1 "+str(ma_b1)+" at "+ma_b1_time_key
+                 +" , ma_b2 "+str(ma_b2)+" at "+ma_b2_time_key
+                 )
 
     # logging.info(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
 
@@ -271,18 +563,18 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         'rtn_code':0,
         'ktype':ktype,
         'ma_period':ma_period,
+        'ma_b0':ma_b0,
+        'ma_b0_time_key': ma_b0_time_key,
         'ma_b1':ma_b1,
-        'ma_b1_time_key': data.iloc[-2]['time_key'],
+        'ma_b1_time_key': ma_b1_time_key,
+        'ma_b2':ma_b2,
+        'ma_b2_time_key': ma_b2_time_key,
         'ma_nsub1_sum':ma_nsub1_sum,
-        'time_key':data.iloc[-1]['time_key'],
+        'time_key':ma_b0_time_key,
         # 'time_key':data.iloc[-2]['time_key'],
-        'last_bar': data.tail(1).reset_index().drop('index',axis=1)
+        'last_bar': data.tail(1).reset_index().drop('index',axis=1),
+        'df_history_bars':data, #['code', 'time_key', 'open', 'close', 'high', 'low', 'pe_ratio', 'turnover_rate', 'volume', 'turnover', 'change_rate', 'last_close']
     })
-
-
-
-
-
 
 def convert_dt_timezone(datetime_in, tz_in=pytz.timezone('America/New_York'), tz_out=pytz.timezone('Asia/Shanghai')):
     # dt_out = datetime_in.replace(tzinfo=tz_in).astimezone(tz=tz_out) # #incorrect convert
@@ -447,307 +739,35 @@ def get_persition_and_order(trd_ctx,market,trd_env):
     )
 
 
-def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
-        code,
-        k_renew_interval_second,
-        simulator,
-        trd_ctx_unlocked,
-        dict_code,
-        market,
-    ):
-
-
-    if simulator:
-        trd_env = TrdEnv.SIMULATE
-    else:
-        trd_env = TrdEnv.REAL
-
-    do_not_place_order = False
-    do_not_place_order_reason = "None"
-
-    _po = get_persition_and_order(trd_ctx=trd_ctx_unlocked, market=market, trd_env=trd_env)
-    df_order_list = _po['order_list']
-    df_position_list = _po['position_list']
-
-    ###################
-    # get order
-    ###################
-
-    last_buy_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
-    last_sell_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
-
-
-    orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
-    orders_buy = orders[orders['trd_side']=='BUY']
-    orders_sell = orders[orders['trd_side']=='SELL']
-
-    last_order = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
-
-    if not orders_buy.empty:
-        last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
-        last_buy_order_create_time = datetime.datetime.strptime(last_buy_order.create_time[0], "%Y-%m-%d %H:%M:%S")
-        last_buy_order_string = finlib.Finlib().pprint(last_buy_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
-
-    if not orders_sell.empty:
-        last_sell_order = orders_sell.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
-        last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time[0], "%Y-%m-%d %H:%M:%S")
-        last_sell_order_string = finlib.Finlib().pprint(last_sell_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
-
-    if last_sell_order_create_time > last_buy_order_create_time:
-        last_order = last_sell_order
-        last_order_string = last_sell_order_string
-    elif last_buy_order_create_time > last_sell_order_create_time:
-        last_order = last_buy_order
-        last_order_string = last_buy_order_string
-    elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
-        raise Exception("the last buy and sell order creation time are equal.")
-
-
-    # index 0 is the most recent order
-    # orders = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1)
-
-    # last_order = orders.iloc[0]
-
-    # last_order.order_id #6226957295081580411
-    # last_order.code #HK.09977
-    # last_order.stock_name #凤祥股份
-    # last_order.trd_side  # BUY
-    # last_order.qty #1000.0
-    # last_order.price #2.5
-    # last_order.create_time #'2021-04-02 11:44:05'
-    # last_order.order_status #SUBMITTED
-
-
-    # US Market
-    if code.startswith('US.'):
-        last_buy_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
-                                      - convert_dt_timezone(last_buy_order_create_time,
-                                                            tz_in=pytz.timezone('America/New_York'),
-                                                            tz_out=pytz.timezone('Asia/Shanghai'),
-                                                    )
-
-
-        last_sell_create_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
-                                       - convert_dt_timezone(last_sell_order_create_time,
-                                                             tz_in=pytz.timezone('America/New_York'),
-                                                             tz_out=pytz.timezone('Asia/Shanghai'),
-                                                    )
-
-
-    # not a US market. HK Market
-    else:
-        last_buy_create_time_to_now = datetime.datetime.now() - last_buy_order_create_time
-        last_sell_create_time_to_now = datetime.datetime.now() - last_sell_order_create_time
-
-    if last_buy_create_time_to_now.seconds <= 60*60*4 or last_sell_create_time_to_now.seconds <= 60*60*4: # 4 hours
-        if not simulator:
-            logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
-            logging.info(__file__ + " lastest order" + last_order_string)
-            do_not_place_order = True
-            do_not_place_order_reason = "code " + code + ", REAL env, placed order in 4 hours"
-            return()
-
-        elif simulator and (not last_order.empty) and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
-            logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
-            logging.info(__file__ + " " + "latest order:\n"+last_order_string)
-            do_not_place_order = True
-            do_not_place_order_reason = "code " + code + ", SIM env, UNfilled order in 4 hours"
-            return()
-
-        elif simulator:
-            logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
-
-
-    ###################
-    # get position
-    ###################
-    stock_lot_size = dict_code[code]['stock_lot_size']
-
-    if not code in df_position_list['code'].to_list():
-        # logging.info(__file__ + " " + "code " + code + " no position, will short on sell.")
-        sell_slot_size_1_of_4_position = stock_lot_size
-
-    else:
-
-        position = df_position_list[df_position_list['code'] == code].reset_index().drop('index', axis=1)
-
-        # cur_pos="current position:\n"+finlib.Finlib().pprint(position[['code','stock_name', 'qty','cost_price','can_sell_qty','position_side','unrealized_pl','realized_pl']])
-        # logging.info(cur_pos)
-        # position_qty = position.qty[0]
-        position_can_sell_qty = position.can_sell_qty[0]
-        position_cost_price = position.cost_price[0]  # cheng beng
-
-        ###################
-        # Buy/Sell position
-        ###################
-        stock_lot_size = dict_code[code]['stock_lot_size']
-        sell_slot_size_1_of_4_position = int(round(position_can_sell_qty * 0.25 / stock_lot_size, 0) ) * stock_lot_size
-
-        if sell_slot_size_1_of_4_position < stock_lot_size:
-            sell_slot_size_1_of_4_position = stock_lot_size
-
-        #trading one unit in REAL env.
-        if (not simulator) and sell_slot_size_1_of_4_position > stock_lot_size:
-            sell_slot_size_1_of_4_position = stock_lot_size
-
-    ###################
-    # evaluate p_ask with MA
-    ###################
-    p_current = dict_code[code]['p_last']
-    time_current= dict_code[code]['update_time']
-
-    p_last_bar_close = dict_code[code]['p_last_last']
-    p_ask = dict_code[code]['p_ask']
-    p_bid = dict_code[code]['p_bid']
-    ma = dict_code[code]['ma']
-
-    ktype = dict_code[code]['ktype']
-    ma_period = dict_code[code]['ma_period']
-    last_bar_close = dict_code[code]['last_bar'].iloc[0]['close']
-    previous_ma = dict_code[code]['previous_ma']
-    previous_ma_time_key = dict_code[code]['t_last_k_time_key']
-
-    range = 0.00005
-
-    if p_current < ma:
-        sybmol_close_ma = "<"
-    elif p_current ==  ma:
-        sybmol_close_ma = "="
-    else:
-        sybmol_close_ma = ">"
-
-    if last_bar_close < previous_ma:
-        sybmol_close_ma_previous = "<"
-    elif last_bar_close == previous_ma:
-        sybmol_close_ma_previous = "="
-    else:
-        sybmol_close_ma_previous = ">"
-
-    if ma*(1-range) < p_ask:
-        symbol_Ask_ma = ">"
-    elif ma*(1-range) == p_ask:
-        symbol_Ask_ma = "="
-    else:
-        symbol_Ask_ma = "<" #To sell
-
-    if ma*(1+range) < p_bid:
-        symbol_Bid_ma = ">"
-    elif ma*(1+range) == p_bid:
-        symbol_Bid_ma = "="
-    else:
-        symbol_Bid_ma = "<" #To buy
-
-
-
-    if last_bar_close > p_ask:
-        symbol_Ask_lastClose = "<"
-    elif last_bar_close == p_ask:
-        symbol_Ask_lastClose = "<"
-    else:
-        symbol_Ask_lastClose = ">"
-
-    if last_bar_close > p_bid:
-        symbol_Bid_lastClose = "<"
-    elif last_bar_close == p_ask:
-        symbol_Bid_lastClose = "<"
-    else:
-        symbol_Bid_lastClose = ">"
-
-    # Will not run to this now. p_ask will be p_last if NA/0
-    # if p_ask == 'N/A' or p_ask == 0:
-    #     logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
-    #     return()
-    p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
-
-    # logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
-    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['atr_14'],2)))
-
-    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
-
-        if p_delta >0 and p_delta > dict_code[code]['atr_14']:
-            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
-            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
-
-
-        if p_delta < 0 and abs(p_delta) > dict_code[code]['atr_14']:
-            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
-            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
-                                   trd_env=trd_env)
-
-
-    # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    if (ma*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma >0):
-        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)
-                     + ", last_bar_close " + str(last_bar_close) +". proceeding to SELL"
-                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
-                     )
-        if do_not_place_order:
-            logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
-        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
-            logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
-        else:
-            # beep, last 1sec, repeat 5 times.
-            os.system("beep -f 555 -l 1000 -r 5")
-            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
-                                   trd_env=trd_env)
-
-    # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    if (p_bid > ma*(1+range) > 0)  and (previous_ma >= last_bar_close >0 ):
-        logging.info(__file__ + " "
-                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)
-                     + ". proceeding to BUY"
-                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
-                     )
-        if do_not_place_order:
-            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
-        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
-            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
-        else:
-            # beep, last 1sec, repeat 5 times.
-            os.system("beep -f 555 -l 1000 -r 5")
-            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
-
-
-    logging.info('*************************************')
-
-    logging.info(
-        __file__ + " " + code + " this_ck_done. "
-        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
-        + ". ask "+symbol_Ask_ma +  symbol_Ask_lastClose
-        + ", bid "+symbol_Bid_ma +  symbol_Bid_lastClose
-        + ", close_ma_prev_vs_current "+sybmol_close_ma_previous +  sybmol_close_ma
-        + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
-    )
-
-    return()
-
-
 def hourly_ma_minutely_check(
         code,
-        ktype,
+        ktype_short,
+        ktype_long,
         ma_period,
         dict_code,
-        df_live_price,
+        # df_live_price,
     ):
 
 
     ###################
     # get live price
     ###################
-    stock_daily_snap = df_live_price[df_live_price['code'] == code]
+    stock_daily_snap = dict_code[code]['df_live_price']
     dict_code[code]['stock_lot_size'] = stock_daily_snap.iloc[0]['lot_size']
     dict_code[code]['stock_daily_snap'] = stock_daily_snap.iloc[0]
 
-    dict_code[code]['ktype'] = ktype
+    dict_code[code]['ktype_short'] = ktype_short
+    dict_code[code]['ktype_long'] = ktype_long
     dict_code[code]['ma_period'] = ma_period
-    dict_code[code]['p_last_last'] = dict_code[code]['p_last']
+    dict_code[code]['p_last_last'] = dict_code[code]['df_live_price']['last_price'].values[0]
 
-    dict_code[code]['p_ask_last'] = dict_code[code]['p_ask']
-    dict_code[code]['p_bid_last'] = dict_code[code]['p_bid']
+    dict_code[code]['p_ask_last'] = dict_code[code]['df_live_price']['ask_price'].values[0]
+    dict_code[code]['p_bid_last'] = dict_code[code]['df_live_price']['bid_price'].values[0]
     # dict_code[code]['ma_last'] = dict_code[code]['ma']
-    dict_code[code]['update_time_last'] = dict_code[code]['update_time']
+    dict_code[code]['update_time_last'] = dict_code[code]['df_live_price']['update_time'].values[0]
 
-    dict_code[code]['ma'] = round((dict_code[code]['ma_nsub1_sum'] + stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
+    dict_code[code][ktype_short]["ma"] = round((dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
+    dict_code[code][ktype_long]["ma"]= round((dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
     dict_code[code]['p_last'] = stock_daily_snap.iloc[0]['last_price']  # seller want to sell at this price.
     dict_code[code]['update_time'] = stock_daily_snap.iloc[0]['update_time'] #buyer want to buy at this price.
 
@@ -766,17 +786,9 @@ def hourly_ma_minutely_check(
         dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['bid_price']  # buyer want to buy at this price.
 
 
-    if dict_code[code]['p_ask']  < dict_code[code]['ma']:
-        dict_code[code]['p_less_ma_cnt_in_a_row'] += 1
-        dict_code[code]['p_great_ma_cnt_in_a_row'] = 0
-
-    elif dict_code[code]['p_ask'] > dict_code[code]['ma']:
-        dict_code[code]['p_great_ma_cnt_in_a_row'] += 1
-        dict_code[code]['p_less_ma_cnt_in_a_row'] = 0
-
     logging.info("\n"+__file__ + " " + "code " + code + " "
                  +" p_last "+str(dict_code[code]['p_last'])
-                 +" MA_" +ktype+"_"+str(ma_period) +" "+ str(dict_code[code]['ma'])
+                 +" MA_" +ktype_short+"_"+str(ma_period) +" "+ str(dict_code[code][ktype_short]['ma'])
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
@@ -969,22 +981,37 @@ def get_atr(code, df_tv_all):
 
 
 
-def init_dict_code(dict_code,code,df_tv_all):
+def init_dict_code(dict_code,code,ktype_short, ktype_long, df_tv_all):
     atr_14 = get_atr(code,df_tv_all)
 
     dict_code[code] = {
-        'ma_nsub1_sum': 0,
-        'p_less_ma_cnt_in_a_row': 0,
-        'p_great_ma_cnt_in_a_row': 0,
-        'p_last': 0,
-        'p_ask': 0,
-        'p_bid': 0,
-        'ma': 0,
-        'update_time': 0,
-        't_last_k_renew': datetime.datetime.now(),
-        't_last_k_time_key': datetime.datetime.now(),
-        'atr_14':atr_14
+        ktype_short:{'history_bars_and_ma':{'bars_and_ma':{'ma_nsub1_sum':0}},
+                     'atr_14': atr_14,
+                     't_last_k_renew': datetime.datetime.now(),
+                     't_last_k_time_key': datetime.datetime.now(),
+                     },
+
+        ktype_long: {'history_bars_and_ma': {'bars_and_ma': {'ma_nsub1_sum': 0}},
+                      'atr_14': atr_14,
+                     't_last_k_renew': datetime.datetime.now(),
+                     't_last_k_time_key': datetime.datetime.now(),
+                      },
+
     }
+    #
+    # dict_code[code] = {
+    #     'ma_nsub1_sum': 0,
+    #     'p_less_ma_cnt_in_a_row': 0,
+    #     'p_great_ma_cnt_in_a_row': 0,
+    #     'p_last': 0,
+    #     'p_ask': 0,
+    #     'p_bid': 0,
+    #     'ma': 0,
+    #     'update_time': 0,
+    #     't_last_k_renew': datetime.datetime.now(),
+    #     't_last_k_time_key': datetime.datetime.now(),
+    #     'atr_14':atr_14
+    # }
     return(dict_code)
 
 def main():
@@ -1002,7 +1029,8 @@ def main():
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period", default="21", dest="ma_period",type=int, help="MA Period")
-    parser.add_option("--ktype", default="K_60M", dest="ktype",type="str", help="Kline type. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
+    parser.add_option("--ktype_short", default="K_3M", dest="ktype_short",type="str", help="Kline type. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
+    parser.add_option("--ktype_long", default="K_60M", dest="ktype_long",type="str", help="Kline type. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="debug ")
 
 
@@ -1026,7 +1054,8 @@ def main():
     # market = Market.SH
     # market = Market.SZ
     # market = options.market
-    ktype =options.ktype
+    ktype_short =options.ktype_short
+    ktype_long =options.ktype_long
     ma_period =options.ma_period
     tv_source = options.tv_source
 
@@ -1087,7 +1116,7 @@ def main():
     #populate code specification dictionary
     dict_code = {}
     for code in get_price_code_list:
-        dict_code = init_dict_code(dict_code, code,df_tv_all)
+        dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,df_tv_all)
 
     k_renew_interval_second = {
         'K_1M':1*60,
@@ -1135,7 +1164,7 @@ def main():
 
         for code in get_price_code_list:
             if code not in dict_code.keys():
-                dict_code = init_dict_code(dict_code, code,df_tv_all)
+                dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,df_tv_all)
                 logging.info("initialized code "+code+ " to dict_code")
 
             # update ma at the 1st minute of a new hour
@@ -1143,39 +1172,51 @@ def main():
 
             if code.startswith('US.'):
                 last_bar_time_to_now = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')) \
-                                              - convert_dt_timezone(dict_code[code]['t_last_k_time_key'],
+                                              - convert_dt_timezone(dict_code[code][ktype_short]['t_last_k_time_key'],
                                                                     tz_in=pytz.timezone('America/New_York'),
                                                                     tz_out=pytz.timezone('Asia/Shanghai'),
                                                                     )
             else:
-                last_bar_time_to_now = datetime.datetime.now() - dict_code[code]['t_last_k_time_key']
+                last_bar_time_to_now = datetime.datetime.now() - dict_code[code][ktype_short]['t_last_k_time_key']
 
 
-            # if (dict_code[code]['ma_nsub1_sum'] == 0)  or ((now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] <= 59):
-            if (dict_code[code]['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype]):
-            # if (dict_code[code]['ma_nsub1_sum'] == 0) \
-            #         or (now.hour*60*60+now.minute*60+now.second)%k_renew_interval_second[ktype] == 1 \
-            #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= k_renew_interval_second[ktype]) \
-            #         or ((now - dict_code[code]['t_last_k_renew']).seconds >= 300
-            # ):
+             #handling ktype_short
+            if (dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
                 _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
-                                   ktype=ktype, ma_period=ma_period)
+                                   ktype=ktype_short, ma_period=ma_period)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                dict_code[code]['ma_nsub1_sum'] = _['ma_nsub1_sum']
-                dict_code[code]['ma_period'] = _['ma_period']
-                dict_code[code]['ktype'] = _['ktype']
-                dict_code[code]['last_bar'] = _['last_bar']
-                dict_code[code]['t_last_k_renew'] = now
-                dict_code[code]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
-                dict_code[code]['previous_ma'] = _['ma_b1']
+                # accessing : dict_code[code]['history_bars_and_ma']['K_3M']
+                dict_code[code][ktype_short]['history_bars_and_ma'] ={"bars_and_ma":_,
+                                't_last_k_renew':now,
+                                't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
+                                }
+
+
+            # handling ktype_long
+            if (dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
+                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
+                                   ktype=ktype_long, ma_period=ma_period)
+                if _['rtn_code'] == RET_ERROR:
+                    continue
+                dict_code[code][ktype_long] ={
+                    'history_bars_and_ma':{"bars_and_ma":_,
+                                't_last_k_renew':now,
+                                't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
+                                },
+                }
+
+            #handling df_live_price
+            dict_code[code]['df_live_price'] = df_live_price[df_live_price['code'] == code]
+
+
                 # logging.info(__file__ + " code "+code+" renewed "+dict_code[code]['ktype'] +"_ma_nsub1_sum " + str(dict_code[code]['ma_nsub1_sum']))
 
             dict_code = hourly_ma_minutely_check(code=code,
-                                     ktype = ktype,
+                                     ktype_short = ktype_short,
+                                     ktype_long = ktype_long,
                                      ma_period=ma_period,
                                      dict_code = dict_code,
-                                     df_live_price = df_live_price,
                                 )
 
             #check for each code
@@ -1185,6 +1226,8 @@ def main():
                     k_renew_interval_second=k_renew_interval_second,
                     simulator=simulator,
                     trd_ctx_unlocked=trd_ctx_unlocked,
+                    ktype_short=ktype_short,
+                    ktype_long=ktype_long,
                     dict_code = dict_code,
                     market= market,
                 )
