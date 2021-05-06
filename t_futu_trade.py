@@ -198,8 +198,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ma_long = dict_code[code]['long'][ktype_long]['ma']
 
     # ktype = dict_code[code]['ktype']
-    ma_period_short = dict_code[code]['short']['ma_period_short']
-    ma_period_long = dict_code[code]['long']['ma_period_long']
+    ma_period_short = dict_code[code]['ma_period_short']
+    ma_period_long = dict_code[code]['ma_period_long']
     last_bar_close = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['last_bar'].iloc[0]['close']
     previous_ma_short = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
     previous_ma_short_time_key = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
@@ -256,7 +256,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     #     return()
     p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
-    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code][ktype_short]['atr_14'],2)))
+    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['short'][ktype_short]['atr_14'],2)))
 
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['short'][ktype_short]['atr_14'] > 0:
@@ -1225,12 +1225,13 @@ def main():
                                    ktype=ktype_short, ma_period=ma_period_short)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                # accessing : dict_code[code]['K_3M'][21]['history_bars_and_ma']
-                dict_code[code]['short'][ktype_short] ={'history_bars_and_ma':{"bars_and_ma":_,
-                                't_last_k_renew':now,
-                                't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
-                                },
-                        }
+                # accessing : dict_code[code]['K_3M']['history_bars_and_ma']
+                dict_code[code]['short'][ktype_short]['history_bars_and_ma'] ={"bars_and_ma":_}
+                dict_code[code]['short'][ktype_short]['t_last_k_renew'] =now
+                dict_code[code]['short'][ktype_short]['t_last_k_time_key'] =datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
+
+
+
 
 
             # handling ktype_long
@@ -1239,12 +1240,11 @@ def main():
                                    ktype=ktype_long, ma_period=ma_period_long)
                 if _['rtn_code'] == RET_ERROR:
                     continue
-                dict_code[code]['long'][ktype_long] ={'history_bars_and_ma':{"bars_and_ma":_,
-                                't_last_k_renew':now,
-                                't_last_k_time_key':datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
-                                },
-                }
 
+                dict_code[code]['long'][ktype_long]['history_bars_and_ma'] = {"bars_and_ma": _}
+                dict_code[code]['long'][ktype_long]['t_last_k_renew'] = now
+                dict_code[code]['long'][ktype_long]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'],
+                                                                                                        "%Y-%m-%d %H:%M:%S")
 
             #handling df_live_price
             dict_code[code]['df_live_price'] = df_live_price[df_live_price['code'] == code]
