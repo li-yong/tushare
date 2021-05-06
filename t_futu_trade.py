@@ -200,8 +200,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     # ktype = dict_code[code]['ktype']
     ma_period = dict_code[code]['ma_period']
     last_bar_close = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['last_bar'].iloc[0]['close']
-    previous_ma = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
-    previous_ma_time_key = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+    previous_ma_short = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0']
+    previous_ma_short_time_key = dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
 
     range = 0.00005
 
@@ -212,9 +212,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         sybmol_close_ma = ">"
 
-    if last_bar_close < previous_ma:
+    if last_bar_close < previous_ma_short:
         sybmol_close_ma_previous = "<"
-    elif last_bar_close == previous_ma:
+    elif last_bar_close == previous_ma_short:
         sybmol_close_ma_previous = "="
     else:
         sybmol_close_ma_previous = ">"
@@ -255,34 +255,31 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     #     return()
     p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
-    # logging.info(__file__ + " " + "code " + code + ", MA_"+ktype+"_"+str(ma_period) +" " + str(ma) + " , ask price " + str(p_ask)+ " , bid price " + str(p_bid))
     logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code][ktype_short]['atr_14'],2)))
 
 
-    #dict_code[code]['df_history_bars']
+    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code][ktype_short]['atr_14'] > 0:
 
-    if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['atr_14'] > 0:
-
-        if p_delta >0 and p_delta > dict_code[code]['atr_14']:
-            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+        if p_delta >0 and p_delta > dict_code[code][ktype_short]['atr_14']:
+            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code][ktype_short]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
 
-        if p_delta < 0 and abs(p_delta) > dict_code[code]['atr_14']:
-            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['atr_14']))
+        if p_delta < 0 and abs(p_delta) > dict_code[code][ktype_short]['atr_14']:
+            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code][ktype_short]['atr_14']))
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
 
     # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    if (ma_short*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma >0):
-        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype+"_"+str(ma_period) + " "+str(ma)
+    if (ma_short*(1-range) > p_ask > 0 ) and (last_bar_close >= previous_ma_short >0):
+        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period) + " "+str(ma)
                      + ", last_bar_close " + str(last_bar_close) +". proceeding to SELL"
-                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     + ".  Previous "+str(previous_ma_short_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma_short)
                      )
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
-        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype]:
+        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
@@ -291,15 +288,15 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    if (p_bid > ma_short*(1+range) > 0)  and (previous_ma >= last_bar_close >0 ):
+    if (p_bid > ma_short*(1+range) > 0)  and (previous_ma_short >= last_bar_close >0 ):
         logging.info(__file__ + " "
-                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype+"_"+str(ma_period) +" "+ str(ma)
+                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period) +" "+ str(ma_short)
                      + ". proceeding to BUY"
-                     + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+                     + ".  Previous "+str(previous_ma_short_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma_short_short)
                      )
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
-        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype]:
+        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
@@ -311,11 +308,11 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     logging.info(
         __file__ + " " + code + " this_ck_done. "
-        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype+"_"+str(ma_period)+" " + str(ma)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
+        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype_short+"_"+str(ma_period)+" " + str(ma_short)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
         + ". ask "+symbol_Ask_ma +  symbol_Ask_lastClose
         + ", bid "+symbol_Bid_ma +  symbol_Bid_lastClose
         + ", close_ma_prev_vs_current "+sybmol_close_ma_previous +  sybmol_close_ma
-        + ".  Previous "+str(previous_ma_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma)
+        + ".  Previous "+str(previous_ma_short_time_key) +" close "+str(last_bar_close) + " ma "+str(previous_ma_short)
     )
 
     return()
@@ -540,21 +537,24 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     ma_b0 = round(data[-ma_period:]['close'].mean(),2)  # current MA value
     ma_b0_time_key = data.iloc[-1]['time_key']
+    close_b0 = data.iloc[-1]['close']
 
     ma_b1 = round(data[-ma_period-1:-1]['close'].mean(),2)  # previous-1 MA value
     ma_b1_time_key = data.iloc[-2]['time_key']
+    close_b1 = data.iloc[-2]['close']
 
     ma_b2 = round(data[-ma_period-2:-2]['close'].mean(),2)  # previous-2 MA value
     ma_b2_time_key = data.iloc[-3]['time_key']
+    close_b2 = data.iloc[-2]['close']
 
     # ma_nsub1_sum = round(data[-ma_period:-1]['close'].sum(),2)
     ma_nsub1_sum = round(data[-ma_period+1:]['close'].sum(),2)  # use to calculate right_now MA.
 
-    logging.info('*************************************')
-    logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_b0 "+str(ma_b1)+" at "+ma_b0_time_key
-                 +" , ma_b1 "+str(ma_b1)+" at "+ma_b1_time_key
-                 +" , ma_b2 "+str(ma_b2)+" at "+ma_b2_time_key
-                 )
+    # logging.info('*************************************')
+    # logging.info(__file__+" "+"code "+code+", ktype "+ktype+", ma_nsub1_sum "+str(ma_nsub1_sum)+", ma_period "+str(ma_period)+" , ma_b0 "+str(ma_b1)+" at "+ma_b0_time_key
+    #              +" , ma_b1 "+str(ma_b1)+" at "+ma_b1_time_key
+    #              +" , ma_b2 "+str(ma_b2)+" at "+ma_b2_time_key
+    #              )
 
     # logging.info(finlib.Finlib().pprint(data[['code','time_key','close','volume', 'turnover_rate','turnover','last_close']].tail(1).reset_index().drop('index',axis=1)))
 
@@ -565,10 +565,13 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         'ma_period':ma_period,
         'ma_b0':ma_b0,
         'ma_b0_time_key': ma_b0_time_key,
+        'close_b0': close_b0,
         'ma_b1':ma_b1,
         'ma_b1_time_key': ma_b1_time_key,
+        'close_b1': close_b1,
         'ma_b2':ma_b2,
         'ma_b2_time_key': ma_b2_time_key,
+        'close_b2': close_b2,
         'ma_nsub1_sum':ma_nsub1_sum,
         'time_key':ma_b0_time_key,
         # 'time_key':data.iloc[-2]['time_key'],
@@ -745,16 +748,14 @@ def hourly_ma_minutely_check(
         ktype_long,
         ma_period,
         dict_code,
-        # df_live_price,
     ):
 
 
     ###################
     # get live price
     ###################
-    stock_daily_snap = dict_code[code]['df_live_price']
-    dict_code[code]['stock_lot_size'] = stock_daily_snap.iloc[0]['lot_size']
-    dict_code[code]['stock_daily_snap'] = stock_daily_snap.iloc[0]
+    dict_code[code]['stock_lot_size'] = dict_code[code]['df_live_price'].iloc[0]['lot_size']
+    dict_code[code]['stock_daily_snap'] = dict_code[code]['df_live_price'].iloc[0]
 
     dict_code[code]['ktype_short'] = ktype_short
     dict_code[code]['ktype_long'] = ktype_long
@@ -763,38 +764,74 @@ def hourly_ma_minutely_check(
 
     dict_code[code]['p_ask_last'] = dict_code[code]['df_live_price']['ask_price'].values[0]
     dict_code[code]['p_bid_last'] = dict_code[code]['df_live_price']['bid_price'].values[0]
-    # dict_code[code]['ma_last'] = dict_code[code]['ma']
     dict_code[code]['update_time_last'] = dict_code[code]['df_live_price']['update_time'].values[0]
 
-    dict_code[code][ktype_short]["ma"] = round((dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
-    dict_code[code][ktype_long]["ma"]= round((dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ stock_daily_snap.iloc[0]['last_price'] ) / ma_period, 2)
-    dict_code[code]['p_last'] = stock_daily_snap.iloc[0]['last_price']  # seller want to sell at this price.
-    dict_code[code]['update_time'] = stock_daily_snap.iloc[0]['update_time'] #buyer want to buy at this price.
+    dict_code[code][ktype_short]['ma'] = round((dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period, 2)
+    dict_code[code][ktype_long]['ma']= round((dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum']+ dict_code[code]['df_live_price'].iloc[0]['last_price'] ) / ma_period, 2)
+    dict_code[code]['p_last'] = dict_code[code]['df_live_price'].iloc[0]['last_price']  # seller want to sell at this price.
+    dict_code[code]['update_time'] = dict_code[code]['df_live_price'].iloc[0]['update_time'] #buyer want to buy at this price.
 
 
-    if stock_daily_snap.iloc[0]['ask_price'] in ['N/A', 0]:
-        logging.info(__file__ + " " + "code " + code + " invalid ask price "+str(stock_daily_snap.iloc[0]['ask_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as ask_price")
-        dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['last_price']
+    if dict_code[code]['df_live_price'].iloc[0]['ask_price'] in ['N/A', 0]:
+        logging.info(__file__ + " " + "code " + code + " invalid ask price "+str(dict_code[code]['df_live_price'].iloc[0]['ask_price'])+" , use last_price "+ str( dict_code[code]['df_live_price'].iloc[0]['last_price'])+" as ask_price")
+        dict_code[code]['p_ask'] = dict_code[code]['df_live_price'].iloc[0]['last_price']
     else:
-        dict_code[code]['p_ask'] = stock_daily_snap.iloc[0]['ask_price']  # seller want to sell at this price.
+        dict_code[code]['p_ask'] = dict_code[code]['df_live_price'].iloc[0]['ask_price']  # seller want to sell at this price.
 
 
-    if stock_daily_snap.iloc[0]['bid_price']  in ['N/A', 0]:
-        logging.info(__file__ + " " + "code " + code + " invalid bid price "+str(stock_daily_snap.iloc[0]['bid_price'])+" , use last_price "+ str( stock_daily_snap.iloc[0]['last_price'])+" as bid_price")
-        dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['last_price']
+    if dict_code[code]['df_live_price'].iloc[0]['bid_price']  in ['N/A', 0]:
+        logging.info(__file__ + " " + "code " + code + " invalid bid price "+str(dict_code[code]['df_live_price'].iloc[0]['bid_price'])+" , use last_price "+ str( dict_code[code]['df_live_price'].iloc[0]['last_price'])+" as bid_price")
+        dict_code[code]['p_bid'] = dict_code[code]['df_live_price'].iloc[0]['last_price']
     else:
-        dict_code[code]['p_bid'] = stock_daily_snap.iloc[0]['bid_price']  # buyer want to buy at this price.
+        dict_code[code]['p_bid'] = dict_code[code]['df_live_price'].iloc[0]['bid_price']  # buyer want to buy at this price.
+
+
+    #
+    logging.info('*************************************')
+    logging.info(__file__+" "+"code "+code+", ktype "+ktype_short
+                 +", ma_period "+str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_period'])
+                 )
 
 
     logging.info("\n"+__file__ + " " + "code " + code + " "
-                 +" p_last "+str(dict_code[code]['p_last'])
-                 +" MA_" +ktype_short+"_"+str(ma_period) +" "+ str(dict_code[code][ktype_short]['ma'])
+                 +"MA_"+ktype_short+"_"+str(ma_period) +": ma/p_last "+ str(dict_code[code][ktype_short]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
+                 + " , ma_b0/close_b0 " + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
+                 +str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
+                 + dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+                 + " , ma_b1/close_b1 " + str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
+                 +str( dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
+                 + dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
+                 + " , ma_b2/close_b2 " + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
+                 + str(dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
+                 +dict_code[code][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
 
                  +" p_ask "+str(dict_code[code]['p_ask'])
                  +" p_bid "+str(dict_code[code]['p_bid'])
 
                  +" updated "+str(dict_code[code]['update_time'])
                  )
+
+
+
+
+    logging.info("\n"+__file__ + " " + "code " + code + " "
+                 +"MA_"+ktype_long+"_"+str(ma_period) +": ma/p_last "+ str(dict_code[code][ktype_long]['ma'])+"/"+str(dict_code[code]['p_last'])+" at "+dict_code[code]['df_live_price']['update_time'].values[0]
+                 + " , ma_b0/close_b0 " + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0'])+"/"
+                 +str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b0']) + " at "
+                 + dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b0_time_key']
+                 + " , ma_b1/close_b1 " + str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1']) +"/"
+                 +str( dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b1'])+ " at "
+                 + dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b1_time_key']
+                 + " , ma_b2/close_b2 " + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2'])+"/"
+                 + str(dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['close_b2']) + " at "
+                 +dict_code[code][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_b2_time_key']
+
+                 +" p_ask "+str(dict_code[code]['p_ask'])
+                 +" p_bid "+str(dict_code[code]['p_bid'])
+
+                 +" updated "+str(dict_code[code]['update_time'])
+                 )
+
 
     return(dict_code)
 
