@@ -272,7 +272,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     bma_short = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']
-    bma_long = dict_code[code]['long'][ktype_short]['history_bars_and_ma']['bars_and_ma']
+    bma_long = dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']
 
     # SELL Condition: ASK cross down short MA.  a<><  a<=< . ask: minimal price seller willing to offer.
     if (ma_short*(1-range) > p_ask > 0 ) and (bma_short['ma_b0'] > bma_short['close_b0'] >0) and (bma_short['close_b1'] > bma_short['ma_b1']):
