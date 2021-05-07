@@ -271,12 +271,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
-    bma = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']
-    # SELL Condition:  a<><  a<=< . ask: minimal price seller willing to offer.
-    if (ma_short*(1-range) > p_ask > 0 ) and (bma['ma_b0'] > bma['close_b0'] >0) and (bma['close_b1'] > bma['ma_b1']):
+    bma_short = dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']
+    bma_long = dict_code[code]['long'][ktype_short]['history_bars_and_ma']['bars_and_ma']
+
+    # SELL Condition: ASK cross down short MA.  a<><  a<=< . ask: minimal price seller willing to offer.
+    if (ma_short*(1-range) > p_ask > 0 ) and (bma_short['ma_b0'] > bma_short['close_b0'] >0) and (bma_short['close_b1'] > bma_short['ma_b1']):
         logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
                      + ". proceeding to SELL"
-                     + ".  Previous "+str(bma['ma_b0_time_key']) +" close "+str(bma['close_b0']) + " ma "+str(bma['ma_b0'])
+                     + ".  Previous "+str(bma_short['ma_b0_time_key']) +" close "+str(bma_short['close_b0']) + " ma "+str(bma_short['ma_b0'])
                      )
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
@@ -284,18 +286,43 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
-            os.system("beep -f 555 -l 1000 -r 5")
+            os.system("beep -f 555 -l 100 -r 1")
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
-    # BUY Condition:  b><>  b>=>.  bid: max price buyer willing to pay
-    # if (p_bid > ma_short*(1+range) > 0)  and (previous_ma_short >= last_bar_close >0 ):
-    if (p_bid > ma_short*(1+range) > 0) and (bma['close_b0'] >= bma['ma_b0']  > 0) and ( bma['ma_b1'] > bma['close_b1']):
+    # SELL Condition: short MA across down long MA.
+    if (bma_short['ma_b1'] >= bma_long['ma_b1']  > 0) and ( bma_long['ma_b0'] > bma_short['ma_b0']):
+        logging.info(" ALERT! Fast MA across down Slow MA. proceeding to SELL")
+        if do_not_place_order:
+            logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+        elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
+            logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
+        else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 100 -r 1")
+            place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
+                                   trd_env=trd_env)
+
+    # BUY Condition: short MA across up long MA.
+    if (bma_long['ma_b1'] >= bma_short['ma_b1']  > 0) and ( bma_short['ma_b0'] > bma_long['ma_b0']):
+        logging.info(" ALERT! Fast MA across up Slow MA. proceeding to BUY")
+        if do_not_place_order:
+            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+        elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
+            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+        else:
+            # beep, last 1sec, repeat 5 times.
+            os.system("beep -f 555 -l 100 -r 1")
+            place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
+
+
+    # BUY Condition: BID cross up short MA. b><>  b>=>.  bid: max price buyer willing to pay
+    if (p_bid > ma_short*(1+range) > 0) and (bma_short['close_b0'] >= bma_short['ma_b0']  > 0) and ( bma_short['ma_b1'] > bma_short['close_b1']):
 
         logging.info(__file__ + " "
                      + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period_short) +" "+ str(ma_short)
                      + ". proceeding to BUY"
-                     + ".  Previous "+str(bma['ma_b0_time_key']) +" close "+str( bma['ma_b0'] ) + " ma "+str(bma['ma_b0'])
+                     + ".  Previous "+str(bma_short['ma_b0_time_key']) +" close "+str(bma_short['ma_b0'] ) + " ma "+str(bma_short['ma_b0'])
                      )
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
@@ -303,7 +330,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         else:
             # beep, last 1sec, repeat 5 times.
-            os.system("beep -f 555 -l 1000 -r 5")
+            os.system("beep -f 555 -l 100 -r 1")
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
 
@@ -1235,7 +1262,7 @@ def main():
 
 
             # handling ktype_long
-            if (dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
+            if (dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_long]):
                 _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
                                    ktype=ktype_long, ma_period=ma_period_long)
                 if _['rtn_code'] == RET_ERROR:
