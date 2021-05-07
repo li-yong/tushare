@@ -1248,8 +1248,7 @@ def main():
 
              #handling ktype_short
             if (dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
-                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
-                                   ktype=ktype_short, ma_period=ma_period_short)
+                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short)
                 if _['rtn_code'] == RET_ERROR:
                     continue
                 # accessing : dict_code[code]['K_3M']['history_bars_and_ma']
@@ -1263,8 +1262,7 @@ def main():
 
             # handling ktype_long
             if (dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_long]):
-                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,
-                                   ktype=ktype_long, ma_period=ma_period_long)
+                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,ktype=ktype_long, ma_period=ma_period_long)
                 if _['rtn_code'] == RET_ERROR:
                     continue
 
