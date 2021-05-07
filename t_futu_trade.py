@@ -510,6 +510,8 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
         end) + ' extended_time ' + str(extended_time) + " max_count " + str(max_count)
     logging.info("request_history_kline " + ls)
 
+    #每 30 秒内最多请求 60 次历史 K 线接口
+    time.sleep(30/60)
     ret, data, page_req_key = quote_ctx.request_history_kline(
         code, ktype=ktype,
         start=start,
