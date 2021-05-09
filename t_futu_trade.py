@@ -545,7 +545,7 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
-def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, ):
+def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, history_bar_df=None ):
 
     start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * ma_period/24/60/60)+2)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -554,7 +554,11 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     # data are Bars, e.g K_3M.
     # data don't contain current time bar. eg.K_3M, at 9.54~9.57, bar 9.57 is growing, data return bars end at 9.54.
-    data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=True) #ryan debug
+
+    if history_bar_df is None:
+        data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=True) #ryan debug
+    else:
+        data = history_bar_df
 
     if data.__len__() < ma_period:
         logging.info(finlib.Finlib().pprint(data))
@@ -1250,28 +1254,29 @@ def main():
 
              #handling ktype_short
             if (dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
-                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short)
-                if _['rtn_code'] == RET_ERROR:
+                rtn_current_ma = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short)
+                if rtn_current_ma['rtn_code'] == RET_ERROR:
                     continue
                 # accessing : dict_code[code]['K_3M']['history_bars_and_ma']
-                dict_code[code]['short'][ktype_short]['history_bars_and_ma'] ={"bars_and_ma":_}
+                dict_code[code]['short'][ktype_short]['history_bars_and_ma'] ={"bars_and_ma":rtn_current_ma}
                 dict_code[code]['short'][ktype_short]['t_last_k_renew'] =now
-                dict_code[code]['short'][ktype_short]['t_last_k_time_key'] =datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
-
-
-
+                dict_code[code]['short'][ktype_short]['t_last_k_time_key'] =datetime.datetime.strptime(rtn_current_ma['time_key'], "%Y-%m-%d %H:%M:%S")
 
 
             # handling ktype_long
             if (dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_long]):
-                _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,ktype=ktype_long, ma_period=ma_period_long)
+                if ktype_long == ktype_short:
+                    _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,ktype=ktype_long, ma_period=ma_period_long,history_bar_df=rtn_current_ma['df_history_bars'])
+                else:
+                    _ = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second,ktype=ktype_long, ma_period=ma_period_long)
+
+
                 if _['rtn_code'] == RET_ERROR:
                     continue
 
                 dict_code[code]['long'][ktype_long]['history_bars_and_ma'] = {"bars_and_ma": _}
                 dict_code[code]['long'][ktype_long]['t_last_k_renew'] = now
-                dict_code[code]['long'][ktype_long]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'],
-                                                                                                        "%Y-%m-%d %H:%M:%S")
+                dict_code[code]['long'][ktype_long]['t_last_k_time_key'] = datetime.datetime.strptime(_['time_key'], "%Y-%m-%d %H:%M:%S")
 
             #handling df_live_price
             dict_code[code]['df_live_price'] = df_live_price[df_live_price['code'] == code]
@@ -1318,8 +1323,7 @@ if __name__ == '__main__':
         except Exception:
             logging.info(traceback.format_exc())
             logging.info("caught exception, restart main()")
-n
-time.sleep(1)
+            time.sleep(1)
 
 
     exit(0)
