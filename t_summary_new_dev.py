@@ -645,8 +645,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     # df that get from Files
     #########################
     for k in mkt_dict.keys():
-        # if k == 'df_hs300_add_candidate':
-        if k == 'df_sz100_add_candidate':
+        if k == 'df_hs300_add_candidate':
+        # if k == 'df_sz100_add_candidate':
             print("debug stop")
 
         if mkt_dict[k]["op"] != operation:
@@ -740,7 +740,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             logging.info(__file__ + " " + "empty " + a)
             continue
 
-        if "date" in tmp.columns:
+        if "date" in tmp.columns and a.count('candidate')==0: #exclude candidate df,eg df_hs300_add_candidate
             tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
 
         logging.info(__file__ + " " + "sorting " + a)

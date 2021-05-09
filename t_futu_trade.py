@@ -1318,7 +1318,8 @@ if __name__ == '__main__':
         except Exception:
             logging.info(traceback.format_exc())
             logging.info("caught exception, restart main()")
-            time.sleep(1)
+n
+time.sleep(1)
 
 
     exit(0)
