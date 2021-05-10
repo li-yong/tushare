@@ -545,9 +545,11 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
-def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, history_bar_df=None ):
+def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, history_bar_df=None,bar_fetch_period=None ):
+    if bar_fetch_period is None:
+        bar_fetch_period = ma_period
 
-    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * ma_period/24/60/60)+2)).strftime("%Y-%m-%d")
+    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * bar_fetch_period/24/60/60)+2)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
@@ -1253,8 +1255,12 @@ def main():
 
 
              #handling ktype_short
+            ma_period_large = ma_period_short
+            if ma_period_large > ma_period_short:
+                ma_period_large = ma_period_long
+
             if (dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
-                rtn_current_ma = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short)
+                rtn_current_ma = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short, bar_fetch_period=ma_period_large)
                 if rtn_current_ma['rtn_code'] == RET_ERROR:
                     continue
                 # accessing : dict_code[code]['K_3M']['history_bars_and_ma']
