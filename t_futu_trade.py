@@ -77,6 +77,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     orders_sell = orders[orders['trd_side']=='SELL']
 
     last_order = orders.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
+    last_sell_order = last_order
+    last_buy_order = last_order
 
     if not orders_buy.empty:
         last_buy_order = orders_buy.sort_values(by="create_time", ascending=False).reset_index().drop('index', axis=1).head(1)
@@ -88,10 +90,10 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         last_sell_order_create_time = datetime.datetime.strptime(last_sell_order.create_time[0], "%Y-%m-%d %H:%M:%S")
         last_sell_order_string = finlib.Finlib().pprint(last_sell_order[['code', 'stock_name', 'trd_side', 'order_type','order_status','order_id' , 'qty' ,  'price' , 'create_time' ]])
 
-    if last_sell_order_create_time > last_buy_order_create_time:
+    if last_sell_order_create_time > last_buy_order_create_time and (last_sell_order is not None):
         last_order = last_sell_order
         last_order_string = last_sell_order_string
-    elif last_buy_order_create_time > last_sell_order_create_time:
+    elif last_buy_order_create_time > last_sell_order_create_time and (last_buy_order is not None):
         last_order = last_buy_order
         last_order_string = last_buy_order_string
     elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
