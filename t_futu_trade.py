@@ -1255,9 +1255,10 @@ def main():
 
 
              #handling ktype_short
-            ma_period_large = ma_period_short
-            if ma_period_large > ma_period_short:
+            if ma_period_long >= ma_period_short:
                 ma_period_large = ma_period_long
+            else:
+                ma_period_large = ma_period_short
 
             if (dict_code[code]['short'][ktype_short]['history_bars_and_ma']['bars_and_ma']['ma_nsub1_sum'] == 0) or (last_bar_time_to_now.seconds > k_renew_interval_second[ktype_short]):
                 rtn_current_ma = get_current_ma(host=host, port=port, code=code, k_renew_interval_second=k_renew_interval_second, ktype=ktype_short, ma_period=ma_period_short, bar_fetch_period=ma_period_large)
