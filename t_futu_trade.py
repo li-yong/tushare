@@ -69,7 +69,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     ###################
 
     last_buy_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
-    last_sell_order_create_time = datetime.datetime.strptime('1980-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
+    last_sell_order_create_time = datetime.datetime.strptime('1979-01-04 01:01:01', "%Y-%m-%d %H:%M:%S")
 
 
     orders = df_order_list[df_order_list['code']==code].reset_index().drop('index', axis=1)
@@ -94,8 +94,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     elif last_buy_order_create_time > last_sell_order_create_time:
         last_order = last_buy_order
         last_order_string = last_buy_order_string
-    # elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
-    #     raise Exception("the last buy and sell order creation time are equal.")
+    elif (not orders.empty) and (last_buy_order_create_time == last_sell_order_create_time):
+        # raise Exception("the last buy and sell order creation time are equal.")
+        logging.warning("the last buy and sell order creation time are equal.")
 
 
     # index 0 is the most recent order
