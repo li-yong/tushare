@@ -4720,6 +4720,10 @@ class Finlib:
             if col_name in ['amount', 'total_mv','circ_mv','mkt_cap','net_amount']: #
                 # logging.info("converting column "+col_name)
                 df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
+            elif col_data_type in ['float64']:
+                # df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
+                df[col_name] = df[col_name].apply(lambda x: round(x,2))
+
 
         return(df)
 
