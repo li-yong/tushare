@@ -22,62 +22,8 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
-
-
-f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_indicator.csv'
-
-df0 = pd.read_csv(f)
-
-df_last_3_years = df0[df0['end_date'].isin([20201231,20191231,20181231,20171231,20161231,20151231,20141231,20131231,20121231,20111231])]
-
-
-# #test start
-# df_test = df_last_3_years[df_last_3_years['ts_code']=="300146.SZ"]
-# df_test[['ts_code','end_date', 'quick_ratio','basic_eps_yoy','eps']]
-# #test end
-
-
-
-# df_last_3_years = df_last_3_years.groupby(by='ts_code').mean().reset_index()
-df_last_3_years = df_last_3_years.groupby(by='ts_code').median().reset_index()
-
-
-# df = df0[df0['end_date']==20201231]
-df = df_last_3_years
-
-
-
-df[['quick_ratio']].describe()
-df = df.sort_values('quick_ratio', ascending=False)[['ts_code','end_date', 'quick_ratio','basic_eps_yoy','eps']].reset_index().drop('index', axis=1)
-df = df[df['eps']>0]
-df = df[df['basic_eps_yoy']>0]
-
-df['inner_value']= round(df['eps']*(2*df['basic_eps_yoy']+8.5)*4.4/3.78,2)
-df = finlib.Finlib().ts_code_to_code(df=df)
-
-today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210511.csv')
-today_df = today_df[['code','close']]
-df = pd.merge(df, today_df, on=['code'], how='inner')
-
-# percent drop from current close to reach the inner value, smaller better, negative means close < inner value
-df['diff_inner_market_value'] = round((df['close'] - df['inner_value'])*100/df['close'], 2)
-df = df.sort_values('diff_inner_market_value', ascending=True).reset_index().drop('index', axis=1)
-
-
-df = finlib.Finlib().add_amount_mktcap(df=df)
-# df = finlib.Finlib().add_tr_pe(df=df,df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()),
-#                                df_ts_all= finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
-df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
-
-
-print(finlib.Finlib().pprint(df.head(20)))
-
-
-df_c = finlib.Finlib().remove_garbage(df=df)
-df_c = finlib.Finlib().df_format_column(df=df_c, precision='%.1e')
-df_c = finlib.Finlib().add_stock_name_to_df(df=df_c)
-print(finlib.Finlib().pprint(df_c.head(20)))
-print(1)
+########################### graham instrinsic value
+finlib_indicator.Finlib_indicator().graham_intrinsic_value()
 
 ########################### Evaluate tr/pe ratio
 def evaluate_tr_pe():
