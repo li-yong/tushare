@@ -22,6 +22,28 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
+########################### abnormal volume
+f = "/home/ryan/DATA/DAY_Global/FUTU_US/US.MSFT_1m_2021-04-1"
+
+df = pd.DataFrame()
+for i in range(10):
+    df_tmp = pd.read_csv(f+str(i)+".csv", converters={'volume': float,'code':str, 'time_key':str})
+    df = df.append(df_tmp)
+    logging.info("appened "+f+str(i)+".csv")
+
+print(df.__len__())
+df = df.reset_index().drop('index', axis=1)
+df.to_csv(f+"0-2021-04-19.csv", encoding='UTF-8', index=False)
+
+df.sort_values(by='volume', ascending=False).head(100)
+print(finlib.Finlib().pprint(df.sort_values(by='volume', ascending=False).head(100)))
+print(df.volume.describe())
+
+df
+
+
+
+
 ########################### graham instrinsic value
 finlib_indicator.Finlib_indicator().graham_intrinsic_value()
 
