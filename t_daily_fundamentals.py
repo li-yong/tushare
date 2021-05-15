@@ -130,7 +130,7 @@ def _combine_all(year_end, quarter_end, debug=False):
     df_result = pd.DataFrame()
 
     #for y in range(2000,int(year_end)+1):
-    for y in range(2000, int(year_end) + 1):
+    for y in range(2019, int(year_end) + 1):
 
         for q in range(1, 5):
             if str(y) == year_end and str(q) > quarter_end:
