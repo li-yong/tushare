@@ -1136,10 +1136,6 @@ def main():
     ma_period_long = options.ma_period_long
     tv_source = options.tv_source
 
-
-    market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
-    get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
-
     #### fetch
     if options.fetch_history_bar:
         start = (datetime.datetime.today() - datetime.timedelta(days=700)).strftime("%Y-%m-%d")
@@ -1162,6 +1158,8 @@ def main():
 
         exit()
 
+    market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
+    get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
 
     if simulator:
         # trd_env = TrdEnv.SIMULATE
