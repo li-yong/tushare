@@ -1141,7 +1141,7 @@ def main():
         start = (datetime.datetime.today() - datetime.timedelta(days=700)).strftime("%Y-%m-%d")
         end = datetime.datetime.today().strftime("%Y-%m-%d")
 
-        for code in get_price_code_list:
+        for code in get_chk_code_list(market=options.market, debug=options.debug):
             # for i in range(10):
             # date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
             csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
