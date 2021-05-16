@@ -378,10 +378,10 @@ fi
 ######################################
 # /home/ryan/DATA/DAY_Global/FUTU_[HK, SH, SZ, US]/*.csv
 ######################################
-  python t_futu_trade.py --fetch_history_bar  --market AG_HOLD
-  python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
-  python t_futu_trade.py --fetch_history_bar  --market AG
-  python t_futu_trade.py --fetch_history_bar  --market HK
+python t_futu_trade.py --fetch_history_bar  --market AG_HOLD
+python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
+python t_futu_trade.py --fetch_history_bar  --market AG
+python t_futu_trade.py --fetch_history_bar  --market HK
 
 
 ######################################

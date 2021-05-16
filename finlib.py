@@ -4724,12 +4724,14 @@ class Finlib:
             col_name = i[0]
             col_data_type = i[1]  # dtype('float64')
             # if col_data_type.name in ['float64', 'int64'] and df[col_name].describe()['mean'] > 1E3: # number > 1000
-            if col_name in ['amount', 'total_mv','circ_mv','mkt_cap','net_amount']: #
+            if col_name in ['amount', 'total_mv','circ_mv','mkt_cap','net_amount','volume']: #
                 # logging.info("converting column "+col_name)
                 df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
             elif col_data_type in ['float64']:
-                # df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
-                df[col_name] = df[col_name].apply(lambda x: round(x,2))
+                if df[col_name].mean() > 10E3:
+                    df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
+                else:
+                    df[col_name] = df[col_name].apply(lambda x: round(x,2))
 
 
         return(df)

@@ -744,7 +744,11 @@ python t_daily_index_candidates.py --index_name cn --period_start 20210101 --per
 python t_daily_index_candidates.py --index_name cn_sse --period_start 20210101 --period_end 20210101
 python t_daily_index_candidates.py --index_name cn_szse --period_start 20210101 --period_end 20210101
 
-
+#/home/ryan/DATA/result/high_volumes/*.csv
+python t_futu_trade.py --check_high_volume --market AG_HOLD
+python t_futu_trade.py --check_high_volume --market HK_HOLD
+python t_futu_trade.py --check_high_volume --market AG
+python t_futu_trade.py --check_high_volume --market HK
 
 #############--calc_base
 # output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt

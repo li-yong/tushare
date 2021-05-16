@@ -929,25 +929,33 @@ def get_chk_code_list(market,debug):
 
     rtn_list=[]
 
+    hold = "HOLD" in market
+
     if 'US' in market:
-        rtn_list += _get_chk_code_list(market='US', debug=debug)
+        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=hold)
     if 'HK' in market:
-        rtn_list += _get_chk_code_list(market='HK', debug=debug)
+        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=hold)
     if 'AG' in market:
-        rtn_list += _get_chk_code_list(market='SH', debug=debug)
-        rtn_list += _get_chk_code_list(market='SZ', debug=debug)
+        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=hold)
+        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=hold)
 
     return(rtn_list)
 
 
-def _get_chk_code_list(market,debug):
+def _get_chk_code_list(market,debug,hold=False):
     if market == Market.HK:
-        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
+        if hold:
+            stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK_HOLD')['stock_list']
+        else:
+            stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='HK')['stock_list']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'HK.'+_d).to_list()
         if debug:
             get_price_code_list = ['HK.00700']
     elif market == Market.US:
-        stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
+        if hold:
+            stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US_HOLD')['stock_list']
+        else:
+            stock_list = finlib.Finlib().get_stock_configuration(selected=True, stock_global='US')['stock_list']
         get_price_code_list = stock_list['code'].apply(lambda _d: 'US.' + _d).to_list()
         # get_price_code_list = ['US.FUTU', 'US.AAPL']
         # get_price_code_list = ['US.FUTU', 'US.AAPL','US.MSFT','US.FB','US.TSLA','US.NVDA','US.WMT','US.HD','US.DIS',
@@ -958,14 +966,20 @@ def _get_chk_code_list(market,debug):
             get_price_code_list = ['US.FUTU']
             # get_price_code_list = ['US.MDU']
     elif market == Market.SH:
-        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
+        if hold:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list'])
+        else:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SH')]['code']
         get_price_code_list = _.to_list()
         if debug:
-            get_price_code_list = ['SH.600809']
+            get_price_code_list = ['SH.688111']
     elif market == Market.SZ:
-        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
+        if hold:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list'])
+        else:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SZ')]['code']
         get_price_code_list = _.to_list()
@@ -1061,15 +1075,18 @@ def fetch_history_bar(host,port,market,debug):
         if not os.path.isdir(dir):
             os.mkdir(dir)
 
-    if os.path.exists(csv_f):
-            df_exist = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
+        if os.path.exists(csv_f):
+            df_exist = pd.read_csv(csv_f, converters={'volume': float,'date':str, 'code': str, 'time_key': str})
             csv_min_date = datetime.datetime.strptime(df_exist.time_key.min(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
             csv_max_date = datetime.datetime.strptime(df_exist.time_key.max(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
             start = csv_max_date
             end = datetime.datetime.today().strftime("%Y-%m-%d")
         else:
             df_exist = pd.DataFrame()
-            csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
+            if debug:
+                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+            else:
+                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
             csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
 
         logging.info("fetching date " + start + " " + end + " " + code)
@@ -1079,11 +1096,10 @@ def fetch_history_bar(host,port,market,debug):
         df['date'] = df['time_key'].apply(
             lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
 
-        df['code_c2d6']=finlib.Finlib().get_code_format(code)['C2D6']
-        df = df.rename(columns={"code": "code_ft"}, inplace=False)
-        df = df.rename(columns={"code_c2d6": "code"}, inplace=False)
-
-        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date'])
+        if 'AG' in market: # AG or AG_HOLD
+            df = df.rename(columns={"code": "code_ft"}, inplace=False)
+            df['code']=finlib.Finlib().get_code_format(code)['C2D6']
+            df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date'])
 
         df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'], keep='last',
                                                      ignore_index=True).reset_index().drop('index', axis=1)
@@ -1114,36 +1130,57 @@ def check_high_volume(host,port,market,debug,ndays=3):
         last_n_days.append((today - datetime.timedelta(i)).strftime("%Y%m%d")
                            )
     for code in get_chk_code_list(market=market, debug=debug):
+        logging.info("checking "+code)
         csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
 
         if not os.path.exists(csv_f):
             logging.warning("No such file "+csv_f)
             continue
 
-        df = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
+        df = pd.read_csv(csv_f, converters={'volume': float, 'date':str, 'code': str, 'time_key': str})
 
-        df['date'] = df['time_key'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
-        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date', 'time_key', 'volume', 'close'])
-
-        if df.__len__()< 60*4*260 :
-            logging.info("insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
+        if df.__len__()< 60*4*260:
+            logging.info(code+" insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
             continue
 
         df_v100 = df.sort_values(by='volume', ascending=False).head(100)
 
-        finlib.Finlib().ts_code_to_code(df_v100)
-        finlib.Finlib().get_code_format('SH.600519')
+
 
         df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
 
+        if df_today_hit.__len__() > 0 and 'AG' in market:
+            df_today_hit = finlib.Finlib().add_stock_name_to_df(df=df_today_hit)
+
+        if df_today_hit.__len__() > 0 and 'HK' in market:
+            df_today_hit['code_ft'] = df_today_hit['code']
+            df_today_hit['code'] = df_today_hit['code'].apply(lambda _d: _d.split('.')[1])
+            df_today_hit = finlib.Finlib().add_stock_name_to_df_us_hk(df=df_today_hit, market='HK')
+
+        if df_today_hit.__len__() > 0 and 'US' in market:
+            df_today_hit['code_ft'] = df_today_hit['code']
+            df_today_hit['code'] = df_today_hit['code'].apply(lambda _d: _d.split('.')[1])
+            df_today_hit = finlib.Finlib().add_stock_name_to_df_us_hk(df=df_today_hit, market='US')
+
         if df_today_hit.__len__() > 0:
+            df_today_hit = df_today_hit[['code','name','time_key','volume','close']]
+
+            df_today_hit['MaxD1']=df_v100.iloc[0].time_key
+            df_today_hit['MaxV1']=df_v100.iloc[0].volume
+            df_today_hit['MaxD2']=df_v100.iloc[1].time_key
+            df_today_hit['MaxV2']=df_v100.iloc[1].volume
+            df_today_hit['MaxD3']=df_v100.iloc[2].time_key
+            df_today_hit['MaxV3']=df_v100.iloc[2].volume
+
+            df_today_hit = finlib.Finlib().df_format_column(df=df_today_hit, precision='%.1e')
+
             logging.info(code+" hit a abnormal high value in past "+str(ndays) +" days." )
             # print(finlib.Finlib().pprint(df=df_today_hit))
-            df_rtn.append(df_today_hit)
+            df_rtn = df_rtn.append(df_today_hit)
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
     df_rtn.to_csv(csv, encoding='UTF-8', index=False)
-    logging.info("high volume stocks list save to "+csv)
+    logging.info("high volume stocks list save to "+csv+" len "+str(df_rtn.__len__()))
     return(df_rtn)
         
 
