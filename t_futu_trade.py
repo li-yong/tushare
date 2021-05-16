@@ -1037,7 +1037,7 @@ def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
 
     # logging.info("market after proceeding: " + str(market))
     if market == []:
-        logging.warning("\nEmpty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
+        logging.warning("\nwarning: empty market (all markets are closed, or FutuOpenD has no quote previlege on open markets). Adding --debug may overwrite.\n")
         # exit()
 
     return(market)
@@ -1099,7 +1099,7 @@ def main():
     # parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
-    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar")
+    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US_HK_AG]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
@@ -1147,12 +1147,13 @@ def main():
             csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
 
             if finlib.Finlib().is_cached(csv_f, day=10):
+                logging.info("file updated in 10 days, not fetch again. "+csv_f)
                 continue
 
             logging.info("fetching date "+ start+" "+end+" "+code)
             df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M, extended_time=True)
             df.to_csv(csv_f, encoding='UTF-8', index=False)
-            logging.info("fetched, saved to "+ csv_f)
+            logging.info("fetched, saved to "+ csv_f+" len "+str(df.__len__()))
 
 
 
