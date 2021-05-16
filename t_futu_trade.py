@@ -1174,8 +1174,7 @@ def check_high_volume(host,port,market,debug,ndays=3):
 
             df_today_hit = finlib.Finlib().df_format_column(df=df_today_hit, precision='%.1e')
 
-            logging.info(code+" hit a abnormal high value in past "+str(ndays) +" days." )
-            #
+            logging.info(code+" hit an abnormal high value in past "+str(ndays) +" days." )
             df_rtn = df_rtn.append(df_today_hit)
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
