@@ -3622,11 +3622,7 @@ class Finlib:
 
     def regular_df_date_to_ymd(self, df):
         if 'date' not in df.columns:
-            logging.fatal(__file__+" "+"No cloumn date in df")
-            logging.warning(__file__+" "+str(df.head(2)))
-            #self.pprint(df.head(2))
-
-            #exit(0)
+            logging.warning(__file__+" no column date in df, "+str(df.head(1)))
             return (df)
 
         if df.__len__() == 0:
@@ -3988,7 +3984,7 @@ class Finlib:
 
     #regular df to format: code, name, open,high,low,close,volume
     def regular_read_csv_to_stdard_df(self, data_csv,add_market=False,exit_if_not_exist=True):
-        logging.info("loading "+data_csv)
+        # logging.info("loading "+data_csv)
         base_dir = "/home/ryan/DATA/DAY_Global"
         base_dir_fund2 = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2"
         data_csv = str(data_csv)

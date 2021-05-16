@@ -1175,11 +1175,12 @@ def check_high_volume(host,port,market,debug,ndays=3):
             df_today_hit = finlib.Finlib().df_format_column(df=df_today_hit, precision='%.1e')
 
             logging.info(code+" hit a abnormal high value in past "+str(ndays) +" days." )
-            # print(finlib.Finlib().pprint(df=df_today_hit))
+            #
             df_rtn = df_rtn.append(df_today_hit)
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
     df_rtn.to_csv(csv, encoding='UTF-8', index=False)
+    print(finlib.Finlib().pprint(df=df_rtn))
     logging.info("high volume stocks list save to "+csv+" len "+str(df_rtn.__len__()))
     return(df_rtn)
         
