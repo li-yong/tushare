@@ -1053,6 +1053,76 @@ def get_atr(code, df_tv_all):
     atr_14 = df_tv_all[df_tv_all.code == code]['atr_14'].values[0]
     return(atr_14)
 
+def fetch_history_bar(host,port,market,debug):
+    for code in get_chk_code_list(market=market, debug=debug):
+        csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
+
+        if os.path.exists(csv_f):
+            df_exist = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
+            csv_min_date = datetime.datetime.strptime(df_exist.time_key.min(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+            csv_max_date = datetime.datetime.strptime(df_exist.time_key.max(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+            start = csv_max_date
+            end = datetime.datetime.today().strftime("%Y-%m-%d")
+        else:
+            df_exist = pd.DataFrame()
+            csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
+            csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
+
+        logging.info("fetching date " + start + " " + end + " " + code)
+        df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M,
+                             extended_time=True)
+
+        df['date'] = df['time_key'].apply(
+            lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
+        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date'])
+
+        df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'], keep='last',
+                                                     ignore_index=True).reset_index().drop('index', axis=1)
+
+        df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
+        logging.info("fetched, saved to " + csv_f
+                     + ". fetched len " + str(df.__len__())
+                     + " total len " + str(df_rtn.__len__())
+                     + ". start " + csv_min_date + " end " + csv_max_date
+                     )
+
+
+def check_high_volume(host,port,market,debug,ndays=3):
+    if market in ['AG','AG_HOLD','HK','HK_HOLD']:
+        today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(),"%Y%m%d")
+    elif market in ['US', 'US_HOLD']:
+        today=datetime.datetime.strptime( finlib.Finlib().get_last_trading_day_us(),"%Y-%m-%d")
+
+    last_n_days = []
+    for i in range(ndays):
+        last_n_days.append((today - datetime.timedelta(i)).strftime("%Y%m%d")
+                           )
+    for code in get_chk_code_list(market=market, debug=debug):
+        csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
+
+        if not os.path.exists(csv_f):
+            logging.warning("No such file "+csv_f)
+            continue
+
+        df = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
+
+        df['date'] = df['time_key'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
+        df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date', 'time_key', 'volume', 'close'])
+
+        df_v100 = df.sort_values(by='volume', ascending=False).head(30)
+
+        df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
+
+        if df_today_hit.__len__() > 0:
+            logging.info(code+" hit a abnormal high value in past "+str(ndays) +" days." )
+            print(finlib.Finlib().pprint(df=df_today_hit))
+            print(1)
+        #
+        # logging.info("top 10 frequent days have the high minute volumes")
+        # logging.info(df_v100['date'].value_counts().head(10))
+        
+        
+        
 
 
 def init_dict_code(dict_code,code,ktype_short, ktype_long,ma_period_short,ma_period_long, df_tv_all):
@@ -1100,6 +1170,7 @@ def main():
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
     parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
+    parser.add_option("--check_high_volume", action="store_true", default=False, dest="check_high_volume", help="check high volume based on 1minute bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US_HK_AG]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
@@ -1136,47 +1207,16 @@ def main():
     ma_period_long = options.ma_period_long
     tv_source = options.tv_source
 
-    #### fetch
+    #### fetch history bar
     if options.fetch_history_bar:
-
-
-
-        for code in get_chk_code_list(market=options.market, debug=options.debug):
-            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
-
-            # csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
-
-            # if finlib.Finlib().is_cached(csv_f, day=10):
-            #     logging.info("file updated in 10 days, not fetch again. "+csv_f)
-            #     continue
-
-            if os.path.exists(csv_f):
-                df_exist = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
-                csv_min_date= datetime.datetime.strptime(df_exist.time_key.min(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
-                csv_max_date = datetime.datetime.strptime(df_exist.time_key.max(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
-                start = csv_max_date
-                end = datetime.datetime.today().strftime("%Y-%m-%d")
-            else:
-                df_exist = pd.DataFrame()
-                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
-                csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
-
-
-            logging.info("fetching date "+ start+" "+end+" "+code)
-            df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M, extended_time=True)
-
-            df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'],keep='last', ignore_index=True).reset_index().drop('index',axis=1)
-
-            df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
-            logging.info("fetched, saved to "+ csv_f
-                         +". fetched len "+str(df.__len__())
-                         +" total len "+str(df_rtn.__len__())
-                         +". start "+csv_min_date + " end "+csv_max_date
-                         )
-
-
-
+        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug)
         exit()
+
+    if options.check_high_volume:
+        check_high_volume(host=host,port=port,market=options.market, debug=options.debug,ndays=5)
+        exit()
+
+
 
     market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
     get_price_code_list = get_chk_code_list(market=market,debug=options.debug)

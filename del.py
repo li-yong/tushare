@@ -35,14 +35,23 @@ import akshare as ak
 # df = df.reset_index().drop('index', axis=1)
 # df.to_csv(f+"0-2021-04-19.csv", encoding='UTF-8', index=False)
 
-df = pd.read_csv("/home/ryan/DATA/DAY_Global/FUTU_SH/SH.600519_1m_2019-06-15_2021-05-15.csv", converters={'volume': float,'code':str, 'time_key':str})
-df.sort_values(by='volume', ascending=False).head(100)
+df = pd.read_csv("/home/ryan/DATA/DAY_Global/FUTU_SH/SH.600519_1m.csv", converters={'volume': float,'code':str, 'time_key':str})
+
+
+
 print(finlib.Finlib().pprint(df.sort_values(by='volume', ascending=False).head(100)))
 print(df.volume.describe())
 
+
+
+df_price = finlib.Finlib().get_daily_amount_mktcap()
+vol = df_price[df_price['code']=='SH600519']['volume'].values[0]
+
+from scipy import stats
+stats.percentileofscore(df.volume, vol)
+
+
 df = df[df['time_key']>"2021-01-01"]
-
-
 print(finlib.Finlib().pprint(df.sort_values(by='volume', ascending=False).head(10)))
 
 
