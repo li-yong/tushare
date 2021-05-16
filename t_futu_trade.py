@@ -1093,6 +1093,9 @@ def check_high_volume(host,port,market,debug,ndays=3):
     elif market in ['US', 'US_HOLD']:
         today=datetime.datetime.strptime( finlib.Finlib().get_last_trading_day_us(),"%Y-%m-%d")
 
+    df_rtn = pd.DataFrame()
+    csv =  "/home/ryan/DATA/result/high_volumes/"+market+".csv"
+
     last_n_days = []
     for i in range(ndays):
         last_n_days.append((today - datetime.timedelta(i)).strftime("%Y%m%d")
@@ -1109,19 +1112,23 @@ def check_high_volume(host,port,market,debug,ndays=3):
         df['date'] = df['time_key'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
         df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date', 'time_key', 'volume', 'close'])
 
-        df_v100 = df.sort_values(by='volume', ascending=False).head(30)
+        if df.__len__()< 60*4*260 :
+            logging.info("insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
+            continue
+
+        df_v100 = df.sort_values(by='volume', ascending=False).head(100)
 
         df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
 
         if df_today_hit.__len__() > 0:
             logging.info(code+" hit a abnormal high value in past "+str(ndays) +" days." )
-            print(finlib.Finlib().pprint(df=df_today_hit))
-            print(1)
-        #
-        # logging.info("top 10 frequent days have the high minute volumes")
-        # logging.info(df_v100['date'].value_counts().head(10))
-        
-        
+            # print(finlib.Finlib().pprint(df=df_today_hit))
+            df_rtn.append(df_today_hit)
+
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(csv, encoding='UTF-8', index=False)
+    logging.info("high volume stocks list save to "+csv)
+    return(df_rtn)
         
 
 
