@@ -1138,22 +1138,41 @@ def main():
 
     #### fetch
     if options.fetch_history_bar:
-        start = (datetime.datetime.today() - datetime.timedelta(days=700)).strftime("%Y-%m-%d")
-        end = datetime.datetime.today().strftime("%Y-%m-%d")
+
+
 
         for code in get_chk_code_list(market=options.market, debug=options.debug):
-            # for i in range(10):
-            # date_p = (datetime.datetime.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
+            csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
 
-            if finlib.Finlib().is_cached(csv_f, day=10):
-                logging.info("file updated in 10 days, not fetch again. "+csv_f)
-                continue
+            # csv_f = "/home/ryan/DATA/DAY_Global/FUTU_"+code[0:2]+"/"+code+"_1m_"+start+"_"+end+".csv"
+
+            # if finlib.Finlib().is_cached(csv_f, day=10):
+            #     logging.info("file updated in 10 days, not fetch again. "+csv_f)
+            #     continue
+
+            if os.path.exists(csv_f):
+                df_exist = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
+                csv_min_date= datetime.datetime.strptime(df_exist.time_key.min(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                csv_max_date = datetime.datetime.strptime(df_exist.time_key.max(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                start = csv_max_date
+                end = datetime.datetime.today().strftime("%Y-%m-%d")
+            else:
+                df_exist = pd.DataFrame()
+                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
+                csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
+
 
             logging.info("fetching date "+ start+" "+end+" "+code)
             df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M, extended_time=True)
-            df.to_csv(csv_f, encoding='UTF-8', index=False)
-            logging.info("fetched, saved to "+ csv_f+" len "+str(df.__len__()))
+
+            df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'],keep='last', ignore_index=True).reset_index().drop('index',axis=1)
+
+            df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info("fetched, saved to "+ csv_f
+                         +". fetched len "+str(df.__len__())
+                         +" total len "+str(df_rtn.__len__())
+                         +". start "+csv_min_date + " end "+csv_max_date
+                         )
 
 
 
