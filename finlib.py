@@ -2912,6 +2912,7 @@ class Finlib:
 
     def get_code_format(self, code_input):
         rem_D6DotC2 = re.match("(\d{6})\.(.*)", code_input)  # 600519.SH
+        rem_C2DotD6 = re.match("([a-zA-Z]{2})\.(\d{6})", code_input)  # SH.600519
         rem_C2D6 = re.match("([a-zA-Z]{2})(\d{6})", code_input)  # SH600519
         rem_D6 = re.match("^(\d{6})$", code_input)  # 600519
 
@@ -2919,6 +2920,11 @@ class Finlib:
             code = rem_D6DotC2.group(1)
             mkt = rem_D6DotC2.group(2)
             code_format = "D6.C2"
+
+        if rem_C2DotD6:
+            code = rem_C2DotD6.group(2)
+            mkt = rem_C2DotD6.group(1)
+            code_format = "C2.D6"
 
         if rem_C2D6:
             code = rem_C2D6.group(2)
@@ -2933,6 +2939,7 @@ class Finlib:
         dict = {'code': code, 'mkt': mkt, 'format': code_format}
 
         dict['D6.C2'] = dict['code'] + "." + dict['mkt']
+        dict['C2.D6'] = dict['mkt'] + "." + dict['code']
         dict['C2D6'] = dict['mkt'] + dict['code']
         dict['D6'] = dict['code']
 

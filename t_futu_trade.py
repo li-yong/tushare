@@ -1055,9 +1055,13 @@ def get_atr(code, df_tv_all):
 
 def fetch_history_bar(host,port,market,debug):
     for code in get_chk_code_list(market=market, debug=debug):
-        csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
+        dir = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2]
+        csv_f = dir + "/" + code + "_1m.csv"
 
-        if os.path.exists(csv_f):
+        if not os.path.isdir(dir):
+            os.mkdir(dir)
+
+    if os.path.exists(csv_f):
             df_exist = pd.read_csv(csv_f, converters={'volume': float, 'code': str, 'time_key': str})
             csv_min_date = datetime.datetime.strptime(df_exist.time_key.min(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
             csv_max_date = datetime.datetime.strptime(df_exist.time_key.max(), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
@@ -1074,6 +1078,11 @@ def fetch_history_bar(host,port,market,debug):
 
         df['date'] = df['time_key'].apply(
             lambda _d: datetime.datetime.strptime(_d, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d"))
+
+        df['code_c2d6']=finlib.Finlib().get_code_format(code)['C2D6']
+        df = df.rename(columns={"code": "code_ft"}, inplace=False)
+        df = df.rename(columns={"code_c2d6": "code"}, inplace=False)
+
         df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date'])
 
         df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'], keep='last',
@@ -1094,7 +1103,11 @@ def check_high_volume(host,port,market,debug,ndays=3):
         today=datetime.datetime.strptime( finlib.Finlib().get_last_trading_day_us(),"%Y-%m-%d")
 
     df_rtn = pd.DataFrame()
-    csv =  "/home/ryan/DATA/result/high_volumes/"+market+".csv"
+    dir =  "/home/ryan/DATA/result/high_volumes"
+    csv =  dir+"/"+market+".csv"
+
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
 
     last_n_days = []
     for i in range(ndays):
@@ -1117,6 +1130,9 @@ def check_high_volume(host,port,market,debug,ndays=3):
             continue
 
         df_v100 = df.sort_values(by='volume', ascending=False).head(100)
+
+        finlib.Finlib().ts_code_to_code(df_v100)
+        finlib.Finlib().get_code_format('SH.600519')
 
         df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
 
