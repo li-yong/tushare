@@ -22,50 +22,19 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 
-########################### abnormal volume
-# f = "/home/ryan/DATA/DAY_Global/FUTU_US/US.MSFT_1m_2021-04-1"
-#
-# df = pd.DataFrame()
-# for i in range(10):
-#     df_tmp = pd.read_csv(f+str(i)+".csv", converters={'volume': float,'code':str, 'time_key':str})
-#     df = df.append(df_tmp)
-#     logging.info("appened "+f+str(i)+".csv")
-#
-# print(df.__len__())
-# df = df.reset_index().drop('index', axis=1)
-# df.to_csv(f+"0-2021-04-19.csv", encoding='UTF-8', index=False)
-
-df = pd.read_csv("/home/ryan/DATA/DAY_Global/FUTU_SH/SH.600519_1m.csv", converters={'volume': float,'code':str, 'time_key':str})
-
-
-
-print(finlib.Finlib().pprint(df.sort_values(by='volume', ascending=False).head(100)))
-print(df.volume.describe())
-
-
-
-df_price = finlib.Finlib().get_daily_amount_mktcap()
-vol = df_price[df_price['code']=='SH600519']['volume'].values[0]
-
-from scipy import stats
-stats.percentileofscore(df.volume, vol)
-
-
-df = df[df['time_key']>"2021-01-01"]
-print(finlib.Finlib().pprint(df.sort_values(by='volume', ascending=False).head(10)))
-
 
 
 ########################### graham instrinsic value
-finlib_indicator.Finlib_indicator().graham_intrinsic_value()
+def graham_intrinsic_value():
+    finlib_indicator.Finlib_indicator().graham_intrinsic_value()
 
 ########################### Evaluate tr/pe ratio
 def evaluate_tr_pe():
     df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
     df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
 
-    df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
-    tmp = finlib.Finlib().add_amount_mktcap(df=df_selected)
+    df_ag_hold = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+    tmp = finlib.Finlib().add_amount_mktcap(df=df_ag_hold)
     tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
     tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
@@ -75,6 +44,10 @@ def evaluate_tr_pe():
 #########################################
 def evaluate_grid(market='AG'):
     logging.info("\n==== "+market+" ====")
+
+    print("==========  52 Week  ========")
+    print("=============================")
+
     high_field='52 Week High'
     low_field='52 Week Low'
 
@@ -86,19 +59,55 @@ def evaluate_grid(market='AG'):
     # cols += ['cs_pos','grid_perc_resis_spt_dist',"l1","l2","l3","l4","l5","l6","l7" ,'description']
     cols += ['grid_support','grid_resistance','grid_perc_to_support','grid_perc_to_resistance']
 
-    print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
-    print(finlib.Finlib().pprint(df_g_p1_52week[cols].head(2)))  #grid == 1
 
-    print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
-    print(finlib.Finlib().pprint(df_g_n3_52week[cols].head(2)))  #grid == -3
+    # print("==========  PositiveGrid 1 "+ str(high_field)+"  "+str(low_field)+" ========")
+    # print(finlib.Finlib().pprint(df_g_p1_52week[cols].head(2)))  #grid == 1
 
-    df_selected = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+    # print("==========  NegtiveGrid 3 "+ str(high_field)+"  "+str(low_field)+" ========")
+    # print(finlib.Finlib().pprint(df_g_n3_52week[cols].head(2)))  #grid == -3
+
+    df_ag_hold = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+    df_ag = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list']
 
     # ddf_rtnf = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'tr_pe'])
 
 
+    df_hold_52week = pd.merge(df_52week, df_ag_hold, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    df_52week = pd.merge(df_52week, df_ag, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+
+    df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+    df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+
+    tmp = finlib.Finlib().add_amount_mktcap(df=df_hold_52week)
+    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+    print("\n==========  52 Week, AG_HOLD State ========")
+    print(finlib.Finlib().pprint(tmp))
+
+    tmp = finlib.Finlib().add_amount_mktcap(df=df_52week)
+    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+    print("\n==========  52 Week, AG State ========")
+    print(finlib.Finlib().pprint(tmp))
+
+    print("roe_ttm", "pe_ttm", 'Operating Margin (TTM)', 'Gross Margin (TTM)')
+    _ = df_g_p4[['roe_ttm', 'pe_ttm', 'Operating Margin (TTM)', 'Gross Margin (TTM)']].describe().iloc[1];  print('p4: ', end='');  print(_['roe_ttm'], _['pe_ttm'], _['Operating Margin (TTM)'], _['Gross Margin (TTM)'])
+    _ = df_g_p3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_p2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_p1_52week[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+
+    _ = df_g_n1[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n3_52week[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+    _ = df_g_n4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
+
+
 
     ###################
+
+    print("\n==========  3 Month  ========")
+    print("=============================")
+
     high_field='3-Month High'
     low_field ='3-Month Low'
 
@@ -107,29 +116,16 @@ def evaluate_grid(market='AG'):
     (df_3month,df_g_n4,df_g_n3_3month,df_g_n2,df_g_n1,df_g_p1_3month,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
 
 
-    print("==========  52 Week Hold ========")
-    df_hold_52week = pd.merge(df_52week, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
-
-    df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
-    df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
-
-    tmp = finlib.Finlib().add_amount_mktcap(df=df_hold_52week)
-    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
-    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
-    print(tmp)
+    print("==========  3 month Hold State ========")
+    df_hold_3month = pd.merge(df_3month, df_ag_hold, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    print(finlib.Finlib().pprint(df_hold_3month))
 
 
+    # print("========== 3 month  PositiveGrid 1 "+ str(high_field)+"  "+str(low_field)+" ========")
+    # print(finlib.Finlib().pprint(df_g_p1_3month[cols].head(2)))  #grid == 1
 
-    print("==========  3 month Hold ========")
-    df_hold_3month = pd.merge(df_3month, df_selected, on=['code'], how='inner', suffixes=('', '_select'))[cols]
-    print(df_hold_3month)
-
-
-    print("==========  P1 "+ str(high_field)+"  "+str(low_field)+" ========")
-    print(finlib.Finlib().pprint(df_g_p1_3month[cols].head(2)))  #grid == 1
-
-    print("==========  N3 "+ str(high_field)+"  "+str(low_field)+" ========")
-    print(finlib.Finlib().pprint(df_g_n3_3month[cols].head(2)))  #grid == -3
+    # print("========== 3 month NegtiveGrid 3 "+ str(high_field)+"  "+str(low_field)+" ========")
+    # print(finlib.Finlib().pprint(df_g_n3_3month[cols].head(2)))  #grid == -3
 
 
 
@@ -141,14 +137,9 @@ def evaluate_grid(market='AG'):
     df_lhrl = df[(df.grid==1) & (df.grid_3M==-3)][cols]  #long high, recent low
     print(finlib.Finlib().pprint(df_lhrl.head(30)))
 
-    finlib.Finlib().get_ts_field(ts_code='601995.SH', ann_date='20201231', field='roe', big_memory=False)
-
     #
     print("roe_ttm", "pe_ttm",'Operating Margin (TTM)','Gross Margin (TTM)')
-    _ = df_g_p4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]
-    print('p4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
-
-
+    _ = df_g_p4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_p3[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p3: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_p2[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p2: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
     _ = df_g_p1_3month[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('p1: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
@@ -159,9 +150,7 @@ def evaluate_grid(market='AG'):
     _ = df_g_n4[['roe_ttm','pe_ttm','Operating Margin (TTM)','Gross Margin (TTM)']].describe().iloc[1]; print('n4: ',end='') ;print(_['roe_ttm'], _['pe_ttm'],_['Operating Margin (TTM)'],_['Gross Margin (TTM)'])
 
 
-    df_g_p4.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
-
-    logging.info("")
+    # df_g_p4.sort_values('grid_perc_resis_spt_dist', ascending=False, inplace=False).head(5)
 
     exit(0)
 

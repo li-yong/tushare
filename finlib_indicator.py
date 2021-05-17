@@ -1699,6 +1699,8 @@ class Finlib_indicator:
         f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_indicator.csv'
         df0 = pd.read_csv(f)
 
+        csv = "/home/ryan/DATA/result/graham_intrinsic_value.csv"
+
         df_last_n_years = df0[df0['end_date'].isin(
             [20201231, 20191231, 20181231, 20171231, 20161231, 20151231, 20141231, 20131231, 20121231, 20111231])]
 
@@ -1743,8 +1745,15 @@ class Finlib_indicator:
 
         df_c = finlib.Finlib().remove_garbage(df=df)
         df_c = finlib.Finlib().df_format_column(df=df_c, precision='%.1e')
+
         print(finlib.Finlib().pprint(df_c.head(20)))
-        print(1)
+
+        df_c.to_csv(csv,encoding='UTF-8', index=False)
+        logging.info("save to "+csv+" len"+str(df_c.__len__()))
+
+        return(df_c)
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

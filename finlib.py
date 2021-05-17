@@ -1050,7 +1050,7 @@ class Finlib:
     #
     # todayS = datetime.strptime(todayS, '%Y-%m-%d').strftime('%Y%m%d') #last trading day. eg. 20181202-->20181130
 
-    def get_last_trading_day(self, date=None, debug=True):
+    def get_last_trading_day(self, date=None, debug=False):
 
         if date is None:
 
@@ -1088,9 +1088,7 @@ class Finlib:
         b = a[a['cal_date'] == int(todayS)]
 
         if len(b) == 0:
-            print("no record!!!")
-            print("csv_f " + csv_f)
-            print("todayS " + todayS)
+            logging.warning("no record!!! csv_f "+csv_f+" tpdayS "+todayS)
 
         tdy_idx = a[a['cal_date'] == int(todayS)].index.values[0]
 
@@ -1116,7 +1114,7 @@ class Finlib:
         tdy_idx = a[a['cal_date'] == int(dateS)].index.values[0]
 
         if a.at[tdy_idx, "is_open"] == 0:
-            logging.info(__file__+" "+"Date " + dateS + " is not a trading day")
+            # logging.info(__file__+" "+"Date " + dateS + " is not a trading day")
             rst = False
 
         else:
@@ -3622,7 +3620,7 @@ class Finlib:
 
     def regular_df_date_to_ymd(self, df):
         if 'date' not in df.columns:
-            logging.warning(__file__+" no column date in df, "+str(df.head(1)))
+            # logging.warning(__file__+" no column date in df, "+str(df.head(1)))
             return (df)
 
         if df.__len__() == 0:
@@ -4412,7 +4410,7 @@ class Finlib:
                 stock_list = self.get_ak_hk_us_list('US')[['code','name']]
 
         rtn = {
-            "stock_list": stock_list,
+            "stock_list": stock_list.drop_duplicates().reset_index().drop('index', axis=1),
             "csv_dir": csv_dir,
             "out_dir": out_dir,
         }

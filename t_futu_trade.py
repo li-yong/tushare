@@ -939,6 +939,7 @@ def get_chk_code_list(market,debug):
         rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=hold)
         rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=hold)
 
+    rtn_list = list(set(rtn_list))
     return(rtn_list)
 
 
@@ -1143,9 +1144,9 @@ def check_high_volume(host,port,market,debug,ndays=3):
             logging.info(code+" insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
             continue
 
-        df_v100 = df.sort_values(by='volume', ascending=False).head(100)
 
-
+        # three years, 30 records.  10 records out of 260 in a year.
+        df_v100 = df.sort_values(by='volume', ascending=False).head(30)
 
         df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
 
