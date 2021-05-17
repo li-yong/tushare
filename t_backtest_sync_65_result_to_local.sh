@@ -67,18 +67,18 @@ fi
 
 # sync smaller folders first
 if [[ ${source_host} == "haha_65" ]]; then
-  rsync -avz  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/
-  rsync -avz  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/
+  rsync -avzL  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/
+  rsync -avzL  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/
   rsync -az   haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/
   rsync -az   haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
   rsync -az   haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/
 else
-  rsync -avz  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/
-  rsync -avz  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/
-  rsync -az   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/
-  rsync -az   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
-  rsync -az   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/
-  rsync -az   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
+  rsync -avzL  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/
+  rsync -avzL  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/
+  rsync -azL   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/
+  rsync -azL   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
+  rsync -azL   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/
+  rsync -azL   ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
 fi
 
 ###################################################################

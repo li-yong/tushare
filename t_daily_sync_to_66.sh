@@ -36,9 +36,9 @@ ssh haha_66 "cd ~/tushare_ryan; git pull; "
 
 bash -x t_backtest_sync_65_result_to_local.sh
 
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged.dev    haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report.dev   haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source.dev   haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged.dev    haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report.dev   haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source.dev   haha_66:/hdd/DATA/pickle/Stock_Fundamental/fundamentals_2
 
 ######################################
 #
@@ -53,7 +53,7 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2019/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2019/
+    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2021/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2021/
     rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2020/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/2020/
 fi
 
@@ -70,26 +70,26 @@ rsync -az /home/ryan/DATA/DAY_JAQS/  haha_66:/hdd/DATA/DAY_JAQS/
 rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/
 
 
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/  haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/
 
-#rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/
+#rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/
 
 for i in `ls /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/ | grep 201 | grep -E 201[8-9]`;
 do
     echo "sync file to normal directory /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/". $i
-    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/
+    rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/
 done
 
 
 for i in `ls /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/ | grep 202 | grep -E 202[0-3]`;
 do
     echo "sync file to normal directory /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/". $i
-    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/
+    rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/
 done
 
 
@@ -99,16 +99,16 @@ done
 #    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/$i/
 #done
 
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200331/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200331/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200630/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200630/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200930/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20200930/
-rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/
+rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/
 
 
 
 if [ $full_or_daily == "FULL" ]; then
-    rsync -az /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
+    rsync -azL /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/ haha_66:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
 fi
 
 
