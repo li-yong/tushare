@@ -49,6 +49,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         ktype_long,
         dict_code,
         market,
+        tri_bar_ma,
+        tri_ma_ma,
+        tri_abnormal_price
     ):
 
 
@@ -264,13 +267,13 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['short'][ktype_short]['atr_14'] > 0:
 
-        if p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
-            logging.info("Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
+        if tri_abnormal_price and p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
+            logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
 
-        if p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
-            logging.info("Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
+        if tri_abnormal_price and p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
+            logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
@@ -278,7 +281,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     bma_long = dict_code[code]['long'][ktype_long]['history_bars_and_ma']['bars_and_ma']
 
     # SELL Condition: ASK cross down short MA.  a<><  a<=< . ask: minimal price seller willing to offer.
-    if (ma_short*(1-range) > p_ask > 0 ) and (bma_short['ma_b0'] > bma_short['close_b0'] >0) and (bma_short['close_b1'] > bma_short['ma_b1']):
+    if tri_bar_ma and (ma_short*(1-range) > p_ask > 0 ) and (bma_short['ma_b0'] > bma_short['close_b0'] >0) and (bma_short['close_b1'] > bma_short['ma_b1']):
         logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
                      + ". proceeding to SELL"
                      + ".  Previous "+str(bma_short['ma_b0_time_key']) +" close "+str(bma_short['close_b0']) + " ma "+str(bma_short['ma_b0'])
@@ -294,8 +297,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # SELL Condition: short MA across down long MA.
-    if (bma_short['ma_b1'] >= bma_long['ma_b1']  > 0) and ( bma_long['ma_b0'] > bma_short['ma_b0']):
-        logging.info(" ALERT! Fast MA across down Slow MA. proceeding to SELL")
+    if tri_ma_ma and (bma_short['ma_b1'] >= bma_long['ma_b1']  > 0) and ( bma_long['ma_b0'] > bma_short['ma_b0']):
+        logging.info(__file__ +  " " + code +" ALERT! Fast MA across DOWN Slow MA. proceeding to SELL. "
+                     +" slow "+ktype_long+"_"+str(ma_period_long) +" "+ str(bma_long['ma_b0'])
+                     +", fast "+ktype_short+"_"+str(ma_period_short) +" "+ str(bma_short['ma_b0'])
+                     +". "+ str(time_current)+" last_price " + str(p_current)
+                     )
         if do_not_place_order:
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
@@ -307,8 +314,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition: short MA across up long MA.
-    if (bma_long['ma_b1'] >= bma_short['ma_b1']  > 0) and ( bma_short['ma_b0'] > bma_long['ma_b0']):
-        logging.info(" ALERT! Fast MA across up Slow MA. proceeding to BUY")
+    if tri_ma_ma and (bma_long['ma_b1'] >= bma_short['ma_b1']  > 0) and ( bma_short['ma_b0'] > bma_long['ma_b0']):
+        logging.info(__file__ +  " " + code +" ALERT! Fast MA across UP Slow MA. proceeding to BUY. "
+                     +" slow "+ktype_long+"_"+str(ma_period_long) +" "+ str(bma_long['ma_b0'])
+                     +", fast "+ktype_short+"_"+str(ma_period_short) +" "+ str(bma_short['ma_b0'])
+                     +". "+ str(time_current)+" last_price " + str(p_current)
+                     )
         if do_not_place_order:
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
@@ -320,7 +331,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
 
     # BUY Condition: BID cross up short MA. b><>  b>=>.  bid: max price buyer willing to pay
-    if (p_bid > ma_short*(1+range) > 0) and (bma_short['close_b0'] >= bma_short['ma_b0']  > 0) and ( bma_short['ma_b1'] > bma_short['close_b1']):
+    if tri_bar_ma and (p_bid > ma_short*(1+range) > 0) and (bma_short['close_b0'] >= bma_short['ma_b0']  > 0) and ( bma_short['ma_b1'] > bma_short['close_b1']):
 
         logging.info(__file__ + " "
                      + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period_short) +" "+ str(ma_short)
@@ -560,7 +571,7 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
     # data are Bars, e.g K_3M.
     # data don't contain current time bar. eg.K_3M, at 9.54~9.57, bar 9.57 is growing, data return bars end at 9.54.
 
-    if history_bar_df is None:
+    if history_bar_df is None: #the 1st time run
         data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=True) #ryan debug
     else:
         data = history_bar_df
@@ -1240,6 +1251,9 @@ def main():
     parser.add_option("--ktype_short", default="K_3M", dest="ktype_short",type="str", help="Kline type short. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
     parser.add_option("--ktype_long", default="K_60M", dest="ktype_long",type="str", help="Kline type long. [K_1M (1,3,5,15,30,60), K_DAY, K_WEEK, K_MON,K_QUARTER,K_YEAR ")
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="debug ")
+    parser.add_option("--tri_bar_ma", action="store_true", default=False, dest="tri_bar_ma", help="trigger buy/sell based on Bar close Across MA_short")
+    parser.add_option("--tri_ma_ma", action="store_true", default=True, dest="tri_ma_ma", help="trigger buy/sell based on MA_short Across MA_long")
+    parser.add_option("--tri_abnormal_price", action="store_true", default=True, dest="tri_abnormal_price", help="trigger buy/sell when price change in two check > ATR14 D")
 
 
     (options, args) = parser.parse_args()
@@ -1266,7 +1280,14 @@ def main():
     ktype_long =options.ktype_long
     ma_period_short = options.ma_period_short
     ma_period_long = options.ma_period_long
+    tri_bar_ma = options.tri_bar_ma
+    tri_ma_ma = options.tri_ma_ma
+    tri_abnormal_price = options.tri_abnormal_price
     tv_source = options.tv_source
+
+    if ma_period_short > ma_period_long:
+        logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
+        exit(1)
 
     #### fetch history bar
     if options.fetch_history_bar:
@@ -1432,6 +1453,9 @@ def main():
                     ktype_long=ktype_long,
                     dict_code = dict_code,
                     market= market,
+                    tri_bar_ma = tri_bar_ma,
+                    tri_ma_ma = tri_ma_ma,
+                    tri_abnormal_price = tri_abnormal_price,
                 )
             except Exception:
                 for k in trd_ctx_unlocked.keys():

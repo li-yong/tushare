@@ -39,7 +39,6 @@ def evaluate_tr_pe():
     tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
     print(finlib.Finlib().pprint(tmp))
-    exit()
 
 #########################################
 def evaluate_grid(market='AG'):
@@ -179,7 +178,7 @@ def tv_filter():
 
     print(1)
 
-
+# graham_intrinsic_value()
 evaluate_grid(market='AG')
 
 #########################################
