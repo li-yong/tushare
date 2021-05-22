@@ -1039,6 +1039,7 @@ def get_market_state(host='127.0.0.1',port=11111):
 def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
     # logging.info("market before proceeding: "+market_str)
     market = market_str.split("_")
+    market.remove('HOLD')
     mkt_state = get_market_state(host=host, port=port)
     if (not debug) and ('AG' in market) and ( mkt_state['ag_state'] in ['CLOSED','REST',]):
         market.remove('AG')
@@ -1470,15 +1471,19 @@ def main():
 
 
 if __name__ == '__main__':
+    exception_cnt = 0
     while True:
         try:
             main()
         except Exception:
+            exception_cnt += 1
             logging.info(traceback.format_exc())
-            logging.info("caught exception, restart main()")
-            time.sleep(1)
-
-
+            if exception_cnt >= 10:
+                logging.fatal("exception more than 10 times, exit")
+                exit(0)
+            else:
+                logging.info("caught exception, restart main()")
+                time.sleep(1)
     exit(0)
 
 
