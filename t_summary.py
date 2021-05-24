@@ -2010,6 +2010,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
             tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
 
+            # if tmp.__len__() > 0:
+            #     print("ryan debug")
             tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
             comb_df_name = comb_df_name + "_" + subset[subset.__len__() - 1]

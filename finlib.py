@@ -135,7 +135,6 @@ class Finlib:
         return(df_all_jaqs)
     '''
     def load_all_ts_pro(self, debug=False, overwrite=False):
-        # return ()  # ryan debug
 
         output_pickle = "/home/ryan/DATA/result/ts_all.pickle"
 
@@ -3099,6 +3098,7 @@ class Finlib:
         return(df)
 
     def remove_garbage(self, df, code_field_name='code', code_format='C2D6',b_m_score=-1,n_year=5):
+
         df = self._remove_garbage_must(df,b_m_score,n_year)
         df = self._remove_garbage_rpt_s1(df, code_field_name, code_format)
         df = self._remove_garbage_by_profit_on_market_days_st(df)
@@ -3369,6 +3369,7 @@ class Finlib:
         return (df_rtn)
 
     def remove_garbage_macd_ma(self,df):
+
         if df.empty:
             logging.info("df is empty, not to remove macd ma garbage")
             return(df)
@@ -4682,6 +4683,12 @@ class Finlib:
 
 
     def add_amount_mktcap(self,df,sorted_by_mktcap=True):
+        cols = df.columns
+
+        if 'amount' in cols and 'total_mv' in cols and 'circ_mv' in cols:
+            logging.info("already have all the columns['amount','total_mv','circ_mv'], not adding more")
+            return(df)
+        
         df_amt_mktcap = self.get_daily_amount_mktcap()[['code','amount','total_mv','circ_mv']]
         df = pd.merge(df, df_amt_mktcap,  on=['code'], how='left', suffixes=('', '_mktcap'))
 
@@ -4707,6 +4714,10 @@ class Finlib:
         return(df_target)
 
     def add_tr_pe(self,df,df_daily,df_ts_all):
+        if 'tr_pe' in df.columns:
+            logging.info("already has tr_pe, not adding")
+            return(df)
+
         df_trpe = self.get_tr_pe(df_daily=df_daily, df_ts_all=df_ts_all)[['code','tr_pe']]
         df = pd.merge(df, df_trpe,  on=['code'], how='inner', suffixes=('', '_trpe'))
         df = self.adjust_column(df=df,col_name_list=['code','tr_pe'])
@@ -4714,6 +4725,9 @@ class Finlib:
 
 
     def df_format_column(self, df, precision="%.1e"):
+        if df.__len__() == 0:
+            return(df)
+
         for i in df.dtypes.iteritems():
             col_name = i[0]
             col_data_type = i[1]  # dtype('float64')
