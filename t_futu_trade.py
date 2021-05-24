@@ -563,8 +563,14 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
     if bar_fetch_period is None:
         bar_fetch_period = ma_period
 
-    start = (datetime.datetime.today() - datetime.timedelta(days=int(k_renew_interval_second[ktype] * bar_fetch_period/24/60/60)+2)).strftime("%Y-%m-%d")
     end = datetime.datetime.today().strftime("%Y-%m-%d")
+
+    if datetime.datetime.today().isoweekday() == 1 : #Monday
+        start = (datetime.datetime.today() - datetime.timedelta(
+            days= 2 + int(k_renew_interval_second[ktype] * bar_fetch_period / 24 / 60 / 60) + 2)).strftime("%Y-%m-%d")
+    else:
+        start = (datetime.datetime.today() - datetime.timedelta(
+            days=int(k_renew_interval_second[ktype] * bar_fetch_period / 24 / 60 / 60) + 2)).strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
 
@@ -687,17 +693,18 @@ def _get_trd_ctx(host="127.0.0.1", port=111111, market=['US','HK','AG']):
     trd_ctx_hk = None
     trd_ctx_cn = None
 
-    if 'US' in market:
+    if 'US' in market or 'US_HOLD' in market:
         trd_ctx_us = OpenUSTradeContext(host=host, port=port)
 
-    if 'HK' in market:
+    if 'HK' in market or 'HK_HOLD' in market:
         trd_ctx_hk = OpenHKTradeContext(host=host, port=port)
 
-    if 'AG' in market:
+    if 'AG' in market or 'AG_HOLD' in market:
         trd_ctx_cn = OpenCNTradeContext(host=host, port=port)
 
-    if market.__len__() > 0 and ('US' not in market) and ('HK' not in market) and ('AG' not in market):
-        logging.fatal(__file__ + " " + "unknown market, support (US,HK,AG). get " + str(market))
+    if market.__len__() > 0 and ('US' not in market) and ('HK' not in market) and ('AG' not in market) \
+            and ('US_HOLD' not in market) and ('HK_HOLD' not in market) and ('AG_HOLD' not in market):
+        logging.fatal(__file__ + " " + "unknown market, support (US,HK,AG, US_HOLD, HK_HOLD, AG_HOLD). get " + str(market))
         raise Exception("unknown market, support (US,HK,AG). get " + str(market))
 
     return(
@@ -737,7 +744,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
     df_order_list = pd.DataFrame()
     df_position_list = pd.DataFrame()
 
-    if 'HK' in market:
+    if 'HK' in market or 'HK_HOLD' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_hk = trd_ctx['trd_ctx_hk'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -753,7 +760,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         else:
             df_position_list = df_position_list.append(df_position_list_hk).reset_index().drop('index', axis=1)
 
-    if 'US' in market:
+    if 'US' in market or 'US_HOLD' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_us = trd_ctx['trd_ctx_us'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -770,7 +777,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
             df_position_list = df_position_list.append(df_position_list_us).reset_index().drop('index', axis=1)
 
     # if 'SH' in mkt or 'SZ' in mkt or 'AG' in mkt:
-    if 'AG' in market:
+    if 'AG' in market or 'AG_HOLD' in market:
         #checking orders(in queue) 查询今日订单
         ret, df_order_list_cn = trd_ctx['trd_ctx_cn'].order_list_query(trd_env=trd_env)
         if ret != RET_OK:
@@ -940,15 +947,23 @@ def get_chk_code_list(market,debug):
 
     rtn_list=[]
 
-    hold = "HOLD" in market
+    # hold = "HOLD" in market
 
     if 'US' in market:
-        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=hold)
+        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=False)
     if 'HK' in market:
-        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=hold)
+        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=False)
     if 'AG' in market:
-        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=hold)
-        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=hold)
+        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=False)
+        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=False)
+
+    if 'US_HOLD' in market:
+        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=True)
+    if 'HK_HOLD' in market:
+        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=True)
+    if 'AG_HOLD' in market:
+        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=True)
+        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=True)
 
     rtn_list = list(set(rtn_list))
     return(rtn_list)
@@ -1038,8 +1053,8 @@ def get_market_state(host='127.0.0.1',port=11111):
 
 def get_avilable_market(host,port,debug,market_str="US_HK_AG"):
     # logging.info("market before proceeding: "+market_str)
-    market = market_str.split("_")
-    market.remove('HOLD')
+    market = market_str.split("-")
+    # market.remove('HOLD')
     mkt_state = get_market_state(host=host, port=port)
     if (not debug) and ('AG' in market) and ( mkt_state['ag_state'] in ['CLOSED','REST',]):
         market.remove('AG')
@@ -1244,7 +1259,7 @@ def main():
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
     parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("--check_high_volume", action="store_true", default=False, dest="check_high_volume", help="check high volume based on 1minute bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
-    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US_HK_AG]")
+    parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US-HK-AG|US_HOLD-HK_HOLD-AG_HOLD]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
     parser.add_option("--ma_period_short", default="21", dest="ma_period_short",type=int, help="MA Period short")
