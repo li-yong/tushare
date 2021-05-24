@@ -14,7 +14,7 @@ import datetime
 import pytz
 import logging
 import traceback
-
+import math
 
 from optparse import OptionParser
 
@@ -51,7 +51,9 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         market,
         tri_bar_ma,
         tri_ma_ma,
-        tri_abnormal_price
+        tri_abnormal_price,
+        buy_only,
+        sell_only,
     ):
 
 
@@ -267,12 +269,11 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['short'][ktype_short]['atr_14'] > 0:
 
-        if tri_abnormal_price and p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
+        if (not sell_only) and tri_abnormal_price and p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
             logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
-
-        if tri_abnormal_price and p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
+        if (not buy_only) and tri_abnormal_price and p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
             logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
@@ -290,6 +291,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
+        elif buy_only:
+            logging.info("not sell as specified buy_only.")
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 100 -r 1")
@@ -307,6 +310,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info("will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_sell_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info("will not place order. last sell order in 180 sec "+str(last_sell_create_time_to_now.seconds))
+        elif buy_only:
+            logging.info("not sell as specified buy_only.")
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 100 -r 1")
@@ -324,6 +329,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+        elif sell_only:
+            logging.info("not buy as specified sell_only.")
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 100 -r 1")
@@ -342,6 +349,8 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
             logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
             logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+        elif sell_only:
+            logging.info("not buy as specified sell_only.")
         else:
             # beep, last 1sec, repeat 5 times.
             os.system("beep -f 555 -l 100 -r 1")
@@ -565,12 +574,12 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
 
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
-    if datetime.datetime.today().isoweekday() == 1 : #Monday
+    if datetime.datetime.today().isoweekday() == 1 : #Monday, suppose one day have 4 trading hours
         start = (datetime.datetime.today() - datetime.timedelta(
-            days= 2 + int(k_renew_interval_second[ktype] * bar_fetch_period / 24 / 60 / 60) + 2)).strftime("%Y-%m-%d")
+            days=  math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
     else:
         start = (datetime.datetime.today() - datetime.timedelta(
-            days=int(k_renew_interval_second[ktype] * bar_fetch_period / 24 / 60 / 60) + 2)).strftime("%Y-%m-%d")
+            days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60))).strftime("%Y-%m-%d")
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
 
@@ -1270,6 +1279,8 @@ def main():
     parser.add_option("--tri_bar_ma", action="store_true", default=False, dest="tri_bar_ma", help="trigger buy/sell based on Bar close Across MA_short")
     parser.add_option("--tri_ma_ma", action="store_true", default=True, dest="tri_ma_ma", help="trigger buy/sell based on MA_short Across MA_long")
     parser.add_option("--tri_abnormal_price", action="store_true", default=True, dest="tri_abnormal_price", help="trigger buy/sell when price change in two check > ATR14 D")
+    parser.add_option("--buy_only", action="store_true", default=False, dest="buy_only", help="only buy")
+    parser.add_option("--sell_only", action="store_true", default=False, dest="sell_only", help="only sell")
 
 
     (options, args) = parser.parse_args()
@@ -1472,6 +1483,8 @@ def main():
                     tri_bar_ma = tri_bar_ma,
                     tri_ma_ma = tri_ma_ma,
                     tri_abnormal_price = tri_abnormal_price,
+                    buy_only=options.buy_only,
+                    sell_only=options.sell_only,
                 )
             except Exception:
                 for k in trd_ctx_unlocked.keys():
