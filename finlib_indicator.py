@@ -1380,7 +1380,7 @@ class Finlib_indicator:
         self.tv_wait_page_to_ready(browser, timeout=10)
 
         # obj_m =   # get element again. otherwise staled obj
-        while browser.find_element_by_css_selector('[data-name="screener-markets"]').get_attribute('alt').upper() != market:
+        while browser.find_element_by_css_selector('[data-name="screener-markets"]').find_element_by_xpath('img').get_attribute('alt').upper() != market:
             logging.warning("market has not set to " + market)
             time.sleep(1)
             # obj_m = browser.find_element_by_xpath(xp_m) #refresh
@@ -1532,6 +1532,7 @@ class Finlib_indicator:
         prefs["profile.default_content_settings.popups"] = 0
         prefs["download.default_directory"] = os.getenv('CHROME_TMP_DOWNLOAD_DIR')
         options.add_experimental_option("prefs", prefs)
+        options.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
         browser = webdriver.Chrome(options=options)
 
         return browser
