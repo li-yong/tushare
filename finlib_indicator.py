@@ -1236,14 +1236,15 @@ class Finlib_indicator:
         return(browser)
 
     def tv_screener_set_interval(self, browser, interval='1D'):
-        xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
+        # xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
+        obj_interval = browser.find_element_by_css_selector('[data-name="screener-time-interval"]')
 
-        try:
-            obj_interval = browser.find_element_by_xpath(xp_interval)
-        except:
-            logging.warning("get interval error, "+xp_interval+" retry in 10sec")
-            time.sleep(10)
-            obj_cf = browser.find_element_by_xpath(xp_interval)
+        # try:
+        #     obj_interval = browser.find_element_by_xpath(xp_interval)
+        # except:
+        #     logging.warning("get interval error, "+xp_interval+" retry in 10sec")
+        #     time.sleep(10)
+        #     obj_cf = browser.find_element_by_xpath(xp_interval)
 
         if obj_interval.text == interval:
             logging.info("interval already be " + interval)
@@ -1258,7 +1259,7 @@ class Finlib_indicator:
                 i.click()
 
         time.sleep(1)
-        while obj_interval.text != interval:
+        while browser.find_element_by_css_selector('[data-name="screener-time-interval"]').text != interval:
             logging.warning("interval has not set to " + interval)
             time.sleep(1)
         logging.info("interval has set to " + interval)
@@ -1281,19 +1282,25 @@ class Finlib_indicator:
         return()
 
     def tv_screener_set_column_field(self, browser, column_filed='MA_CROSS'):
-        xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
+        # xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
 
-        try:
-            obj_cf = browser.find_element_by_xpath(xp_cf)
-        except:
-            logging.warning("get column_filed error, "+xp_cf+" retry in 10sec")
-            time.sleep(10)
+        obj_cf = browser.find_element_by_css_selector('[data-name="screener-field-sets"]')
 
-        if browser.find_element_by_xpath(xp_cf).text == column_filed:
+        #test
+
+        # try:
+        #     obj_cf = browser.find_element_by_xpath(xp_cf)
+        # except:
+        #     logging.warning("get column_filed error, "+xp_cf+" retry in 10sec")
+        #     time.sleep(10)
+
+        # if browser.find_element_by_xpath(xp_cf).text == column_filed:
+        if obj_cf.text == column_filed:
             logging.info("column field already be " + column_filed)
             return(browser)
 
-        browser.find_element_by_xpath(xp_cf).click()
+        # browser.find_element_by_xpath(xp_cf).click()
+        obj_cf.click()
         self.tv_wait_page_to_ready(browser, timeout=10)
 
         column_layout_list = browser.find_elements_by_class_name('js-field-set-name')
@@ -1317,15 +1324,16 @@ class Finlib_indicator:
         if market in ['SH', 'SZ', 'CN']:
             market = 'CN'
 
-        xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
-        try:
-            obj_m = browser.find_element_by_xpath(xp_m)
-        except:
-            logging.warning("get market error, "+xp_m+" retry in 10sec")
-            time.sleep(10)
-            obj_cf = browser.find_element_by_xpath(xp_m)
+        # xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
+        # try:
+            # obj_m = browser.find_element_by_xpath(xp_m)
+        obj_m = browser.find_element_by_css_selector('[data-name="screener-markets"]')
+        # except:
+            # logging.warning("get market error, "+xp_m+" retry in 10sec")
+            # time.sleep(10)
+            # obj_cf = browser.find_element_by_xpath(xp_m)
 
-        if obj_m.get_attribute('alt').upper() == market:
+        if obj_m.find_element_by_xpath('img').get_attribute('alt').upper() == market:
             logging.info("market already be " + market)
             return(browser)
 
@@ -1372,7 +1380,7 @@ class Finlib_indicator:
         self.tv_wait_page_to_ready(browser, timeout=10)
 
         # obj_m =   # get element again. otherwise staled obj
-        while browser.find_element_by_xpath(xp_m).get_attribute('alt').upper() != market:
+        while browser.find_element_by_css_selector('[data-name="screener-markets"]').get_attribute('alt').upper() != market:
             logging.warning("market has not set to " + market)
             time.sleep(1)
             # obj_m = browser.find_element_by_xpath(xp_m) #refresh
@@ -1380,13 +1388,15 @@ class Finlib_indicator:
         return(browser)
 
     def tv_screener_set_filter(self, browser, filter):
-        xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
-        try:
-            obj_f = browser.find_element_by_xpath(xp_f)
-        except:
-            logging.warning("get filter error, "+xp_f+" retry in 10sec")
-            time.sleep(10)
-            obj_cf = browser.find_element_by_xpath(xp_f)
+        # xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
+        obj_f = browser.find_element_by_css_selector('[data-name="screener-filter-sets"]')
+
+        # try:
+        #     obj_f = browser.find_element_by_xpath(xp_f)
+        # except:
+        #     logging.warning("get filter error, "+xp_f+" retry in 10sec")
+        #     time.sleep(10)
+        #     obj_cf = browser.find_element_by_xpath(xp_f)
 
         if obj_f.text == filter:
             logging.info("filter already be " + filter)
@@ -1407,7 +1417,7 @@ class Finlib_indicator:
 
 
         time.sleep(5)  # waiting filter result, sometime slow.
-        while obj_f.text != filter:
+        while browser.find_element_by_css_selector('[data-name="screener-filter-sets"]').text != filter:
             logging.warning("filter has not set to " + filter)
             time.sleep(1)
 

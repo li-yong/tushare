@@ -1219,7 +1219,24 @@ def check_high_volume(host,port,market,debug,ndays=3):
     print(finlib.Finlib().pprint(df=df_rtn))
     logging.info("high volume stocks list save to "+csv+" len "+str(df_rtn.__len__()))
     return(df_rtn)
-        
+
+
+def close_all_positions(host, port,trd_ctx, market,trd_env, debug):
+    _po = get_persition_and_order(trd_ctx,market,trd_env)['position_list']
+    code_list = _po['code'].to_list()
+
+    _price = get_current_price(host=host, port=port, code_list=code_list)
+
+    for code in code_list:
+        qty = _po[_po['code'] == code]['can_sell_qty'].values[0]
+        price = _price[_price['code'] == code]['low_price'].values[0]
+        logging.info("close the postion "+code)
+        place_sell_limit_order(trd_ctx=trd_ctx, code=code,price=price,qty=qty, trd_env=trd_env)
+        #此协议请求太频繁，触发了频率限制，请稍后再试
+        #每 30 秒内最多请求 15 次下单接口，且连续两次请求的间隔不可小于 0.02 秒
+        time.sleep(30/15)
+    return()
+
 
 
 def init_dict_code(dict_code,code,ktype_short, ktype_long,ma_period_short,ma_period_long, df_tv_all):
@@ -1281,6 +1298,7 @@ def main():
     parser.add_option("--tri_abnormal_price", action="store_true", default=True, dest="tri_abnormal_price", help="trigger buy/sell when price change in two check > ATR14 D")
     parser.add_option("--buy_only", action="store_true", default=False, dest="buy_only", help="only buy")
     parser.add_option("--sell_only", action="store_true", default=False, dest="sell_only", help="only sell")
+    parser.add_option("--close_all_positions", action="store_true", default=False, dest="close_all_positions", help="close_all_positions")
 
 
     (options, args) = parser.parse_args()
@@ -1325,8 +1343,6 @@ def main():
         check_high_volume(host=host,port=port,market=options.market, debug=options.debug,ndays=5)
         exit()
 
-
-
     market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
     get_price_code_list = get_chk_code_list(market=market,debug=options.debug)
 
@@ -1356,6 +1372,15 @@ def main():
     # df_stock_basicinfo = get_stock_basicinfo(host=host, port=port, stock_list=get_price_code_list, market=market, securityType=SecurityType.STOCK)
 
     trd_ctx_unlocked = _unlock_trd_ctx(trd_ctx=_get_trd_ctx(host=host, port=port,market=market), pwd_unlock=pwd_unlock)
+
+    # Close all open positions, for Simulator Env only
+    if options.close_all_positions:
+        if options.real:
+            logging.fatal("Not allowed to close ALL positions on REAL account.")
+        else:
+            close_all_positions(host=host, port=port, trd_ctx=trd_ctx_unlocked,
+                                market=options.market, trd_env=TrdEnv.SIMULATE, debug=options.debug)
+        exit()
 
     #populate code specification dictionary
     dict_code = {}
