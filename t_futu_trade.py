@@ -573,10 +573,12 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         bar_fetch_period = ma_period
 
     end = datetime.datetime.today().strftime("%Y-%m-%d")
-    start = (datetime.datetime.today() - datetime.timedelta(
-        days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
 
-    # if datetime.datetime.today().isoweekday() == 1 : #Monday, suppose one day have 4 trading hours
+    # suppose one day have 4 trading hours, 5 tradings days in a week
+    start = (datetime.datetime.today() - datetime.timedelta(
+        days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period * 7/ 5 / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
+
+    # if datetime.datetime.today().isoweekday() == 1 : #Monday, suppose one day have 4 trading hours, 5 tradings days in a week
     #     start = (datetime.datetime.today() - datetime.timedelta(
     #         days=  math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
     # else:
