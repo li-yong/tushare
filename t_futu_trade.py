@@ -8,6 +8,8 @@ import re
 import pandas as pd
 # import time
 import tabulate
+
+import constant
 import finlib
 import finlib_indicator
 import datetime
@@ -42,6 +44,7 @@ def pprint(df):
 
 def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
         code,
+        name,
         k_renew_interval_second,
         simulator,
         trd_ctx_unlocked,
@@ -144,21 +147,21 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     if last_buy_create_time_to_now.seconds <= 60*60*4 or last_sell_create_time_to_now.seconds <= 60*60*4: # 4 hours
         if not simulator:
-            logging.info(__file__ + " " + "code "+code+" placed an order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " " + "code "+code+" "+name+ " placed an order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " lastest order" + last_order_string)
             do_not_place_order = True
-            do_not_place_order_reason = "code " + code + ", REAL env, placed order in 4 hours"
+            do_not_place_order_reason = "code " + code+" "+name + ", REAL env, placed order in 4 hours"
             return()
 
         elif simulator and (not last_order.empty) and (last_order.order_status[0] not in ('FILLED_ALL','FILLED_PART','CANCELLED_ALL')):
-            logging.info(__file__ + " " + "code "+code+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
+            logging.info(__file__ + " " + "code "+code+" "+name+" SIMULATOR but has no UNfilled order in 4 hours, will not create more orders. Abort further processing")
             logging.info(__file__ + " " + "latest order:\n"+last_order_string)
             do_not_place_order = True
-            do_not_place_order_reason = "code " + code + ", SIM env, UNfilled order in 4 hours"
+            do_not_place_order_reason = "code " + code+" "+name + ", SIM env, UNfilled order in 4 hours"
             return()
 
         elif simulator:
-            logging.info(__file__ + " " + "code "+code+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
+            logging.info(__file__ + " " + "code "+code+" "+name+" SIMULATOR, ignore orders created in 4 hours. REAL will abort here.")
 
 
     ###################
@@ -258,23 +261,30 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     else:
         symbol_Bid_lastClose = ">"
 
+    if ma_short > ma_long:
+        symbol_ma_short_long = constant.TREND_UP
+    elif ma_short == ma_long:
+        symbol_ma_short_long = constant.NO_TREND
+    else:
+        symbol_ma_short_long = constant.TREND_DOWN
+
     # Will not run to this now. p_ask will be p_last if NA/0
     # if p_ask == 'N/A' or p_ask == 0:
     #     logging.info(__file__ + " " + "code " + code + ". ask price is "+ str(p_ask)+" . abort further processing.")
     #     return()
     p_delta = dict_code[code]['p_last'] - dict_code[code]['p_last_last']
 
-    logging.info(__file__ +  " " + code + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['short'][ktype_short]['atr_14'],2)))
+    logging.info(__file__ +  " " + code+" "+name + " p_delta " +str(round(p_delta,2))+ " atr_14 " + str(round(dict_code[code]['short'][ktype_short]['atr_14'],2)))
 
 
     if dict_code[code]['p_last_last'] > 0 and dict_code[code]['p_last'] > 0 and dict_code[code]['short'][ktype_short]['atr_14'] > 0:
 
         if (not sell_only) and tri_abnormal_price and p_delta >0 and p_delta > dict_code[code]['short'][ktype_short]['atr_14']:
-            logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
+            logging.info(__file__ +  " " + code+" "+name + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price SOAR !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_buy_limit_order(trd_ctx=trd_ctx_unlocked, price=p_bid, code=code, qty=stock_lot_size,trd_env=trd_env)
 
         if (not buy_only) and tri_abnormal_price and p_delta < 0 and abs(p_delta) > dict_code[code]['short'][ktype_short]['atr_14']:
-            logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
+            logging.info(__file__ +  " " + code+" "+name + " "+ str(time_current)+" last_price "+ str(p_current)+ ". Abnormal Price DROP !!  p_delta "+ str(p_delta)+" atr_14 "+ str(dict_code[code]['short'][ktype_short]['atr_14']))
             place_sell_limit_order(trd_ctx=trd_ctx_unlocked, price=p_ask, code=code, qty=sell_slot_size_1_of_4_position,
                                    trd_env=trd_env)
 
@@ -283,7 +293,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # SELL Condition: ASK cross down short MA.  a<><  a<=< . ask: minimal price seller willing to offer.
     if tri_bar_ma and (ma_short*(1-range) > p_ask > 0 ) and (bma_short['ma_b0'] > bma_short['close_b0'] >0) and (bma_short['close_b1'] > bma_short['ma_b1']):
-        logging.info(__file__ +  " " + code + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
+        logging.info(__file__ +  " " + code+" "+name + " "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_ask " + str(p_ask) + " across DOWN "+"MA_"+ktype_short+"_"+str(ma_period_short) + " "+str(ma_short)
                      + ". proceeding to SELL"
                      + ".  Previous "+str(bma_short['ma_b0_time_key']) +" close "+str(bma_short['close_b0']) + " ma "+str(bma_short['ma_b0'])
                      )
@@ -301,7 +311,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     # SELL Condition: short MA across down long MA.
     if tri_ma_ma and (bma_short['ma_b1'] >= bma_long['ma_b1']  > 0) and ( bma_long['ma_b0'] > bma_short['ma_b0']):
-        logging.info(__file__ +  " " + code +" ALERT! Fast MA across DOWN Slow MA. proceeding to SELL. "
+        logging.info(__file__ +  " " + code+" "+name +" ALERT! Fast MA across DOWN Slow MA. proceeding to SELL. "
                      +" slow "+ktype_long+"_"+str(ma_period_long) +" "+ str(bma_long['ma_b0'])
                      +", fast "+ktype_short+"_"+str(ma_period_short) +" "+ str(bma_short['ma_b0'])
                      +". "+ str(time_current)+" last_price " + str(p_current)
@@ -319,16 +329,16 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                                    trd_env=trd_env)
 
     # BUY Condition: short MA across up long MA.
-    if tri_ma_ma and (bma_long['ma_b1'] >= bma_short['ma_b1']  > 0) and ( bma_short['ma_b0'] > bma_long['ma_b0']):
-        logging.info(__file__ +  " " + code +" ALERT! Fast MA across UP Slow MA. proceeding to BUY. "
+    if tri_ma_ma and (bma_long['ma_b1'] >= bma_short['ma_b1'] > 0) and ( bma_short['ma_b0'] > bma_long['ma_b0']):
+        logging.info(__file__ +  " " + code+" "+name +" ALERT! Fast MA across UP Slow MA. proceeding to BUY. "
                      +" slow "+ktype_long+"_"+str(ma_period_long) +" "+ str(bma_long['ma_b0'])
                      +", fast "+ktype_short+"_"+str(ma_period_short) +" "+ str(bma_short['ma_b0'])
                      +". "+ str(time_current)+" last_price " + str(p_current)
                      )
         if do_not_place_order:
-            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+            logging.info(__file__ + " " + "code " + code+" "+name +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
-            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+            logging.info(__file__ + " " + "code " + code+" "+name +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         elif sell_only:
             logging.info("not buy as specified sell_only.")
         else:
@@ -341,14 +351,14 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     if tri_bar_ma and (p_bid > ma_short*(1+range) > 0) and (bma_short['close_b0'] >= bma_short['ma_b0']  > 0) and ( bma_short['ma_b1'] > bma_short['close_b1']):
 
         logging.info(__file__ + " "
-                     + code +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period_short) +" "+ str(ma_short)
+                     + code+" "+name +" "+ str(time_current)+" last_price "+ str(p_current)+ ". ALERT! p_bid " + str(p_bid) + " across UP "+"MA_"+ktype_short+"_"+str(ma_period_short) +" "+ str(ma_short)
                      + ". proceeding to BUY"
                      + ".  Previous "+str(bma_short['ma_b0_time_key']) +" close "+str(bma_short['ma_b0'] ) + " ma "+str(bma_short['ma_b0'])
                      )
         if do_not_place_order:
-            logging.info(__file__ + " " + "code " + code +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
+            logging.info(__file__ + " " + "code " + code+" "+name +" will not place order. do_not_place_order "+str(do_not_place_order)+", reason "+str(do_not_place_order_reason))
         elif last_buy_create_time_to_now.seconds < k_renew_interval_second[ktype_short]:
-            logging.info(__file__ + " " + "code " + code +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
+            logging.info(__file__ + " " + "code " + code+" "+name +" will not place order. last buy order in 180 sec "+str(last_buy_create_time_to_now.seconds))
         elif sell_only:
             logging.info("not buy as specified sell_only.")
         else:
@@ -359,9 +369,12 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
 
     logging.info('*************************************')
 
+
     logging.info(
-        __file__ + " " + code + " this_ck_done. "
-        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype_short+"_"+str(ma_period_short)+" " + str(ma_short)+".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
+        __file__ + " this_ck_done. " + code+" "+name + " "+symbol_ma_short_long+" "
+        +  str(time_current)+" last_price "+ str(p_current)+", MA_"+ktype_short+"_"+str(ma_period_short)+" " + str(ma_short)
+        + ", MA_" + ktype_long + "_" + str(ma_period_long) + " " + str(ma_long)
+        +".  bid "+ str(p_bid)+ ", ask "+ str(p_ask)
         + ". ask "+symbol_Ask_ma +  symbol_Ask_lastClose
         + ", bid "+symbol_Bid_ma +  symbol_Bid_lastClose
         + ", close_ma_prev_vs_current "+sybmol_close_ma_previous +  sybmol_close_ma
@@ -1434,9 +1447,14 @@ def main():
 
 
         get_price_code_list = get_chk_code_list(market=market, debug=options.debug)
+        df_name = finlib.Finlib().add_name_to_futu_code_list(get_price_code_list)
+
         df_live_price = get_current_price(host=host, port=port, code_list=get_price_code_list)
 
+
         for code in get_price_code_list:
+            name = df_name[df_name['code_ft']==code]['name'].values[0]
+
             if code not in dict_code.keys():
                 dict_code = init_dict_code(dict_code, code,ktype_short, ktype_long,ma_period_short,ma_period_long,df_tv_all)
                 logging.info("initialized code "+code+ " to dict_code")
@@ -1503,6 +1521,7 @@ def main():
             try:
                 buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
                     code=code,
+                    name=name,
                     k_renew_interval_second=k_renew_interval_second,
                     simulator=simulator,
                     trd_ctx_unlocked=trd_ctx_unlocked,

@@ -4997,6 +4997,28 @@ class Finlib:
 
         return(df)
 
+    def add_name_to_futu_code_list(self,ft_code_list):
+
+        _df_name = pd.DataFrame({"code_ft":ft_code_list})
+
+        _df_name_ag = _df_name[_df_name['code_ft'].str.match('SH.') | _df_name['code_ft'].str.match('SZ.')]
+        _df_name_ag['code'] = _df_name_ag['code_ft']
+        _df_name_ag = self.remove_market_from_tscode(_df_name_ag)
+        _df_name_ag = self.add_market_to_code(_df_name_ag)
+        _df_name_ag = self.add_stock_name_to_df(_df_name_ag)
+
+        _df_name_hk = _df_name[_df_name['code_ft'].str.match('HK.')]
+        _df_name_hk['code'] = _df_name_hk['code_ft'].apply(lambda _d: _d.split('.')[1])
+        _df_name_hk = self.add_stock_name_to_df_us_hk(df=_df_name_hk, market='HK')
+
+        _df_name_us = _df_name[_df_name['code_ft'].str.match('US.')]
+        _df_name_us['code'] = _df_name_us['code_ft'].apply(lambda _d: _d.split('.')[1])
+        _df_name_us = self.add_stock_name_to_df_us_hk(df=_df_name_us, market='US')
+
+        _df_name = _df_name_hk.append(_df_name_ag).append(_df_name_us)
+
+        return(_df_name)
+
 
     def add_stock_name_to_df_us_hk(self, df, market='US'):
         market = market.upper()

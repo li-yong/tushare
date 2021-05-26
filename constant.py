@@ -122,6 +122,10 @@ MA_KONG_TOU_PAI_LIE_N_days = "ma kong tou pai lie n days"
 MA_LAST_DUO_TOU_PAI_LIE_N_days = "current is ma ktpl, last dtpl is n days before "
 
 
+NO_TREND = "NO_TREND"
+TREND_UP = "TREND_UP"
+TREND_DOWN = "TREND_DOWN"
+
 
 SHORT_TREND_UP = "short trend up"
 SHORT_TREND_DOWN = "short trend down"
