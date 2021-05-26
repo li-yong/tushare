@@ -1736,8 +1736,10 @@ class Finlib_indicator:
         df = finlib.Finlib().ts_code_to_code(df=df)
         df = finlib.Finlib().add_stock_name_to_df(df=df)
 
-        today_df = finlib.Finlib().regular_read_csv_to_stdard_df(
-            data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210511.csv')
+        last_trading_day = finlib.Finlib().get_last_trading_day()
+
+        # today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210511.csv')
+        today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_'+last_trading_day+'.csv')
         today_df = today_df[['code', 'close']]
         df = pd.merge(df, today_df, on=['code'], how='inner')
 

@@ -178,7 +178,7 @@ def tv_filter():
 
     print(1)
 
-# graham_intrinsic_value()
+graham_intrinsic_value()
 evaluate_grid(market='AG')
 
 #########################################

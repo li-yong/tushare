@@ -573,13 +573,16 @@ def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5,
         bar_fetch_period = ma_period
 
     end = datetime.datetime.today().strftime("%Y-%m-%d")
+    start = (datetime.datetime.today() - datetime.timedelta(
+        days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
 
-    if datetime.datetime.today().isoweekday() == 1 : #Monday, suppose one day have 4 trading hours
-        start = (datetime.datetime.today() - datetime.timedelta(
-            days=  math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
-    else:
-        start = (datetime.datetime.today() - datetime.timedelta(
-            days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60))).strftime("%Y-%m-%d")
+    # if datetime.datetime.today().isoweekday() == 1 : #Monday, suppose one day have 4 trading hours
+    #     start = (datetime.datetime.today() - datetime.timedelta(
+    #         days=  math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60) + 2)).strftime("%Y-%m-%d")
+    # else:
+    #     start = (datetime.datetime.today() - datetime.timedelta(
+    #         days=math.ceil(k_renew_interval_second[ktype] * bar_fetch_period / 4 / 60 / 60))).strftime("%Y-%m-%d")
+
 
     # data = get_history_bar(host, port, code=code, start=start, end=end, ktype=ktype, extended_time=False)
 

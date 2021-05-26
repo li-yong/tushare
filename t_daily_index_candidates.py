@@ -417,7 +417,6 @@ def fetch_index_tradingview_selenium():
 
    # have to fetch in US->CN->HK sequence. only support scroll down. not up.
 
-
     for interval in ['1D','1M', '1W']:
         market = 'US'
         finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval=interval,market='US', filter='ALL_of_The_market_US' )
