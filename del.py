@@ -199,7 +199,7 @@ def tv_filter():
     print(1)
 
 
-grep_garbage()
+grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 graham_intrinsic_value()
 evaluate_grid(market='AG')
 
