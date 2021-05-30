@@ -1712,8 +1712,8 @@ class Finlib_indicator:
 
         csv = "/home/ryan/DATA/result/graham_intrinsic_value.csv"
 
-        df_last_n_years = df0[df0['end_date'].isin(
-            [20201231, 20191231, 20181231, 20171231, 20161231, 20151231, 20141231, 20131231, 20121231, 20111231])]
+        # df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231, 20171231, 20161231, 20151231, 20141231, 20131231, 20121231, 20111231])]
+        df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231])]
 
         # #test start
         # df_test = df_last_n_years[df_last_n_years['ts_code']=="300146.SZ"]
@@ -1726,7 +1726,6 @@ class Finlib_indicator:
         # df = df0[df0['end_date']==20201231]
         df = df_last_n_years
 
-        df[['quick_ratio']].describe()
         df = df.sort_values('quick_ratio', ascending=False)[
             ['ts_code', 'end_date', 'quick_ratio', 'basic_eps_yoy', 'eps']].reset_index().drop('index', axis=1)
         df = df[df['eps'] > 0]
@@ -1754,9 +1753,10 @@ class Finlib_indicator:
                                            df=finlib.Finlib().load_fund_n_years()))
         df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
 
-        print(finlib.Finlib().pprint(df.head(20)))
+        # print(finlib.Finlib().pprint(df.head(20)))
 
-        df_c = finlib.Finlib().remove_garbage(df=df)
+        # df_c = finlib.Finlib().remove_garbage(df=df)
+        df_c = df
         df_c = finlib.Finlib().df_format_column(df=df_c, precision='%.1e')
 
         print(finlib.Finlib().pprint(df_c.head(20)))

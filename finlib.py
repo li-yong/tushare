@@ -3427,17 +3427,22 @@ class Finlib:
             logging.info("input df is empty, not able to deduct df_sub.")
             return(df)
 
+        if byreason=='':
+            byreason = "no_reason"
+
         df_init_len = df.__len__()
+
+        byreason = byreason.replace(" ", "_")
 
 
         df = df.reset_index().drop('index', axis=1)
         df_sub = df_sub.reset_index().drop('index', axis=1)
 
         dir = "/home/ryan/DATA/result/garbage"
-        if byreason=='':
-            gar_csv = dir+"/"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
-        else:
-            gar_csv = dir+"/"+byreason+"_"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
+
+        gar_csv = dir+"/"+byreason+"_"+datetime.today().strftime("%Y%m%d_%H%M%S")+".csv"
+        sl_csv = dir+"/"+"latest_"+byreason+".csv"
+
 
         if not os.path.isdir(dir):
             os.mkdir(dir)
@@ -3445,7 +3450,10 @@ class Finlib:
         df_sub.to_csv(gar_csv, encoding='UTF-8', index=False)
         logging.info("garbage df saved to "+gar_csv)
 
-
+        if os.path.lexists(sl_csv):
+            os.unlink(sl_csv)
+        os.symlink(gar_csv, sl_csv)
+        logging.info("make symbol link " + sl_csv + " --> " + gar_csv)
 
         s_all = df['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
         s_sub = df_sub['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
@@ -3460,7 +3468,7 @@ class Finlib:
         df = df.reset_index().drop('index', axis=1)
 
         df_len = df.__len__()
-        print(self.pprint(df_sub))
+        # print(self.pprint(df_sub))
         logging.info(str(df_init_len)+"->"+str(df_len)+", "+str(df_init_len - df_len) + " shares were removed by "+byreason)
         return(df)
 
