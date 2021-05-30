@@ -25,8 +25,28 @@ import akshare as ak
 
 
 ########################### graham instrinsic value
+def grep_garbage():
+    #output saved to /home/ryan/DATA/result/garbage/*.csv
+    df = finlib.Finlib().get_A_stock_instrment()
+
+    finlib.Finlib()._remove_garbage_beneish_low_rate(df, m_score=-1)
+    finlib.Finlib()._remove_garbage_change_named_stock(df, n_year=3)
+    finlib.Finlib()._remove_garbage_none_standard_audit_statement(df, n_year=3)
+    finlib.Finlib()._remove_garbage_high_pledge_ration(df, statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
+    finlib.Finlib()._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
+    finlib.Finlib()._remove_garbage_by_fund_n_years(df, n_years=1)  #esp < 0.1
+
+    finlib.Finlib()._remove_garbage_rpt_s1(df, code_field_name='code', code_format='C2D6')
+    finlib.Finlib()._remove_garbage_by_profit_on_market_days_st(df)
+
+
+
 def graham_intrinsic_value():
-    finlib_indicator.Finlib_indicator().graham_intrinsic_value()
+    df = finlib_indicator.Finlib_indicator().graham_intrinsic_value()
+    df = df[df['eps'] > 0] #基本每股收益
+    df = df[df['basic_eps_yoy'] > 0] #基本每股收益同比增长率(%)
+
+    df_c = finlib.Finlib().remove_garbage(df=df)
 
 ########################### Evaluate tr/pe ratio
 def evaluate_tr_pe():
@@ -178,6 +198,8 @@ def tv_filter():
 
     print(1)
 
+
+grep_garbage()
 graham_intrinsic_value()
 evaluate_grid(market='AG')
 

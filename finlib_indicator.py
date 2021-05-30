@@ -1728,8 +1728,7 @@ class Finlib_indicator:
 
         df = df.sort_values('quick_ratio', ascending=False)[
             ['ts_code', 'end_date', 'quick_ratio', 'basic_eps_yoy', 'eps']].reset_index().drop('index', axis=1)
-        df = df[df['eps'] > 0]
-        df = df[df['basic_eps_yoy'] > 0]
+
 
         df['inner_value'] = round(df['eps'] * (2 * df['basic_eps_yoy'] + 8.5) * 4.4 / 3.78, 2)
         df = finlib.Finlib().ts_code_to_code(df=df)

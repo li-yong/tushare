@@ -3354,12 +3354,12 @@ class Finlib:
         df_mean = b.groupby('code').mean()
         df_mean_rank = df_mean.rank(pct=True).reset_index()
 
-        df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1)
-                              | (df_mean_rank['roe'] <= 0.3)
-                              | (df_mean_rank['fcff'] <= 0.3)
-                              | (df_mean_rank['ocf_to_profit'] <= 0.3)
-                              | (df_mean_rank['grossprofit_margin'] <= 0.1)
-                              | (df_mean_rank['debt_to_assets'] >= 0.3)
+        df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1) #基本每股收益
+                              | (df_mean_rank['roe'] <= 0.1) #净资产收益率
+                              | (df_mean_rank['fcff'] <= 0.1) #企业自由现金流量
+                              | (df_mean_rank['ocf_to_profit'] <= 0.1) #经营活动产生的现金流量净额／营业利润
+                              | (df_mean_rank['grossprofit_margin'] <= 0.1) #销售毛利率
+                              | (df_mean_rank['debt_to_assets'] >= 0.6) #资产负债率
                               ]
 
         df_rtn = self._df_sub_by_code(df=df, df_sub=df_gar,byreason='_remove_garbage_by_fund_n_years')
@@ -3434,7 +3434,6 @@ class Finlib:
 
         byreason = byreason.replace(" ", "_")
 
-
         df = df.reset_index().drop('index', axis=1)
         df_sub = df_sub.reset_index().drop('index', axis=1)
 
@@ -3453,7 +3452,7 @@ class Finlib:
         if os.path.lexists(sl_csv):
             os.unlink(sl_csv)
         os.symlink(gar_csv, sl_csv)
-        logging.info("make symbol link " + sl_csv + " --> " + gar_csv)
+        logging.info("made symbol link " + sl_csv + " --> " + gar_csv)
 
         s_all = df['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
         s_sub = df_sub['code'].drop_duplicates().reset_index().drop('index', axis=1)['code']
@@ -5300,7 +5299,7 @@ class Finlib:
         p.extend([stb2['ann_date_2q_before']])
         p.extend([stb2['ann_date_3q_before']])
         p.extend([stb2['ann_date_4q_before']])
-        p.extend(stb2['full_period_list_yearly'][1:n_year + 1])
+        p.extend(stb2['full_period_list_yearly'][1:n_year])
 
         return(p)
 
@@ -5312,6 +5311,9 @@ class Finlib:
         df_rtn = pd.DataFrame()
 
         for i in p:
+            if not i.endswith('1231'):
+                continue
+
             f = dir + "/merged_all_" + i + ".csv"
             # print(f)
 
