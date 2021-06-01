@@ -21,6 +21,91 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import akshare as ak
+import glob
+
+
+########################### graham instrinsic value
+def roe_pe():
+    df_today = finlib.Finlib().get_today_stock_basic(date_exam_day='20210531')
+    df_today = df_today[['code','industry','close','pe','pe_ttm','pb','ps','ps_ttm', 'dv_ratio', 'dv_ttm','list_date','on_market_days']]
+
+    csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/merged_all_20201231.csv'
+    csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/merged_all_20210331.csv'
+    df_roe = finlib.Finlib().regular_read_csv_to_stdard_df(csv)
+    df_roe = df_roe[['code','name','roe']]
+    df_roe = pd.merge(df_roe, df_today, on='code')
+    df_roe['roe_div_pe_ttm'] = df_roe['roe']/df_roe['pe_ttm']
+    df_roe['roe_div_pe'] = df_roe['roe']/df_roe['pe']
+    df_roe['roe_div_ps_ttm'] = df_roe['roe']/df_roe['ps_ttm']
+    df_roe['roe_div_ps'] = df_roe['roe']/df_roe['ps']
+    df_roe['roe_div_pb'] = df_roe['roe']/df_roe['pb']
+
+    df_roe = finlib.Finlib().df_format_column(df=df_roe, precision='%.1e')
+
+    df_roe_pe = df_roe[df_roe['pe']>0.1]
+    df_roe_pe_ttm = df_roe[df_roe['pe_ttm']>0.1]
+    df_roe_ps = df_roe[df_roe['ps']>0.1]
+    df_roe_pb = df_roe[df_roe['pb']>0.1]
+
+    print("==== ROE_DIV_PB ====")
+    print(finlib.Finlib().pprint(df_roe_pb.sort_values(by='roe_div_pb', ascending=False).reset_index().drop('index', axis=1)[['code','name','industry','on_market_days','roe','pb','roe_div_pb']].head(10)))
+
+    print("==== ROE_DIV_PS ====")
+    print(finlib.Finlib().pprint(df_roe_ps.sort_values(by='roe_div_ps', ascending=False).reset_index().drop('index', axis=1)[['code','name','industry','on_market_days','roe','ps','roe_div_ps']].head(10)))
+
+    print("==== ROE_DIV_PE_TTM ====")
+    print(finlib.Finlib().pprint(df_roe_pe_ttm.sort_values(by='roe_div_pe_ttm', ascending=False).reset_index().drop('index', axis=1)[['code','name','industry','on_market_days','roe','pe_ttm','roe_div_pe_ttm']].head(10)))
+
+    print("==== ROE_DIV_PE ====")
+    print(finlib.Finlib().pprint(df_roe_pe.sort_values(by='roe_div_pe', ascending=False).reset_index().drop('index', axis=1)[['code','name','industry','on_market_days','roe','pe','roe_div_pe']].head(100)))
+
+    print("haha")
+
+
+def garbage_increase():
+    # roe_pe()
+
+    dir = "/home/ryan/DATA/result/garbage"
+
+    startD = 20210527
+    endD = 20210601
+
+    all_files = glob.glob(dir+"/latest_*.csv")
+
+    df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None,debug=True, force_run=False)
+    df_close_start =  df_amount[df_amount['date']==int(startD)]
+    df_close_end =  df_amount[df_amount['date']==int(endD)]
+    df_close_amount =  pd.merge(df_close_start[['code','date','close','amount']],df_close_end[['code','date','close','amount']], on='code',how='inner', suffixes=('_dayS','_dayE'))
+    df_close_amount['amount_increase'] = round((df_close_amount['amount_dayE'] - df_close_amount['amount_dayS']) *100.0 /  df_close_amount['amount_dayS'],2)
+
+    df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
+    df_close_start = df_basic[df_basic['trade_date']==int(startD)]
+    df_close_end = df_basic[df_basic['trade_date']==int(endD)]
+    df_close =  pd.merge(df_close_start[['ts_code','close','trade_date']],df_close_end[['ts_code','close','trade_date']], on='ts_code',how='inner', suffixes=('_dayS','_dayE'))
+
+    df_close = finlib.Finlib().ts_code_to_code(df=df_close)
+    df_close = finlib.Finlib().add_stock_name_to_df(df=df_close)
+
+    #
+    # csv = "latest_ST_stock.csv"
+    # df = pd.read_csv(dir+"/"+csv)
+    #
+    for csv in all_files:
+        logging.info("reading "+csv)
+        df = pd.read_csv(csv)
+
+
+
+        df_2 = pd.merge(df[['code']],df_close[['code','name','close_dayS','trade_date_dayS','close_dayE','trade_date_dayE']], on='code',how='inner')
+        df_2 = pd.merge(df_2,df_close_amount[['code','amount_increase']], on='code',how='inner')
+        df_2['close_delta'] = round((df_2['close_dayE']-df_2['close_dayS'])*100.0/df_2['close_dayS'],2)
+        chg_mean_perc_close = round(df_2['close_delta'].mean(),2)
+        chg_mean_perc_amt = round(df_2['amount_increase'].mean(),2)
+
+        print(str(df_close.trade_date_dayS.iloc[0])+"->"+str(df_close.trade_date_dayE.iloc[0])+" len "+str(df_2.__len__())+" " +csv+ ",  change average close "+str(chg_mean_perc_close)+"%,  change average amount "+str(chg_mean_perc_amt)+"%")
+
+    print("HAHA")
+
 
 
 
@@ -43,10 +128,7 @@ def grep_garbage():
 
 def graham_intrinsic_value():
     df = finlib_indicator.Finlib_indicator().graham_intrinsic_value()
-    df = df[df['eps'] > 0] #基本每股收益
-    df = df[df['basic_eps_yoy'] > 0] #基本每股收益同比增长率(%)
 
-    df_c = finlib.Finlib().remove_garbage(df=df)
 
 ########################### Evaluate tr/pe ratio
 def evaluate_tr_pe():
@@ -198,7 +280,7 @@ def tv_filter():
 
     print(1)
 
-
+garbage_increase()
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 graham_intrinsic_value()
 evaluate_grid(market='AG')

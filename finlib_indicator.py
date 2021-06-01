@@ -1710,7 +1710,8 @@ class Finlib_indicator:
         f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_indicator.csv'
         df0 = pd.read_csv(f)
 
-        csv = "/home/ryan/DATA/result/graham_intrinsic_value.csv"
+        csv = "/home/ryan/DATA/result/graham_intrinsic_value_all.csv"
+        csv_sel = "/home/ryan/DATA/result/graham_intrinsic_value_selected.csv"
 
         # df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231, 20171231, 20161231, 20151231, 20141231, 20131231, 20121231, 20111231])]
         df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231])]
@@ -1752,18 +1753,22 @@ class Finlib_indicator:
                                            df=finlib.Finlib().load_fund_n_years()))
         df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
 
-        # print(finlib.Finlib().pprint(df.head(20)))
 
-        # df_c = finlib.Finlib().remove_garbage(df=df)
-        df_c = df
-        df_c = finlib.Finlib().df_format_column(df=df_c, precision='%.1e')
+        df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
+        print(finlib.Finlib().pprint(df.head(10)))
 
-        print(finlib.Finlib().pprint(df_c.head(20)))
+        df.to_csv(csv,encoding='UTF-8', index=False)
+        logging.info("saved all to "+csv+" len"+str(df.__len__()))
 
-        df_c.to_csv(csv,encoding='UTF-8', index=False)
-        logging.info("save to "+csv+" len"+str(df_c.__len__()))
+        #selected
+        df_sel = df[df['eps'] > 0]  # 基本每股收益
+        df_sel = df_sel[df_sel['basic_eps_yoy'] > 0]  # 基本每股收益同比增长率(%)
 
-        return(df_c)
+        df_sel = finlib.Finlib().remove_garbage(df=df_sel)
+        df_sel.to_csv(csv_sel,encoding='UTF-8', index=False)
+        logging.info("selected saved to "+csv_sel+" len"+str(df_sel.__len__()))
+
+        return(df,df_sel)
 
 
 

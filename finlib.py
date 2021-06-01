@@ -4775,7 +4775,7 @@ class Finlib:
 
         logging.info("dayS "+dayS+", dayE "+ dayE+", ndays "+str(ndays))
 
-        if ndays < 60: #because we need calculate 60 MA/ 60 koudi later.
+        if ndays < 60 and (not debug): #because we need calculate 60 MA/ 60 koudi later.
             logging.info("Ndays must great than 60")
             sys.exit(1)
 
