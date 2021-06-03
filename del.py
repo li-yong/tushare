@@ -67,12 +67,12 @@ def garbage_increase():
 
     dir = "/home/ryan/DATA/result/garbage"
 
-    startD = 20210527
-    endD = 20210601
+    startD = 20210601
+    endD = 20210602
 
     all_files = glob.glob(dir+"/latest_*.csv")
 
-    df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None,debug=True, force_run=False)
+    df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None, short_period= True, debug=False, force_run=False)
     df_close_start =  df_amount[df_amount['date']==int(startD)]
     df_close_end =  df_amount[df_amount['date']==int(endD)]
     df_close_amount =  pd.merge(df_close_start[['code','date','close','amount']],df_close_end[['code','date','close','amount']], on='code',how='inner', suffixes=('_dayS','_dayE'))
@@ -105,6 +105,7 @@ def garbage_increase():
         print(str(df_close.trade_date_dayS.iloc[0])+"->"+str(df_close.trade_date_dayE.iloc[0])+" len "+str(df_2.__len__())+" " +csv+ ",  change average close "+str(chg_mean_perc_close)+"%,  change average amount "+str(chg_mean_perc_amt)+"%")
 
     print("HAHA")
+    exit(0)
 
 
 

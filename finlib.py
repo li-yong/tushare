@@ -4751,7 +4751,7 @@ class Finlib:
 
         return(df)
 
-    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,debug=False, force_run=False):
+    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,short_period=False,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
 
         #logic for dayS and dayE:
@@ -4775,8 +4775,8 @@ class Finlib:
 
         logging.info("dayS "+dayS+", dayE "+ dayE+", ndays "+str(ndays))
 
-        if ndays < 60 and (not debug): #because we need calculate 60 MA/ 60 koudi later.
-            logging.info("Ndays must great than 60")
+        if ndays < 60 and (not short_period): #because we need calculate 60 MA/ 60 koudi later.
+            logging.info("Ndays must great than 60 to calculate 60MA/60Koudi. Or overwrite by short_period=True")
             sys.exit(1)
 
         out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
@@ -4809,7 +4809,7 @@ class Finlib:
                 # df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
 
                 df_sub = self.regular_read_csv_to_stdard_df(csv)
-                df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] < dayE)]
+                df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] <= dayE)]
 
                 df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
 
