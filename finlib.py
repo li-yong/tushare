@@ -3297,7 +3297,8 @@ class Finlib:
         df_gar = df_gar[df_gar['ann_date'] > (datetime.today() - timedelta(days=n_year * 365)).strftime("%Y%m%d")]
         df_gar = df_gar[df_gar['audit_result'] != "标准无保留意见"]
         df_gar = self.ts_code_to_code(df_gar)
-        df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        df_gar = df_gar[['code','name','end_date','audit_result','audit_agency','audit_sign']].drop_duplicates().reset_index().drop('index', axis=1)
         logging.info("none standard audit statement " + str(n_year) + " years, len " + str(df_gar.__len__()))
 
         if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':

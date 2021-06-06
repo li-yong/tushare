@@ -2,6 +2,8 @@
 # encoding= utf-8
 
 import pandas as pd
+from pandas import DataFrame
+
 import finlib
 
 import finlib_indicator
@@ -66,6 +68,10 @@ def garbage_increase():
     startD = 20210602
     endD = 20210603
 
+    # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
+    df_rtn: DataFrame = pd.DataFrame()
+    r_idx = 0
+
     #prepare amount df
     df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None, short_period= True, debug=False, force_run=False)
     df_close_start =  df_amount[df_amount['date']==int(startD)]
@@ -82,25 +88,31 @@ def garbage_increase():
     df_close = finlib.Finlib().add_stock_name_to_df(df=df_close)
 
     #calculate HS300
-    _get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount)
-    _get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount)
-    _get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close, df_amount=df_amount)
-    _get_avg_chg_of_code_list(list_name="ShenZhenChenZhi", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"), df_close=df_close, df_amount=df_amount)
-    _get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close, df_amount=df_amount)
-    _get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close, df_amount=df_amount)
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount))
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount))
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close, df_amount=df_amount))
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="ShenZhenChenZhi", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"), df_close=df_close, df_amount=df_amount))
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close, df_amount=df_amount))
+    df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close, df_amount=df_amount))
+
 
     #calculate garbage stocks close/amount increase
+    df_rtn_garb = pd.DataFrame()
     for csv in glob.glob("/home/ryan/DATA/result/garbage/latest_*.csv"):
         # logging.info("reading "+csv)
         df = pd.read_csv(csv)
-        _get_avg_chg_of_code_list(list_name=csv, df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount)
+        df_rtn_garb = df_rtn_garb.append(_get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount))
 
-    print("HAHA")
+    logging.info("\n===== INDEX ======")
+    print(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
+
+    logging.info("\n===== Garbage ======")
+    print(finlib.Finlib().pprint(df_rtn_garb.sort_values('price_change', ascending=False, inplace=False)))
     exit(0)
 
 
 def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount):
-    df_2 = pd.merge(df_code_column_only[['code']],
+    df_2 = pd.merge(df_code_column_only[['code']].drop_duplicates(),
                     df_close[['code', 'name', 'close_dayS', 'trade_date_dayS', 'close_dayE', 'trade_date_dayE']],
                     on='code', how='inner')
     df_2 = pd.merge(df_2, df_amount[['code', 'amount_increase']], on='code', how='inner')
@@ -112,8 +124,14 @@ def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount
         df_2.__len__()) + " " + list_name + ",  change average close " + str(
         chg_mean_perc_close) + "%,  change average amount " + str(chg_mean_perc_amt) + "%")
 
-    return()
+    return(pd.DataFrame.from_dict({'date_s':[df_close['trade_date_dayS'].iloc[0]],
+                                   'date_e':[df_close['trade_date_dayE'].iloc[0]],
 
+                                   'group_name':[list_name],
+                                   'price_change':[chg_mean_perc_close],
+                                   'amount_change':[chg_mean_perc_amt],
+                                   'len': [df_2.__len__()],
+                                   }))
 
 
 ########################### graham instrinsic value
@@ -123,14 +141,12 @@ def grep_garbage():
 
     finlib.Finlib()._remove_garbage_beneish_low_rate(df, m_score=-1)
     finlib.Finlib()._remove_garbage_change_named_stock(df, n_year=3)
-    finlib.Finlib()._remove_garbage_none_standard_audit_statement(df, n_year=3)
     finlib.Finlib()._remove_garbage_high_pledge_ration(df, statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
     finlib.Finlib()._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
     finlib.Finlib()._remove_garbage_by_fund_n_years(df, n_years=1)  #esp < 0.1
-
     finlib.Finlib()._remove_garbage_rpt_s1(df, code_field_name='code', code_format='C2D6')
     finlib.Finlib()._remove_garbage_by_profit_on_market_days_st(df)
-
+    finlib.Finlib()._remove_garbage_none_standard_audit_statement(df, n_year=1)
 
 
 def graham_intrinsic_value():
