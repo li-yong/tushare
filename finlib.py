@@ -3383,6 +3383,59 @@ class Finlib:
         # print(self.pprint(df_rtn[['code', 'name']]))
         return (df_rtn)
 
+    #########################################
+    # 1. fcf > 0
+    # 2. profit > accounts_receiv	应收账款
+    #########################################
+    def _remove_garbage_fcf_profit_act_n_years(self,n_year=3):
+
+        dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged"
+
+        this_year = self.get_last_4q_n_years(n_year=n_year)
+        df_rtn = self.get_A_stock_instrment()
+
+        for y in this_year:
+            if not y.endswith('1231'):
+                continue
+
+            csv = dir + "/" + "merged_all_" + y + ".csv"
+            df_all = self.regular_read_csv_to_stdard_df(data_csv=csv)
+            df_all = self._remove_gar_free_cache_a_year(df_all=df_all, year=y)
+            df_rtn = pd.merge(df_rtn['code'], df_all, how='inner', on='code')
+
+        df_rtn = self.add_amount_mktcap(df_rtn).reset_index().drop('index', axis=1)
+
+        df_rtn = df_rtn.sort_values('n_cashflow_act', ascending=False, inplace=False).reset_index().drop('index',
+                                                                                                         axis=1)
+
+        df_rtn = self.df_format_column(df=df_rtn, precision='%.1e')
+        print(self.pprint(df_rtn))
+        return(df_rtn)
+
+    def _remove_gar_free_cache_a_year(self, df_all, year):
+        df_all = self.add_stock_name_to_df(df=df_all)
+        df = df_all[['code', 'name', 'end_date', 'n_cashflow_act',
+                     'net_profit',
+                     'n_cashflow_inv_act',
+                     'n_cash_flows_fnc_act',
+                     'im_net_cashflow_oper_act',
+                     'accounts_receiv',  # 应收账款
+                     'acct_payable',  # 应付账款
+
+                     'notes_receiv',  # 应收票据
+                     'oth_receiv',  # 其他应收款
+                     'money_cap',  # 货币资金
+                     'r_and_d',  # 研发支出
+                     'goodwill',  # 商誉
+
+                     ]]
+
+        df_f1 = self._remove_garbage_nagtive_cash_flow(df=df, year=year)
+        df_f2 = self._remove_garbage_profit_less_accounts_receiv(df=df, year=year)
+
+        df_f = pd.merge(df_f1, df_f2['code'], how='inner', on='code')
+        return (df_f)
+
     def remove_garbage_macd_ma(self,df):
 
         if df.empty:
