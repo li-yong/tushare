@@ -3237,6 +3237,20 @@ class Finlib:
 
 
     #input: df['code',...]
+    #output:
+    def _remove_garbage_nagtive_cash_flow(self, df,year):
+        df_gar = df[df['n_cashflow_act'] < 0]
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAG_CASHFLOW+" "+str(year))
+        return(df)
+
+
+    def _remove_garbage_profit_less_accounts_receiv(self, df, year):
+        df_gar = df[df['net_profit'] < df['accounts_receiv']]
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.PROFIT_LT_ACT_RECEIV+" "+str(year))
+        return(df)
+
+
+    #input: df['code',...]
     def _remove_garbage_change_named_stock(self, df, n_year=5):
 
         if df.__len__()==0:
@@ -4744,7 +4758,7 @@ class Finlib:
                 # logging.info("converting column "+col_name)
                 df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
             elif col_data_type in ['float64']:
-                if df[col_name].mean() > 10E3:
+                if abs(df[col_name].mean()) > 10E3:
                     df[col_name] = df[col_name].apply(lambda x: precision % Decimal(x))
                 else:
                     df[col_name] = df[col_name].apply(lambda x: round(x,2))

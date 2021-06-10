@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 import akshare as ak
 import glob
-
+from scipy.stats import variation
 
 ########################### graham instrinsic value
 def roe_pe():
@@ -64,9 +64,99 @@ def roe_pe():
     print("haha")
 
 
-def garbage_increase():
-    startD = 20210602
-    endD = 20210603
+def coefficient_variation_price_amount():
+
+    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
+    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+    a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG')
+
+    df_stock_list = a['stock_list']
+    df_csv_dir = a['csv_dir']
+    df_out_dir = a['out_dir']
+    df_rtn = pd.DataFrame()
+
+    i=1
+    for index, row in df_stock_list.iterrows():
+        name, code = row['name'], row['code']
+        print(str(i)+" of "+str(df_stock_list.__len__())+" , "+str(code)+" "+name)
+        i+=1
+
+        csv = df_csv_dir + "/"+ code+".csv"
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv).tail(100)
+        cv_close = round(variation(df['close']), 2)
+        cv_amount = round(variation(df['amount']), 2)
+        df_rtn = df_rtn.append(pd.DataFrame().from_dict({'name':[name],'code':[code],'cv_close':[cv_close], 'cv_amount':[cv_amount]}))
+
+    df_rtn = df_rtn.reset_index().drop('index',axis=1)
+    print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
+
+
+def _remove_garbage_fcf_lt_0_n_years(n_year=3):
+
+    dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged"
+
+    this_year = finlib.Finlib().get_last_4q_n_years(n_year=n_year)
+    df_rtn = finlib.Finlib().get_A_stock_instrment()
+
+    for y in this_year:
+        if not y.endswith('1231'):
+            continue
+
+        csv = dir+"/"+"merged_all_"+y+".csv"
+        df_all = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
+        df_all = _free_cache_a_year(df_all=df_all,year=y)
+        df_rtn = pd.merge(df_rtn['code'],df_all, how='inner', on='code')
+        print(1)
+
+
+
+    df_rtn = finlib.Finlib().add_amount_mktcap(df_rtn).reset_index().drop('index', axis=1)
+
+    df_rtn = df_rtn.sort_values('n_cashflow_act', ascending=False, inplace=False).reset_index().drop('index', axis=1)
+
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision='%.1e')
+    print(finlib.Finlib().pprint(df_rtn))
+    print(1)
+
+    finlib.Finlib()._remove_garbage_low_roe_pe()
+
+
+def _free_cache_a_year(df_all,year):
+    df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
+    df = df_all[['code', 'name', 'end_date', 'n_cashflow_act',
+                 'net_profit',
+                 'n_cashflow_inv_act',
+                 'n_cash_flows_fnc_act',
+                 'im_net_cashflow_oper_act',
+                 'accounts_receiv',  # 应收账款
+                 'acct_payable',  # 应付账款
+
+                 'notes_receiv',  # 应收票据
+                 'oth_receiv',  # 其他应收款
+                 'money_cap',  # 货币资金
+                 'r_and_d',  # 研发支出
+                 'goodwill',  # 商誉
+
+                 ]]
+
+    df_f1 = finlib.Finlib()._remove_garbage_nagtive_cash_flow(df=df, year=year)
+    df_f2 = finlib.Finlib()._remove_garbage_profit_less_accounts_receiv(df=df, year=year)
+
+    df_f = pd.merge(df_f1, df_f2['code'], how='inner', on='code')
+    # df_f = finlib.Finlib().df_format_column(df=df_f, precision='%.1e')
+
+
+    # print(finlib.Finlib().pprint(df_f.head(2)))
+    return(df_f)
+
+
+def price_amount_increase():
+    _remove_garbage_fcf_lt_0_n_years()
+
+    startD = 20210607
+    endD = 20210608
+
+    finlib.Finlib().get
 
     # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
     df_rtn: DataFrame = pd.DataFrame()
@@ -103,12 +193,12 @@ def garbage_increase():
         df = pd.read_csv(csv)
         df_rtn_garb = df_rtn_garb.append(_get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount))
 
-    logging.info("\n===== INDEX ======")
-    print(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
+    logging.info("\n===== INDEX Increase ======")
+    logging.info(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
 
-    logging.info("\n===== Garbage ======")
-    print(finlib.Finlib().pprint(df_rtn_garb.sort_values('price_change', ascending=False, inplace=False)))
-    exit(0)
+    logging.info("\n===== Garbage Increase ======")
+    logging.info(finlib.Finlib().pprint(df_rtn_garb.sort_values('price_change', ascending=False, inplace=False)))
+    # exit(0)
 
 
 def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount):
@@ -134,7 +224,7 @@ def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount
                                    }))
 
 
-########################### graham instrinsic value
+
 def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
@@ -149,8 +239,11 @@ def grep_garbage():
     finlib.Finlib()._remove_garbage_none_standard_audit_statement(df, n_year=1)
 
 
+########################### graham instrinsic value
 def graham_intrinsic_value():
     df = finlib_indicator.Finlib_indicator().graham_intrinsic_value()
+    logging.info("\n==== Graham instrinsic value ====")
+    logging.info(finlib.Finlib().pprint(df))
 
 
 ########################### Evaluate tr/pe ratio
@@ -167,10 +260,11 @@ def evaluate_tr_pe():
 
 #########################################
 def evaluate_grid(market='AG'):
-    logging.info("\n==== "+market+" ====")
-
-    print("==========  52 Week  ========")
-    print("=============================")
+    #markte in [AG_HOLD,AG, HK, US]
+    logging.info("\n==== Evaluate_grid "+market+" ====")
+    #
+    # logging.info("========== Evaluate_grid 52 Week  ========")
+    # logging.info("=============================")
 
     high_field='52 Week High'
     low_field='52 Week Low'
@@ -190,29 +284,27 @@ def evaluate_grid(market='AG'):
     # print("==========  NegtiveGrid 3 "+ str(high_field)+"  "+str(low_field)+" ========")
     # print(finlib.Finlib().pprint(df_g_n3_52week[cols].head(2)))  #grid == -3
 
-    df_ag_hold = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
-    df_ag = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list']
+
+    # df_ag_hold = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list']
+    # df_ag = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list']
+
+    df_mkt = finlib.Finlib().get_stock_configuration(selected=True, stock_global=market)['stock_list']
 
     # ddf_rtnf = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'tr_pe'])
 
 
-    df_hold_52week = pd.merge(df_52week, df_ag_hold, on=['code'], how='inner', suffixes=('', '_select'))[cols]
-    df_52week = pd.merge(df_52week, df_ag, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    # df_hold_52week = pd.merge(df_52week, df_ag_hold, on=['code'], how='inner', suffixes=('', '_select'))[cols]
+    df_52week = pd.merge(df_52week, df_mkt, on=['code'], how='inner', suffixes=('', '_select'))[cols]
 
     df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
     df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
 
-    tmp = finlib.Finlib().add_amount_mktcap(df=df_hold_52week)
-    tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
-    tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
-    print("\n==========  52 Week, AG_HOLD State ========")
-    print(finlib.Finlib().pprint(tmp))
 
     tmp = finlib.Finlib().add_amount_mktcap(df=df_52week)
     tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
     tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
-    print("\n==========  52 Week, AG State ========")
-    print(finlib.Finlib().pprint(tmp))
+    logging.info("\n==========  52 Week "+market+" ========")
+    logging.info(finlib.Finlib().pprint(tmp))
 
     print("roe_ttm", "pe_ttm", 'Operating Margin (TTM)', 'Gross Margin (TTM)')
     _ = df_g_p4[['roe_ttm', 'pe_ttm', 'Operating Margin (TTM)', 'Gross Margin (TTM)']].describe().iloc[1];  print('p4: ', end='');  print(_['roe_ttm'], _['pe_ttm'], _['Operating Margin (TTM)'], _['Gross Margin (TTM)'])
@@ -229,8 +321,8 @@ def evaluate_grid(market='AG'):
 
     ###################
 
-    print("\n==========  3 Month  ========")
-    print("=============================")
+    logging.info("\n==========  3 Month "+market+" ========")
+    logging.info("=============================")
 
     high_field='3-Month High'
     low_field ='3-Month Low'
@@ -240,11 +332,6 @@ def evaluate_grid(market='AG'):
     (df_3month,df_g_n4,df_g_n3_3month,df_g_n2,df_g_n1,df_g_p1_3month,df_g_p2,df_g_p3,df_g_p4) = finlib_indicator.Finlib_indicator().grid_market_overview(market=market,high_field=high_field, low_field=low_field, all_columns=all_column)
 
 
-    print("==========  3 month Hold State ========")
-    df_hold_3month = pd.merge(df_3month, df_ag_hold, on=['code'], how='inner', suffixes=('', '_select'))[cols]
-    print(finlib.Finlib().pprint(df_hold_3month))
-
-
     # print("========== 3 month  PositiveGrid 1 "+ str(high_field)+"  "+str(low_field)+" ========")
     # print(finlib.Finlib().pprint(df_g_p1_3month[cols].head(2)))  #grid == 1
 
@@ -252,13 +339,13 @@ def evaluate_grid(market='AG'):
     # print(finlib.Finlib().pprint(df_g_n3_3month[cols].head(2)))  #grid == -3
 
 
-
-
     df = pd.merge(df_52week, df_3month, on='code', how='inner', suffixes=("", "_3M"))
     df_llrh = df[(df.grid==-3) & (df.grid_3M==1)][cols]  #long low, recent high
+    logging.info("\n==== 52Week Low, 3Month High ====")
     print(finlib.Finlib().pprint(df_llrh.head(30)))
 
     df_lhrl = df[(df.grid==1) & (df.grid_3M==-3)][cols]  #long high, recent low
+    logging.info("\n==== 52Week high, 3Month Lowe ====")
     print(finlib.Finlib().pprint(df_lhrl.head(30)))
 
     #
@@ -303,8 +390,8 @@ def tv_filter():
 
     print(1)
 
-# garbage_increase()
 # grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+price_amount_increase()
 graham_intrinsic_value()
 evaluate_grid(market='AG')
 

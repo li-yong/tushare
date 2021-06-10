@@ -15,6 +15,8 @@ NAGTIVE_OR_ZERO_PE = "PE <= 0"
 VERY_STONG_DOWN_TREND = "very strong down trend"
 VERY_STONG_UP_TREND = "very strong up trend"
 
+PROFIT_LT_ACT_RECEIV = "profit less than account_receive"
+NAG_CASHFLOW = "nagative cashflow"
 
 ###############
 # Bar style
