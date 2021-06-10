@@ -3405,11 +3405,10 @@ class Finlib:
 
         df_rtn = self.add_amount_mktcap(df_rtn).reset_index().drop('index', axis=1)
 
-        df_rtn = df_rtn.sort_values('n_cashflow_act', ascending=False, inplace=False).reset_index().drop('index',
-                                                                                                         axis=1)
+        # df_rtn = df_rtn.sort_values('n_cashflow_act', ascending=False, inplace=False).reset_index().drop('index',axis=1)
 
         df_rtn = self.df_format_column(df=df_rtn, precision='%.1e')
-        print(self.pprint(df_rtn))
+        # print(self.pprint(df_rtn.head(10)))
         return(df_rtn)
 
     def _remove_gar_free_cache_a_year(self, df_all, year):

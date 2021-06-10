@@ -91,7 +91,9 @@ def coefficient_variation_price_amount():
     print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
 
 def price_amount_increase():
-    df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
+    df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=5)
+    df = finlib.Finlib()._remove_garbage_must(df=df)
+    print(finlib.Finlib().pprint(df))
 
     startD = 20210607
     endD = 20210608
