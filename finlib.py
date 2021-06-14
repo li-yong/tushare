@@ -3143,7 +3143,7 @@ class Finlib:
 
         return(df)
 
-    def _remove_garbage_must(self, df, b_m_score=-1,n_year=5):
+    def _remove_garbage_must(self, df, b_m_score=-1,n_year=2):
         if 'ts_code' in df.columns:
             ts_code_fmt = True
             df = self.ts_code_to_code(df)
@@ -3154,7 +3154,7 @@ class Finlib:
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
         df = self._remove_garbage_high_pledge_ration(df,statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
-        df = self._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
+        df = self._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.1)
         df = self._remove_garbage_by_fund_n_years(df,n_years=1)
 
 
@@ -3239,13 +3239,25 @@ class Finlib:
     #input: df['code',...]
     #output:
     def _remove_garbage_nagtive_cash_flow(self, df,year):
-        df_gar = df[df['n_cashflow_act'] < 0]
-        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAG_CASHFLOW+" "+str(year))
+        df_gar = df[df['n_cashflow_act'] < 0]  #经营活动产生的现金流量净额
+        df1 = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAG_CASHFLOW+" "+str(year))
+
+        df_gar = df[(df['n_cashflow_act'] +df['n_cashflow_inv_act'] +df['n_cash_flows_fnc_act'] )< 0]
+        df2 = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.NAG_CASHFLOW_SUMALL_INV_FNC+" "+str(year))
+
+        df = pd.merge(df, df1['code'], on='code',how='inner')
+        df = pd.merge(df, df2['code'], on='code',how='inner')
+
         return(df)
 
 
+    def _remove_garbage_n_cashflow_act_less_profit(self, df, year):
+        df_gar = df[df['n_cashflow_act'] < df['net_profit']*0.5]  #bai tiao >= 50% profit. Big profit, small cash flow
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.N_CASHFLOW_ACT_LT_PROFIT+" "+str(year))
+        return(df)
+
     def _remove_garbage_profit_less_accounts_receiv(self, df, year):
-        df_gar = df[df['net_profit'] < df['accounts_receiv']]
+        df_gar = df[df['net_profit'] < df['accounts_receiv']]  # net_profit <  accounts_receiv 应收账款
         df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason=constant.PROFIT_LT_ACT_RECEIV+" "+str(year))
         return(df)
 
@@ -3353,8 +3365,9 @@ class Finlib:
     def _remove_garbage_by_fund_n_years(self, df, n_years=3):
         # a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
 
-        b = self.load_fund_n_years(n_years=n_years)[['code','eps','roe','fcff','ocf_to_profit',
-                                'grossprofit_margin','debt_to_assets'
+        df_all = self.load_fund_n_years(n_years=n_years)
+        df_all = df_all[['code','eps','roe','fcff','ocf_to_profit','free_cashflow',
+                                'grossprofit_margin','debt_to_assets','current_ratio'
                                 ]]
         #
         # code = 'SH600519'
@@ -3366,22 +3379,39 @@ class Finlib:
         #                             ]])
 
         # df_mean = b.groupby('code').mean().reset_index()
-        df_mean = b.groupby('code').mean()
+        df_mean = df_all.groupby('code').mean()
         df_mean_rank = df_mean.rank(pct=True).reset_index()
 
-        df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1) #基本每股收益
-                              | (df_mean_rank['roe'] <= 0.1) #净资产收益率
-                              | (df_mean_rank['fcff'] <= 0.1) #企业自由现金流量
-                              | (df_mean_rank['ocf_to_profit'] <= 0.1) #经营活动产生的现金流量净额／营业利润
-                              | (df_mean_rank['grossprofit_margin'] <= 0.1) #销售毛利率
-                              | (df_mean_rank['debt_to_assets'] >= 0.6) #资产负债率
-                              ]
+        # df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1) #基本每股收益
+        #                       | (df_mean_rank['roe'] <= 0.1) #净资产收益率
+        #                       | (df_mean_rank['fcff'] <= 0.1) #企业自由现金流量
+        #                       | (df_mean_rank['ocf_to_profit'] <= 0.1) #经营活动产生的现金流量净额／营业利润
+        #                       | (df_mean_rank['grossprofit_margin'] <= 0.1) #销售毛利率
+        #                       | (df_mean_rank['debt_to_assets'] >= 0.6) #资产负债率
+        #                       ]
+        #
+        # df_rtn = self._df_sub_by_code(df=df, df_sub=df_gar,byreason='_remove_garbage_by_fund_n_years')
 
-        df_rtn = self._df_sub_by_code(df=df, df_sub=df_gar,byreason='_remove_garbage_by_fund_n_years')
-        # df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
-        # df_rtn.to_csv("~/del.csv")
-        # print(self.pprint(df_rtn[['code', 'name']]))
-        return (df_rtn)
+        df_1 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['eps'] <= 0.1],byreason='garbage_eps_bottom_dot1')
+        df_2 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['roe'] <= 0.1],byreason='garbage_roe_bottom_dot1')
+        df_3 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['free_cashflow'] <= 0.1],byreason='garbage_free_cashflow_bottom_dot1') #fcff企业自由现金流量, free_cashflow
+        df_4 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['ocf_to_profit'] <= 0.1],byreason='garbage_ocf_to_profit_bottom_dot1')
+        df_5 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['grossprofit_margin'] <= 0.1],byreason='garbage_grossprofit_margin_bottom_dot1')
+        df_6 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['debt_to_assets'] >= 0.6],byreason='garbage_debt_to_assets_top_dot6')
+
+        df_7 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['fcff'] <= 0.1], byreason='garbage_fcff_bottom_dot1')  # fcff企业自由现金流量to firm,
+        df_8 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['current_ratio'] <= 0.1],byreason='garbage_current_ratio_bottom_dot1')  # 流动比率,
+
+        df_rtn_2 = pd.merge(df_1,df_2['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_3['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_4['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_5['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_6['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_7['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df_rtn_2,df_8['code'], on='code',how='inner')
+        df_rtn_2 = pd.merge(df,df_rtn_2['code'], on='code',how='inner')
+
+        return (df_rtn_2)
 
     #########################################
     # 1. fcf > 0
@@ -3413,11 +3443,12 @@ class Finlib:
 
     def _remove_gar_free_cache_a_year(self, df_all, year):
         df_all = self.add_stock_name_to_df(df=df_all)
-        df = df_all[['code', 'name', 'end_date', 'n_cashflow_act',
-                     'net_profit',
-                     'n_cashflow_inv_act',
-                     'n_cash_flows_fnc_act',
-                     'im_net_cashflow_oper_act',
+        df = df_all[['code', 'name', 'end_date',
+                     'n_cashflow_act', #经营活动产生的现金流量净额
+                     'net_profit', #净利润
+                     'n_cashflow_inv_act', #投资活动产生的现金流量净额
+                     'n_cash_flows_fnc_act', #筹资活动产生的现金流量净额
+                     'im_net_cashflow_oper_act',#	经营活动产生的现金流量净额(间接法)
                      'accounts_receiv',  # 应收账款
                      'acct_payable',  # 应付账款
 
@@ -3430,9 +3461,12 @@ class Finlib:
                      ]]
 
         df_f1 = self._remove_garbage_nagtive_cash_flow(df=df, year=year)
-        df_f2 = self._remove_garbage_profit_less_accounts_receiv(df=df, year=year)
+        df_f2 = self._remove_garbage_n_cashflow_act_less_profit(df=df, year=year)
+
+        df_f3 = self._remove_garbage_profit_less_accounts_receiv(df=df, year=year)
 
         df_f = pd.merge(df_f1, df_f2['code'], how='inner', on='code')
+        df_f = pd.merge(df_f, df_f3['code'], how='inner', on='code')
         return (df_f)
 
     def remove_garbage_macd_ma(self,df):
@@ -3503,6 +3537,9 @@ class Finlib:
 
         df = df.reset_index().drop('index', axis=1)
         df_sub = df_sub.reset_index().drop('index', axis=1)
+
+        if not 'name' in df_sub.columns:
+            df_sub =self.add_stock_name_to_df(df=df_sub)
 
         dir = "/home/ryan/DATA/result/garbage"
 

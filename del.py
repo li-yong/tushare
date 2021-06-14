@@ -90,18 +90,20 @@ def coefficient_variation_price_amount():
     df_rtn = df_rtn.reset_index().drop('index',axis=1)
     print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
 
-def price_amount_increase():
-    df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=5)
+
+def remove_garbage_by_fcf():
+    df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
     df = finlib.Finlib()._remove_garbage_must(df=df)
-    print(finlib.Finlib().pprint(df))
+    print(finlib.Finlib().pprint(df[['code','name']].head(100)))
+
+
+def price_amount_increase():
 
     startD = 20210607
     endD = 20210608
 
-    finlib.Finlib().get
-
     # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
-    df_rtn: DataFrame = pd.DataFrame()
+    df_rtn = pd.DataFrame()
     r_idx = 0
 
     #prepare amount df

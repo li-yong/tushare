@@ -15,8 +15,10 @@ NAGTIVE_OR_ZERO_PE = "PE <= 0"
 VERY_STONG_DOWN_TREND = "very strong down trend"
 VERY_STONG_UP_TREND = "very strong up trend"
 
-PROFIT_LT_ACT_RECEIV = "profit less than account_receive"
+PROFIT_LT_ACT_RECEIV = "profit less than account_receive" #net_profit < 应收账款
+N_CASHFLOW_ACT_LT_PROFIT = "cashflow less than 0.5*profit"
 NAG_CASHFLOW = "nagative cashflow"
+NAG_CASHFLOW_SUMALL_INV_FNC = "nagative cashflow plus inv plus fnc"
 
 ###############
 # Bar style
