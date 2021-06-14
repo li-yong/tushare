@@ -100,7 +100,7 @@ def remove_garbage_by_fcf():
 def price_amount_increase():
 
     startD = 20210607
-    endD = 20210608
+    endD = 20210614
 
     # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
     df_rtn = pd.DataFrame()
@@ -334,7 +334,8 @@ def tv_filter():
 
     print(1)
 
-# grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+remove_garbage_by_fcf() # update garbage, consider fcf and must
 price_amount_increase()
 graham_intrinsic_value()
 evaluate_grid(market='AG')
