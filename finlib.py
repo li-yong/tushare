@@ -3097,7 +3097,7 @@ class Finlib:
             exit()
         return(df)
 
-    def remove_garbage(self, df, code_field_name='code', code_format='C2D6',b_m_score=-1,n_year=5):
+    def remove_garbage(self, df, code_field_name='code', code_format='C2D6',b_m_score=-1,n_year=1):
         df = self._remove_garbage_must(df,b_m_score,n_year)
         df = self._remove_garbage_rpt_s1(df, code_field_name, code_format)
         df = self._remove_garbage_by_profit_on_market_days_st(df)
