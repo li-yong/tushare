@@ -95,6 +95,7 @@ def remove_garbage_by_fcf():
     df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
     df = finlib.Finlib()._remove_garbage_must(df=df)
     print(finlib.Finlib().pprint(df[['code','name']].head(100)))
+    return(df)
 
 
 def price_amount_increase():
@@ -121,6 +122,10 @@ def price_amount_increase():
     df_close = finlib.Finlib().ts_code_to_code(df=df_close)
     df_close = finlib.Finlib().add_stock_name_to_df(df=df_close)
 
+    if df_close.empty:
+        logging.fatal("unexpected empty dataframe df_close, cannot contine")
+        return
+
     #calculate HS300
     df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount))
     df_rtn = df_rtn.append(_get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount))
@@ -146,6 +151,10 @@ def price_amount_increase():
 
 
 def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount):
+    if df_close.empty:
+        logging.error("Unexpected empty input df df_close.")
+        return()
+
     df_2 = pd.merge(df_code_column_only[['code']].drop_duplicates(),
                     df_close[['code', 'name', 'close_dayS', 'trade_date_dayS', 'close_dayE', 'trade_date_dayE']],
                     on='code', how='inner')
@@ -173,11 +182,14 @@ def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
 
+    finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
+
+    #_remove_garbage_must
     finlib.Finlib()._remove_garbage_beneish_low_rate(df, m_score=-1)
     finlib.Finlib()._remove_garbage_change_named_stock(df, n_year=3)
     finlib.Finlib()._remove_garbage_high_pledge_ration(df, statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
     finlib.Finlib()._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.5)
-    finlib.Finlib()._remove_garbage_by_fund_n_years(df, n_years=1)  #esp < 0.1
+    finlib.Finlib()._remove_garbage_by_fund_n_years(df, n_years=1)  #esp < bottom 0.1 etc
     finlib.Finlib()._remove_garbage_rpt_s1(df, code_field_name='code', code_format='C2D6')
     finlib.Finlib()._remove_garbage_by_profit_on_market_days_st(df)
     finlib.Finlib()._remove_garbage_none_standard_audit_statement(df, n_year=1)
@@ -187,7 +199,8 @@ def grep_garbage():
 def graham_intrinsic_value():
     df = finlib_indicator.Finlib_indicator().graham_intrinsic_value()
     logging.info("\n==== Graham instrinsic value ====")
-    logging.info(finlib.Finlib().pprint(df))
+    logging.info(finlib.Finlib().pprint(df.head(10)))
+    return(df)
 
 
 ########################### Evaluate tr/pe ratio
@@ -335,9 +348,9 @@ def tv_filter():
     print(1)
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-remove_garbage_by_fcf() # update garbage, consider fcf and must
-price_amount_increase()
-graham_intrinsic_value()
+df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
+df_increase = price_amount_increase()
+df_intrinsic_value = graham_intrinsic_value()
 evaluate_grid(market='AG')
 
 #########################################

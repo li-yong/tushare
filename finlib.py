@@ -3098,7 +3098,6 @@ class Finlib:
         return(df)
 
     def remove_garbage(self, df, code_field_name='code', code_format='C2D6',b_m_score=-1,n_year=5):
-
         df = self._remove_garbage_must(df,b_m_score,n_year)
         df = self._remove_garbage_rpt_s1(df, code_field_name, code_format)
         df = self._remove_garbage_by_profit_on_market_days_st(df)
@@ -3143,7 +3142,7 @@ class Finlib:
 
         return(df)
 
-    def _remove_garbage_must(self, df, b_m_score=-1,n_year=2):
+    def _remove_garbage_must(self, df, b_m_score=-1,n_year=1):
         if 'ts_code' in df.columns:
             ts_code_fmt = True
             df = self.ts_code_to_code(df)
@@ -3155,7 +3154,10 @@ class Finlib:
         df = self._remove_garbage_none_standard_audit_statement(df,n_year=n_year)
         df = self._remove_garbage_high_pledge_ration(df,statistic_ratio_threshold=50, detail_ratio_sum_threshold=70)
         df = self._remove_garbage_low_roe_pe(df, market='AG', roe_pe_ratio_threshold=0.1)
-        df = self._remove_garbage_by_fund_n_years(df,n_years=1)
+        df = self._remove_garbage_by_fund_n_years(df,n_years=n_year)
+        
+        df_gar = self._remove_garbage_fcf_profit_act_n_years(n_year=n_year)
+        df = pd.merge(df,df_gar['code'], on='code',how='inner')
 
 
         #remove koudi, this affected the fundermental_2.py step6.
@@ -3206,14 +3208,11 @@ class Finlib:
 
         df = self._df_sub_by_code(df=df, df_sub=df_garbage, byreason=constant.STOP_PROCESS)
 
-
         if ts_code_fmt:
             df = self.add_ts_code_to_column(df=df)
 
         df = df.reset_index().drop('index', axis=1)
         return (df)
-
-
 
 
     #input: df['code',...]
