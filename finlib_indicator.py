@@ -142,7 +142,7 @@ class Finlib_indicator:
 
     #not recommend long df, the shorter the faster
     # df.__len__ == 7 recommend
-    def upper_body_lower_shadow(self, df):
+    def upper_body_lower_shadow(self, df,ma_short, ma_middle,ma_long):
         ###### Upper_shadow, Body, Lower_shadow ####
         unit = [['']*2+[0]*3+[False]*6]
         df_a = pd.DataFrame( unit * df.__len__(), columns=['reason', 'action', 'upper_shadow_len', 'body_len', 'lower_shadow_len',
@@ -204,7 +204,7 @@ class Finlib_indicator:
         for i in range(df.__len__() - 5, df.__len__()):
             print("i is "+str(i))
             df_tmp = df.iloc[:i]
-            junxian_seri = self.sma_jincha_sicha_duotou_koutou(df_tmp, short=5, middle=10, long=20).iloc[-1]
+            junxian_seri = self.sma_jincha_sicha_duotou_koutou(df_tmp, short=ma_short, middle=ma_middle, long=ma_long).iloc[-1]
 
             #yunxian_buy: down trend, down_bar large bar.
             if (junxian_seri['kongtou_pailie']):
@@ -212,7 +212,7 @@ class Finlib_indicator:
                         if (not df.iloc[i-1]['long_upper_shadow'] ):
                             if (not df.iloc[i-1]['long_lower_shadow'] ):
                                 if (not df.iloc[i-1]['small_body'] ):
-                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_5']:
+                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_'+str(ma_short)]:
                                             # increase_bar,
                                             if df.iloc[i]['open']< df.iloc[i]['close']:
                                                 if df.iloc[i]['low'] > df.iloc[i-1]['low']:
@@ -230,7 +230,7 @@ class Finlib_indicator:
                         if (not df.iloc[i-1]['long_upper_shadow'] ):
                             if (not df.iloc[i-1]['long_lower_shadow'] ):
                                 if (not df.iloc[i-1]['small_body'] ):
-                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_5']:
+                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_'+str(ma_short)]:
                                             if df.iloc[i]['open']< df.iloc[i]['close']:# decrease_bar,
                                                 if df.iloc[i]['low'] > df.iloc[i-1]['low']:
                                                     if df.iloc[i]['high'] < df.iloc[i-1]['high'] :

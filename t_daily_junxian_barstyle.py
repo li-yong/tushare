@@ -36,7 +36,7 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     #         date      code  open  ...  long_lower_shadow  yunxian_buy  yunxian_sell
     #299  20200619  SZ000651  58.5  ...              False        False         False
     ######################################################
-    df_bar_style = finlib_indicator.Finlib_indicator().upper_body_lower_shadow(df)
+    df_bar_style = finlib_indicator.Finlib_indicator().upper_body_lower_shadow(df, ma_short=ma_short, ma_middle=ma_middle,ma_long=ma_long)
     df_today_bar_style = df_bar_style[-1:].reset_index().drop('index', axis=1)    #<<<<<< TODAY BAR_STYLE
 
 
@@ -281,7 +281,7 @@ def main():
 
 
         logging.info("verifying "+code + " " +name)
-        df_t = verify_a_stock(df=df)
+        df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
 
         #print(df_t)
         if not df_t.empty:
