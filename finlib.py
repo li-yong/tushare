@@ -5193,7 +5193,6 @@ class Finlib:
         pocket_pivot_this_vol_gt_N_records_of_down_vol = 0
 
 
-
         for i in range(2, df.__len__()):
             if df['close_-1_d'].iloc[-1*i] < 0: #price was down that day
                 if latest_volume >= df['volume'].iloc[-1 * i]:

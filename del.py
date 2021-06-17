@@ -347,6 +347,8 @@ def tv_filter():
 
     print(1)
 
+#### MAIN #####
+
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
 df_increase = price_amount_increase()

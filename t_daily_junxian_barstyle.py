@@ -8,7 +8,7 @@ import tabulate
 import constant
 
 
-def verify_a_stock(df):
+def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     #df must have column (code, date, open, low,high,close)
 
     # csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
@@ -21,8 +21,8 @@ def verify_a_stock(df):
     ###################################
     # Prepare
     ###################################
-    df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=5, middle=10, long=20)
-    df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=5, middle=10, long=20)
+    df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=ma_long)
+    df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=ma_short, middle=ma_middle, long=ma_long)
 
 
 
@@ -47,7 +47,8 @@ def verify_a_stock(df):
     #      code      date  close  ...  ema_short  ema_middle   ema_long
     #0  SZ000651  20200619  58.84  ...  58.433884    58.61309  58.362801
     ######################################################
-    df_today_junxian_style = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,5,10,20)    #<<<<<< TODAY JUNXIAN
+    # df_today_junxian_style = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,5,10,20)    #<<<<<< TODAY JUNXIAN
+    df_today_junxian_style = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,ma_short,ma_middle,ma_long)    #<<<<<< TODAY JUNXIAN
 
 
     ######################################################
@@ -193,6 +194,9 @@ def show_result(file, dir, filebase):
 def main():
 
     parser = OptionParser()
+    parser.add_option("--ma_short", type="int", action="store", dest="ma_short", default=5, help="MA short period")
+    parser.add_option("--ma_middle", type="int", action="store", dest="ma_middle", default=10, help="MA middle period")
+    parser.add_option("--ma_long", type="int", action="store", dest="ma_long", default=20, help="MA long period")
 
     parser.add_option("-s", "--show_result",   action="store_true", dest="show_result_f", default=False, help="show previous calculated result")
 
@@ -222,6 +226,10 @@ def main():
     check_my_ma = options.check_my_ma
     check_my_ma_allow_delay_min = options.check_my_ma_allow_delay_min
     check_my_ma_force_fetch = options.check_my_ma_force_fetch
+
+    ma_short = options.ma_short
+    ma_middle = options.ma_middle
+    ma_long = options.ma_long
 
     rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
     out_dir = rst['out_dir']
