@@ -168,24 +168,25 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
 
 
 
-def show_result(file, dir, filebase):
+def show_result(file, dir, filebase,selected, stock_global):
+    stock_global = stock_global.lower()
     logging.info("\ndf_yunxian_sell")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_SELL).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_SELL,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_yunxian_buy")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BAR_YUNXIAN_BUY,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_jincha_minor")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_jincha_major")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_very_strong_up_trend")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     logging.info("\ndf_duotou_pailie")
-    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE).head(5), headers='keys', tablefmt='psql'))
+    logging.info(tabulate.tabulate(finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_DUO_TOU_PAI_LIE,market=stock_global, selected=selected).head(5), headers='keys', tablefmt='psql'))
 
     exit(0)
 
@@ -238,7 +239,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
 
     if show_result_f:
-        show_result(file=out_f, dir=out_dir, filebase= stock_global.lower() + "_junxian_barstyle")
+        show_result(file=out_f, dir=out_dir, filebase= stock_global.lower() + "_junxian_barstyle", selected=selected, stock_global=stock_global)
         exit()
     elif check_my_ma:
         finlib_indicator.Finlib_indicator().check_my_ma(selected=selected, stock_global=stock_global,
@@ -279,7 +280,7 @@ def main():
         df['name']  = pd.Series([name]*df.__len__(),name='name')
 
 
-
+        logging.info("verifying "+code + " " +name)
         df_t = verify_a_stock(df=df)
 
         #print(df_t)
