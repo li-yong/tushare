@@ -347,7 +347,33 @@ def tv_filter():
 
     print(1)
 
+
+
+def ag_industry_selected():
+    path = "/home/ryan/DATA/ag_selected_industry"
+    allFiles = glob.glob(path + "/" + "*.BK*")
+    df_rtn = pd.DataFrame()
+
+    for f in allFiles:
+        logging.info("loading "+f)
+        df = pd.read_csv(f, names=['code'], converters={'code': str}, header=None, )
+        df['industry'] = f.split("/")[-1]
+        df_rtn = df_rtn.append(df)
+
+    df_rtn = finlib.Finlib().add_market_to_code(df=df_rtn)
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+    df_rtn = finlib.Finlib().remove_garbage(df=df_rtn)
+
+    out_csv = path + "/" + "ag_industry_selected.csv"
+    df_rtn.to_csv(out_csv, encoding='UTF-8', index=False)
+    logging.info("saved to "+out_csv)
+    finlib.Finlib.pprint(df_rtn)
+    return (df_rtn)
+
+
 #### MAIN #####
+
+df_industry = ag_industry_selected()
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must

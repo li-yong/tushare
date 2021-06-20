@@ -631,7 +631,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
             # signal.alarm(5)
             df_tmp = pd.DataFrame()
-            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit", "disclosure_date", "express", "fina_mainbz"]:
+            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit","fina_mainbz", "disclosure_date", "express"]:
                 if fast_fetch:
                     if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")):
                         continue
