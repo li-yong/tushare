@@ -965,6 +965,74 @@ def fetch_info_daily(fast_fetch=False):
     pass
 
 
+
+def fetch_industry_l123():
+    pro = ts.pro_api(token=myToken)
+
+    # 获取申万一级行业列表
+    df1 = pro.index_classify(level='L1', src='SW')
+    # 获取申万二级行业列表
+    df2 = pro.index_classify(level='L2', src='SW')
+    # 获取申万三级级行业列表
+    df3 = pro.index_classify(level='L3', src='SW')
+
+    df_index = df1.append(df2).append(df3).reset_index().drop('index', axis=1)
+
+    out_csv = "/home/ryan/DATA/pickle/ag_industry.csv"
+    df_index.to_csv(out_csv, encoding='UTF-8', index=False)
+    logging.info("industry index saved to " + out_csv)
+
+
+    df1n = pd.DataFrame()
+    for index, row in df1.iterrows():
+        logging.info(
+            str(index) + " of " + str(df1.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
+                'industry_name'] + " ," + row['level'])
+        df1n = df1n.append(pro.index_member(index_code=row['index_code']))
+    df1n = df1n.reset_index().drop('index', axis=1)
+    df1n = pd.merge(df1n, df_index, on='index_code', how='inner')
+
+    df2n = pd.DataFrame()
+    for index, row in df2.iterrows():
+        logging.info(
+            str(index) + " of " + str(df2.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
+                'industry_name'] + " ," + row['level'])
+        df2n = df2n.append(pro.index_member(index_code=row['index_code']))
+    df2n = df2n.reset_index().drop('index', axis=1)
+    df2n = pd.merge(df2n, df_index, on='index_code', how='inner')
+
+    df3n = pd.DataFrame()
+    for index, row in df3.iterrows():
+        logging.info(
+            str(index) + " of " + str(df3.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
+                'industry_name'] + " ," + row['level'])
+        df3n = df3n.append(pro.index_member(index_code=row['index_code']))
+    df3n = df3n.reset_index().drop('index', axis=1)
+    df3n = pd.merge(df3n, df_index, on='index_code', how='inner')
+
+    dfnn = pd.merge(left=df1n, right=df2n, on='con_code', how="inner", suffixes=("_1n", "_2n"))
+    dfnn = pd.merge(left=dfnn, right=df3n, on='con_code', how="inner", suffixes=("", "_3n"))
+    dfnn['industry_name_L1_L2_L3'] = dfnn['industry_name_1n'] + "_" + dfnn['industry_name_2n'] + "_" + dfnn[
+        'industry_name']
+    dfnn['index_code_L1_L2_L3'] = dfnn['index_code_1n'] + "_" + dfnn['index_code_2n'] + dfnn['index_code']
+    dfnn = dfnn[['con_code', 'industry_name_L1_L2_L3', 'index_code_L1_L2_L3']]
+    #
+    # dfnn = df1n.append(df2n).append(df3n).reset_index().drop('index', axis=1)
+
+    dfnn = dfnn.rename(columns={"con_code": "ts_code"}, inplace=False)
+    dfnn = finlib.Finlib().ts_code_to_code(dfnn)
+    dfnn = finlib.Finlib().add_stock_name_to_df(dfnn)
+
+    dfnn[dfnn['code'] == 'SH600519']
+
+    out_csv = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
+    dfnn.to_csv(out_csv, encoding='UTF-8', index=False)
+    logging.info("stock industry mapping saved to "+out_csv)
+
+    return(dfnn)
+
+
+
 def fetch_new_share():
     ts.set_token(myToken)
     pro = ts.pro_api()
@@ -4068,6 +4136,7 @@ def main():
     parser.add_option("--fetch_pro_repurchase", action="store_true", dest="fetch_pro_repurchase_f", default=False, help="")
     parser.add_option("--fetch_cctv_news", action="store_true", dest="fetch_cctv_news_f", default=False, help="")
     parser.add_option("--fetch_new_share", action="store_true", dest="fetch_new_share_f", default=False, help="")
+    parser.add_option("--fetch_industry_l123", action="store_true", dest="fetch_industry_l123_f", default=False, help="")
     parser.add_option("--fetch_change_name", action="store_true", dest="fetch_change_name_f", default=False, help="")
     parser.add_option("--fetch_pledge_stat_detail", action="store_true", dest="fetch_pledge_stat_detail_f", default=False, help="")
 
@@ -4116,6 +4185,7 @@ def main():
     (options, args) = parser.parse_args()
     fetch_all_f = options.fetch_all_f
     fetch_new_share_f = options.fetch_new_share_f
+    fetch_industry_l123_f = options.fetch_industry_l123_f
     fetch_change_name_f = options.fetch_change_name_f
     extract_latest_f = options.extract_latest_f
     merge_quarterly_f = options.merge_quarterly_f
@@ -4141,6 +4211,7 @@ def main():
 
     logging.info(__file__ + " " + "fetch_all_f: " + str(fetch_all_f))
     logging.info(__file__ + " " + "fetch_new_share_f: " + str(fetch_new_share_f))
+    logging.info(__file__ + " " + "fetch_industry_l123_f: " + str(fetch_industry_l123_f))
     logging.info(__file__ + " " + "extract_latest_f: " + str(extract_latest_f))
     logging.info(__file__ + " " + "merge_quarterly_f: " + str(merge_quarterly_f))
     logging.info(__file__ + " " + "analyze_f: " + str(analyze_f))
@@ -4199,6 +4270,11 @@ def main():
 
     if options.fetch_new_share_f:
         fetch_new_share()
+
+
+    if options.fetch_industry_l123_f:
+        fetch_industry_l123()
+
 
     if options.fetch_change_name_f:
         _fetch_change_name()

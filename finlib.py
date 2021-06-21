@@ -3103,6 +3103,24 @@ class Finlib:
         df = self._remove_garbage_by_profit_on_market_days_st(df)
         return(df)
 
+    def _remove_garbage_by_industry(self,df):
+        if df.__len__()==0:
+            return(df)
+
+        df_all = self.get_A_stock_instrment()
+        df_all = self.add_industry_to_df(df_all)
+
+        df1 = self._df_sub_by_code(df=df_all, df_sub=df_all[df_all['industry_name_L1_L2_L3'].str.contains('纺织服装')], byreason="industry_纺织服装")
+        df2 = self._df_sub_by_code(df=df_all, df_sub=df_all[df_all['industry_name_L1_L2_L3'].str.contains('农林牧渔')], byreason="industry_农林牧渔")
+
+        df_rtn = pd.merge(df,df1['code'],on='code',how='inner')
+        df_rtn = pd.merge(df_rtn,df2['code'],on='code',how='inner')
+
+        return(df_rtn)
+
+
+
+
     def add_industry_to_df(self,df):
         f = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
         df_industry = pd.read_csv(f)
@@ -3154,6 +3172,10 @@ class Finlib:
             df = self.ts_code_to_code(df)
         else:
             ts_code_fmt = False
+
+        if 'industry_name_L1_L2_L3' not in df.columns:
+            df = self.add_industry_to_df(df=df)
+            df = self.adjust_column(df=df, col_name_list=['industry_name_L1_L2_L3'])
 
         df = self._remove_garbage_beneish_low_rate(df,m_score=b_m_score)
         df = self._remove_garbage_change_named_stock(df,n_year=n_year)
