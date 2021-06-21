@@ -215,6 +215,8 @@ if [ $full_or_daily == "FULL" ]; then
   #python t_daily_fundamentals_2.py --fetch_data_all --force_run   #if everything stock/period need be refetch.
   #python t_daily_fundamentals_2.py --fetch_data_all --fast_fetch  #most time, update most recent q.  #time consuming.
 
+  python t_daily_fundamentals_2.py --fetch_industry_l123
+
   #separate --fetch_data_all
   #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_*.csv
   #ts_code,trade_date,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,total_share,float_share,total_mv,circ_mv
@@ -271,7 +273,6 @@ if [ $full_or_daily == "DAILY" ]; then
   python t_daily_fundamentals_2.py --fetch_basic_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_info_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_new_share
-  python t_daily_fundamentals_2.py --fetch_industry_l123
   python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch #pro fundation tables. 10 tables.
   python t_daily_fundamentals_2.py --fetch_change_name
 
