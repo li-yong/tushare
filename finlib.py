@@ -3101,6 +3101,7 @@ class Finlib:
         df = self._remove_garbage_must(df,b_m_score,n_year)
         df = self._remove_garbage_rpt_s1(df, code_field_name, code_format)
         df = self._remove_garbage_by_profit_on_market_days_st(df)
+        df = self._remove_garbage_by_industry(df)
         return(df)
 
     def _remove_garbage_by_industry(self,df):
@@ -3109,6 +3110,7 @@ class Finlib:
 
         df_all = self.get_A_stock_instrment()
         df_all = self.add_industry_to_df(df_all)
+        df_all = df_all[~df_all['industry_name_L1_L2_L3'].isna()].reset_index().drop('index',axis=1) #remove Nan
 
         df1 = self._df_sub_by_code(df=df_all, df_sub=df_all[df_all['industry_name_L1_L2_L3'].str.contains('纺织服装')], byreason="industry_纺织服装")
         df2 = self._df_sub_by_code(df=df_all, df_sub=df_all[df_all['industry_name_L1_L2_L3'].str.contains('农林牧渔')], byreason="industry_农林牧渔")

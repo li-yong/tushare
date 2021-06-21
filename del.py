@@ -181,6 +181,9 @@ def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount
 def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
+    df = finlib.Finlib()._remove_garbage_by_industry(df)
+    # df = finlib.Finlib()._remove_garbage_must(df)
+    df = finlib.Finlib().remove_garbage(df)
 
     finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
 
@@ -373,86 +376,20 @@ def ag_industry_selected():
     return (df_rtn)
 
 
-def get_industry_l123():
-    pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
-
-    # 获取申万一级行业列表
-    df1 = pro.index_classify(level='L1', src='SW')
-    # 获取申万二级行业列表
-    df2 = pro.index_classify(level='L2', src='SW')
-    # 获取申万三级级行业列表
-    df3 = pro.index_classify(level='L3', src='SW')
-
-    df_index = df1.append(df2).append(df3).reset_index().drop('index', axis=1)
-
-    out_csv = "/home/ryan/DATA/pickle/ag_industry.csv"
-    df_index.to_csv(out_csv, encoding='UTF-8', index=False)
-    logging.info("industry index saved to " + out_csv)
-
-
-    df1n = pd.DataFrame()
-    for index, row in df1.iterrows():
-        logging.info(
-            str(index) + " of " + str(df1.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
-                'industry_name'] + " ," + row['level'])
-        df1n = df1n.append(pro.index_member(index_code=row['index_code']))
-    df1n = df1n.reset_index().drop('index', axis=1)
-    df1n = pd.merge(df1n, df_index, on='index_code', how='inner')
-
-    df2n = pd.DataFrame()
-    for index, row in df2.iterrows():
-        logging.info(
-            str(index) + " of " + str(df2.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
-                'industry_name'] + " ," + row['level'])
-        df2n = df2n.append(pro.index_member(index_code=row['index_code']))
-    df2n = df2n.reset_index().drop('index', axis=1)
-    df2n = pd.merge(df2n, df_index, on='index_code', how='inner')
-
-    df3n = pd.DataFrame()
-    for index, row in df3.iterrows():
-        logging.info(
-            str(index) + " of " + str(df3.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
-                'industry_name'] + " ," + row['level'])
-        df3n = df3n.append(pro.index_member(index_code=row['index_code']))
-    df3n = df3n.reset_index().drop('index', axis=1)
-    df3n = pd.merge(df3n, df_index, on='index_code', how='inner')
-
-    dfnn = pd.merge(left=df1n, right=df2n, on='con_code', how="inner", suffixes=("_1n", "_2n"))
-    dfnn = pd.merge(left=dfnn, right=df3n, on='con_code', how="inner", suffixes=("", "_3n"))
-    dfnn['industry_name_L1_L2_L3'] = dfnn['industry_name_1n'] + "_" + dfnn['industry_name_2n'] + "_" + dfnn[
-        'industry_name']
-    dfnn['index_code_L1_L2_L3'] = dfnn['index_code_1n'] + "_" + dfnn['index_code_2n'] + dfnn['index_code']
-    dfnn = dfnn[['con_code', 'industry_name_L1_L2_L3', 'index_code_L1_L2_L3']]
-    #
-    # dfnn = df1n.append(df2n).append(df3n).reset_index().drop('index', axis=1)
-
-    dfnn = dfnn.rename(columns={"con_code": "ts_code"}, inplace=False)
-    dfnn = finlib.Finlib().ts_code_to_code(dfnn)
-    dfnn = finlib.Finlib().add_stock_name_to_df(dfnn)
-
-    dfnn[dfnn['code'] == 'SH600519']
-
-    out_csv = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
-    dfnn.to_csv(out_csv, encoding='UTF-8', index=False)
-    logging.info("stock industry mapping saved to "+out_csv)
-
-    return(dfnn)
-
-
 #### MAIN #####
-
-df_all = finlib.Finlib().get_A_stock_instrment()
-df_all = finlib.Finlib().add_industry_to_df(df=df_all)
+grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+exit()
+#
+# df_all = finlib.Finlib().get_A_stock_instrment()
+# df_all = finlib.Finlib().add_industry_to_df(df=df_all)
 
 
 print(1)
 
-df_industry = get_industry_l123()
 
 df_industry = ag_industry_selected()
 exit()
 
-grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
 df_increase = price_amount_increase()
 df_intrinsic_value = graham_intrinsic_value()
