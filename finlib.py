@@ -3103,6 +3103,12 @@ class Finlib:
         df = self._remove_garbage_by_profit_on_market_days_st(df)
         return(df)
 
+    def add_industry_to_df(self,df):
+        f = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
+        df_industry = pd.read_csv(f)
+        df_rtn = pd.merge(left=df, right=df_industry[['code', 'industry_name_L1_L2_L3']], on='code', how='left',
+                          suffixes=("", "_x"))
+        return(df_rtn)
 
     def evaluate_by_ps_pe_pb(self):
         df_exam_all = self.get_common_fund_df()

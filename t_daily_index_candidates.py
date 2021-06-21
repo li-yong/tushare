@@ -471,7 +471,7 @@ def main():
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
     parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
-    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
+    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="BBCR Frames Lost ",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
     #
 
