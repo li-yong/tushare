@@ -303,6 +303,70 @@ def get_hs300_total_share_weighted():
     return(df_basic[['code','name','hs300_total_share_weighted']])
 
 
+
+############
+def fetch_stock_industry_wugui_selenium():
+    csv_o = "/home/ryan/DATA/pickle/ag_stock_industry_wg.csv"
+
+    opts = webdriver.ChromeOptions()
+    browser = webdriver.Chrome(options=opts)
+    browser.get('https://androidinvest.com/auth/login/')
+
+    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
+    login_link = browser.find_element_by_partial_link_text('账号密码')
+    login_link.click()
+
+    usr_box =  browser.find_element_by_id('login_user_name')
+    pwd_box =  browser.find_element_by_id('login_user_pwd')
+    sub_btn = browser.find_element_by_id('btnLogin')
+
+    usr_box.send_keys('13651887669')
+    pwd_box.send_keys('fav@Apple!')
+
+    sub_btn.click()
+    # time.sleep(5)
+
+    #wait maximum 10seconds to login
+    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+
+    ### fetch industry start
+    u="https://wglh.com/sector/"
+    browser.get(u)
+    obj_tbl = browser.find_element_by_id("table1")
+
+    df_all = pd.DataFrame()
+    industry_links = []
+    for l in obj_tbl.find_elements_by_partial_link_text(''):
+        industry_links.append(l.get_property('href'))
+
+    for l in industry_links:
+        # print(l.get_property('href'))
+        browser.get(l)
+
+        industry_name = browser.find_elements_by_class_name('clearfix')[0].text.split("_")[0]
+        industry_code = browser.find_elements_by_class_name('clearfix')[0].text.split("_")[1].splitlines()[0].split(".")[1]
+        # print(industry_name)
+
+        tbl = browser.find_element_by_class_name('bootstrap-table')
+        s_list = tbl.find_elements_by_class_name('text-left')
+
+        for i in s_list:
+            code = i.text.split(". ")[0]
+            name = i.text.split(". ")[1]
+            logging.info(code,name,industry_name)
+            df = pd.DataFrame({'code':[code],'name_wg':[name],'industry_name_wg':[industry_name],'industry_code_wg':[industry_code]})
+            df_all = df_all.append(df)
+
+        df_all.to_csv(csv_o, encoding='UTF-8', index=False)
+
+    df_all = pd.read_csv(csv_o, converters={'code':str})
+    df_all = finlib.Finlib().add_market_to_code(df_all)
+    df_all = finlib.Finlib().add_stock_name_to_df(df_all)
+    df_all.to_csv(csv_o, encoding='UTF-8', index=False)
+    logging.info("completed. fetched stock's industry from wugui, save to "+csv_o+" len "+str(df_all.__len__()))
+    return(df_all)
+
+
 ############
 def fetch_index_wugui_selenium():
 
@@ -471,7 +535,7 @@ def main():
     parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
     parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tushare, saved to DATA/pickle/{index_name}.csv")
-    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="BBCR Frames Lost ",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
+    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
 
     #
 
@@ -513,6 +577,7 @@ def main():
         # download chromedriver_linux64.zip
         # sudo mv chromedriver  /usr/local/bin/
         fetch_index_wugui_selenium()
+        fetch_stock_industry_wugui_selenium()
         exit()
 
     if period_end is None:

@@ -3,6 +3,7 @@
 #rm -rf /home/ryan/DATA/result/today.del
 #mv  /home/ryan/DATA/result/today ~/DATA/result/today.del
 #mkdir  /home/ryan/DATA/result/today
+bash -x clean_result_dir.sh
 
 full_or_daily=$1
 

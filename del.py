@@ -181,8 +181,6 @@ def _get_avg_chg_of_code_list(list_name, df_code_column_only, df_close,df_amount
 def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
-    df = finlib.Finlib()._remove_garbage_by_industry(df)
-    # df = finlib.Finlib()._remove_garbage_must(df)
     df = finlib.Finlib().remove_garbage(df)
 
     finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
@@ -377,11 +375,10 @@ def ag_industry_selected():
 
 
 #### MAIN #####
-grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-exit()
-#
-# df_all = finlib.Finlib().get_A_stock_instrment()
-# df_all = finlib.Finlib().add_industry_to_df(df=df_all)
+# grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+
+df_all = finlib.Finlib().get_A_stock_instrment()
+df_all = finlib.Finlib().add_industry_to_df(df=df_all)
 
 
 print(1)
