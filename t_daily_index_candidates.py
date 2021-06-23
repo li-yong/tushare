@@ -353,7 +353,7 @@ def fetch_stock_industry_wugui_selenium():
         for i in s_list:
             code = i.text.split(". ")[0]
             name = i.text.split(". ")[1]
-            logging.info(code,name,industry_name)
+            logging.info(code+" "+name+" "+industry_name)
             df = pd.DataFrame({'code':[code],'name_wg':[name],'industry_name_wg':[industry_name],'industry_code_wg':[industry_code]})
             df_all = df_all.append(df)
 

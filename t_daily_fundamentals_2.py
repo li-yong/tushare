@@ -857,7 +857,7 @@ def fetch_basic_daily(fast_fetch=False):
     todayS = datetime.datetime.today().strftime("%Y%m%d")
 
     trading_days = trade_days[(trade_days.cal_date <= int(todayS)) & (trade_days.is_open == 1)]
-    trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)
+    # trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)  #don't sort, we need create the latest_ symbol link.
 
     if fast_fetch:  # run on daily, fetch the most recent 5 day only.
         trading_days = trading_days[:5]
