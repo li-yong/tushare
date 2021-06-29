@@ -375,7 +375,7 @@ def ag_industry_selected():
 
 
 #### MAIN #####
-# grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 
 df_all = finlib.Finlib().get_A_stock_instrment()
 df_all = finlib.Finlib().add_industry_to_df(df=df_all)

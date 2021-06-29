@@ -3124,6 +3124,10 @@ class Finlib:
 
 
     def add_industry_to_df(self,df):
+        if "_".join(df.columns.to_list()).__contains__("industry_name"):
+            logging.info("df already has column named industry_name, skip adding industry to df. df columns: "+",".join(df.columns.to_list()))
+            return(df)
+
         f_ts = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
         f_wg = "/home/ryan/DATA/pickle/ag_stock_industry_wg.csv"
         df_industry_ts = pd.read_csv(f_ts)
@@ -3426,7 +3430,16 @@ class Finlib:
 
         # df_mean = b.groupby('code').mean().reset_index()
         df_mean = df_all.groupby('code').mean()
+        df_mean = self.add_industry_to_df(df=df_mean)
+        df_mean_no_bank_insurance = df_mean[~df_mean['industry_name_L1_L2_L3'].str.contains(r"银行|保险",na=False)].reset_index().drop('index', axis=1)
+
         df_mean_rank = df_mean.rank(pct=True).reset_index()
+        df_mean_rank['code'] = df_mean['code']
+        
+        df_mean_rank_no_bank_insurance_rank = df_mean_no_bank_insurance.rank(pct=True).reset_index()
+        df_mean_rank_no_bank_insurance_rank['code'] = df_mean_no_bank_insurance['code']
+
+        # df_mean_rank = self.add_industry_to_df(df=df_mean_rank)
 
         # df_gar = df_mean_rank[(df_mean_rank['eps'] <= 0.1) #基本每股收益
         #                       | (df_mean_rank['roe'] <= 0.1) #净资产收益率
@@ -3443,10 +3456,12 @@ class Finlib:
         df_3 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['free_cashflow'] <= 0.1],byreason='garbage_free_cashflow_bottom_dot1') #fcff企业自由现金流量, free_cashflow
         df_4 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['ocf_to_profit'] <= 0.1],byreason='garbage_ocf_to_profit_bottom_dot1')
         df_5 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['grossprofit_margin'] <= 0.1],byreason='garbage_grossprofit_margin_bottom_dot1')
-        df_6 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['debt_to_assets'] >= 0.6],byreason='garbage_debt_to_assets_top_dot6')
+
+        # df_mean_rank_no_bank_assurance = df_mean_rank[~df_mean_rank['industry_name_L1_L2_L3'].str.contains(r"银行|保险",na=False)].reset_index().drop('index', axis=1)
+        df_6 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank_no_bank_insurance_rank[df_mean_rank_no_bank_insurance_rank['debt_to_assets'] >= 0.6],byreason='no_bank_garbage_debt_to_assets_top_dot6')
 
         df_7 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['fcff'] <= 0.1], byreason='garbage_fcff_bottom_dot1')  # fcff企业自由现金流量to firm,
-        df_8 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['current_ratio'] <= 0.1],byreason='garbage_current_ratio_bottom_dot1')  # 流动比率,
+        df_8 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank_no_bank_insurance_rank[df_mean_rank_no_bank_insurance_rank['current_ratio'] <= 0.1],byreason='no_bank_garbage_current_ratio_bottom_dot1')  # 流动比率,
 
         df_rtn_2 = pd.merge(df_1,df_2['code'], on='code',how='inner')
         df_rtn_2 = pd.merge(df_rtn_2,df_3['code'], on='code',how='inner')
