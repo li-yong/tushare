@@ -3,7 +3,6 @@
 #rm -rf /home/ryan/DATA/result/today.del
 #mv  /home/ryan/DATA/result/today ~/DATA/result/today.del
 #mkdir  /home/ryan/DATA/result/today
-bash -x clean_result_dir.sh
 
 full_or_daily=$1
 
@@ -20,6 +19,7 @@ fi
 sleep 2
 
 cd /home/ryan/tushare_ryan
+bash -x clean_result_dir.sh
 
 #@todo: focus on date after 2005? when the gu quan fengzhi starts
 #@todo:  each fields name and meaning, adding to the code py script.
