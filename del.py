@@ -374,7 +374,60 @@ def ag_industry_selected():
     return (df_rtn)
 
 
+
+def bayes():
+    f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(f)
+
+    code = "SH000001"
+    name = 'SH_INDEX'
+    short=4
+    middle=10
+    long=27
+
+    df_up = df[df['pct_chg']>=0.5]
+
+    df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df,short=short, middle=middle, long=long)
+    df['close_a5'] = df['close'].shift(-5)
+    df['close_a2'] = df['close'].shift(-2)
+    df['close_b1'] = df['close'].shift(1)
+    df['open_b1'] = df['open'].shift(1)
+
+
+    df['sma_short_b1'] = df['sma_short_'+str(short)].shift(1)
+    df['sma_middle_b1'] = df['sma_middle_'+str(middle)].shift(1)
+    df['sma_long_b1'] = df['sma_long_'+str(long)].shift(1)
+
+
+    #jincha
+    df_jincha = df[(df['sma_short_b1'] < df['sma_long_b1']) & (df['sma_short_'+str(short)] > df['sma_long_'+str(long)])]
+
+    #yunxian
+    df_yunxian = df[(df['open'] < df['close']) & (df['open_b1'] > df['close_b1']) & (df['open_b1'] > df['close']) & (df['close_b1'] < df['open'])  ]
+
+    _print_bayes_possibility(code=code,name=name, condition='jincha', df_all=df, df_up=df_up,df_con=df_jincha )
+    _print_bayes_possibility(code=code,name=name, condition='yunxian', df_all=df, df_up=df_up,df_con=df_yunxian )
+
+
+
+    print(1)
+
+
+def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
+    #P(condition | up) : N(up & condition) / N(up)
+    p_con_up = pd.merge(df_con,df_up,on=['date'],how='inner',suffixes=('','_x')).__len__()/df_up.__len__()
+    p_con = df_con.__len__() / df_all.__len__()
+    p_up = df_up.__len__() / df_all.__len__()
+
+
+    #P(up|condition)
+    P_bayes = round((p_con_up*p_up)/p_con,2)
+    logging.info(str(code)+" "+str(name)+", Bayes Possibility, P(up|"+condition+"): "+str(P_bayes))
+
+
+
 #### MAIN #####
+bayes()
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 
 df_all = finlib.Finlib().get_A_stock_instrment()
