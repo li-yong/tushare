@@ -374,16 +374,37 @@ def ag_industry_selected():
     return (df_rtn)
 
 
+def bayes_start():
+    df = finlib.Finlib().get_A_stock_instrment()
+    # df = finlib.Finlib().remove_garbage(df)
+    # df = finlib.Finlib().get_stock_configuration(select=False, stock_global='AG')
+    sc = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
 
-def bayes(code,name,csv_f):
-    f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
-    csv_f = "/home/ryan/DATA/DAY_Global/AG/SH603288.csv"
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(f).tail(1000)
+    stock_list = sc['stock_list']
+    csv_dir = sc['csv_dir']
+    out_dir = sc['out_dir']
+
+    for index, row in stock_list.iterrows():
+
+        code = row['code']
+        name = row['name']
+
+        print(code+", "+name)
+
+        _bayes_a_stock(code=code, name=name, csv_f=csv_dir+"/"+code+".csv")
+
+
+    print(1)
+
+def _bayes_a_stock(code,name,csv_f):
+    # f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
+    # csv_f = "/home/ryan/DATA/DAY_Global/AG/SH603288.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f).tail(1000)
 
     # code = "SH000001"
-    code = "SH603288"
+    # code = "SH603288"
     # name = 'SH_INDEX'
-    name = '海天味业'
+    # name = '海天味业'
 
     short=4
     middle=10
@@ -395,8 +416,8 @@ def bayes(code,name,csv_f):
     df['close_b1'] = df['close'].shift(1)
     df['open_b1'] = df['open'].shift(1)
 
-    df_up = df[df['close_a2'] > 1.01*df['close']]
-    df_up = df[df['close_a5'] > 1.00*df['close']]
+    # df_up = df[df['close_a2'] > 1.01*df['close']]
+    df_up = df[df['close_a5'] > 1.02*df['close']]
 
 
     df['sma_short_b1'] = df['sma_short_'+str(short)].shift(1)
@@ -413,23 +434,34 @@ def bayes(code,name,csv_f):
     _print_bayes_possibility(code=code,name=name, condition='jincha', df_all=df, df_up=df_up,df_con=df_jincha )
     _print_bayes_possibility(code=code,name=name, condition='yunxian', df_all=df, df_up=df_up,df_con=df_yunxian )
 
-    print(1)
+    return()
+
 
 
 def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
     #P(condition | up) : N(up & condition) / N(up)
-    p_con_up = pd.merge(df_con,df_up,on=['date'],how='inner',suffixes=('','_x')).__len__()/df_up.__len__()
+    df_con_up =  pd.merge(df_con,df_up,on=['date'],how='inner',suffixes=('','_x'))
+
+    p_con_up = df_con_up.__len__()/df_up.__len__()
     p_con = df_con.__len__() / df_all.__len__()
     p_up = df_up.__len__() / df_all.__len__()
 
     #P(up|condition)
-    P_bayes = round((p_con_up*p_up)/p_con,2)
-    logging.info(str(code)+" "+str(name)+", Bayes Possibility, P(up|"+condition+"): "+str(P_bayes))
+    P_bayes = round((p_con_up*p_up)/p_con,2)  # it is actually equal df_con_up.__len__()/df_con.__len__()
+
+    
+    logging.info(str(code)+" "+str(name)+", Bayes Possibility, P(up|"+condition+"): "+str(P_bayes)
+                 +" con_up: "+str(df_con_up.__len__() )
+                 +" con: "+str(df_con.__len__() )
+                 +" up: "+str(df_up.__len__() )
+                 +" all: "+str(df_all.__len__() )
+                 )
 
 
 
 #### MAIN #####
-bayes()
+bayes_start()
+exit()
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 
 df_all = finlib.Finlib().get_A_stock_instrment()
