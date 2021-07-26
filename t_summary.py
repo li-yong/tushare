@@ -443,10 +443,10 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
     if select:
         rpt = "/home/ryan/DATA/result/report_" + exam_date + "_selected.txt"
-        rpt_pub = "/home/ryan/DATA/result/latest_report_selected.txt"
+        rpt_pub = "/home/ryan/DATA/result/report_latest_selected.txt"
     else:
         rpt = "/home/ryan/DATA/result/report_" + exam_date + "_" + stock_global + ".txt"
-        rpt_pub = "/home/ryan/DATA/result/latest_report_" + stock_global + ".txt"
+        rpt_pub = "/home/ryan/DATA/result/report_latest_" + stock_global + ".txt"
 
     rst = "\nGetting today's summary report " + exam_date + "\n\n"  #the string contains the report content.
     fh = open(rpt, "w")

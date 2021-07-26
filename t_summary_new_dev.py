@@ -608,17 +608,17 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     if select:
         if remove_garbage:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_selected_no_garbage.txt"
-            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+ "_selected_no_garbage.txt"
+            rpt_pub = "/home/ryan/DATA/result/report_latest_new_dev_"+operation+ "_selected_no_garbage.txt"
         else:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_selected.txt"
-            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_selected.txt"
+            rpt_pub = "/home/ryan/DATA/result/report_latest_new_dev_"+operation+"_selected.txt"
     else:
         if remove_garbage:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + "_no_garbage.txt"
-            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_" + stock_global + "_no_garbage.txt"
+            rpt_pub = "/home/ryan/DATA/result/report_latest_new_dev_"+operation+"_" + stock_global + "_no_garbage.txt"
         else:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + ".txt"
-            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_" + stock_global + ".txt"
+            rpt_pub = "/home/ryan/DATA/result/report_latest_new_dev_"+operation+"_" + stock_global + ".txt"
     rst = "\nGetting today's summary report " + exam_date + "\n\n"  # the string contains the report content.
     fh = open(rpt, "w")
     fh.write(rst)
