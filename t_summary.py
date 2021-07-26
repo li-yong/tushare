@@ -443,8 +443,11 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
     if select:
         rpt = "/home/ryan/DATA/result/report_" + exam_date + "_selected.txt"
+        rpt_pub = "/home/ryan/DATA/result/latest_report_selected.txt"
     else:
         rpt = "/home/ryan/DATA/result/report_" + exam_date + "_" + stock_global + ".txt"
+        rpt_pub = "/home/ryan/DATA/result/latest_report_" + stock_global + ".txt"
+
     rst = "\nGetting today's summary report " + exam_date + "\n\n"  #the string contains the report content.
     fh = open(rpt, "w")
     fh.write(rst)
@@ -2027,12 +2030,20 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
                       + "len " + str(tmp.__len__()) + ". " + ", ".join(set(subset))
 
                 rst += "\n" + tabulate(tmp, headers='keys', tablefmt='psql', disable_numparse=True) + "\n"
+
                 fh = open(rpt, "a")
                 fh.write(rst)
                 fh.close()
+
+                fh = open(rpt_pub, "a")
+                fh.write(rst)
+                fh.close()
+
+
                 logging.info(rst)
 
     logging.info(("result saved to " + rpt))
+    logging.info(("result public saved to " + rpt_pub))
     logging.info(__file__+" "+"script completed")
 
     os._exit(0)

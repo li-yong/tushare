@@ -4870,7 +4870,7 @@ class Finlib:
             df = df.sort_values('total_mv', ascending=False)
         return(df)
 
-    def get_tr_pe(self, df_daily=None, df_ts_all=None): #tr_yoy 营业总收入同比增长率(%)
+    def get_tr_pe(self, df_daily=None, df_ts_all=None): #tr_yoy 营业总收入同比增长率(%). tr: total revenue
         # df_fund = df_ts_all[df_ts_all['end_date'] == self.get_report_publish_status()['completed_year_rpt_date']]
         df_yoy_mean = df_ts_all[['ts_code', 'tr_yoy']].groupby('ts_code').mean().reset_index()
         # df = pd.merge(df_fund, df_yoy_mean, left_on='ts_code', right_on='ts_code', suffixes=('', '_mean'))

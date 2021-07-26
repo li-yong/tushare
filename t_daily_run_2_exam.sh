@@ -778,6 +778,18 @@ python t_summary.py -x AG --action generate_report
 #############
 python t_summary.py -x AG --action analyze_report
 
+#######
+# commit garbage to github
+######
+cd /home/ryan/DATA/result/garbage
+for i in `ls latest_*`; do echo $i; cat $i > /home/ryan/DATA/result/garbage_$i;  done
+
+cd /home/ryan/DATA/result
+git add garbage_latest_*.csv
+git commit -a -m'1'; git push
+echo "garbage_latest csv were commited to github"
+
+
 #Possible good candidates:
 #  df_support_resist_line_today <<  SHORT term. with fund or fund_2 other fundamental indicators (whitehorse, ROE, etc)
 #                                   at lower price, bottom price now?

@@ -460,9 +460,10 @@ def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
 
 
 #### MAIN #####
-bayes_start()
-exit()
+# bayes_start()
+
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+exit()
 
 df_all = finlib.Finlib().get_A_stock_instrment()
 df_all = finlib.Finlib().add_industry_to_df(df=df_all)

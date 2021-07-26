@@ -608,15 +608,23 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     if select:
         if remove_garbage:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_selected_no_garbage.txt"
+            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+ "_selected_no_garbage.txt"
         else:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_selected.txt"
+            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_selected.txt"
     else:
         if remove_garbage:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + "_no_garbage.txt"
+            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_" + stock_global + "_no_garbage.txt"
         else:
             rpt = "/home/ryan/DATA/result/report_new_dev_"+operation+"_" + exam_date + "_" + stock_global + ".txt"
+            rpt_pub = "/home/ryan/DATA/result/latest_report_new_dev_"+operation+"_" + stock_global + ".txt"
     rst = "\nGetting today's summary report " + exam_date + "\n\n"  # the string contains the report content.
     fh = open(rpt, "w")
+    fh.write(rst)
+    fh.close()
+
+    fh = open(rpt_pub, "w")
     fh.write(rst)
     fh.close()
 
@@ -873,12 +881,21 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
                 rst = "\n==== " + str(cheap_cnt) + " cheap " + str(expensive_cnt) + " exp, " + str(short_term) + "s " + str(middle_term) + "m " + str(long_term) + "l " + "len " + str(tmp.__len__()) + ". " + ", ".join(set(subset))
 
                 rst += "\n" + tabulate(tmp, headers="keys", tablefmt="psql", disable_numparse=True) + "\n"
+
+
                 fh = open(rpt, "a")
                 fh.write(rst)
                 fh.close()
+
+                fh = open(rpt_pub, "a")
+                fh.write(rst)
+                fh.close()
+
+
                 logging.info(rst)
 
     logging.info(("result saved to " + rpt))
+    logging.info(("result public saved to " + rpt_pub))
     logging.info(__file__ + " " + "script completed")
 
     os._exit(0)
