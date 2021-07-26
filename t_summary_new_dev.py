@@ -141,7 +141,7 @@ def define_global(stock_global):
             # 'df_low_price_year':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_pvbreak_lv_year',"term": "SHORT TERM", "price": "NA" },
             # 'df_low_vol_year':{'op':'B','file':result_today + "/" + "talib_and_pv_no_db_filter_" + stock_global + ".csv",'column':'op_rsn','kw':'_max_daily_increase',"term": "SHORT TERM", "price": "NA" },
             # "df_macd_m": {"op": "B", "file": result + "/macd_selection_M.csv", "column": "reason", "kw": constant.MACD_CROSS_OVER_0, "term": "SHORT TERM", "price": "NA"},
-            # "df_macd_w": {"op": "B", "file": result + "/macd_selection_W.csv", "column": "reason", "kw": constant.SIG_CROSS_OVER_0, "term": "SHORT TERM", "price": "NA"},
+            # "df_macd_w": {"op": "B", "file": result + "/macd_selection_W.csv", "column": "reason", "kw": constant.MACD_SIG_CROSS_OVER_0, "term": "SHORT TERM", "price": "NA"},
             # "df_macd_d": {"op": "B", "file": result + "/macd_selection_D.csv", "column": "reason", "kw": constant.MACD_DIF_MAIN_OVER_0_N_DAYS, "term": "SHORT TERM", "price": "NA"},
             #
             #

@@ -167,17 +167,17 @@ SMA_CROSS_OVER = "SMA FAST cross over SMA SlOW"
 #  Criterial MACD
 #############
 
-DIF_LT_0 = "dif less than 0"
-DIF_GT_0 = "dif great than 0"
+MACD_DIF_LT_0 = "macd dif less than 0"
+MACD_DIF_GT_0 = "macd dif great than 0"
 
-SIG_LT_0 = "sig less than 0"
-SIG_GT_0 = "sig great than 0"
+MACD_SIG_LT_0 = "macd sig less than 0"
+MACD_SIG_GT_0 = "macd sig great than 0"
 
-DIF_CROSS_OVER_0 = "dif cross over 0"
-DIF_CROSS_DOWN_0 = "dif cross down 0"
+MACD_DIF_CROSS_OVER_0 = "macd dif cross over 0"
+MACD_DIF_CROSS_DOWN_0 = "macd dif cross down 0"
 
-SIG_CROSS_OVER_0 = "sig cross over 0"
-SIG_CROSS_DOWN_0 = "sig cross down 0"
+MACD_SIG_CROSS_OVER_0 = "macd sig cross over 0"
+MACD_SIG_CROSS_DOWN_0 = "macd sig cross down 0"
 
 MACD_CROSS_OVER_0 = "macd cross over 0"
 MACD_CROSS_DOWN_0 = "macd cross down 0"
@@ -190,11 +190,11 @@ MACD_DEA_SIGNAL_OVER_0_N_DAYS = "macd dea_signal over 0 n days"
 MACD_HISTOGRAM_OVER_0_N_DAYS = "macd historgram over 0 n days"
 
 
-DIF_LT_SIG = "dif less than sig" #down trend
-DIF_GT_SIG = "dif great than sig" #up trend
+MACD_DIF_LT_SIG = "macd dif less than sig" #down trend
+MACD_DIF_GT_SIG = "macd dif great than sig" #up trend
 
-DIF_CROSS_OVER_SIG = "dif cross over sig"
-DIF_CROSS_DOWN_SIG = "dif cross down sig"
+MACD_DIF_CROSS_OVER_SIG = "macd dif cross over sig"
+MACD_DIF_CROSS_DOWN_SIG = "macd dif cross down sig"
 
 ##############
 #  Criterial KDJ

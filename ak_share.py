@@ -44,23 +44,22 @@ def fetch_ak(api, note, parms):
     csv_f = base_dir + "/" + api + "_" + note + ".csv"
 
     if finlib.Finlib().is_cached(csv_f, day=2):
-        logging.info("file updated in 2 days, not fetch again. "+csv_f)
+        logging.info("file updated in 2 days, not fetch again. " + csv_f)
         return
-    
+
     logging.info("\nfetching " + api + " " + note)
 
     try:
-        cmd = "ak."+api+"("+parms+")"
+        cmd = "ak." + api + "(" + parms + ")"
         df = eval(cmd)
         if df is not None:
             df.to_csv(csv_f, encoding='UTF-8')
-            logging.info("fetched "+api+" "+note+", "+csv_f)
+            logging.info("fetched " + api + " " + note + ", " + csv_f)
             logging.info(tabulate.tabulate(df.head(1), headers='keys', tablefmt='psql'))
         else:
             logging.warning("df is None")
     except Exception as e:
-        logging.warning("Exception on "+ api + ", "+str(e))
-
+        logging.warning("Exception on " + api + ", " + str(e))
 
 
 def get_individual_min():
@@ -74,7 +73,6 @@ def get_individual_min():
     # print(tabulate.tabulate(pd.DataFrame(df['code'].value_counts()), headers='keys', tablefmt='psql'))
 
     todayS_ymd = datetime.datetime.today().strftime('%Y%m%d')
-
 
     # save daily minutes start
     for i in range(df.__len__()):
@@ -104,9 +102,7 @@ def get_individual_min():
     # save daily minutes ends
 
 
-
 def wei_pan_la_sheng(stock_market='AG'):
-
 
     finlib.Finlib().get_ak_live_price(stock_market='AG')
 
@@ -139,31 +135,25 @@ def wei_pan_la_sheng(stock_market='AG'):
     if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
         old_df = pd.read_csv(a_spot_csv_link_old, encoding="utf-8")
         old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
-        logging.info(" number of small change df in old " + str(old_df_small_change.__len__()) + ", data at " +
-                     old_df_small_change['ticktime'].iloc[0])
+        logging.info(" number of small change df in old " + str(old_df_small_change.__len__()) + ", data at " + old_df_small_change['ticktime'].iloc[0])
 
         # new_df = stock_zh_a_spot_df
         new_df = pd.read_csv(a_spot_csv_link, encoding="utf-8")
         new_df_large_change = new_df[new_df['changepercent'] > -30]
-        logging.info(" number of large change df in new " + str(new_df_large_change.__len__()) + ", data at " +
-                     new_df_large_change['ticktime'].iloc[0])
+        logging.info(" number of large change df in new " + str(new_df_large_change.__len__()) + ", data at " + new_df_large_change['ticktime'].iloc[0])
 
-        merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code',
-                                right_on='code',
-                                suffixes=('_o', '')).drop('name_o', axis=1)
+        merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code', right_on='code', suffixes=('_o', '')).drop('name_o', axis=1)
         merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
 
-        merged_inner_rst = merged_inner[
-            ['code', 'name', 'close', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc',
-             'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
+        merged_inner_rst = merged_inner[['code', 'name', 'close', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc', 'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
 
         merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(30)
         logging.info("The top10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
-        merged_inner_rst.to_csv(b+'/wei_pan_la_sheng_'+nowS+'.csv', encoding='UTF-8', index=False)
-        logging.info("ag wei_pan_la_sheng output list saved to "+b+'/wei_pan_la_sheng_'+nowS+'.csv'  )
+        merged_inner_rst.to_csv(b + '/wei_pan_la_sheng_' + nowS + '.csv', encoding='UTF-8', index=False)
+        logging.info("ag wei_pan_la_sheng output list saved to " + b + '/wei_pan_la_sheng_' + nowS + '.csv')
 
 
 def fetch_after_market_close():
@@ -173,13 +163,11 @@ def fetch_after_market_close():
         logging.info("AG market is open, please capture after market closing.")
         return ()
 
-
     # maket is closed now
-
 
     # stock_szse_summary_df = ak.stock_szse_summary(date=todayS_ymd)
     # finlib.Finlib().pprint(stock_szse_summary_df)
-    fetch_ak(api='stock_szse_summary', note='深圳证券交易所市场总貌', parms="date='"+todayS_ymd+"'")
+    fetch_ak(api='stock_szse_summary', note='深圳证券交易所市场总貌', parms="date='" + todayS_ymd + "'")
 
     # stock_sse_summary_df = ak.stock_sse_summary()
     # finlib.Finlib().pprint(stock_sse_summary_df)
@@ -272,14 +260,11 @@ def fetch_after_market_close():
 def main():
     parser = OptionParser()
 
-    parser.add_option("-f","--fetch_after_market", action="store_true", dest="fetch_after_market", default=False,
-                      help="fetch market data after market closure.")
+    parser.add_option("-f", "--fetch_after_market", action="store_true", dest="fetch_after_market", default=False, help="fetch market data after market closure.")
 
-    parser.add_option("-i","--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False,
-                      help="get stocks price roaring. Need run twice then get the comparing increase")
+    parser.add_option("-i", "--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False, help="get stocks price roaring. Need run twice then get the comparing increase")
 
     (options, args) = parser.parse_args()
-
 
     #find the rapid up stocks in market. Comparing the increase percent with the number got in previous run.
     #set up crontabs, run at 2:00, and 2:45.  Check the output of 2.45 run.

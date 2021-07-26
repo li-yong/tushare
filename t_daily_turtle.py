@@ -309,20 +309,20 @@ def _entry(csv_f, period):
 #####################
     #if c2 < sma60_2 and  c1 > sma60_1 and dif1 < 0 : #use this criteria, cross over ensure the curve are up trend.
     if c1 > sma60_1 and dif1 < 0 : #Don't use this criterial
-        this_reason +=  'SELL_MUST,'+ constant.ABOVE_SMA60 + "but "+constant.DIF_LT_0+', price expected to be drop back to under sma60, close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
+        this_reason +=  'SELL_MUST,'+ constant.ABOVE_SMA60 + "but "+constant.MACD_DIF_LT_0+', price expected to be drop back to under sma60, close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
         this_strength += 1
         this_action +=  constant.SELL_MUST + "; "
         logging.info(this_reason)
 
 
     if c2 < sma60_2 and  c1 > sma60_1 and dif2 < 0 and dif1 > 0 :
-        this_reason +='BUY_MUST, '+ constant.CROSS_OVER_SMA60+' and '+ constant.DIF_CROSS_OVER_0 +', price expected to continue rise. close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
+        this_reason +='BUY_MUST, '+ constant.CROSS_OVER_SMA60+' and '+ constant.MACD_DIF_CROSS_OVER_0 +', price expected to continue rise. close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
         this_strength += 2
         this_action += constant.BUY_MUST + "; "
         logging.info(this_reason)
 
     if c2 > sma60_2 and  c1 < sma60_1 and dif2 > 0 and dif1 < 0 :
-        this_reason += str(this_code)+" "+str(this_date) + ',SELL_MUST, '+constant.CROSS_DOWN_SMA60+' and  '+constant.DIF_CROSS_DOWN_0+  ', price expected to continue drop. close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
+        this_reason += str(this_code)+" "+str(this_date) + ',SELL_MUST, '+constant.CROSS_DOWN_SMA60+' and  '+constant.MACD_DIF_CROSS_DOWN_0+  ', price expected to continue drop. close '+str(c1)+" ,sma60 "+str(sma60_1)+"; "
         this_strength += 2
         this_action += constant.SELL_MUST + "; "
         logging.info(this_reason)
@@ -333,14 +333,14 @@ def _entry(csv_f, period):
 #####################
 # dif cross above dea
     if dif2 < dea2 and dif1 > dea1:
-        this_reason +=  constant.DIF_CROSS_OVER_SIG + "; "
+        this_reason +=  constant.MACD_DIF_CROSS_OVER_SIG + "; "
         this_strength += 1
         this_action += constant.BUY_CHECK+'; '
         logging.info(this_reason)
 
 
     if dif2 > dea2 and dif1 < dea1:
-        this_reason += constant.DIF_CROSS_DOWN_SIG + "; "
+        this_reason += constant.MACD_DIF_CROSS_DOWN_SIG + "; "
         this_strength += 1
         this_action += constant.SELL_CHECK+'; '
         logging.info(this_reason)

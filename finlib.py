@@ -3537,9 +3537,9 @@ class Finlib:
             return(df)
 
         df_gar_1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D')
-        df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
-        df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
-        df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
+        df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_DIF_LT_0, period='D')
+        df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_SIG_LT_0, period='D')
+        df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_DIF_LT_SIG, period='D')
         df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
 
         df_gar_6 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.VERY_STONG_DOWN_TREND,
@@ -3551,9 +3551,9 @@ class Finlib:
             df = self.add_market_to_code(df)
 
         df = self._df_sub_by_code(df=df, df_sub=df_gar_1,byreason=constant.CLOSE_UNDER_SMA60)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.DIF_LT_0)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.SIG_LT_0)
-        df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.DIF_LT_SIG)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.MACD_DIF_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.MACD_SIG_LT_0)
+        df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.MACD_DIF_LT_SIG)
         df = self._df_sub_by_code(df=df, df_sub=df_gar_5,byreason=constant.SMA21_UNDER_SMA60)
 
         df = self._df_sub_by_code(df=df, df_sub=df_gar_6,byreason=constant.VERY_STONG_DOWN_TREND)
@@ -3567,18 +3567,18 @@ class Finlib:
     #
     #
     #     df_gar_1 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.CLOSE_UNDER_SMA60, period='D')
-    #     df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_0, period='D')
-    #     df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SIG_LT_0, period='D')
-    #     df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.DIF_LT_SIG, period='D')
+    #     df_gar_2 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_DIF_LT_0, period='D')
+    #     df_gar_3 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_SIG_LT_0, period='D')
+    #     df_gar_4 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.MACD_DIF_LT_SIG, period='D')
     #     df_gar_5 = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SMA21_UNDER_SMA60, period='D')
     #
     #     if self.get_code_format(code_input=df['code'].iloc[0])['format'] == 'D6':
     #         df = self.add_market_to_code(df)
     #
     #     df = self._df_sub_by_code(df=df, df_sub=df_gar_1,byreason=constant.CLOSE_UNDER_SMA60)
-    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.DIF_LT_0)
-    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.SIG_LT_0)
-    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.DIF_LT_SIG)
+    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_2,byreason=constant.MACD_DIF_LT_0)
+    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_3,byreason=constant.MACD_SIG_LT_0)
+    #     df = self._df_sub_by_code(df=df, df_sub=df_gar_4,byreason=constant.MACD_DIF_LT_SIG)
     #     df = self._df_sub_by_code(df=df, df_sub=df_gar_5,byreason=constant.SMA21_UNDER_SMA60)
     #     return(df)
     #
