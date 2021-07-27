@@ -790,13 +790,16 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             fh = open(rpt, "a")
             fh.write(rst)
             fh.close()
+
+            fh = open(rpt_pub, "a")
+            fh.write(rst)
+            fh.close()
+            
             logging.info(rst)
 
             #save each single df to daily result folder, in order to evaluate the performance later.
             tmp.to_csv(save_dir+"/"+a+".csv", encoding='UTF-8', index=False)
             logging.info("single df saved to "+save_dir+"/"+a+".csv")
-
-
 
     for combi in range(2, arr.__len__() + 1):
         # def _proc_combination(arr, combi, skip_sets, df_dict, day_3_before_date, debug, rpt):

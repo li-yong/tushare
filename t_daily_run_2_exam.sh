@@ -782,13 +782,13 @@ python t_summary.py -x AG --action analyze_report
 # commit garbage to github
 ######
 cd /home/ryan/DATA/result/garbage
-for i in `ls latest_*`; do echo $i; cat $i > /home/ryan/DATA/result/garbage_$i;  done
+for i in `ls latest_*`; do cat $i > /home/ryan/DATA/result/garbage_$i;  done
 
 cd /home/ryan/DATA/result
-gid add report_latest*.txt
+git add report_latest*.txt
 git add garbage_latest_*.csv
-git commit -a -m'1'; git push
-echo "garbage_latest csv were commited to github"
+git commit -a -m'1'; git push;
+echo "garbage_latest and report_latest were commited to github"
 
 
 #Possible good candidates:
