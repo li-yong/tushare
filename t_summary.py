@@ -1957,7 +1957,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             fh = open(rpt_pub, "a")
             fh.write(rst)
             fh.close()
-            
+
             logging.info(rst)
 
     for combi in range(2, arr.__len__() + 1):

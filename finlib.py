@@ -5344,14 +5344,31 @@ class Finlib:
                 # 获取 A 股实时行情数据. 单次返回所有 A 股上市公司的实时行情数据
                 # A 股数据是从新浪财经获取的数据, 重复运行本函数会被新浪暂时封 IP, 建议增加时间间隔
                 stock_spot_df = ak.stock_zh_a_spot().drop_duplicates()
+                stock_spot_df = stock_spot_df.rename(columns={
+                    "代码": "symbol",
+                    "名称": "name",
+                    "最新价": "trade",
+                    "涨跌额": "pricechange",
+                    "涨跌幅": "changepercent",
+                    "买入": "buy",
+                    "卖出": "sell",
+                    "昨收": "settlement",
+                    "今开": "open",
+                    "最高": "high",
+                    "最低": "low",
+                    "成交量": "volume",
+                    "成交额": "amount",
+                }, inplace=False)
 
                 # 获取科创板实时行情数据. 单次返回所有科创板上市公司的实时行情数据
                 # 从新浪财经获取科创板股票数据
                 stock_zh_kcb_spot_df = ak.stock_zh_kcb_spot().drop_duplicates()
-
+                stock_zh_kcb_spot_df = stock_zh_kcb_spot_df[['symbol','name','trade','pricechange',
+                                                             'changepercent','buy','sell','settlement',
+                                                             'open','high','low','volume','amount',
+                                                             ]]
                 # Merge KCB to AG
                 stock_spot_df = pd.concat([stock_spot_df, stock_zh_kcb_spot_df]).reset_index().drop('index', axis=1)
-                stock_spot_df = stock_spot_df.drop('code', axis=1)
                 stock_spot_df = stock_spot_df.rename(columns={
                     "symbol": "code", "trade": "close",
                 }, inplace=False)
