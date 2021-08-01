@@ -462,7 +462,7 @@ def fetch_pro_fund(fast_fetch=False):
             stock_list = load_fund_result(mini_score=70)
             # stock_list = finlib.Finlib().ts_code_to_code(df=stock_list)
             # stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list)
-            stock_list = finlib.Finlib().remove_garbage(df=stock_list)
+            stock_list = finlib.Finlib().remove_garbage(df=stock_list) #code: SH600519
             # print(stock_list.__len__())
         else:
             stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
@@ -470,15 +470,15 @@ def fetch_pro_fund(fast_fetch=False):
 
     else:
         stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
-        stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
+        stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # code:SH603999
         fetch_period_list = time_series["full_period_list"][0:3] + time_series["full_period_list_yearly"]
         fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
         fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
 
 
     if debug_global:  # ryan debug start of fetching
-        # stock_list = stock_list[stock_list["code"] == "600519.SH"]
-        stock_list = stock_list[stock_list["code"] == "SH601995"]
+        stock_list = stock_list[stock_list["code"] == "SH600519"]
+        # stock_list = stock_list[stock_list["code"] == "SH601995"]
         # stock_list=stock_list[stock_list['code']=='300081.SZ']
         # stock_list=stock_list[stock_list['code']=='000333.SZ']  #2019-04-20
         # stock_list=stock_list[stock_list['code']=='603888.SH']  #2019-04-20

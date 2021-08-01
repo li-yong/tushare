@@ -104,7 +104,7 @@ def get_individual_min():
 
 def wei_pan_la_sheng(stock_market='AG'):
 
-    finlib.Finlib().get_ak_live_price(stock_market='AG')
+    # finlib.Finlib().get_ak_live_price(stock_market='AG')
 
     # find stocks increased at the end of the market time
     # dfmt = stock_zh_a_spot_df[stock_zh_a_spot_df['symbol'] == 'sh600519']
@@ -132,21 +132,30 @@ def wei_pan_la_sheng(stock_market='AG'):
     a_spot_csv_link = b + "/" + stock_market + "_spot_link.csv"
     a_spot_csv_link_old = b + "/" + stock_market + "_spot_link_old.csv"
 
-    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
+    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1) or True:
         old_df = pd.read_csv(a_spot_csv_link_old, encoding="utf-8")
         old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
-        logging.info(" number of small change df in old " + str(old_df_small_change.__len__()) + ", data at " + old_df_small_change['ticktime'].iloc[0])
+        logging.info("number of small change df in old " + str(old_df_small_change.__len__()))
 
         # new_df = stock_zh_a_spot_df
         new_df = pd.read_csv(a_spot_csv_link, encoding="utf-8")
-        new_df_large_change = new_df[new_df['changepercent'] > -30]
-        logging.info(" number of large change df in new " + str(new_df_large_change.__len__()) + ", data at " + new_df_large_change['ticktime'].iloc[0])
+        new_df_large_change = new_df[new_df['changepercent'] > 0.3] # all new_df, as we sort the delta increase later.
+        logging.info("number of large change df in new " + str(new_df_large_change.__len__()))
 
         merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code', right_on='code', suffixes=('_o', '')).drop('name_o', axis=1)
         merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
 
-        merged_inner_rst = merged_inner[['code', 'name', 'close', 'increase_diff', 'volume', 'amount', 'per', 'pb', 'mktcap', 'nmc', 'turnoverratio', 'ticktime_o', 'changepercent_o', 'ticktime', 'changepercent']]
-        merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False)
+        df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+        df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+
+        tmp = finlib.Finlib().add_amount_mktcap(df=merged_inner)
+        tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+        tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+
+
+
+        merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','tr_pe','total_mv', 'volume', 'amount', 'changepercent_o',  'changepercent']]
+        merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False).reset_index().drop('index', axis=1)
 
         merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(30)
         logging.info("The top10 Rapid Change Stock List:")
