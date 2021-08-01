@@ -154,8 +154,9 @@ def define_global(stock_global):
             # 'df_disclosure_date_notify':{'op':'B','file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_fib_ag':{'op':'B','file':result+'/ag_fib.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_fib_index':{'op':'B','file':result+'/xxxx.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
-            "df_wei_pan_la_sheng": {"op": "B", "file": result_wpls + "/wei_pan_la_sheng_" + last_trading_day_yyyymmdd + "_1445.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            # "df_wei_pan_la_sheng": {"op": "B", "file": result_wpls + "/wei_pan_la_sheng_" + last_trading_day_yyyymmdd + "_1445.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
 
+            "df_wei_pan_la_sheng": {"op": "B", "file": result_wpls + "/AG_latest_result.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_hs300_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
             "df_hs300_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.HS300_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 

@@ -104,7 +104,7 @@ def get_individual_min():
 
 def wei_pan_la_sheng(stock_market='AG'):
 
-    # finlib.Finlib().get_ak_live_price(stock_market='AG')
+    finlib.Finlib().get_ak_live_price(stock_market='AG')
 
     # find stocks increased at the end of the market time
     # dfmt = stock_zh_a_spot_df[stock_zh_a_spot_df['symbol'] == 'sh600519']
@@ -132,7 +132,12 @@ def wei_pan_la_sheng(stock_market='AG'):
     a_spot_csv_link = b + "/" + stock_market + "_spot_link.csv"
     a_spot_csv_link_old = b + "/" + stock_market + "_spot_link_old.csv"
 
-    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1) or True:
+    result_csv = b + "/"+stock_market+'_wei_pan_la_sheng_' + nowS + '.csv'
+    result_csv_link = b+"/"+ stock_market + "_latest_result.csv"
+
+
+    # if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1) or True:
+    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
         old_df = pd.read_csv(a_spot_csv_link_old, encoding="utf-8")
         old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
         logging.info("number of small change df in old " + str(old_df_small_change.__len__()))
@@ -145,24 +150,31 @@ def wei_pan_la_sheng(stock_market='AG'):
         merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code', right_on='code', suffixes=('_o', '')).drop('name_o', axis=1)
         merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
 
-        df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
-        df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+        tmp = merged_inner
 
-        tmp = finlib.Finlib().add_amount_mktcap(df=merged_inner)
-        tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
-        tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
+        # df_daily = finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day())
+        # df_ts_all = finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years())
+        # tmp = finlib.Finlib().add_amount_mktcap(df=merged_inner)
+        # tmp = finlib.Finlib().add_tr_pe(df=tmp, df_daily=df_daily, df_ts_all=df_ts_all)
+        # tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')
 
-
-
-        merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','tr_pe','total_mv', 'volume', 'amount', 'changepercent_o',  'changepercent']]
+        merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','volume', 'amount', 'changepercent_o',  'changepercent']]
+        # merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','tr_pe','total_mv', 'volume', 'amount', 'changepercent_o',  'changepercent']]
         merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False).reset_index().drop('index', axis=1)
 
         merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(30)
         logging.info("The top10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
-        merged_inner_rst.to_csv(b + '/wei_pan_la_sheng_' + nowS + '.csv', encoding='UTF-8', index=False)
+        merged_inner_rst.to_csv(result_csv, encoding='UTF-8', index=False)
         logging.info("ag wei_pan_la_sheng output list saved to " + b + '/wei_pan_la_sheng_' + nowS + '.csv')
+
+        #update symbol link
+        if os.path.lexists(result_csv_link):
+            os.unlink(result_csv_link)
+
+        os.symlink(result_csv, result_csv_link)
+        logging.info(__file__ + ": " + "symbol link created  " + result_csv_link + " -> " + result_csv)
 
 
 def fetch_after_market_close():
