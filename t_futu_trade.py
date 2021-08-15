@@ -581,6 +581,46 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
 
     return(data)
 
+
+def get_rt_ticker(host,port,market, debug):
+    class TickerTest(TickerHandlerBase):
+        def on_recv_rsp(self, rsp_pb):
+            ret_code, data = super(TickerTest, self).on_recv_rsp(rsp_pb)
+            if ret_code != RET_OK:
+                print("TickerTest: error, msg: %s" % data)
+                return RET_ERROR, data
+            print("TickerTest ", data)  # TickerTest 自己的处理逻辑
+            return RET_OK, data
+
+    quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+    handler = TickerTest()
+    quote_ctx.set_handler(handler)  # 设置实时逐笔推送回调
+    # quote_ctx.subscribe(['HK.00700'], [SubType.TICKER])  # 订阅逐笔类型，FutuOpenD 开始持续收到服务器的推送
+    quote_ctx.subscribe(['SH.600519'], [SubType.TICKER])  # 订阅逐笔类型，FutuOpenD 开始持续收到服务器的推送
+    # quote_ctx.subscribe(['US.AAPL'], [SubType.TICKER])  # 订阅逐笔类型，FutuOpenD 开始持续收到服务器的推送
+    time.sleep(120)  # 设置脚本接收 FutuOpenD 的推送持续时间为15秒
+    quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
+
+
+
+def get_rt_ticker_rt(host,port,market, debug):
+    quote_ctx = OpenQuoteContext(host=host, port=port)
+
+    ret_sub, err_message = quote_ctx.subscribe(['HK.00700'], [SubType.TICKER], subscribe_push=False)
+    # 先订阅逐笔类型。订阅成功后 FutuOpenD 将持续收到服务器的推送，False 代表暂时不需要推送给脚本
+    if ret_sub == RET_OK:  # 订阅成功
+        ret, data = quote_ctx.get_rt_ticker('HK.00700', 2)  # 获取港股00700最近2个逐笔
+        if ret == RET_OK:
+            print(data)
+            print(data['turnover'][0])  # 取第一条的成交金额
+            print(data['turnover'].values.tolist())  # 转为 list
+        else:
+            print('error:', data)
+    else:
+        print('subscription failed', err_message)
+    quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
+
+
 def get_current_ma(host, port, code,k_renew_interval_second, ktype, ma_period=5, history_bar_df=None,bar_fetch_period=None ):
     if bar_fetch_period is None:
         bar_fetch_period = ma_period
@@ -1303,6 +1343,7 @@ def main():
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
     parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("--check_high_volume", action="store_true", default=False, dest="check_high_volume", help="check high volume based on 1minute bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
+    parser.add_option("--get_rt_ticker", action="store_true", default=False, dest="get_rt_ticker", help="get real time ticker 获取实时逐笔")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US-HK-AG|US_HOLD-HK_HOLD-AG_HOLD]")
     parser.add_option("--host", default="127.0.0.1", dest="host",type="str", help="futuOpenD host")
     parser.add_option("--port", default="11111", dest="port",type=int, help="futuOpenD port")
@@ -1359,6 +1400,10 @@ def main():
 
     if options.check_high_volume:
         check_high_volume(host=host,port=port,market=options.market, debug=options.debug,ndays=5)
+        exit()
+
+    if options.get_rt_ticker:
+        get_rt_ticker(host=host,port=port,market=options.market, debug=options.debug)
         exit()
 
     market = get_avilable_market(host=host,port=port,debug=options.debug,market_str=options.market)
@@ -1559,7 +1604,7 @@ if __name__ == '__main__':
                 logging.fatal("exception more than 10 times, exit")
                 exit(0)
             else:
-                logging.info("caught exception, restart main()")
+                logging.info("caught exception, restart main(). exception_cnt "+str(exception_cnt))
                 time.sleep(1)
     exit(0)
 

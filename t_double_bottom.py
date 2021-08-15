@@ -124,7 +124,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     d_min = (c > 0).nonzero()[0]
     d_max = (c < 0).nonzero()[0]
     d_zero = (c == 0).nonzero()[0]
-    print('hi')
+    # print('hi')
 
 
     # min_max = np.diff(np.sign(np.diff(y_data))).nonzero()[0] + 1  # local min & max
@@ -155,7 +155,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_min_pol_list.append(y_pol[i])
         # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i], 2)), xy=(x_date[i], y_pol[i]), label="min", color='red')
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i], 2)), xy=(x_date[i], y_data[i]), label="min", color='red')
-        logging.info("MIN position " +str(i)+", "+ str(x_date[i]) + " " + str(y_data[i]))
+        # logging.info("MIN position " +str(i)+", "+ str(x_date[i]) + " " + str(y_data[i]))
 
     for i in l_max:
         x_max_list.append(x_date[i])
@@ -163,7 +163,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_max_pol_list.append(y_pol[i])
         # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i],2)), xy=(x_date[i], y_data[i]), label="max", color='blue')
-        logging.info("MAX position " +str(i)+", "+str(x_date[i])+" "+str(y_data[i]))
+        # logging.info("MAX position " +str(i)+", "+str(x_date[i])+" "+str(y_data[i]))
 
     ### Double bottom detect start   head2 -- btm2 -- head1 -- btm1 --today
     btm_1_x = x_min_list[-1]
@@ -182,14 +182,16 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     latest_y = y_data.iloc[-1]
 
     if (head_2_x < btm_2_x < head_1_x < btm_1_x < latest_x) and (head_1_y > latest_y) and (head_2_y > head_1_y):
-        logging.info("head-bottom-head-bottom_today pattern detected")
+        logging.info(code+"," +name +", head-bottom-head-bottom_today pattern detected")
 
         increase_perc = round((btm_1_y - btm_2_y)*100.0/btm_2_y,2)
         if increase_perc > 0: #not lower than previous low
-            logging.info("increase perc from bot2 to bot1 "+str(increase_perc))
+            logging.info(code+"," +name +", increase perc from bot2 to bot1 "+str(increase_perc))
 
-            if (head_1_x - btm_1_x).days == (btm_1_x - head_1_x).days:
-                logging.info("Bonous, equal bottom pattern")
+            d2 = (head_1_x - btm_2_x).days
+            d1 = (btm_1_x - head_1_x).days
+            if d1 > 0 and (0.9 < d2/d1 <1.1 or (abs(d1-d2) < 3)):
+                logging.info(code+"," +name +", Bonous, equal bottom pattern. -2 Btm to -1 head : "+str(d2)+" days, "+" -1 head to -1 btm "+str(d1) +" days")
 
             if (latest_x - btm_1_x).days <= 7:
                 cur_increase_perc = round((latest_y - btm_1_y)*100.0/btm_1_y,2)
@@ -199,7 +201,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
                 y_ = np.polyval(pol_2_heads, list(range(l_max[-2], data_len)))
                 plt.plot_date(x_date_ext[l_max[-2]:], y_, 'b-', color='green', markersize=0.5, alpha=0.5)  # plot the head_2 line
 
-                if (latest_y - y_[-1])/latest_y > 0.02 :
+                inc_tmp = (latest_y - y_[-1])/latest_y
+                logging.info(code+"," +name +" increase tmp "+str(round(inc_tmp,4)))
+                if inc_tmp > 0.02 :
                     rtn_dict['hit'] = True
                     rtn_dict['reason'] += constant.DOUBLE_BOTTOM_123_LONG_TREND_REVERSE+";"
                     logging.info("double bottom 123 hitted! "+str(code)+" "+str(name))
@@ -289,7 +293,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     rtn_dict['slop_degree_max_3'] = round(slop_degree_max_3, 2)
     plt.annotate("max 3p est: " + str(rtn_dict['pol_max_right_3'])+" deg:"+str(slop_degree_max_3),xy=(x_date[-1], rtn_dict['pol_max_right_3']))
     if (slop_degree_max_3 > 30):
-        logging.info("a very good right max slop degree " + str(round(slop_degree_max_3, 2)))
+        logging.info(code+"," +name +", a very good right max slop degree " + str(round(slop_degree_max_3, 2)))
         rtn_dict['hit'] = True
         rtn_dict['reason'] += constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE+";"
 
@@ -475,7 +479,7 @@ def main():
     selected = options.selected
     stock_global = options.stock_global
 
-    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
+    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global, remove_garbage=False)
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
@@ -495,7 +499,7 @@ def main():
         name, code = row['name'], row['code']
 
         csv_f = csv_dir + "/" + code + ".csv"
-        logging.info(csv_f)
+        logging.info(name+", "+code+", "+csv_f)
 
         if not os.path.isfile(csv_f):
             logging.warning(__file__ + " " + "file not exist. " + csv_f)

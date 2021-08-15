@@ -924,7 +924,7 @@ class Finlib_indicator:
                 df.iloc[i].data = np.nan
 
         rtn_list = list(df['data'])
-        logging.info("after smoothing, rtn_list " + str(rtn_list))
+        # logging.info("after smoothing, rtn_list " + str(rtn_list))
         return(rtn_list)
 
     #input: df [open,high, low, close]

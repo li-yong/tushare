@@ -4474,7 +4474,7 @@ class Finlib:
         #logging.info(str)
         return(str)
 
-    def get_stock_configuration(self, selected, stock_global):
+    def get_stock_configuration(self, selected, stock_global,remove_garbage=True):
         rtn = {
             "stock_list": None,
             "csv_dir": None,
@@ -4547,7 +4547,8 @@ class Finlib:
                 out_dir = "/home/ryan/DATA/result"
                 stock_list = self.get_A_stock_instrment()  # 603999
                 # stock_list = self.add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # 603999.SH
-                stock_list = self.remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+                if remove_garbage:
+                    stock_list = self.remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
             elif stock_global == 'HK':
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK"
                 out_dir = "/home/ryan/DATA/result/hk"

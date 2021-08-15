@@ -458,9 +458,28 @@ def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
                  )
 
 
+def result_effort_ratio():
+    f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+
+    df = df.tail(200)
+
+    df['inc'] = round(100*(df['close']-df['close'].shift(1))/df['close'].shift(1), 2)
+
+    df['inc_1'] = df['inc'].shift(1)
+    df['v_1'] = df['volume'].shift(1)
+
+    df['result_effort_ratio'] = round((df['inc']/df['inc_1'])/(df['volume']/df['v_1']),2)
+    print(finlib.Finlib().pprint(df))
+
+
+    print(1)
+
 
 #### MAIN #####
 # bayes_start()
+
+result_effort_ratio()
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 exit()
