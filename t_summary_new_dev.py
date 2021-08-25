@@ -149,6 +149,7 @@ def define_global(stock_global):
             # "df_kdj_w": {"op": "B", "file": result + "/kdj_selection_W.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # "df_kdj_d": {"op": "B", "file": result + "/kdj_selection_D.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_hsgt": {"op": "B", "file": result + "/hsgt_top_10_selected.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_hong_san_bin": {"op": "B", "file": result + "/hong_san_bin.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_moneyflow_top_amt_perc": {"op": "B", "file": result_today + "/mf_today_top5_large_amount.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             # 'df_support_resist_line_today':{'op':'B','file':result+"/key_points_" + str(stock_global).lower() + "_today_selected.csv",'column':'','kw':'',"term": "SHORT TERM", "price": "NA" },
             # 'df_disclosure_date_notify':{'op':'B','file':'/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv','column':'','kw':'',"term": "SHORT TERM", "price": "NA" },

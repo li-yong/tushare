@@ -612,6 +612,10 @@ python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_
 #######################################
 python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 21 --ma_long 34
 
+#######################################
+# output: /home/ryan/DATA/result/hong_san_bin.csv
+#######################################
+python t_daily_junxian_barstyle.py  --hong_san_bin --stock_global AG
 
 #######################################
 # output: /home/ryan/DATA/result/

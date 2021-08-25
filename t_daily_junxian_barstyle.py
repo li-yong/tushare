@@ -214,6 +214,9 @@ def main():
     parser.add_option("--check_my_ma_force_fetch", action="store_true", dest="check_my_ma_force_fetch", default=False,help="force download current market spot via akshare.")
 
 
+    parser.add_option("--hong_san_bin", action="store_true", dest="hong_san_bin", default=False,help="hong_san_bin bar style finder")
+
+
     #df_rtn = pd.DataFrame()
     df_rtn = pd.DataFrame(columns=["code", "name"])
 
@@ -227,6 +230,8 @@ def main():
     check_my_ma = options.check_my_ma
     check_my_ma_allow_delay_min = options.check_my_ma_allow_delay_min
     check_my_ma_force_fetch = options.check_my_ma_force_fetch
+
+    hong_san_bin = options.hong_san_bin
 
     ma_short = options.ma_short
     ma_middle = options.ma_middle
@@ -245,6 +250,9 @@ def main():
         finlib_indicator.Finlib_indicator().check_my_ma(selected=selected, stock_global=stock_global,
                                                         allow_delay_min=check_my_ma_allow_delay_min,
                                                         force_fetch=check_my_ma_force_fetch)
+        exit()
+    elif hong_san_bin:
+        finlib_indicator.Finlib_indicator().hong_san_bin()
         exit()
 
     if not os.path.isdir(out_dir):
@@ -294,10 +302,6 @@ def main():
     exit(0)
 
 
-
 ### MAIN ####
 if __name__ == '__main__':
-
-
-
     main()

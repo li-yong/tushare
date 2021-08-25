@@ -30,13 +30,10 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
 
-def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=500):
+def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=500, debug=False):
     rtn_dict = {}
     rtn_dict['hit']=False
     rtn_dict['reason']=''
-
-
-
 
     if df.__len__() < min_sample:
         return (rtn_dict)
@@ -44,6 +41,7 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
     df = df.tail(min_sample)  #.head(70) #ryan_debug
     # mean_window = 2  #ryan_debug#to avoid peak data outlier, e.g H-L-H in 3 days in a row )
     mean_window = 1
+    mean_window = 4
     predict_ext_win = 0  ## of days to predict
 
     df = df[(df['low'] > 0) & (df['high'] > 0) & (df['open'] > 0) & (df['close'] > 0)]
@@ -57,7 +55,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
 
     df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), '%Y%m%d'))
 
-    y_data = df['close'].rolling(window=mean_window).mean().dropna()
+    # y_data = df['close'].rolling(window=mean_window).mean().dropna()
+    y_data = df[['close']].rolling(window=mean_window).mean().dropna().reset_index().drop('index',axis=1)
+    y_data = y_data['close']  #df to series
     # data_list = [7,6,5,5.1,4,3,3.1,2,1,2,3,4,5]
     # data_list = finlib_indicator.Finlib_indicator().data_smoother(data_list)
     y_data_na = pd.Series(finlib_indicator.Finlib_indicator().data_smoother(y_data,fill_na=True, fill_prev=False))
@@ -155,7 +155,9 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_min_pol_list.append(y_pol[i])
         # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i], 2)), xy=(x_date[i], y_pol[i]), label="min", color='red')
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i], 2)), xy=(x_date[i], y_data[i]), label="min", color='red')
-        # logging.info("MIN position " +str(i)+", "+ str(x_date[i]) + " " + str(y_data[i]))
+
+        if debug:
+            logging.info("MIN position " +str(i)+", "+ str(x_date[i]) + " " + str(y_data[i]))
 
     for i in l_max:
         x_max_list.append(x_date[i])
@@ -163,7 +165,8 @@ def draw_a_stock(df, code, name, show_fig_f=False, save_fig_f=False, min_sample=
         y_max_pol_list.append(y_pol[i])
         # plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_pol[i])), xy=(x_date[i], y_pol[i]), label="max", color='blue')
         plt.annotate(x_date[i].strftime("%m-%d") + " " + str(round(y_data[i],2)), xy=(x_date[i], y_data[i]), label="max", color='blue')
-        # logging.info("MAX position " +str(i)+", "+str(x_date[i])+" "+str(y_data[i]))
+        if debug:
+            logging.info("MAX position " +str(i)+", "+str(x_date[i])+" "+str(y_data[i]))
 
     ### Double bottom detect start   head2 -- btm2 -- head1 -- btm1 --today
     btm_1_x = x_min_list[-1]
@@ -486,7 +489,7 @@ def main():
     out_f = out_dir + "/" + stock_global.lower() + "_curve_shape.csv"  # /home/ryan/DATA/result/selected/us_index_fib.csv
 
     if debug_f:
-        stock_list = stock_list[stock_list['code']=='SH603566']
+        stock_list = stock_list[stock_list['code']=='SH603799']
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
@@ -522,7 +525,7 @@ def main():
             df['low'] = df['low'].apply(lambda _d: np.log(_d))
 
         #show_fig_f=False, =False, =500
-        rtn_dict_t = draw_a_stock(df=df, code=code, name=name, show_fig_f=show_fig_f, save_fig_f=save_fig_f, min_sample=min_sample_f)
+        rtn_dict_t = draw_a_stock(df=df, code=code, name=name, show_fig_f=show_fig_f, save_fig_f=save_fig_f, min_sample=min_sample_f, debug=debug_f)
         df_t = pd.DataFrame(data=rtn_dict_t, index=[0])
         # print(df_t)
         if not df_t.empty:

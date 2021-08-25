@@ -476,8 +476,10 @@ def result_effort_ratio():
     print(1)
 
 
+
 #### MAIN #####
 # bayes_start()
+hong_san_bin()
 
 result_effort_ratio()
 

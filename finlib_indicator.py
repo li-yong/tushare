@@ -1770,7 +1770,65 @@ class Finlib_indicator:
 
         return(df,df_sel)
 
+    def hong_san_bin(self):
+        output_csv = '/home/ryan/DATA/result/hong_san_bin.csv'
 
+        dir = '/home/ryan/DATA/pickle/daily_update_source'
+        day0 = finlib.Finlib().get_last_trading_day()
+
+        day_list = []
+
+        for i in range(6):
+            day_dt = datetime.strptime(day0, "%Y%m%d") - timedelta(days=i)
+            day_s = datetime.strftime(day_dt, "%Y%m%d")
+            if finlib.Finlib().is_a_trading_day_ag(day_s):
+                day_list.append(day_s)
+                if day_list.__len__() == 3:
+                    logging.info("got enough days ")
+                    break
+
+        df_rst = pd.DataFrame()
+
+        day_list.reverse()  # ['20210823', '20210824', '20210825']
+
+        for d in day_list:
+            f = dir + "/" + "ag_daily_" + d + ".csv"
+            df_a_day = self._hong_san_bin_day_bar_analysis(f)
+
+            if df_a_day.empty:
+                logging.info("no match stocks on day " + d + " , thus the days in roll donot match , quit.")
+                break
+
+            if df_rst.empty:
+                df_rst = df_a_day
+
+            df_rst = pd.merge(df_rst[['code', 'date', 'close']], df_a_day[['code', 'date', 'close']], how='inner',
+                              on='code', suffixes=('_x', ''))
+            logging.info("after merging day " + d + " ,result csv len " + str(df_rst.__len__()))
+
+        df_rst = df_rst[['code', 'date', 'close']]
+        df_rst = finlib.Finlib().add_stock_name_to_df(df_rst)
+
+        df_rst.to_csv(output_csv, encoding='UTF-8', index=False)
+        logging.info(finlib.Finlib().pprint(df_rst))
+        logging.info("saved to " + output_csv + " , len " + str(df_rst.__len__()))
+        print(1)
+
+    def _hong_san_bin_day_bar_analysis(self,f):
+        if not os.path.exists(f):
+            logging.error("file not exists. " + str(f))
+            return (pd.DataFrame())
+
+        # df = pd.read_csv(f)
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+        df_in = df[df['open'] < df['close']]
+        df_in = df_in[df_in['low'] < df_in['pre_close']]
+        df_in = df_in[df_in['open'] < df_in['pre_close']]
+        df_in = df_in[df_in['high'] > df_in['pre_close']]
+        df_in = df_in[
+            (df_in['high'] - df_in['close']) / df_in['close'] < 0.007]  # high to close less than 0.7%. short up shadow.
+        # df_in = df_in[ (df_in['open'] - df_in['low'])/ df_in['open'] < 0.01]
+        return (df_in)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
