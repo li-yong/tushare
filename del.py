@@ -475,11 +475,79 @@ def result_effort_ratio():
 
     print(1)
 
+def get_price_let_mashort_equal_malong(debug=False):
+    csv_in = '/home/ryan/DATA/result/stocks_amount_365_days.csv'
+    csv_out = '/home/ryan/DATA/result/price_let_mashort_equal_malong.csv'
 
+    df = pd.read_csv(csv_in)
+    df_rtn = pd.DataFrame()
+
+    code_list = df['code'].unique().tolist()
+
+    if debug:
+        code_list = ['SH600519']
+
+    i = 1
+    for code in code_list:
+        logging.info(str(i)+" of "+str(code_list.__len__())+" "+ code)
+        i+=1
+
+        df_sub = df[df['code']==code].reset_index().drop('index', axis=1)
+
+        ma_short = 4
+        ma_long = 27
+        # ma_short = 3
+        # ma_long = 5
+
+        p1 = ma_short/(ma_long - ma_short)
+        p2 = df_sub[-1*(ma_long -1 ):].head(ma_long-ma_short)
+        p2 = p2['close'].sum()
+
+        p3 = df_sub.tail(ma_short-1)
+        p3 = p3['close'].sum()
+
+        d0 = round( p1*p2 - p3, 2)
+        d1 = df_sub['close'].iloc[-1]
+        da1 = df_sub['date'].iloc[-1]
+
+        delta = round(d0 - d1,2)
+        delta_perc = round(delta*100/d1, 1)
+
+
+        if delta < 0:
+            trend ="up" #P(ma_short) > P(ma_long)
+        else:
+            trend = "down"
+
+
+        df_rtn = df_rtn.append(pd.DataFrame().from_dict({'code':[code],'date':[da1],'close':[d1],
+                                                         'p_make_ma_across':[d0],
+                                                         'delta':[delta],
+                                                         'delta_perc':[delta_perc],
+                                                         'ma_short':[ma_short],
+                                                         'ma_long':[ma_long],
+                                                         'trend':[trend],
+                                                         }))
+
+
+        logging.info(str(code)+", day "+str(da1)+" close "+str(d1)
+                     +" , price to get mashort"+str(ma_short)
+                     +" equal malong"+str(ma_long)+" " +str(d0)
+                     +" delta "+str(delta)
+                     +" delta_perc "+str(delta_perc)
+                     +" trend "+str(trend)
+                     )
+
+        print(1)
+
+
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("file saved to "+csv_out+" ,len "+str(df_rtn.__len__()))
 
 #### MAIN #####
 # bayes_start()
-hong_san_bin()
+get_price_let_mashort_equal_malong()
 
 result_effort_ratio()
 
