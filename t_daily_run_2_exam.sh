@@ -610,13 +610,8 @@ python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_
 #######################################
 # output: /home/ryan/DATA/result/ag_junxian_barstyle.csv
 #######################################
-python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 21 --ma_long 34
+python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60
 
-
-#######################################
-# output: /home/ryan/DATA/result/price_let_mashort_equal_malong.csv
-#######################################
-python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 21 --calc_ma_across_price
 
 #######################################
 # output: /home/ryan/DATA/result/hong_san_bin.csv
@@ -736,6 +731,15 @@ python t_daily_index_candidates.py --index_name hs300 --period_start 20201101 --
 python t_daily_index_candidates.py --index_name zz100 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update
 python t_daily_index_candidates.py --index_name szcz  --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update --force_run
 python t_daily_index_candidates.py --index_name sz100 --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update
+
+
+
+#######################################
+# run this after HS300, as this use file generated during hs300 calcuation.  /result/stocks_amount_365_days.csv
+# output: /home/ryan/DATA/result/price_let_mashort_equal_malong.csv
+#######################################
+python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
+
 
 #
 #python t_daily_index_candidates.py --index_name hs300 --ndays 365 --index_source wugui --force_run
