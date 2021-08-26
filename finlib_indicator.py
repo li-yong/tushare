@@ -1869,12 +1869,12 @@ class Finlib_indicator:
                 trend = "down"
 
             df_rtn = df_rtn.append(pd.DataFrame().from_dict({'code': [code], 'date': [da1], 'close': [d1],
+                                                             'trend': [trend],
+                                                             'ma_short': [ma_short],
+                                                             'ma_long': [ma_long],
                                                              'p_make_ma_across': [d0],
                                                              'delta': [delta],
                                                              'delta_perc': [delta_perc],
-                                                             'ma_short': [ma_short],
-                                                             'ma_long': [ma_long],
-                                                             'trend': [trend],
                                                              }))
 
             logging.info(str(code) + ", day " + str(da1) + " close " + str(d1)
