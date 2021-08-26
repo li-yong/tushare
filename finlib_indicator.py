@@ -1864,12 +1864,14 @@ class Finlib_indicator:
             delta_perc = round(delta * 100 / d1, 1)
 
             if delta < 0:
-                trend = "up"  # P(ma_short) > P(ma_long)
+                trend = "bull"  # P(ma_short) > P(ma_long)
+                action = "sell"
             else:
-                trend = "down"
+                trend = "bear"
+                action = "buy"
 
             df_rtn = df_rtn.append(pd.DataFrame().from_dict({'code': [code], 'date': [da1], 'close': [d1],
-                                                             'trend': [trend],
+                                                             'trend': [trend], 'action':[action],
                                                              'ma_short': [ma_short],
                                                              'ma_long': [ma_long],
                                                              'p_make_ma_across': [d0],

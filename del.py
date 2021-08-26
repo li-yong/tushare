@@ -475,9 +475,32 @@ def result_effort_ratio():
 
     print(1)
 
+def check_stop_loss_based_on_ma_across():
+    file = "/home/ryan/DATA/result/price_let_mashort_equal_malong.csv"
+    df = pd.read_csv(file)
+
+    df_target = df[ (df['delta_perc'] < 10) & (df['delta_perc'] > -10)]
+
+    df_target_no_gar = finlib.Finlib().remove_garbage(df=df_target)
+
+    df_target_no_gar = df_target_no_gar.sort_values(by=['delta_perc'], ascending=[False]).reset_index().drop('index', axis=1)
+
+    df_buy = df_target_no_gar[df_target_no_gar['action']=='buy'].sort_values(by=['delta_perc'],ascending=True).reset_index().drop('index', axis=1)
+    df_sell = df_target_no_gar[df_target_no_gar['action']=='sell'].sort_values(by=['delta_perc'],ascending=False).reset_index().drop('index', axis=1)
+
+    logging.info("\nBuy Target")
+    logging.info(finlib.Finlib().pprint(df=df_buy))
+
+    logging.info("\nSell Target")
+    logging.info(finlib.Finlib().pprint(df=df_sell))
+
+
+
+    print(1)
+
 #### MAIN #####
 # bayes_start()
-get_price_let_mashort_equal_malong()
+check_stop_loss_based_on_ma_across()
 
 result_effort_ratio()
 
