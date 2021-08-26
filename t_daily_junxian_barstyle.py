@@ -195,9 +195,9 @@ def show_result(file, dir, filebase,selected, stock_global):
 def main():
 
     parser = OptionParser()
-    parser.add_option("--ma_short", type="int", action="store", dest="ma_short", default=5, help="MA short period")
-    parser.add_option("--ma_middle", type="int", action="store", dest="ma_middle", default=10, help="MA middle period")
-    parser.add_option("--ma_long", type="int", action="store", dest="ma_long", default=20, help="MA long period")
+    parser.add_option("--ma_short", type="int", action="store", dest="ma_short", default=4, help="MA short period")
+    parser.add_option("--ma_middle", type="int", action="store", dest="ma_middle", default=27, help="MA middle period")
+    parser.add_option("--ma_long", type="int", action="store", dest="ma_long", default=60, help="MA long period")
 
     parser.add_option("-s", "--show_result",   action="store_true", dest="show_result_f", default=False, help="show previous calculated result")
 
@@ -215,6 +215,7 @@ def main():
 
 
     parser.add_option("--hong_san_bin", action="store_true", dest="hong_san_bin", default=False,help="hong_san_bin bar style finder")
+    parser.add_option("--calc_ma_across_price", action="store_true", dest="calc_ma_across_price", default=False,help="calculate target price let ma_short equal ma_middle")
 
 
     #df_rtn = pd.DataFrame()
@@ -232,6 +233,7 @@ def main():
     check_my_ma_force_fetch = options.check_my_ma_force_fetch
 
     hong_san_bin = options.hong_san_bin
+    calc_ma_across_price = options.calc_ma_across_price
 
     ma_short = options.ma_short
     ma_middle = options.ma_middle
@@ -252,7 +254,10 @@ def main():
                                                         force_fetch=check_my_ma_force_fetch)
         exit()
     elif hong_san_bin:
-        finlib_indicator.Finlib_indicator().hong_san_bin()
+        df_rtn = finlib_indicator.Finlib_indicator().hong_san_bin()
+        exit()
+    elif calc_ma_across_price:
+        df_rtn = finlib_indicator.Finlib_indicator().get_price_let_mashort_equal_malong(ma_short=ma_short, ma_long=ma_middle, debug=debug_f)
         exit()
 
     if not os.path.isdir(out_dir):
