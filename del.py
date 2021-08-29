@@ -100,8 +100,8 @@ def remove_garbage_by_fcf():
 
 def price_amount_increase():
 
-    startD = 20210607
-    endD = 20210614
+    startD = 20210802
+    endD = 20210827
 
     # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
     df_rtn = pd.DataFrame()
@@ -115,7 +115,8 @@ def price_amount_increase():
     df_amount['amount_increase'] = round((df_amount['amount_dayE'] - df_amount['amount_dayS']) *100.0 /  df_amount['amount_dayS'],2)
 
     #prepare close df
-    df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
+    df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=30,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
+    # df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10,dayS=startD,dayE=endD,daily_update=None,debug=False, force_run=False)
     df_close_start = df_basic[df_basic['trade_date']==int(startD)]
     df_close_end = df_basic[df_basic['trade_date']==int(endD)]
     df_close =  pd.merge(df_close_start[['ts_code','close','trade_date']],df_close_end[['ts_code','close','trade_date']], on='ts_code',how='inner', suffixes=('_dayS','_dayE'))
@@ -499,6 +500,9 @@ def check_stop_loss_based_on_ma_across():
     print(1)
 
 #### MAIN #####
+df_increase = price_amount_increase()
+exit()
+
 # bayes_start()
 check_stop_loss_based_on_ma_across()
 
@@ -518,7 +522,7 @@ df_industry = ag_industry_selected()
 exit()
 
 df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
-df_increase = price_amount_increase()
+
 df_intrinsic_value = graham_intrinsic_value()
 evaluate_grid(market='AG')
 
