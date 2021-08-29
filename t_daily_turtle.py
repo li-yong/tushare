@@ -71,7 +71,7 @@ def _entry(csv_f, period, dc_length=20):
         logging.info('file not exist. ' + csv_f)
         return (rtn)
 
-    csv_f = '/home/ryan/DATA/DAY_Global/AG/SH600519.csv' #ryan debug
+    # csv_f = '/home/ryan/DATA/DAY_Global/AG/SH600519.csv' #ryan debug
     #csv_f = '/home/ryan/DATA/DAY_Global/AG/SZ000008.csv'
 
 
@@ -129,26 +129,28 @@ def _entry(csv_f, period, dc_length=20):
     hold_unit=0
     profit = 0
 
-    open_price = 0
+    # open_price = 0
     # hold_unit_threshold = 0.02
     max_allowed_spent_cash = start_cash * 0.02
     has_spent_cash = 0
 
     for index, row in df_turtle.iterrows():
-        # print(row)
+        N = row['atr_middle_21']
+        stock_value = hold_unit * a_unit_amt * row['close']
 
-        # if row['max']==True and hold_unit == 0:
-        if row['max']==True and has_spent_cash < max_allowed_spent_cash:
+        if (row['high'] > row['pre_dc_max']) and has_spent_cash < max_allowed_spent_cash:
+        # if (row['close'] > 0.5 * (row['pre_dc_max']+row['pre_dc_min'])) and has_spent_cash < max_allowed_spent_cash:
             #open 1st persition
-            N = row['atr_middle_21']
+
             A_Unit_Change = N*a_unit_amt  # $ changes in a Day
             #A_Unit_Change = N*row['close']*100 # $ changes in a Day
             unit_to_open = round(0.01*net_cash/A_Unit_Change/100,8)
+            unit_to_open = round(0.01*net_cash/A_Unit_Change/10,0)
 
-            open_price = row['close']
+            # open_price = row['close']
 
             hold_unit += unit_to_open
-            spent_cash = round(unit_to_open * a_unit_amt * open_price,2)
+            spent_cash = round(unit_to_open * a_unit_amt * row['close'],2)
             has_spent_cash += spent_cash
             net_cash -= spent_cash
             logging.info(row['date'].strftime('%Y%m%d')+', open unit '+str(unit_to_open)+", price "
@@ -156,11 +158,12 @@ def _entry(csv_f, period, dc_length=20):
                          +" spent "+str(spent_cash)
                          +", cash left "+str(net_cash)
                          )
+            stock_value = hold_unit * a_unit_amt * row['close']
 
-        if row['min']==True and hold_unit > 0:
+        if (row['low'] < row['pre_dc_min']) and hold_unit > 0:
+        # if (row['close'] < 0.5 * (row['pre_dc_max']+row['pre_dc_min'])) and hold_unit > 0:
             #close persition
-
-            net_cash += hold_unit * a_unit_amt * row['close']
+            net_cash += stock_value
             profit = round(net_cash - start_cash, 2)
             profit_perc = round(profit*100.0/start_cash, 0)
 
@@ -168,26 +171,36 @@ def _entry(csv_f, period, dc_length=20):
                          +" profit "+str(profit)+" , profit_perc "+str(profit_perc)+" cash left "+str(net_cash)+"\n\n")
 
             hold_unit = 0
+            has_spent_cash = 0
+            start_cash = net_cash
 
-        p = row['close'] - open_price
+        p = row['close'] - row['close_-1_s']
         if hold_unit > 0 and p < 0:
             #check stop loss or win exit
 
-
-            if abs(p) > 2 * N:
+            if np.abs(p) > 2 * N:
                 net_cash += hold_unit * a_unit_amt * row['close']
                 profit = round(net_cash - start_cash, 2)
                 profit_perc = round(profit * 100.0 / start_cash, 0)
 
-                logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'+", price "+str(row['close'])
+                logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'
+                             +", price "+str(row['close'])
+                             +", unit "+str(hold_unit)
                              +" profit "+str(profit)
                              +" profit_perc "+str(profit_perc)
                              +" cash left "+str(net_cash)
+                             +"\n\n"
                              )
                 hold_unit = 0
+                has_spent_cash = 0
+                start_cash = net_cash
 
         #print('')
-    logging.info('script completed')
+
+    current_value = stock_value + net_cash
+    logging.info("a code verify completed. current value "+ str(current_value))
+    return()
+
     exit(0)
 
 
@@ -416,6 +429,7 @@ def entry(period, debug=False):
 
     stock_list = finlib.Finlib().get_A_stock_instrment()
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+    stock_list = finlib.Finlib().remove_garbage(df=stock_list)
 
     #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
     if debug:
@@ -429,6 +443,9 @@ def entry(period, debug=False):
         logging.info(str(i) + " of " + str(cnt) + " " + c)
 
         r = _entry(csv_f=csv_f, period=period)
+        logging.info("end of " + c)
+
+        continue
 
         if r['action'] != ['']:
             df = pd.DataFrame(data=r)
@@ -442,9 +459,6 @@ def entry(period, debug=False):
         df_rtn.to_csv(output_csv, encoding='UTF-8', index=False)
 
         logging.info(__file__+" "+"MACD selection saved to " + output_csv + " . len " + str(df_rtn.__len__()))
-
-
-
 
 def analyze(indicator, debug=False):
     dir = "/home/ryan/DATA/result"
