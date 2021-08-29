@@ -130,13 +130,15 @@ def _entry(csv_f, period, dc_length=20):
     profit = 0
 
     open_price = 0
-    hold_unit_threshold = 0.02
+    # hold_unit_threshold = 0.02
+    max_allowed_spent_cash = start_cash * 0.02
+    has_spent_cash = 0
 
     for index, row in df_turtle.iterrows():
         # print(row)
 
         # if row['max']==True and hold_unit == 0:
-        if row['max']==True and hold_unit < hold_unit_threshold:
+        if row['max']==True and has_spent_cash < max_allowed_spent_cash:
             #open 1st persition
             N = row['atr_middle_21']
             A_Unit_Change = N*a_unit_amt  # $ changes in a Day
@@ -146,21 +148,24 @@ def _entry(csv_f, period, dc_length=20):
             open_price = row['close']
 
             hold_unit += unit_to_open
-            net_cash -=  unit_to_open * a_unit_amt * open_price
-            logging.info(row['date'].strftime('%Y%m%d')+', open unit '+str(unit_to_open)+", price "+str(row['close']))
-
-
+            spent_cash = round(unit_to_open * a_unit_amt * open_price,2)
+            has_spent_cash += spent_cash
+            net_cash -= spent_cash
+            logging.info(row['date'].strftime('%Y%m%d')+', open unit '+str(unit_to_open)+", price "
+                         +str(row['close'])
+                         +" spent "+str(spent_cash)
+                         +", cash left "+str(net_cash)
+                         )
 
         if row['min']==True and hold_unit > 0:
             #close persition
 
             net_cash += hold_unit * a_unit_amt * row['close']
-
             profit = round(net_cash - start_cash, 2)
             profit_perc = round(profit*100.0/start_cash, 0)
 
-            logging.info(row['date'].strftime('%Y%m%d')+', close all unit '+str(hold_unit)+", price "+str(row['close']))
-            logging.info("profit "+str(profit)+" , profit_perc "+str(profit_perc)+"\n\n")
+            logging.info(row['date'].strftime('%Y%m%d')+', close all unit '+str(hold_unit)+", price "+str(row['close'])
+                         +" profit "+str(profit)+" , profit_perc "+str(profit_perc)+" cash left "+str(net_cash)+"\n\n")
 
             hold_unit = 0
 
@@ -168,8 +173,17 @@ def _entry(csv_f, period, dc_length=20):
         if hold_unit > 0 and p < 0:
             #check stop loss or win exit
 
+
             if abs(p) > 2 * N:
-                logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'+", price "+str(row['close']))
+                net_cash += hold_unit * a_unit_amt * row['close']
+                profit = round(net_cash - start_cash, 2)
+                profit_perc = round(profit * 100.0 / start_cash, 0)
+
+                logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'+", price "+str(row['close'])
+                             +" profit "+str(profit)
+                             +" profit_perc "+str(profit_perc)
+                             +" cash left "+str(net_cash)
+                             )
                 hold_unit = 0
 
         #print('')
