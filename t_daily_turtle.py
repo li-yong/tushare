@@ -34,7 +34,10 @@ import constant
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
 
-def _entry(csv_f, period):
+def _entry(csv_f, period, dc_length=20):
+
+    #dc_length : Donchian Channels length, 20 days by default.
+
     rtn = {
         "reason": [''],
         "strength": [''],
@@ -98,30 +101,25 @@ def _entry(csv_f, period):
         df['date'] = pd.to_datetime(df['date'], format="%Y-%m-%d")
         df_period = df
 
+    #adding max/min
+
+    df_period['pre_date'] = df_period['date'].shift()
+    # df_period['max'] = df_period['close'].rolling(2).max()
+    # df_period['pre_max'] = df_period['max'].shift()
+
+    #pre_20D_max: the max value if 20 days before today
+    df_period['pre_dc_max'] =  df_period['high'].rolling(dc_length).max().shift()
+
+    # pre_20D_min: the in value if 20 days before today
+    df_period['pre_dc_min'] =  df_period['low'].rolling(dc_length).min().shift()
+
     #df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=5, middle=21, long=55)
     #df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=12, middle=26, long=60)
     df_period = finlib_indicator.Finlib_indicator().add_tr_atr(df_period, short=5, middle=21, long=55)
 
     df_period = df_period[-250:]
-
-    #the day when close higher than previous N periods
-    # df_max=df_period[df_period['close'].rolling(window=20).max() == df_period['close']]
-    df_max=df_period[df_period['high'].rolling(window=21).max() == df_period['high']]
-    df_max = df_max[['date','close', 'high']]
-    df_max = df_max[['date']]
-    df_max['max'] = True
-
-    #the day when close lower than previous N periods
-    # df_min=df_period[df_period['close'].rolling(window=10).max() == df_period['close']]
-    df_min=df_period[df_period['low'].rolling(window=10).min() == df_period['low']]
-    df_min = df_min[['date','close', 'low']]
-    df_min = df_min[['date']]
-    df_min['min'] = True
-
-    df_period = pd.merge(df_period, df_max, on='date', how='outer')
-    df_period = pd.merge(df_period, df_min, on='date', how='outer')
-
-    #df_period[(df_period['max']==True) | (df_period['min']==True)]
+    df_period.loc[df_period['high'] > df_period['pre_dc_max'], ['action','max','reason']] = ['B',True,"Break Turtle Dochian Channel "+str(dc_length)+" days high"]
+    df_period.loc[df_period['low'] < df_period['pre_dc_min'], ['action','min','reason']] = ['S',True,"Break Turtle Dochian Channel "+str(dc_length)+" days low"]
 
     df_turtle = df_period
 
@@ -132,20 +130,18 @@ def _entry(csv_f, period):
     profit = 0
 
     open_price = 0
-
-
+    hold_unit_threshold = 0.02
 
     for index, row in df_turtle.iterrows():
         # print(row)
 
-
         # if row['max']==True and hold_unit == 0:
-        if row['max']==True:
+        if row['max']==True and hold_unit < hold_unit_threshold:
             #open 1st persition
             N = row['atr_middle_21']
             A_Unit_Change = N*a_unit_amt  # $ changes in a Day
             #A_Unit_Change = N*row['close']*100 # $ changes in a Day
-            unit_to_open = round(0.01*net_cash/A_Unit_Change,0)
+            unit_to_open = round(0.01*net_cash/A_Unit_Change/100,8)
 
             open_price = row['close']
 
@@ -175,9 +171,6 @@ def _entry(csv_f, period):
             if abs(p) > 2 * N:
                 logging.info(row['date'].strftime('%Y%m%d')+', stop loss close'+", price "+str(row['close']))
                 hold_unit = 0
-
-
-
 
         #print('')
     logging.info('script completed')
