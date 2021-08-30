@@ -4920,7 +4920,7 @@ class Finlib:
     def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,short_period=False,debug=False, force_run=False):
     # def get_last_n_days_stocks_amount(self,ndays=365):
 
-        #logic for dayS and dayE:
+    #logic for dayS and dayE:
         if (dayS is not None ) and (dayE is not None):
             ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
             logging.info("get_last_n_days_stocks_amount, using specifed dayS and dayE, ingore ndays. Use calculated ndays "+str(ndays))

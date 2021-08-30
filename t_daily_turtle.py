@@ -121,7 +121,7 @@ def _entry(csv_f, period, dc_length=20):
 
             A_Unit_Change = N*a_unit_amt  # $ changes in a Day
             #A_Unit_Change = N*row['close']*100 # $ changes in a Day
-            unit_to_open = round(0.01*net_cash/A_Unit_Change/100,8)
+            # unit_to_open = round(0.01*net_cash/A_Unit_Change/100,8)
             unit_to_open = round(0.01*net_cash/A_Unit_Change/10,0)
 
             # open_price = row['close']
@@ -149,7 +149,6 @@ def _entry(csv_f, period, dc_length=20):
 
             hold_unit = 0
             has_spent_cash = 0
-            start_cash = net_cash
 
         p = row['close'] - row['close_-1_s']
         if hold_unit > 0 and p < 0:
@@ -170,7 +169,6 @@ def _entry(csv_f, period, dc_length=20):
                              )
                 hold_unit = 0
                 has_spent_cash = 0
-                start_cash = net_cash
 
 
     current_value = stock_value + net_cash

@@ -115,8 +115,8 @@ def price_amount_increase():
     df_amount['amount_increase'] = round((df_amount['amount_dayE'] - df_amount['amount_dayS']) *100.0 /  df_amount['amount_dayS'],2)
 
     #prepare close df
-    df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=30,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
-    # df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10,dayS=startD,dayE=endD,daily_update=None,debug=False, force_run=False)
+    # df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=30,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
+    df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10,dayS=str(startD),dayE=str(endD),daily_update=None,debug=False, force_run=False)
     df_close_start = df_basic[df_basic['trade_date']==int(startD)]
     df_close_end = df_basic[df_basic['trade_date']==int(endD)]
     df_close =  pd.merge(df_close_start[['ts_code','close','trade_date']],df_close_end[['ts_code','close','trade_date']], on='ts_code',how='inner', suffixes=('_dayS','_dayE'))
