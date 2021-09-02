@@ -4,6 +4,8 @@
 #mv  /home/ryan/DATA/result/today ~/DATA/result/today.del
 #mkdir  /home/ryan/DATA/result/today
 
+
+
 full_or_daily=$1
 
 if [ $full_or_daily == "FULL" ]; then
@@ -17,6 +19,9 @@ fi
 
 
 sleep 2
+
+cd /home/ryan/DATA/result
+git pull
 
 cd /home/ryan/tushare_ryan
 bash -x clean_result_dir.sh
