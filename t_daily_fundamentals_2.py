@@ -3740,6 +3740,44 @@ def _fetch_pro_basic():
     return df
 
 
+def _fetch_stock_company():
+    ts.set_token(myToken)
+    pro = ts.pro_api()
+
+    if not os.path.isdir(fund_base_source):
+        os.mkdir(fund_base_source)
+
+    dir = fund_base_source + "/market"
+
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+
+    output_csv = dir + "/pro_stock_company.csv"
+
+    if finlib.Finlib().is_cached(output_csv, 15):
+        logging.info(__file__ + " " + "not fetch stock company as the file updated in 15 day. " + output_csv)
+        return ()
+
+    all_fields='ts_code,exchange,chairman,manager,secretary,reg_capital,setup_date,province,city,introduction,website,email,office,employees,main_business,business_scope'.split(',')
+    df_1 = pro.stock_company()
+    fields_have_fetched = df_1.columns.to_list()
+
+    df_2 = pro.stock_company(fields=','.join(set(all_fields) - set(fields_have_fetched)))
+
+    df = pd.merge(df_1, df_2, left_index=True, right_index=True)
+    df = finlib.Finlib().ts_code_to_code(df)
+    df = finlib.Finlib().add_stock_name_to_df(df)
+    df = finlib.Finlib().adjust_column(df,col_name_list=['code','name','exchange','employees','chairman',
+                                                         'manager','secretary','reg_capital',
+                                                         'setup_date','province','city','office',
+                                                         'introduction', 'business_scope', 'main_business'
+                                                         ])
+    df = df.sort_values(by='employees', ascending=False)
+    df.to_csv(output_csv, encoding="UTF-8", index=False)
+    logging.info(__file__ + " " + "stock company saved to " + output_csv + " . len " + str(df.__len__()))
+    return df
+
+
 def _fetch_pro_pledge_stat_detail():
     ts.set_token(myToken)
     pro = ts.pro_api()
@@ -4142,6 +4180,7 @@ def main():
     parser.add_option("--fetch_industry_l123", action="store_true", dest="fetch_industry_l123_f", default=False, help="")
     parser.add_option("--fetch_change_name", action="store_true", dest="fetch_change_name_f", default=False, help="")
     parser.add_option("--fetch_pledge_stat_detail", action="store_true", dest="fetch_pledge_stat_detail_f", default=False, help="")
+    parser.add_option("--fetch_stock_company", action="store_true", dest="fetch_stock_company_f", default=False, help="")
 
     parser.add_option("-e", "--extract_latest", action="store_true", dest="extract_latest_f", default=False, help="extract latest quarter data")
 
@@ -4243,6 +4282,9 @@ def main():
 
     if options.fetch_pro_basic_f:
         _fetch_pro_basic()
+
+    if options.fetch_stock_company_f:
+        _fetch_stock_company()
 
     if options.fetch_stk_holdertrade_f:
         _fetch_stk_holdertrade(fast_fetch=fast_fetch_f)

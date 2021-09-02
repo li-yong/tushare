@@ -127,11 +127,12 @@ echo "updating fundamentals/daily/basic_today.csv"
 
 ######################################
 if [ $full_or_daily == "FULL" ]; then
-  echo "updating market, security, instrument, A_stock"
-  python t_daily_fundamentals.py  --update_get_market;  #/home/ryan/DATA/pickle/market.csv
-  python t_daily_fundamentals.py  --update_get_security;   #saved to /home/ryan/DATA/pickle/security.csv #stop work. 20200513
+#  echo "updating market, security, instrument, A_stock"
+#  python t_daily_fundamentals.py  --update_get_market;  #/home/ryan/DATA/pickle/market.csv
 
-  python t_daily_fundamentals.py  --update_get_instrument;  # /home/ryan/DATA/pickle/instrument.csv
+  #ryan: the api is not supported. and result is not useful.
+#  python t_daily_fundamentals.py  --update_get_security;   #saved to /home/ryan/DATA/pickle/security.csv #stop work. 20200513
+#  python t_daily_fundamentals.py  --update_get_instrument;  # /home/ryan/DATA/pickle/instrument.csv
 fi
 
 # update forex, get forex yesterday data from td.
@@ -216,6 +217,9 @@ if [ $full_or_daily == "FULL" ]; then
   #python t_daily_fundamentals_2.py --fetch_data_all --fast_fetch  #most time, update most recent q.  #time consuming.
 
   python t_daily_fundamentals_2.py --fetch_industry_l123
+
+  #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_stock_company.csv
+  python t_daily_fundamentals_2.py --fetch_stock_company
 
   #separate --fetch_data_all
   #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_*.csv

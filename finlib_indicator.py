@@ -1892,6 +1892,116 @@ class Finlib_indicator:
         logging.info("file saved to " + csv_out + " ,len " + str(df_rtn.__len__()))
         return(df_rtn)
 
+    #calculate and compare different sector's volume and price change percent.
+    # startD and endD have to be trading day.
+    def price_amount_increase(self, startD, endD):
+
+        if startD == None and endD == None: #check latest 5 days
+            this_year = datetime.today().strftime("%Y") #2020
+            csv_f = "/home/ryan/DATA/pickle/trading_day_"+this_year+".csv"
+            df_trading_day = pd.read_csv(csv_f, converters={'cal_date': str})
+            df_trading_day = df_trading_day[df_trading_day['is_open'] == 1].reset_index().drop('index',axis=1)
+
+            today_index = df_trading_day[df_trading_day['cal_date'] == finlib.Finlib().get_last_trading_day()].index.values[0]
+
+            endD = df_trading_day.iloc[today_index-1].cal_date
+            startD = df_trading_day.iloc[today_index-6].cal_date
+
+
+        # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
+        df_rtn = pd.DataFrame()
+        r_idx = 0
+
+        # prepare amount df
+        df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None,
+                                                       short_period=True, debug=False, force_run=False)
+        df_close_start = df_amount[df_amount['date'] == int(startD)]
+        df_close_end = df_amount[df_amount['date'] == int(endD)]
+        df_amount = pd.merge(df_close_start[['code', 'date', 'close', 'amount']],
+                             df_close_end[['code', 'date', 'close', 'amount']], on='code', how='inner',
+                             suffixes=('_dayS', '_dayE'))
+        df_amount['amount_increase'] = round(
+            (df_amount['amount_dayE'] - df_amount['amount_dayS']) * 100.0 / df_amount['amount_dayS'], 2)
+
+        # prepare close df
+        # df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=30,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
+        df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10, dayS=str(startD), dayE=str(endD), daily_update=None,
+                                                    debug=False, force_run=False)
+        df_close_start = df_basic[df_basic['trade_date'] == int(startD)]
+        df_close_end = df_basic[df_basic['trade_date'] == int(endD)]
+        df_close = pd.merge(df_close_start[['ts_code', 'close', 'trade_date']],
+                            df_close_end[['ts_code', 'close', 'trade_date']], on='ts_code', how='inner',
+                            suffixes=('_dayS', '_dayE'))
+        df_close = finlib.Finlib().ts_code_to_code(df=df_close)
+        df_close = finlib.Finlib().add_stock_name_to_df(df=df_close)
+
+        if df_close.empty:
+            logging.fatal("unexpected empty dataframe df_close, cannot contine")
+            return
+
+        # calculate HS300
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv(
+            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close,
+                                                              df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv(
+            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close,
+                                                              df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv(
+            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close,
+                                                              df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhenChenZhi",
+                                                              df_code_column_only=pd.read_csv(
+                                                                  "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"),
+                                                              df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv(
+            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close,
+                                                              df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv(
+            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close,
+                                                              df_amount=df_amount))
+
+        # calculate garbage stocks close/amount increase
+        df_rtn_garb = pd.DataFrame()
+        for csv in glob.glob("/home/ryan/DATA/result/garbage/latest_*.csv"):
+            # logging.info("reading "+csv)
+            df = pd.read_csv(csv)
+            df_rtn_garb = df_rtn_garb.append(
+                self._get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']],
+                                          df_close=df_close, df_amount=df_amount))
+
+        logging.info("\n===== INDEX Increase ======")
+        logging.info(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
+
+        logging.info("\n===== Garbage Increase ======")
+        logging.info(finlib.Finlib().pprint(df_rtn_garb.sort_values('price_change', ascending=False, inplace=False)))
+        # exit(0)
+
+    def _get_avg_chg_of_code_list(self, list_name, df_code_column_only, df_close, df_amount):
+        if df_close.empty:
+            logging.error("Unexpected empty input df df_close.")
+            return ()
+
+        df_2 = pd.merge(df_code_column_only[['code']].drop_duplicates(),
+                        df_close[['code', 'name', 'close_dayS', 'trade_date_dayS', 'close_dayE', 'trade_date_dayE']],
+                        on='code', how='inner')
+        df_2 = pd.merge(df_2, df_amount[['code', 'amount_increase']], on='code', how='inner')
+        df_2['close_delta'] = round((df_2['close_dayE'] - df_2['close_dayS']) * 100.0 / df_2['close_dayS'], 2)
+        chg_mean_perc_close = round(df_2['close_delta'].mean(), 2)
+        chg_mean_perc_amt = round(df_2['amount_increase'].mean(), 2)
+
+        print(str(df_close.trade_date_dayS.iloc[0]) + "->" + str(df_close.trade_date_dayE.iloc[0]) + " len " + str(
+            df_2.__len__()) + " " + list_name + ",  change average close " + str(
+            chg_mean_perc_close) + "%,  change average amount " + str(chg_mean_perc_amt) + "%")
+
+        return (pd.DataFrame.from_dict({'date_s': [df_close['trade_date_dayS'].iloc[0]],
+                                        'date_e': [df_close['trade_date_dayE'].iloc[0]],
+
+                                        'group_name': [list_name],
+                                        'price_change': [chg_mean_perc_close],
+                                        'amount_change': [chg_mean_perc_amt],
+                                        'len': [df_2.__len__()],
+                                        }))
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
