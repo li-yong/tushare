@@ -124,16 +124,15 @@ echo "updating fundamentals/daily/basic_today.csv"
 
 ######################################
 #
-
 ######################################
-if [ $full_or_daily == "FULL" ]; then
+#if [ $full_or_daily == "FULL" ]; then
 #  echo "updating market, security, instrument, A_stock"
 #  python t_daily_fundamentals.py  --update_get_market;  #/home/ryan/DATA/pickle/market.csv
 
   #ryan: the api is not supported. and result is not useful.
 #  python t_daily_fundamentals.py  --update_get_security;   #saved to /home/ryan/DATA/pickle/security.csv #stop work. 20200513
 #  python t_daily_fundamentals.py  --update_get_instrument;  # /home/ryan/DATA/pickle/instrument.csv
-fi
+#fi
 
 # update forex, get forex yesterday data from td.
 #bash /home/ryan/oandapybot-ubuntu/t_forex_daily_prepare.sh -e CP_YESTERDAY_FOREX_DATA_FROM_HK_VSP_TO_HAHA_BRAIN
