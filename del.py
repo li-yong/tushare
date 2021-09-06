@@ -91,6 +91,41 @@ def coefficient_variation_price_amount():
     print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
 
 
+def cnt_jin_cha_si_cha():
+    a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
+    a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+    a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+
+    df_stock_list = a['stock_list']
+    df_csv_dir = a['csv_dir']
+    df_out_dir = a['out_dir']
+    df_rtn = pd.DataFrame()
+
+    result_csv=df_out_dir+"/"+"jin_cha_si_cha_cnt.csv"
+
+    i=1
+    for index, row in df_stock_list.iterrows():
+        name, code = row['name'], row['code']
+        logging.info(str(i)+" of "+str(df_stock_list.__len__())+" , "+str(code)+" "+name)
+        i+=1
+
+        csv = df_csv_dir + "/"+ code+".csv"
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
+        df = finlib_indicator.Finlib_indicator().count_jin_cha_si_cha(df=df, check_days=220,code=code,name=name)
+        df_rtn = df_rtn.append(df)
+
+    df_rtn = df_rtn.reset_index().drop('index',axis=1)
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+
+    df_rtn = df_rtn.sort_values(by='sum_perc')
+    df_rtn.to_csv(result_csv, encoding='UTF-8', index=False)
+
+    logging.info("jin_cha_si_cha cnt saved to "+result_csv+" , len "+str(df_rtn.__len__()))
+    logging.info("head 10 df:\n"+finlib.Finlib().pprint(df_rtn.head(10)))
+    logging.info("tail 10 df:\n"+finlib.Finlib().pprint(df_rtn.tail(10)))
+
+
+
 def remove_garbage_by_fcf():
     df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
     df = finlib.Finlib()._remove_garbage_must(df=df)
@@ -393,8 +428,6 @@ def result_effort_ratio():
 
     df['result_effort_ratio'] = round((df['inc']/df['inc_1'])/(df['volume']/df['v_1']),2)
     print(finlib.Finlib().pprint(df))
-
-
     print(1)
 
 def check_stop_loss_based_on_ma_across():
@@ -420,6 +453,16 @@ def check_stop_loss_based_on_ma_across():
     print(1)
 
 #### MAIN #####
+
+
+cnt_jin_cha_si_cha()
+exit()
+
+
+evaluate_grid(market='AG')
+exit()
+
+
  # startD and endD have to be trading day.
 df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
 exit()
@@ -434,8 +477,6 @@ exit()
 
 df_all = finlib.Finlib().get_A_stock_instrment()
 df_all = finlib.Finlib().add_industry_to_df(df=df_all)
-
-
 print(1)
 
 
@@ -445,7 +486,6 @@ exit()
 df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
 
 df_intrinsic_value = graham_intrinsic_value()
-evaluate_grid(market='AG')
 
 #########################################
 df = finlib.Finlib().load_price_n_days(ndays=20)

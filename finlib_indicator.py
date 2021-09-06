@@ -1214,6 +1214,8 @@ class Finlib_indicator:
         else:
             browser.get(target_uri+'#signin')
 
+            # browser.find_element_by_class_name('tv-header__area tv-header__area--user').click()
+
             browser.find_element_by_class_name('tv-signin-dialog__toggle-email').click()
 
 
@@ -1342,40 +1344,46 @@ class Finlib_indicator:
 
         # #scroll down entire window 200 from current position
         # browser.execute_script("window.scrollTo(0, window.scrollY + 200);")
-
-        scroll_bar = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("sb-scrollbar")
-        scroll_bar.location
-
-        action = ActionChains(browser)
-        # action.move_to_element(scroll_bar).click()
-
-        mkt_clicked = False
-        for j in range(100):
-            if mkt_clicked:
-                break
-
-            action.drag_and_drop_by_offset(source=scroll_bar, xoffset=0, yoffset=10)
-            action.perform()
-
-            mkt_list = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-control-select__option-wrap")
-
-            for i in mkt_list:
-
-                im = i.get_attribute("data-market")
-                # print(im) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
-
-                if market == 'US' and im == "america" and i.is_displayed():
-                    i.click()
-                    mkt_clicked = True
-                    break
-                elif (market == 'CN') and im == "china" and i.is_displayed():
-                    i.click()
-                    mkt_clicked = True
-                    break
-                elif market == 'HK' and im == "hongkong" and i.is_displayed():
-                    i.click()
-                    mkt_clicked = True
-                    break
+        if market == 'US':
+            browser.find_element_by_css_selector('[data-market="america"]').click()
+        elif market == 'CN':
+            browser.find_element_by_css_selector('[data-market="china"]').click()
+        elif market == 'HK':
+            browser.find_element_by_css_selector('[data-market="hongkong"]').click()
+        #
+        # scroll_bar = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("sb-scrollbar")
+        # scroll_bar.location
+        #
+        # action = ActionChains(browser)
+        # # action.move_to_element(scroll_bar).click()
+        #
+        # mkt_clicked = False
+        # for j in range(100):
+        #     if mkt_clicked:
+        #         break
+        #
+        #     action.drag_and_drop_by_offset(source=scroll_bar, xoffset=0, yoffset=10)
+        #     action.perform()
+        #
+        #     mkt_list = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("tv-dropdown-behavior__inscroll").find_elements_by_class_name("tv-control-select__option-wrap")
+        #
+        #     for i in mkt_list:
+        #
+        #         im = i.get_attribute("data-market")
+        #         # print(im) #USA (NASDAQ, NYSE, NYSE ARCA, OTC),  China (SSE, SZSE)
+        #
+        #         if market == 'US' and im == "america" and i.is_displayed():
+        #             i.click()
+        #             mkt_clicked = True
+        #             break
+        #         elif (market == 'CN') and im == "china" and i.is_displayed():
+        #             i.click()
+        #             mkt_clicked = True
+        #             break
+        #         elif market == 'HK' and im == "hongkong" and i.is_displayed():
+        #             i.click()
+        #             mkt_clicked = True
+        #             break
 
         self.tv_wait_page_to_ready(browser, timeout=10)
 
@@ -2001,6 +2009,54 @@ class Finlib_indicator:
                                         'amount_change': [chg_mean_perc_amt],
                                         'len': [df_2.__len__()],
                                         }))
+
+
+
+    def count_jin_cha_si_cha(self, df, check_days=220, code='',name=''):
+        df = df.tail(check_days).reset_index().drop('index', axis=1)
+
+        df = self.add_ma_ema(df=df, short=4, middle=27, long=60)
+
+        df['ma_4_minor_27'] = df['close_4_sma'] - df['close_27_sma']
+
+        df = df[['date', 'code', 'close', 'close_4_sma', 'close_27_sma', 'ma_4_minor_27']]
+
+        code = df.iloc[0]['code']
+        start_date = df.iloc[0]['date']
+        end_date = df.iloc[-1]['date']
+
+        df['b1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(1)
+        df['a1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(-1)
+
+        df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
+        df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
+
+        logging.info('\n'+str(code)+" "+str(name)+ ' SI CHA DAYS:')
+        logging.info(finlib.Finlib().pprint(df_si_cha))
+
+        logging.info('\n' + str(code) + " " + str(name) + ' JIN CHA DAYS:')
+        logging.info(finlib.Finlib().pprint(df_jin_cha))
+
+        cnt_days = df.__len__()
+        cnt_jincha = df_jin_cha.__len__()
+        cnt_sicha = df_si_cha.__len__()
+
+        df_rtn = pd.DataFrame({
+            'code': [code],
+            'day_cnt': [cnt_days],
+            'daystart': [str(start_date)],
+            'dayend': [str(end_date)],
+            'jincha_cnt': [cnt_jincha],
+            'sicha_cnt': [cnt_sicha],
+            'jincha_perc': [round(cnt_jincha * 100 / cnt_days, 1)],
+            'sicha_perc': [round(cnt_sicha * 100 / cnt_days, 1)],
+            'sum_perc': [round((cnt_jincha + cnt_sicha) * 100 /cnt_days, 1)],
+        })
+
+        logging.info(str(code)+" "+name+", days " + str(cnt_days) + ", jincha cnt: "
+                     + str(cnt_jincha) + "  sicha cnt: " + str(cnt_sicha ))
+
+        return (df_rtn)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
