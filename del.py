@@ -114,10 +114,12 @@ def cnt_jin_cha_si_cha():
         df = finlib_indicator.Finlib_indicator().count_jin_cha_si_cha(df=df, check_days=220,code=code,name=name)
         df_rtn = df_rtn.append(df)
 
-    df_rtn = df_rtn.reset_index().drop('index',axis=1)
+
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
 
     df_rtn = df_rtn.sort_values(by='sum_perc')
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    
     df_rtn.to_csv(result_csv, encoding='UTF-8', index=False)
 
     logging.info("jin_cha_si_cha cnt saved to "+result_csv+" , len "+str(df_rtn.__len__()))
