@@ -94,7 +94,7 @@ def coefficient_variation_price_amount():
 def cnt_jin_cha_si_cha():
     a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
     # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-    # a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+    a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
 
     df_stock_list = a['stock_list']
     df_csv_dir = a['csv_dir']
@@ -125,7 +125,9 @@ def cnt_jin_cha_si_cha():
     df_rtn['jincha_sicha_days_ratio_score'] = df_rtn['jincha_sicha_days_ratio'].apply(
         lambda _d: round(stats.percentileofscore(df_rtn['jincha_sicha_days_ratio'], _d) / 100, 4))
 
-    df_rtn = df_rtn.sort_values(by='jincha_sicha_days_ratio_score')
+    df_rtn['overall_score'] = 0.7*df_rtn['jincha_sicha_days_ratio_score']+ 0.3*df_rtn['ma_across_rare_score']
+
+    df_rtn = df_rtn.sort_values(by='overall_score',ascending=False)
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
 
@@ -134,6 +136,7 @@ def cnt_jin_cha_si_cha():
     logging.info("jin_cha_si_cha cnt saved to "+result_csv+" , len "+str(df_rtn.__len__()))
     logging.info("head 10 df:\n"+finlib.Finlib().pprint(df_rtn.head(10)))
     logging.info("tail 10 df:\n"+finlib.Finlib().pprint(df_rtn.tail(10)))
+    return()
 
 
 
