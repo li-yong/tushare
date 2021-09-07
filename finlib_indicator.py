@@ -41,6 +41,8 @@ import logging
 import yaml
 import warnings
 import constant
+from operator import sub
+
 
 pd.options.mode.chained_assignment = None
 
@@ -2028,8 +2030,14 @@ class Finlib_indicator:
         df['b1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(1)
         df['a1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(-1)
 
-        df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
-        df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
+        df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)]
+        df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)]
+
+        # df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
+        # df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
+        a_dict = self._cnt_jin_cha_si_cha_days(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+        jincha_days = a_dict['jincha_days']
+        sicha_days = a_dict['sicha_days']
 
         logging.info('\n'+str(code)+" "+str(name)+ ' SI CHA DAYS:')
         logging.info(finlib.Finlib().pprint(df_si_cha))
@@ -2048,15 +2056,70 @@ class Finlib_indicator:
             'dayend': [str(end_date)],
             'jincha_cnt': [cnt_jincha],
             'sicha_cnt': [cnt_sicha],
-            'jincha_perc': [round(cnt_jincha * 100 / cnt_days, 1)],
-            'sicha_perc': [round(cnt_sicha * 100 / cnt_days, 1)],
+            'jincha_days':[jincha_days],
+            'sicha_days':[sicha_days],
+            # 'jincha_perc': [round(cnt_jincha * 100 / cnt_days, 1)],
+            # 'sicha_perc': [round(cnt_sicha * 100 / cnt_days, 1)],
             'sum_perc': [round((cnt_jincha + cnt_sicha) * 100 /cnt_days, 1)],
+            'jincha_sicha_days_ratio' : [round(jincha_days/(sicha_days+1), 2)],
         })
 
-        logging.info(str(code)+" "+name+", days " + str(cnt_days) + ", jincha cnt: "
-                     + str(cnt_jincha) + "  sicha cnt: " + str(cnt_sicha ))
+
+        logging.info(str(code)+" "+name+", days " + str(cnt_days)
+                     + ", jincha cnt: "   + str(cnt_jincha)
+                     + "  sicha cnt: " + str(cnt_sicha)
+                     + "  jincha days: " + str(jincha_days)
+                     + "  sicha days: " + str(sicha_days)
+                     )
 
         return (df_rtn)
+
+
+    def _cnt_jin_cha_si_cha_days(self, df_all, df_jin_cha, df_si_cha):
+        sicha_days = 0
+        jincha_days = 0
+
+        jidx = df_jin_cha.index.tolist()
+        sidx = df_si_cha.index.tolist()
+
+
+        if sidx.__len__()==0:
+            logging.info("no si cha")
+
+        if jidx.__len__() == 0:
+            logging.info("no jin cha")
+
+        if jidx.__len__() > sidx.__len__():
+            trim_days = sidx[-1] - jidx[0]
+            sicha_days += jidx[-1] - sidx[-1] #days of the latest sicha period
+            jincha_days += df_all.index.to_list()[-1] - jidx[-1] # current is jincha perido, days it has been lasted.
+        elif sidx.__len__() > jidx.__len__():
+            trim_days = jidx[-1] - sidx[0]
+            jincha_days += sidx[-1] - jidx[-1] #days of the latest jincha period
+            sicha_days += df_all.index.to_list()[-1] - sidx[-1] #current is sicha perido, days it has been lasted.
+        elif sidx.__len__() == jidx.__len__():
+            if sidx[0] < jidx[0] :
+                trim_days = jidx[-1] - sidx[0]
+                jincha_days += df_all.index.to_list()[-1] - jidx[-1]
+
+            elif jidx[0] < sidx[0]:
+                trim_days = sidx[-1] - jidx[0]
+                sicha_days += df_all.index.to_list()[-1] - sidx[-1]
+
+        if sidx[0] < jidx[0]:
+            logging.info("start with sicha")
+            sicha_days_trim = pd.Series( list(map(sub, jidx, sidx)) ).sum()
+            sicha_days += sicha_days_trim
+            jincha_days += trim_days - sicha_days_trim
+        elif jidx[0] < sidx[0]:
+            logging.info("start with jincha")
+            jincha_days_trim = pd.Series(list(map(sub, sidx, jidx))).sum()
+            jincha_days += jincha_days_trim
+            sicha_days += trim_days - jincha_days_trim
+
+        return({'jincha_days':jincha_days,'sicha_days':sicha_days})
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

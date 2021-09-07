@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import DataFrame
 
 import finlib
-
+from scipy import stats
 import finlib_indicator
 
 import tushare as ts
@@ -93,8 +93,8 @@ def coefficient_variation_price_amount():
 
 def cnt_jin_cha_si_cha():
     a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
-    a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-    a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+    # a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
 
     df_stock_list = a['stock_list']
     df_csv_dir = a['csv_dir']
@@ -117,9 +117,18 @@ def cnt_jin_cha_si_cha():
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
 
+
     df_rtn = df_rtn.sort_values(by='sum_perc')
+    df_rtn['ma_across_rare_score'] = df_rtn['sum_perc'].apply(
+        lambda _d: 1 - round(stats.percentileofscore(df_rtn['sum_perc'], _d) / 100, 4))
+
+    df_rtn['jincha_sicha_days_ratio_score'] = df_rtn['jincha_sicha_days_ratio'].apply(
+        lambda _d: round(stats.percentileofscore(df_rtn['jincha_sicha_days_ratio'], _d) / 100, 4))
+
+    df_rtn = df_rtn.sort_values(by='jincha_sicha_days_ratio_score')
+
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
-    
+
     df_rtn.to_csv(result_csv, encoding='UTF-8', index=False)
 
     logging.info("jin_cha_si_cha cnt saved to "+result_csv+" , len "+str(df_rtn.__len__()))
