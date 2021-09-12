@@ -235,9 +235,9 @@ def cnt_jin_cha_si_cha(ma_short, ma_middle,stock_global,selected, remove_garbage
     df_rtn['jincha_sicha_days_ratio_score'] = df_rtn['jincha_sicha_days_ratio'].apply(
         lambda _d: round(stats.percentileofscore(df_rtn['jincha_sicha_days_ratio'], _d) / 100, 2))
 
-    df_rtn['overall_score'] = round(0.7*df_rtn['jincha_sicha_days_ratio_score']+ 0.3*df_rtn['ma_across_rare_score'],2)
+    df_rtn['ma_x_score'] = round(0.7*df_rtn['jincha_sicha_days_ratio_score']+ 0.3*df_rtn['ma_across_rare_score'],2)
 
-    df_rtn = df_rtn.sort_values(by='overall_score',ascending=False)
+    df_rtn = df_rtn.sort_values(by='ma_x_score',ascending=False)
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
 
@@ -366,6 +366,10 @@ def main():
         #print(df_t)
         if not df_t.empty:
             df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
+
+    df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
+
+    df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
 
     df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
     # print(df_rtn)

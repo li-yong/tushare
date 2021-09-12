@@ -639,6 +639,17 @@ python t_daily_junxian_barstyle.py -x AG --show_result
 #python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -m 22  #Only run pv test.
 
 
+####################################
+# output: /home/ryan/DATA/result/selected/jin_cha_si_cha_cnt.csv
+python t_daily_junxian_barstyle.py -x AG_HOLD --ma_short 4 --ma_middle 27 --calc_ma_across_count --selected
+
+
+####################################
+# output: /home/ryan/DATA/result/jin_cha_si_cha_cnt.csv
+#python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count  --remove_garbage
+python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count
+
+
 ##############################
 # indicator
 # input: DAY_Global/AG
