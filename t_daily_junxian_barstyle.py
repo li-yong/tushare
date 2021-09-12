@@ -369,7 +369,7 @@ def main():
 
     df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
 
-    df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+    df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','name','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
 
     df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
     # print(df_rtn)
