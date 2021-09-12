@@ -6,7 +6,7 @@ import logging
 from optparse import OptionParser
 import tabulate
 import constant
-
+from scipy import stats
 
 def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     #df must have column (code, date, open, low,high,close)
@@ -47,7 +47,6 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     #      code      date  close  ...  ema_short  ema_middle   ema_long
     #0  SZ000651  20200619  58.84  ...  58.433884    58.61309  58.362801
     ######################################################
-    # df_today_junxian_style = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,5,10,20)    #<<<<<< TODAY JUNXIAN
     df_today_junxian_style = finlib_indicator.Finlib_indicator().sma_jincha_sicha_duotou_koutou(df,ma_short,ma_middle,ma_long)    #<<<<<< TODAY JUNXIAN
 
 
@@ -192,6 +191,67 @@ def show_result(file, dir, filebase,selected, stock_global):
 
 
 
+def cnt_jin_cha_si_cha(ma_short, ma_middle,stock_global,selected, remove_garbage=False):
+    a = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global,remove_garbage=remove_garbage)
+    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
+    # a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+
+    df_stock_list = a['stock_list']
+
+    # df_stock_list = df_stock_list[df_stock_list['code'] == 'SH603489']
+
+    df_csv_dir = a['csv_dir']
+    df_out_dir = a['out_dir']
+    df_rtn = pd.DataFrame()
+
+    check_days = 200
+    result_csv=df_out_dir+"/"+"jin_cha_si_cha_cnt.csv"
+
+    i=1
+    for index, row in df_stock_list.iterrows():
+        name, code = row['name'], row['code']
+        logging.info(str(i)+" of "+str(df_stock_list.__len__())+" , "+str(code)+" "+name)
+        i+=1
+
+        csv = df_csv_dir + "/"+ code+".csv"
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
+
+        if df.__len__() < check_days:
+            logging.info(str(code)+" " + name+ " insuffiient data, expect "+str(check_days)+" actual "+str(df.__len__()))
+            continue
+
+        df = finlib_indicator.Finlib_indicator().count_jin_cha_si_cha(df=df, check_days=check_days,
+                                                                      code=code,name=name,ma_short=ma_short, ma_middle=ma_middle)
+        df_rtn = df_rtn.append(df)
+
+
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+
+
+    df_rtn = df_rtn.sort_values(by='sum_perc')
+    df_rtn['ma_across_rare_score'] = df_rtn['sum_perc'].apply(
+        lambda _d: round(1 - stats.percentileofscore(df_rtn['sum_perc'], _d) / 100, 4))
+
+    df_rtn['jincha_sicha_days_ratio_score'] = df_rtn['jincha_sicha_days_ratio'].apply(
+        lambda _d: round(stats.percentileofscore(df_rtn['jincha_sicha_days_ratio'], _d) / 100, 2))
+
+    df_rtn['overall_score'] = round(0.7*df_rtn['jincha_sicha_days_ratio_score']+ 0.3*df_rtn['ma_across_rare_score'],2)
+
+    df_rtn = df_rtn.sort_values(by='overall_score',ascending=False)
+
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+
+
+    logging.info("head 10 df:\n"+finlib.Finlib().pprint(df_rtn.head(10)))
+    logging.info("tail 10 df:\n"+finlib.Finlib().pprint(df_rtn.tail(10)))
+
+    df_rtn.to_csv(result_csv, encoding='UTF-8', index=False)
+    logging.info("jin_cha_si_cha cnt saved to "+result_csv+" , len "+str(df_rtn.__len__()))
+
+    return()
+
+
+
 def main():
 
     parser = OptionParser()
@@ -208,6 +268,7 @@ def main():
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
+    parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
 
     parser.add_option("--check_my_ma", action="store_true", dest="check_my_ma", default=False, help="run before market close")
     parser.add_option("--check_my_ma_allow_delay_min", type="int", action="store", dest="check_my_ma_allow_delay_min", default=30, help="minimal minutes to reuse cached market spot csv.")
@@ -216,6 +277,7 @@ def main():
 
     parser.add_option("--hong_san_bin", action="store_true", dest="hong_san_bin", default=False,help="hong_san_bin bar style finder")
     parser.add_option("--calc_ma_across_price", action="store_true", dest="calc_ma_across_price", default=False,help="calculate target price let ma_short equal ma_middle")
+    parser.add_option("--calc_ma_across_count", action="store_true", dest="calc_ma_across_count", default=False,help="calculate ma_short across ma_middle counts")
 
 
     #df_rtn = pd.DataFrame()
@@ -227,6 +289,7 @@ def main():
     min_sample_f = options.min_sample_f
     selected = options.selected
     stock_global = options.stock_global
+    remove_garbage = options.remove_garbage
 
     check_my_ma = options.check_my_ma
     check_my_ma_allow_delay_min = options.check_my_ma_allow_delay_min
@@ -234,12 +297,13 @@ def main():
 
     hong_san_bin = options.hong_san_bin
     calc_ma_across_price = options.calc_ma_across_price
+    calc_ma_across_count = options.calc_ma_across_count
 
     ma_short = options.ma_short
     ma_middle = options.ma_middle
     ma_long = options.ma_long
 
-    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
+    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global, remove_garbage=remove_garbage)
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
@@ -258,6 +322,9 @@ def main():
         exit()
     elif calc_ma_across_price:
         df_rtn = finlib_indicator.Finlib_indicator().get_price_let_mashort_equal_malong(ma_short=ma_short, ma_long=ma_middle, debug=debug_f)
+        exit()
+    elif calc_ma_across_count:
+        df_rtn = cnt_jin_cha_si_cha(ma_short=ma_short, ma_middle=ma_middle,stock_global=stock_global,selected=selected, remove_garbage=remove_garbage,)
         exit()
 
     if not os.path.isdir(out_dir):

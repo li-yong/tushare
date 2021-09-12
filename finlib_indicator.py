@@ -2014,10 +2014,10 @@ class Finlib_indicator:
 
 
 
-    def count_jin_cha_si_cha(self, df, check_days=220, code='',name=''):
+    def count_jin_cha_si_cha(self, df, check_days=220, code='',name='',ma_short=4,ma_middle=27):
         df = df.tail(check_days).reset_index().drop('index', axis=1)
 
-        df = self.add_ma_ema(df=df, short=4, middle=27, long=60)
+        df = self.add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=60)
 
         df['ma_4_minor_27'] = df['close_4_sma'] - df['close_27_sma']
 
