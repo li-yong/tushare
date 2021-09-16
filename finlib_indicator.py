@@ -1840,7 +1840,7 @@ class Finlib_indicator:
         # df_in = df_in[ (df_in['open'] - df_in['low'])/ df_in['open'] < 0.01]
         return (df_in)
 
-    def get_price_let_mashort_equal_malong(self, ma_short=4, ma_long=27, debug=False):
+    def get_price_let_mashort_equal_malong(self, ma_short, ma_middle, debug=False):
         csv_in = '/home/ryan/DATA/result/stocks_amount_365_days.csv'
         csv_out = '/home/ryan/DATA/result/price_let_mashort_equal_malong.csv'
 
@@ -1859,8 +1859,8 @@ class Finlib_indicator:
 
             df_sub = df[df['code'] == code].reset_index().drop('index', axis=1)
 
-            p1 = ma_short / (ma_long - ma_short)
-            p2 = df_sub[-1 * (ma_long - 1):].head(ma_long - ma_short)
+            p1 = ma_short / (ma_middle - ma_short)
+            p2 = df_sub[-1 * (ma_middle - 1):].head(ma_middle - ma_short)
             p2 = p2['close'].sum()
 
             p3 = df_sub.tail(ma_short - 1)
@@ -1883,7 +1883,7 @@ class Finlib_indicator:
             df_rtn = df_rtn.append(pd.DataFrame().from_dict({'code': [code], 'date': [da1], 'close': [d1],
                                                              'trend': [trend], 'action':[action],
                                                              'ma_short': [ma_short],
-                                                             'ma_long': [ma_long],
+                                                             'ma_middle': [ma_middle],
                                                              'p_make_ma_across': [d0],
                                                              'delta': [delta],
                                                              'delta_perc': [delta_perc],
@@ -1891,7 +1891,7 @@ class Finlib_indicator:
 
             logging.info(str(code) + ", day " + str(da1) + " close " + str(d1)
                          + " , price to get mashort" + str(ma_short)
-                         + " equal malong" + str(ma_long) + " " + str(d0)
+                         + " equal malong" + str(ma_middle) + " " + str(d0)
                          + " delta " + str(delta)
                          + " delta_perc " + str(delta_perc)
                          + " trend " + str(trend)

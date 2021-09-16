@@ -321,7 +321,7 @@ def main():
         df_rtn = finlib_indicator.Finlib_indicator().hong_san_bin()
         exit()
     elif calc_ma_across_price:
-        df_rtn = finlib_indicator.Finlib_indicator().get_price_let_mashort_equal_malong(ma_short=ma_short, ma_long=ma_middle, debug=debug_f)
+        df_rtn = finlib_indicator.Finlib_indicator().get_price_let_mashort_equal_malong(ma_short=ma_short, ma_middle=ma_middle, debug=debug_f)
         exit()
     elif calc_ma_across_count:
         df_rtn = cnt_jin_cha_si_cha(ma_short=ma_short, ma_middle=ma_middle,stock_global=stock_global,selected=selected, remove_garbage=remove_garbage,)

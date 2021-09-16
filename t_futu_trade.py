@@ -17,6 +17,7 @@ import pytz
 import logging
 import traceback
 import math
+import stockstats
 
 from optparse import OptionParser
 
@@ -1238,9 +1239,29 @@ def check_high_volume(host,port,market,debug,ndays=3):
             logging.info(code+" insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
             continue
 
+        df['price_vol']=df['close']*df['volume']
+        stock = stockstats.StockDataFrame.retype(df)
+
+
+        sma_window = 60*4*10 # 10 days 1 minutes records
+        col_name = 'price_vol_'+str(sma_window)+"_sma"
+        stock[col_name]
+        df[col_name] = df[col_name].apply(lambda _d: int(_d))
+
+        #stockstat change df use 'date' as index, now restore it.
+        df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
+        if 'index' in df.columns:
+            df = df.drop('index', axis=1)
+
+        df = df.shift(sma_window) # remove header records
+
+        df['pv_power'] = round(df['price_vol'] / df[col_name],1)
+
+        # df_v100 = df.sort_values(by='pv_power', ascending=False).head(30)
 
         # three years, 30 records.  10 records out of 260 in a year.
-        df_v100 = df.sort_values(by='volume', ascending=False).head(30)
+        df_v100 = df.sort_values(by='pv_power', ascending=False).head(30)
+        logging.info("\n" + finlib.Finlib().pprint(df=df_v100.head(3)[['date','code','time_key','close','volume','price_vol',col_name,'pv_power']]))
 
         df_today_hit = df_v100[df_v100['date'].isin(last_n_days)]
 

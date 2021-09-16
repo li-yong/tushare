@@ -419,11 +419,6 @@ def check_stop_loss_based_on_ma_across():
 
 #### MAIN #####
 
-
-cnt_jin_cha_si_cha()
-exit()
-
-
 evaluate_grid(market='AG')
 exit()
 
