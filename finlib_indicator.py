@@ -2036,6 +2036,7 @@ class Finlib_indicator:
         # df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
         # df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
         a_dict = self._cnt_jin_cha_si_cha_days(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+        a_dict = self._calc_jin_cha_si_cha_profit(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
         jincha_days = a_dict['jincha_days']
         sicha_days = a_dict['sicha_days']
 
@@ -2131,6 +2132,40 @@ class Finlib_indicator:
             jincha_days += jidx[0] #head of jincha
 
         return({'jincha_days':jincha_days,'sicha_days':sicha_days})
+
+
+    def _calc_jin_cha_si_cha_profit(self, df_all, df_jin_cha, df_si_cha):
+        profit = 0
+        sicha_days = 0
+        jincha_days = 0
+
+        df_jin_cha['action']="B"
+        df_si_cha['action']="S"
+
+        rtn_profit_array = []
+
+        df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date')
+
+        if df_tmp.iloc[0]['action'] == 'S':
+            df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
+        if df_tmp.iloc[-1]['action'] == 'B':
+            df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
+
+        for index,row in df_tmp.iterrows():
+            action = row['action']
+            close = row['close']
+            if action == 'B':
+                b_price = close
+                logging.info("Buy at "+row['date']+" "+str(close))
+            if action == 'S':
+                profit_sub = round((close - b_price)*100/b_price,2)
+                rtn_profit_array.append(profit_sub)
+
+                profit = round(profit+ profit_sub,2)
+                logging.info("Sell at " + row['date'] + " " + str(close))
+                logging.info("profit% this "+str(profit_sub)+" profit% overall "+str(profit))
+
+        return(rtn_profit_array)
 
 
 
