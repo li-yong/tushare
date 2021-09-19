@@ -4501,7 +4501,10 @@ class Finlib:
 
             # Then selected Stocks
             elif stock_global == "AG":
-                csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+                if qfq == True:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
+                else:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG"
                 stock_list = selected_stocks['CN']
             elif stock_global == 'HK':
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK"
@@ -4522,7 +4525,10 @@ class Finlib:
 
             # Then (selected) Holded Stocks (
             elif stock_global == "AG_HOLD":
-                csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+                if qfq == True:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
+                else:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG"
                 stock_list = selected_stocks['CN_HOLD']
             elif stock_global == 'HK_HOLD':
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK"
