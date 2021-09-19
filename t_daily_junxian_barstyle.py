@@ -305,7 +305,7 @@ def main():
     ma_middle = options.ma_middle
     ma_long = options.ma_long
 
-    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global, remove_garbage=remove_garbage)
+    rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global, remove_garbage=remove_garbage, qfq=True)
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
