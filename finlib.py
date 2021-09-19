@@ -4477,7 +4477,7 @@ class Finlib:
         #logging.info(str)
         return(str)
 
-    def get_stock_configuration(self, selected, stock_global,remove_garbage=True, qfq=False):
+    def get_stock_configuration(self, selected, stock_global,remove_garbage=True, qfq=True):
         rtn = {
             "stock_list": None,
             "csv_dir": None,
