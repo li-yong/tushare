@@ -219,7 +219,7 @@ def cnt_jin_cha_si_cha(ma_short, ma_middle,stock_global,selected, remove_garbage
         df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
 
         if df.__len__() < check_days:
-            logging.info(str(code)+" " + name+ " insuffiient data, expect "+str(check_days)+" actual "+str(df.__len__()))
+            logging.info(str(code)+" " + name+ " insufficient data, expect "+str(check_days)+" actual "+str(df.__len__()))
             continue
 
         df = finlib_indicator.Finlib_indicator().count_jin_cha_si_cha(df=df, check_days=check_days,

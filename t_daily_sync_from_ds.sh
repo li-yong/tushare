@@ -27,7 +27,10 @@ fi
 #
 ######################################
 #rsync -avz   /home/ryan/tushare_ryan/  haha_data_source:/home/ryan/tushare_ryan/
-ssh haha_data_source "cd ~/tushare_ryan;  git pull"
+#ssh haha_data_source "cd ~/tushare_ryan;  git pull"
+
+rsync -avz ${source_host}:/home/ryan/DATA/pickle/daily_update_source/  /home/ryan/DATA/pickle/daily_update_source/
+rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
 
 #us hk indices are get from WikiPedia. Download to haha_brain, then sync to haha_power
 rsync -avz /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/pickle/INDEX_US_HK
@@ -42,6 +45,8 @@ rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}:
 #rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source
 #rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest
 #rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/
+
+
 
 #v: sync recursivly
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/akshare/  /home/ryan/DATA/pickle/Stock_Fundamental/akshare/
@@ -80,26 +85,28 @@ rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/US/  /home/ryan/DATA/DAY_
 
 #rsync -avz   haha_power/ryan/DATA/DAY_Global/MG/  /home/ryan/DATA/DAY_Global/MG/
 
-
+###################
+# Essentical
+###################
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/
 
 
-
-rsync -avz ${source_host}:/home/ryan/DATA/pickle/daily_update_source/  /home/ryan/DATA/pickle/daily_update_source/
+#######################
+#
+######################
 rsync -avz ${source_host}:/home/ryan/DATA/announcement/  /home/ryan/DATA/announcement/
 rsync -avz ${source_host}:/home/ryan/DATA/DAY_No_Adj/  /home/ryan/DATA/DAY_No_Adj/
 rsync -avz ${source_host}:/home/ryan/DATA/DAY_JAQS/  /home/ryan/DATA/DAY_JAQS/
 
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fenghong/  /home/ryan/DATA/pickle/Stock_Fundamental/fenghong/
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/  /home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/
-
+rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/merged/
 
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_quarterly/
-rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/
 
 
@@ -126,7 +133,7 @@ rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/
-
+rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
 
 #rsync -avz ${source_host}:/home/ryan/DATA/pickle/DOW_SP/  /home/ryan/DATA/pickle/DOW_SP/
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Forbes/  /home/ryan/DATA/pickle/Forbes/
@@ -147,4 +154,3 @@ rsync -avz ${source_host}:/home/ryan/DATA/pickle/ZZ500.csv  /home/ryan/DATA/pick
 
 
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/  /home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/
-

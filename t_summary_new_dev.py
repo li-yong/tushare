@@ -571,7 +571,6 @@ def combin_filter(df, post_combine=False, debug=False):
         "p_max",
         "p_min",
 
-
         "total_mv_perc",
         "amount_perc",
         "my_index_weight",
@@ -579,6 +578,10 @@ def combin_filter(df, post_combine=False, debug=False):
         "mkt_cap",
         "predict",
         "close",
+
+        # /home/ryan/DATA/result/jin_cha_si_cha_cnt.csv
+        "profit_over_all",
+        "ma_x_score",
     ]
 
     for col in df.columns:
@@ -709,7 +712,6 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
         logging.info(d)
         tmp_df = combin_filter(eval(d), debug=debug)
 
-
         if remove_garbage:
             tmp_df = finlib.Finlib().remove_garbage(df=tmp_df)
 
@@ -739,6 +741,9 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
         if a in ("sz50"):
             logging.info(__file__ + " " + "skip list set: " + a)
             continue
+        if a == 'df_jincha_minor':
+            df_jincha_ref = pd.read_csv("/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv")
+            print(1)
 
         # cmd = a+".__len__()"
         # len= eval(cmd)
