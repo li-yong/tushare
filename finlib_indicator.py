@@ -2134,15 +2134,22 @@ class Finlib_indicator:
         return({'jincha_days':jincha_days,'sicha_days':sicha_days})
 
 
-    def _calc_jin_cha_si_cha_profit(self, df_all, df_jin_cha, df_si_cha):
-        profit = 0
-        sicha_days = 0
-        jincha_days = 0
-
+    def _calc_jin_cha_si_cha_profit(self, df_jin_cha, df_si_cha):
         df_jin_cha['action']="B"
         df_si_cha['action']="S"
 
-        rtn_profit_array = []
+        profit_this = 0
+        profit_overall = 0
+
+        if df_jin_cha.__len__()>0:
+            code = df_jin_cha['code'].iloc[0]
+        elif df_si_cha.__len__()>0:
+            code = df_si_cha['code'].iloc[0]
+        else:
+            logging.error("df_jin_cha and df_si_cha all empty, quit")
+            exit()
+
+        rtn_df = pd.DataFrame()
 
         df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date')
 
@@ -2154,18 +2161,34 @@ class Finlib_indicator:
         for index,row in df_tmp.iterrows():
             action = row['action']
             close = row['close']
+            date = row['date']
             if action == 'B':
+                b_date = date
                 b_price = close
-                logging.info("Buy at "+row['date']+" "+str(close))
+                # logging.info("Buy at "+row['date']+" "+str(close))
             if action == 'S':
-                profit_sub = round((close - b_price)*100/b_price,2)
-                rtn_profit_array.append(profit_sub)
+                profit_this = round((close - b_price)*100/b_price,2)
+                profit_overall = round(profit_overall+ profit_this,2)
+                # logging.info("Sell at " + row['date'] + " " + str(close))
+                # logging.info("profit% this "+str(profit_this)+" profit% overall "+str(profit_overall))
 
-                profit = round(profit+ profit_sub,2)
-                logging.info("Sell at " + row['date'] + " " + str(close))
-                logging.info("profit% this "+str(profit_sub)+" profit% overall "+str(profit))
+                tmp_df= pd.DataFrame(
+                    {
+                        'code':[code],
+                        'buy_date':[b_date],
+                        'buy_price':[b_price],
+                        'sell_date':[date],
+                        'sell_price':[close],
+                        'profit_this':[profit_this],
+                        'profit_overall':[profit_overall],
+                     }
+                )
 
-        return(rtn_profit_array)
+                rtn_df = rtn_df.append(tmp_df)
+
+        rtn_df = rtn_df.reset_index().drop('index', axis=1)
+
+        return(rtn_df)
 
 
 
