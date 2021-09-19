@@ -2049,12 +2049,15 @@ class Finlib_indicator:
         cnt_jincha = df_jin_cha.__len__()
         cnt_sicha = df_si_cha.__len__()
 
+        df_profit_details = pd.DataFrame()
+        profit_over_all = 0
+
         if df_jin_cha.__len__() > 0 and df_si_cha.__len__() > 0:
             df_profit_details = self._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
-            profit_over_all = df_profit_details.iloc[-1]['profit_overall']
-        else:
-            df_profit_details = pd.DataFrame()
-            profit_over_all = 0
+
+            if df_profit_details.__len__() > 0:
+                profit_over_all = df_profit_details.iloc[-1]['profit_overall']
+
 
         df_rtn = pd.DataFrame({
             'code': [code],
@@ -2162,10 +2165,12 @@ class Finlib_indicator:
 
         df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date')
 
-        if df_tmp.iloc[0]['action'] == 'S':
-            df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
-        if df_tmp.iloc[-1]['action'] == 'B':
-            df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
+        for tmp_cnt in range(3): #found a record have two S in header.
+            if df_tmp.__len__() > 0 and df_tmp.iloc[0]['action'] == 'S':
+                df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
+            if df_tmp.__len__() > 0 and df_tmp.iloc[-1]['action'] == 'B':
+                df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
+
 
         for index,row in df_tmp.iterrows():
             action = row['action']

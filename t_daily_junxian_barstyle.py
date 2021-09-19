@@ -196,7 +196,11 @@ def cnt_jin_cha_si_cha(ma_short, ma_middle,stock_global,selected, remove_garbage
 
     df_stock_list = a['stock_list']
 
-    # df_stock_list = df_stock_list[df_stock_list['code'] == 'SH603489']
+    debug = True
+    debug = False
+    if debug:
+        df_stock_list = df_stock_list[df_stock_list['code']=='SZ002647']
+
 
     df_csv_dir = a['csv_dir']
     df_out_dir = a['out_dir']
