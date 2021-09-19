@@ -192,9 +192,7 @@ def show_result(file, dir, filebase,selected, stock_global):
 
 
 def cnt_jin_cha_si_cha(ma_short, ma_middle,stock_global,selected, remove_garbage=False):
-    a = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global,remove_garbage=remove_garbage)
-    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-    # a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+    a = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global,remove_garbage=remove_garbage, qfq=True)
 
     df_stock_list = a['stock_list']
 

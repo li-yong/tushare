@@ -2036,7 +2036,6 @@ class Finlib_indicator:
         # df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
         # df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
         a_dict = self._cnt_jin_cha_si_cha_days(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
-        a_dict = self._calc_jin_cha_si_cha_profit(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
         jincha_days = a_dict['jincha_days']
         sicha_days = a_dict['sicha_days']
 
@@ -2050,8 +2049,17 @@ class Finlib_indicator:
         cnt_jincha = df_jin_cha.__len__()
         cnt_sicha = df_si_cha.__len__()
 
+        if df_jin_cha.__len__() > 0 and df_si_cha.__len__() > 0:
+            df_profit_details = self._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+            profit_over_all = df_profit_details.iloc[-1]['profit_overall']
+        else:
+            df_profit_details = pd.DataFrame()
+            profit_over_all = 0
+
         df_rtn = pd.DataFrame({
             'code': [code],
+            'df_profit_details':[df_profit_details],
+            'profit_over_all':profit_over_all,
             'day_cnt': [cnt_days],
             'daystart': [str(start_date)],
             'dayend': [str(end_date)],
@@ -2071,6 +2079,7 @@ class Finlib_indicator:
                      + "  sicha cnt: " + str(cnt_sicha)
                      + "  jincha days: " + str(jincha_days)
                      + "  sicha days: " + str(sicha_days)
+                     + "  profit_over_all: " + str(profit_over_all)
                      )
 
         return(df_rtn)
@@ -2187,10 +2196,7 @@ class Finlib_indicator:
                 rtn_df = rtn_df.append(tmp_df)
 
         rtn_df = rtn_df.reset_index().drop('index', axis=1)
-
         return(rtn_df)
-
-
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

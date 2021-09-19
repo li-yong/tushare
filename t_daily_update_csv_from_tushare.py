@@ -179,6 +179,38 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
             fh.write(csv_append_s)
             fh.close()
 
+def fetch_ag_qfq():
+    pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
+    data = pro.query('stock_basic', exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
+
+    data['ts_code_ori'] = data['ts_code']
+    data = finlib.Finlib().ts_code_to_code(df=data)
+    data = data.rename(columns={'ts_code_ori': 'ts_code'})
+
+    i = 0
+    for index, row in data.iterrows():
+        code = row['code']
+        ts_code = row['ts_code']
+        name = row['name']
+        csv = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
+        i+=1
+        if finlib.Finlib().is_cached(file_path=csv, day=1):
+            logging.info("skip "+code+" as cached 1 day.")
+            continue
+
+        logging.info(str(i) + " of " + str(data.__len__()) + ' , fetching ' + ts_code + " " + name)
+        df = ts.pro_bar(ts_code=ts_code, adj='qfq')
+
+        if df is None:
+            logging.warning("pro_bar return None")
+            continue
+
+        df = df.reindex(index=df.index[::-1])  # revert
+        df.to_csv(csv, encoding='UTF-8', index=False)
+        logging.info("saved to " + csv + " len " + str(df.__len__()))
+
+    logging.info("all ag stocks qfq data refreshed")
+    return()
 
 def main():
     parser = OptionParser()
@@ -189,6 +221,8 @@ def main():
 
     parser.add_option("-p", "--pickle_only", action="store_true", dest="pickle_only", default=False, help="get today data, save to pickel, then exit")
 
+    parser.add_option("--refresh_qfq", action="store_true", dest="refresh_qfq", default=False, help="refresh qfq data")
+
     parser.add_option("-e", "--exam_date", dest="exam_date", help="exam_date, YYYY-MM--DD, no default value, missing will calc the nearest trading day, most time is today")
 
     (options, args) = parser.parse_args()
@@ -197,10 +231,16 @@ def main():
     add_miss = options.add_miss
     pickle_only = options.pickle_only
     exam_date = options.exam_date
+    refresh_qfq = options.refresh_qfq
 
     logging.info(__file__+" "+"base_dir: " + str(base_dir))
     logging.info(__file__+" "+"pickle_only: " + str(pickle_only))
     logging.info(__file__+" "+"exam_date: " + str(exam_date))
+    logging.info(__file__+" "+"refresh_qfq: " + str(refresh_qfq))
+
+    if refresh_qfq:
+        fetch_ag_qfq()
+        exit()
 
     if exam_date is not None:
         dump = "/home/ryan/DATA/pickle/daily_update_source/" + exam_date + "ts_ud.pickle"

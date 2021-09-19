@@ -419,6 +419,7 @@ def check_stop_loss_based_on_ma_across():
 
 #### MAIN #####
 
+
 evaluate_grid(market='AG')
 exit()
 

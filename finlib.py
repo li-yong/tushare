@@ -4172,6 +4172,9 @@ class Finlib:
 
         if dir == base_dir + "/AG":
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'date': str}, header=None, skiprows=1, names=['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv'])
+        elif dir == base_dir + "/AG_qfq":
+            rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str}, encoding="utf-8"))
+            rtn_df = rtn_df.rename(columns={'trade_date':'date'})
         elif dir in [base_dir + "/stooq/US_INDEX", base_dir + "/stooq/US"]:
             #DOW.csv  SP500.csv, AAPL.csv
             #add_market = False
@@ -4474,7 +4477,7 @@ class Finlib:
         #logging.info(str)
         return(str)
 
-    def get_stock_configuration(self, selected, stock_global,remove_garbage=True):
+    def get_stock_configuration(self, selected, stock_global,remove_garbage=True, qfq=False):
         rtn = {
             "stock_list": None,
             "csv_dir": None,
@@ -4543,7 +4546,11 @@ class Finlib:
 
         else:  # selected == False
             if stock_global == 'AG':
-                csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+                if qfq==True:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
+                else:
+                    csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+
                 out_dir = "/home/ryan/DATA/result"
                 stock_list = self.get_A_stock_instrment()  # 603999
                 # stock_list = self.add_market_to_code(stock_list, dot_f=False, tspro_format=False)  # 603999.SH
