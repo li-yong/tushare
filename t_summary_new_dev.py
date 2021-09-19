@@ -741,14 +741,18 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
         if a in ("sz50"):
             logging.info(__file__ + " " + "skip list set: " + a)
             continue
-        if a == 'df_jincha_minor':
-            df_jincha_ref = pd.read_csv("/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv")
-            print(1)
+
 
         # cmd = a+".__len__()"
         # len= eval(cmd)
         # len=str(len)
         tmp = eval(a)
+
+        if a == 'df_jincha_minor':
+            df_jincha_ref = pd.read_csv("/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv")
+            df_jincha_ref = df_jincha_ref[['code','ma_x_score','profit_over_all']]
+            tmp = pd.merge(tmp, df_jincha_ref, on='code', how='inner',suffixes=('', '_x'))
+
         tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
         if tmp.__len__() == 0:
