@@ -56,6 +56,7 @@ rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua
 ######################################
 
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/AG/  /home/ryan/DATA/DAY_Global/AG/
+rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/AG_qfq/  /home/ryan/DATA/DAY_Global/AG_qfq/
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/AG_INDEX/  /home/ryan/DATA/DAY_Global/AG_INDEX/
 #rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/US_INDEX/  /home/ryan/DATA/DAY_Global/US_INDEX/ #no longer there
 rsync -avz   ${source_host}:/home/ryan/DATA/DAY_Global/HK/  /home/ryan/DATA/DAY_Global/HK/
