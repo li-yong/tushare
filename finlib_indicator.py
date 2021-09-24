@@ -2017,24 +2017,15 @@ class Finlib_indicator:
     def count_jin_cha_si_cha(self, df, check_days=220, code='',name='',ma_short=4,ma_middle=27):
         df = df.tail(check_days).reset_index().drop('index', axis=1)
 
-        df = self.add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=60)
-
-        df['ma_4_minor_27'] = df['close_4_sma'] - df['close_27_sma']
-
-        df = df[['date', 'code', 'close', 'close_4_sma', 'close_27_sma', 'ma_4_minor_27']]
-
         code = df.iloc[0]['code']
         start_date = df.iloc[0]['date']
         end_date = df.iloc[-1]['date']
 
-        df['b1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(1)
-        df['a1_ma_4_minor_27'] = df['ma_4_minor_27'].shift(-1)
 
-        df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)]
-        df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)]
+        df = self.add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=60)
 
-        # df_si_cha = df[(df['b1_ma_4_minor_27'] > 0) & (df['ma_4_minor_27'] < 0)].reset_index().drop('index', axis=1)
-        # df_jin_cha = df[(df['b1_ma_4_minor_27'] < 0) & (df['ma_4_minor_27'] > 0)].reset_index().drop('index', axis=1)
+        (df, df_si_cha, df_jin_cha) = self.slow_fast_across(df=df, fast_col_name='close_'+str(ma_short)+'_sma', slow_col_name='close_'+str(ma_middle)+'_sma')
+
         a_dict = self._cnt_jin_cha_si_cha_days(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
         jincha_days = a_dict['jincha_days']
         sicha_days = a_dict['sicha_days']
@@ -2205,8 +2196,16 @@ class Finlib_indicator:
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
-    def w_shape_exam(self, df):
-        pass
+    def slow_fast_across(self, df,fast_col_name,slow_col_name):
+
+        df['tmp_col_fast_minor_slow'] = df[fast_col_name] - df[slow_col_name]
+
+        df['b1_tmp_col_fast_minor_slow'] = df['tmp_col_fast_minor_slow'].shift(1)
+        # df['a1_tmp_col_fast_minor_slow'] = df['tmp_col_fast_minor_slow'].shift(-1)
+
+        df_si_cha = df[(df['b1_tmp_col_fast_minor_slow'] > 0) & (df['tmp_col_fast_minor_slow'] < 0)]
+        df_jin_cha = df[(df['b1_tmp_col_fast_minor_slow'] < 0) & (df['tmp_col_fast_minor_slow'] > 0)]
+        return(df, df_si_cha, df_jin_cha)
 
 
     #input: df [open,high, low, close]
