@@ -2897,7 +2897,7 @@ class Finlib:
         if os.stat(file_path).st_size <= 300: #not work
             return False
 
-        file_time = datetime.fromtimestamp(os.path.getctime(file_path))
+        file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
         current_time = datetime.now()
         file_age = (current_time - file_time).total_seconds()
 
