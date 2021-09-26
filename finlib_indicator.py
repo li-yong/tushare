@@ -2156,7 +2156,7 @@ class Finlib_indicator:
 
         df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date')
 
-        for tmp_cnt in range(3): #found a record have two S in header.
+        for tmp_cnt in range(6): #found a record have two S in header.
             if df_tmp.__len__() > 0 and df_tmp.iloc[0]['action'] == 'S':
                 df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
             if df_tmp.__len__() > 0 and df_tmp.iloc[-1]['action'] == 'B':
@@ -2194,21 +2194,33 @@ class Finlib_indicator:
         rtn_df = rtn_df.reset_index().drop('index', axis=1)
         return(rtn_df)
 
-    #input: df [open,high, low, close]
-    #output: {hit:[T|F], high:value, low:value, }
+    # general function to return jincha sicha on TWO columns.
     def slow_fast_across(self, df,fast_col_name,slow_col_name):
 
         df['tmp_col_fast_minor_slow'] = df[fast_col_name] - df[slow_col_name]
 
         df['b1_tmp_col_fast_minor_slow'] = df['tmp_col_fast_minor_slow'].shift(1)
-        # df['a1_tmp_col_fast_minor_slow'] = df['tmp_col_fast_minor_slow'].shift(-1)
 
         df_si_cha = df[(df['b1_tmp_col_fast_minor_slow'] > 0) & (df['tmp_col_fast_minor_slow'] < 0)]
         df_jin_cha = df[(df['b1_tmp_col_fast_minor_slow'] < 0) & (df['tmp_col_fast_minor_slow'] > 0)]
         return(df, df_si_cha, df_jin_cha)
 
 
+    # general function to return jincha sicha on SINGLE column.
+    def single_column_across(self, df,col_name,threshod=0):
+        df['b1_tmp_col'] = df[col_name].shift(1)
+
+        df_si_cha = df[(df['b1_tmp_col'] >= threshod) & (df[col_name] < threshod)]
+        df_jin_cha = df[(df['b1_tmp_col'] <= threshod) & (df[col_name] > threshod)]
+        return(df_si_cha, df_jin_cha)
+
+
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
+    def w_shape_exam(self, df):
+        pass
+
+
     def w_shape_exam(self, df):
         pass
