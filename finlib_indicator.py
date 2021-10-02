@@ -68,7 +68,8 @@ import zigzag
 # from pandas_datareader import get_data_yahoo
 
 logging.getLogger('matplotlib.font_manager').disabled = True
-
+import numpy
+import math
 
 class Finlib_indicator:
     def add_rsi(self, df, short=5, middle=10, long=20):
@@ -2248,6 +2249,7 @@ class Finlib_indicator:
             v_b2 = df.iloc[-4]  # valley -2
             # p_b2 = df.iloc[-5]  # peak -2
             trend = 'UP'
+            days = (v_b1['date'] - v_b2['date']).days
             logging.info(code+" "+ name+" "+ ", trend " + trend + ", valley_b2 " + str(v_b2['date']) + ", valley_b1 " + str(v_b1['date']))
 
             # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
@@ -2262,8 +2264,10 @@ class Finlib_indicator:
                         'valley_b1': [v_b1['date']],
                         'close_b2': [v_b2['close']],
                         'close_b1': [v_b1['close']],
-                        'dif_main': [v_b2['dif_main']],
-                        'dif_main': [v_b1['dif_main']],
+                        'dif_main_b2': [v_b2['dif_main']],
+                        'dif_main_b1': [v_b1['dif_main']],
+                        'days': [days],
+                        'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
                     })
                 if v_b1['kdjj'] > v_b2['kdjj']:
                     logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to raise up. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
@@ -2277,6 +2281,10 @@ class Finlib_indicator:
                         'close_b1': [v_b1['close']],
                         'kdjj_b2': [v_b2['kdjj']],
                         'kdjj_b1': [v_b1['kdjj']],
+                        'days': [days],
+                        'strength': [round(
+                            (v_b1['kdjj'] - v_b2['kdjj']) / abs(v_b2['kdjj']) / math.log(days, numpy.e),
+                            2)],
                     })
                 if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
                     logging.info(code+" "+ name+" "+ ", divation on rsi, expect to raise up. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
@@ -2288,8 +2296,12 @@ class Finlib_indicator:
                         'valley_b1': [v_b1['date']],
                         'close_b2': [v_b2['close']],
                         'close_b1': [v_b1['close']],
-                        'rsi_middle_14': [v_b2['rsi_middle_14']],
-                        'rsi_middle_14': [v_b1['rsi_middle_14']],
+                        'rsi_middle_14_b2': [v_b2['rsi_middle_14']],
+                        'rsi_middle_14_b1': [v_b1['rsi_middle_14']],
+                        'days': [days],
+                        'strength': [round(
+                            (v_b1['rsi_middle_14'] - v_b2['rsi_middle_14']) / abs(v_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                            2)],
                     })
 
         elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
@@ -2298,6 +2310,7 @@ class Finlib_indicator:
             p_b2 = df.iloc[-4]
             # v_b2 = df.iloc[-5]
             trend = 'DOWN'
+            days = (p_b1['date'] - p_b2['date']).days
             logging.info(code+" "+ name+" "+ ", trend " + trend + ", peak_b2 " + str(p_b2['date']) + ", peak_b1 " + str(p_b1['date']))
 
             # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
@@ -2312,8 +2325,13 @@ class Finlib_indicator:
                         'valley_b1': [p_b1['date']],
                         'close_b2': [p_b2['close']],
                         'close_b1': [p_b1['close']],
-                        'dif_main': [p_b2['dif_main']],
-                        'dif_main': [p_b1['dif_main']],
+                        'dif_main_b2': [p_b2['dif_main']],
+                        'dif_main_b1': [p_b1['dif_main']],
+                        'days': [days],
+                        'strength': [round(
+                            (p_b1['dif_main'] - p_b2['dif_main']) / abs(p_b2['dif_main']) / math.log(days, numpy.e),
+                            2)],
+
                     })
 
                 if p_b1['kdjj'] < p_b2['kdjj']:
@@ -2328,6 +2346,10 @@ class Finlib_indicator:
                         'close_b1': [p_b1['close']],
                         'kdjj_b2': [p_b2['kdjj']],
                         'kdjj_b1': [p_b1['kdjj']],
+                        'days': [days],
+                        'strength': [round(
+                            (p_b1['kdjj'] - p_b2['kdjj']) / abs(p_b2['kdjj']) / math.log(days, numpy.e),
+                            2)],
                     })
                 if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
                     logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
@@ -2339,38 +2361,18 @@ class Finlib_indicator:
                         'valley_b1': [p_b1['date']],
                         'close_b2': [p_b2['close']],
                         'close_b1': [p_b1['close']],
-                        'rsi_middle_14': [p_b2['rsi_middle_14']],
-                        'rsi_middle_14': [p_b1['rsi_middle_14']],
+                        'rsi_middle_14_b2': [p_b2['rsi_middle_14']],
+                        'rsi_middle_14_b1': [p_b1['rsi_middle_14']],
+                        'days': [days],
+                        'strength': [round(
+                            (p_b1['rsi_middle_14'] - p_b2['rsi_middle_14']) / abs(p_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                            2)],
                     })
 
         # df_valley = df[df['pivots'] == -1].reset_index()
         # df_peak = df[df['pivots'] == 1].reset_index()
         # df_profit = self._calc_jin_cha_si_cha_profit(df_si_cha=df_peak, df_jin_cha=df_valley)
         return (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
-
-    #input: df [open,high, low, close]
-    #output: {hit:[T|F], high:value, low:value, }
-    def zigzag_divation(self,debug=False):
-        output_csv = "/home/ryan/DATA/result/macd_div.csv"
-        df_rtn = pd.DataFrame()
-        stock_list = finlib.Finlib().get_A_stock_instrment()
-        stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
-
-        # stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
-        if debug:
-            stock_list = stock_list.head(100)  # debug
-
-        cnt = stock_list.__len__()
-        i = 0
-        for index,row in stock_list.iterrows():
-            code = row['code']
-            name = row['name']
-            i += 1
-            csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
-            logging.info(str(i) + " of " + str(cnt) + " " + code+" "+name)
-
-            (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = self._zigzag_divation(csv_f = csv_f, code =code, name = name)
-            print(1)
 
 
 

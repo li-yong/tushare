@@ -578,6 +578,66 @@ def _macd(csv_f, period):
     return (rtn)
 
 
+def zigzag_divation(debug=False):
+    output_macd = "/home/ryan/DATA/result/zigzag_macd_div.csv"
+    output_kdj = "/home/ryan/DATA/result/zigzag_kdj_div.csv"
+    output_rsi = "/home/ryan/DATA/result/zigzag_rsi_div.csv"
+
+    df_macd = pd.DataFrame()
+    df_kdj = pd.DataFrame()
+    df_rsi = pd.DataFrame()
+
+    stock_list = finlib.Finlib().get_A_stock_instrment()
+    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+
+    # stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+    if debug:
+        stock_list = stock_list.head(100)  # debug
+
+    cnt = stock_list.__len__()
+    i = 0
+    for index,row in stock_list.iterrows():
+        code = row['code']
+        name = row['name']
+        i += 1
+        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
+        logging.info(str(i) + " of " + str(cnt) + " " + code+" "+name)
+
+        (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator()._zigzag_divation(csv_f = csv_f, code =code, name = name)
+
+        df_macd = df_macd.append(rtn_df_macd_div)
+        df_kdj = df_kdj.append(rtn_df_kdj_div)
+        df_rsi = df_rsi.append(rtn_df_rsi_div)
+
+        df_macd.to_csv(output_macd, encoding='UTF-8', index=False)
+        df_kdj.to_csv(output_kdj, encoding='UTF-8', index=False)
+        df_rsi.to_csv(output_rsi, encoding='UTF-8', index=False)
+
+
+
+
+
+
+
+    df_macd = df_macd.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+    df_kdj = df_kdj.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+    df_rsi = df_rsi.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+
+    logging.info("top 3 strength of df_macd:\n"+finlib.Finlib().pprint(df=df_macd.head(3)))
+    logging.info("top 3 strength of df_kdj:\n"+finlib.Finlib().pprint(df=df_kdj.head(3)))
+    logging.info("top 3 strength of df_rsi:\n"+finlib.Finlib().pprint(df=df_rsi.head(3)))
+
+    df_macd.to_csv(output_macd, encoding='UTF-8', index=False)
+    df_kdj.to_csv(output_kdj, encoding='UTF-8', index=False)
+    df_rsi.to_csv(output_rsi, encoding='UTF-8', index=False)
+
+    logging.info("saved to "+output_macd+" len "+ str(df_macd.__len__()))
+    logging.info("saved to "+output_kdj+" len "+ str(df_kdj.__len__()))
+    logging.info("saved to "+output_rsi+" len "+ str(df_rsi.__len__()))
+    return()
+
+
+
 def macd(period, debug=False):
     output_csv = "/home/ryan/DATA/result/macd_selection_" + period + ".csv"  #head: code, name, date, action(b/s), reason, strength.
     # Term: Middle(because based on Monthly data,
@@ -876,6 +936,7 @@ def main():
     parser.add_option("-s","--period_slow", type="str", dest="period_slow_f", default=None, help="slow period of MA, 55 e.g")
 
     parser.add_option("-a", "--analyze", action="store_true", dest="analyze_f", default=False, help="analyze based on [MACD|KDJ] M|W|D result.")
+    parser.add_option("--zigzag_div", action="store_true", dest="zigzag_div_f", default=False, help="analyze zigzag_div on [MACD|KDJ|RSI] ")
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug")
 
     (options, args) = parser.parse_args()
@@ -886,6 +947,7 @@ def main():
     period_slow = options.period_slow_f
     analyze_f = options.analyze_f
     debug = options.debug_f
+    zigzag_div_f = options.zigzag_div_f
 
 
 
@@ -896,6 +958,9 @@ def main():
         analyze(indicator=indicator,  debug=debug)
     elif not period == None:
         calculate(indicator=indicator, period=period, period_fast=period_fast,period_slow=period_slow,debug=debug)
+
+    if zigzag_div_f:
+        zigzag_divation(debug=debug)
 
 
 ### MAIN ####

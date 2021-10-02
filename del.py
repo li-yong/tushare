@@ -427,9 +427,6 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
 #### MAIN #####
-
-finlib_indicator.Finlib_indicator().zigzag_divation(debug=True)
-
 evaluate_grid(market='AG')
 exit()
 
