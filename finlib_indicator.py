@@ -2154,13 +2154,27 @@ class Finlib_indicator:
 
         rtn_df = pd.DataFrame()
 
-        df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date')
+        df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date').reset_index().drop('index', axis=1)
 
-        for tmp_cnt in range(6): #found a record have two S in header.
-            if df_tmp.__len__() > 0 and df_tmp.iloc[0]['action'] == 'S':
+        while True:
+            if df_tmp.__len__() >= 2 and not (df_tmp.iloc[0]['action'] == 'B' and df_tmp.iloc[1]['action'] == 'S'):
                 df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
-            if df_tmp.__len__() > 0 and df_tmp.iloc[-1]['action'] == 'B':
+            else:
+                break
+        while True:
+            if df_tmp.__len__() >= 2 and not (df_tmp.iloc[-1]['action'] == 'S' and df_tmp.iloc[-2]['action'] =='B'):
                 df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
+            else:
+                break
+
+        df_tmp = df_tmp.reset_index().drop('index', axis=1)
+
+        #
+        # for tmp_cnt in range(6): #found a record have two S in header.
+        #     if df_tmp.__len__() > 0 and df_tmp.iloc[0]['action'] == 'S':
+        #         df_tmp = df_tmp.drop(index=df_tmp.head(1).index.values[0])
+        #     if df_tmp.__len__() > 0 and df_tmp.iloc[-1]['action'] == 'B':
+        #         df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
 
 
         for index,row in df_tmp.iterrows():

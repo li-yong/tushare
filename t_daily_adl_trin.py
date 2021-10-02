@@ -284,7 +284,7 @@ def show_result(type, csv_out,root_dir,show_plot=False):
         logging.info("saved to "+csv_tmp)
 
 
-def check_adr_individual(days):
+def check_amount_x_individual(days):
     df = prepare_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
@@ -295,6 +295,78 @@ def check_adr_individual(days):
     df_profit_report = pd.DataFrame()
     df_si_cha_report = pd.DataFrame()
     df_jin_cha_report = pd.DataFrame()
+
+    buy_candidate = pd.DataFrame()
+    sell_candidate = pd.DataFrame()
+
+
+    for c in codes:
+        df_sub = df[df['code']==c]
+        df_sub = df_sub[['code','name','date','close','amount']]
+
+        df_sub_amt_to_close = df_sub
+        df_sub_amt_to_close = df_sub_amt_to_close.drop("close",axis=1).rename(columns={'amount':'close'})
+
+        df_sub_amt_to_close = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_sub_amt_to_close, short=4, middle=27, long=60)
+
+        (df_sub_amt_to_close,df_si_cha, df_jin_cha) = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_sub_amt_to_close,fast_col_name='close_4_sma', slow_col_name='close_27_sma')
+
+        df_jin_cha = pd.merge(df_jin_cha[['date']], df_sub, how="inner")
+        df_si_cha = pd.merge(df_si_cha[['date']], df_sub, how="inner")
+
+        if df_jin_cha.__len__()>0 and df_si_cha.__len__()>0:
+            df_profit_details = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+            logging.info(finlib.Finlib().pprint(df_profit_details))
+            df_profit_report  = df_profit_report.append(df_profit_details)
+
+        continue
+
+    logging.info("check_amount_x_individual, profit_overall describe ")
+    logging.info(df_profit_report[["profit_overall"]].describe())
+    '''
+    
+    Out[5]: 
+       profit_overall
+    count          134.00
+    mean            -0.89
+    std              7.72
+    min            -22.11
+    25%             -5.36
+    50%             -1.08
+    75%              2.12
+    max             24.20
+    '''
+    exit(0)
+
+    buy_candidate = buy_candidate.drop_duplicates()
+    sell_candidate = sell_candidate.drop_duplicates()
+
+    keep_cols =['code','name','date','close','close_4_sma','close_27_sma','adr_bar']
+    buy_candidate = buy_candidate[keep_cols]
+    sell_candidate = sell_candidate[keep_cols]
+
+    buy_candidate = finlib.Finlib().add_amount_mktcap(df=buy_candidate)
+    sell_candidate = finlib.Finlib().add_amount_mktcap(df=sell_candidate)
+
+    logging.info("today buy candidate(ma_4>ma_27 and adb_sicha)\n:"+finlib.Finlib().pprint(buy_candidate))
+    logging.info("today sell candidate(ma_4<ma_27 and adb_sicha)\n:"+finlib.Finlib().pprint(sell_candidate))
+
+    pass
+
+def check_adr_individual(days):
+    df = prepare_data(days=days*2)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+    # df = finlib.Finlib().remove_garbage(df=df)
+
+    codes = df['code'].unique()
+    codes.sort()
+    df_profit_report = pd.DataFrame()
+    df_si_cha_report = pd.DataFrame()
+    df_jin_cha_report = pd.DataFrame()
+
+    buy_candidate = pd.DataFrame()
+    sell_candidate = pd.DataFrame()
 
 
     for c in codes:
@@ -314,8 +386,9 @@ def check_adr_individual(days):
             today_adr_sicha = today_adr_sicha[today_adr_sicha['close_4_sma'] > today_adr_sicha['close_27_sma']]
 
             if today_adr_sicha.__len__()>0:
-                logging.info(finlib.Finlib().pprint(today_adr_sicha))
-                logging.info("WOO, buy candidate")
+                buy_candidate = buy_candidate.append(today_adr_sicha)
+                # logging.info(finlib.Finlib().pprint(today_adr_sicha))
+                # logging.info("WOO, buy candidate")
 
 
         if df_jin_cha.__len__() > 0:
@@ -327,8 +400,9 @@ def check_adr_individual(days):
             today_adr_jincha = today_adr_jincha[today_adr_jincha['close_4_sma'] < today_adr_jincha['close_27_sma']]
 
             if today_adr_jincha.__len__()>0:
-                logging.info(finlib.Finlib().pprint(today_adr_jincha))
-                logging.info("WOO, sell candidate")
+                sell_candidate = sell_candidate.append(today_adr_jincha)
+                # logging.info(finlib.Finlib().pprint(today_adr_jincha))
+                # logging.info("WOO, sell candidate")
 
 
 
@@ -337,11 +411,38 @@ def check_adr_individual(days):
         if df_jin_cha.__len__() > 0 and df_si_cha.__len__() > 0:
             # df_profit_sub = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha,df_si_cha=df_si_cha)
             df_profit_sub = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_si_cha,df_si_cha=df_jin_cha)
-            logging.info(" " + finlib.Finlib().pprint(df=df_profit_sub))
+            # logging.info(" " + finlib.Finlib().pprint(df=df_profit_sub))
             df_profit_report = df_profit_report.append(df_profit_sub)
 
-    today_adr_sicha[today_adr_sicha['close_4_s']]
+    buy_candidate = buy_candidate.drop_duplicates()
+    sell_candidate = sell_candidate.drop_duplicates()
 
+    keep_cols =['code','name','date','close','close_4_sma','close_27_sma','adr_bar']
+    buy_candidate = buy_candidate[keep_cols]
+    sell_candidate = sell_candidate[keep_cols]
+
+    buy_candidate = finlib.Finlib().add_amount_mktcap(df=buy_candidate)
+    sell_candidate = finlib.Finlib().add_amount_mktcap(df=sell_candidate)
+
+    logging.info("today buy candidate(ma_4>ma_27 and adb_sicha)\n:"+finlib.Finlib().pprint(buy_candidate))
+    logging.info("today sell candidate(ma_4<ma_27 and adb_jincha)\n:"+finlib.Finlib().pprint(sell_candidate))
+
+    logging.info("check_adr_individual, profit_overall describe ")
+    logging.info(df_profit_report[["profit_overall"]].describe())
+
+    '''
+    df_profit_report[['profit_overall']].describe()
+    Out[3]: 
+           profit_overall
+    count           52.00
+    mean             5.31
+    std              6.23
+    min             -2.86
+    25%              1.85
+    50%              4.33
+    75%              7.16
+    max             36.02        
+    '''
     pass
 
 def main():
@@ -363,6 +464,7 @@ def main():
     if not os.path.exists(root_dir):
         os.mkdir(root_dir)
 
+    # check_amount_x_individual(days=days)
     check_adr_individual(days=days)
 
     ################################

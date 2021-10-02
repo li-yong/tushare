@@ -1056,7 +1056,8 @@ class Finlib:
             hour = datetime.today().hour
 
             # A market trading time, (0.00 to 15:00) new data not generated. so give yesterday's.
-            if hour < 15:
+            # if hour < 15:
+            if hour < 22:
                 yesterday = datetime.today() - timedelta(1)
                 todayS = yesterday.strftime('%Y%m%d')
                 exam_date = todayS
