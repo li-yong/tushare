@@ -43,14 +43,10 @@ import warnings
 import constant
 from operator import sub
 
-
 pd.options.mode.chained_assignment = None
 
 # warnings.filterwarnings("error")
 # warnings.filterwarnings("default")
-
-
-
 
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
@@ -62,8 +58,8 @@ from selenium.webdriver.support import expected_conditions as EC
 # reduce webdriver session log for every request.
 from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
 from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
-SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
+SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
@@ -75,7 +71,6 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 
 
 class Finlib_indicator:
-
     def add_rsi(self, df, short=5, middle=10, long=20):
         stock = stockstats.StockDataFrame.retype(df)
 
@@ -90,11 +85,13 @@ class Finlib_indicator:
         if 'level_0' in df.columns:
             df = df.drop('level_0', axis=1)
 
+        df = df.round({'rsi_short_' + str(short): 2, 'rsi_middle_' + str(middle): 2, 'rsi_long_' + str(long): 2})
+
         return (df)
 
     def add_kdj(self, df, period=9):
         df = stockstats.StockDataFrame.retype(df)
-        df[['kdjk']] # will add columns 'rsv_9', 'kdjk_9', 'kdjk', 'kdjd_9', 'kdjd', 'kdjj_9', 'kdjj'
+        df[['kdjk']]  # will add columns 'rsv_9', 'kdjk_9', 'kdjk', 'kdjd_9', 'kdjd', 'kdjj_9', 'kdjj'
         df[['kdjk_' + str(period)]]
         df[['kdjd_' + str(period)]]
         df[['kdjj_' + str(period)]]
@@ -106,12 +103,11 @@ class Finlib_indicator:
         if 'level_0' in df.columns:
             df = df.drop('level_0', axis=1)
 
-        return(df)
+        df = df.round({'kdjk': 2, 'kdjd': 2, 'kdjj': 2})
 
+        return (df)
 
-
-        return(df_kdj)
-
+        return (df_kdj)
 
     def add_macd(self, df):
         '''
@@ -126,14 +122,15 @@ class Finlib_indicator:
         '''
         df_macd = stockstats.StockDataFrame.retype(df).reset_index()
         df_macd[['macd', 'macds', 'macdh', 'date']]  # macds: # MACD signal line, macdh: # MACD histogram
-        df_macd.rename(columns={
-            "macd": "DIF_main",  # DIF_Main called DIF in tradeview/eastmoney/Moomoo
-            "macds": "DEA_signal",  # DEA_signal called DEA in tradeview/eastmoney/Moomoo
-            "macdh": "MACD_histogram",  # MACD_histogram called 'MACD' in tradeview/eastmoney/MooMoo
-        }, inplace=True)
+        df_macd.rename(
+            columns={
+                "macd": "DIF_main",  # DIF_Main called DIF in tradeview/eastmoney/Moomoo
+                "macds": "DEA_signal",  # DEA_signal called DEA in tradeview/eastmoney/Moomoo
+                "macdh": "MACD_histogram",  # MACD_histogram called 'MACD' in tradeview/eastmoney/MooMoo
+            },
+            inplace=True)
         df_macd = df_macd.round({'DIF_main': 2, 'DEA_signal': 2, 'MACD_histogram': 2})
-        return(df_macd)
-
+        return (df_macd)
 
     def add_ma_ema_simple(self, df):
         logging.info("adding ma to df")
@@ -206,17 +203,24 @@ class Finlib_indicator:
 
         return df
 
-
     #not recommend long df, the shorter the faster
     # df.__len__ == 7 recommend
-    def upper_body_lower_shadow(self, df,ma_short, ma_middle,ma_long):
+    def upper_body_lower_shadow(self, df, ma_short, ma_middle, ma_long):
         ###### Upper_shadow, Body, Lower_shadow ####
-        unit = [['']*2+[0]*3+[False]*6]
-        df_a = pd.DataFrame( unit * df.__len__(), columns=['reason', 'action', 'upper_shadow_len', 'body_len', 'lower_shadow_len',
-                                                                 'guangtou','guangjiao',
-                                                                 'small_body','cross_star',
-                                                                 'long_upper_shadow','long_lower_shadow',
-                                                                 ])
+        unit = [[''] * 2 + [0] * 3 + [False] * 6]
+        df_a = pd.DataFrame(unit * df.__len__(), columns=[
+            'reason',
+            'action',
+            'upper_shadow_len',
+            'body_len',
+            'lower_shadow_len',
+            'guangtou',
+            'guangjiao',
+            'small_body',
+            'cross_star',
+            'long_upper_shadow',
+            'long_lower_shadow',
+        ])
 
         # df_a = df_a.assign('reason', '') #adding column 'reason' with empty string
         # df_a = df_a.assign('action', '')
@@ -225,86 +229,82 @@ class Finlib_indicator:
         # df.iloc[i, df.columns.get_loc('reason')] = ''
         # df.iloc[i, df.columns.get_loc('reason')] = ''
 
-        threshold_small = 1.0/20
+        threshold_small = 1.0 / 20
         threshold_large = 5
         for i in range(df.__len__()):
             upper_shadow_len = df.at[i, 'high'] - max(df.at[i, 'open'], df.at[i, 'close'])
-            body_len = abs(df.at[i, 'close'] - df.at[i, 'open'])+0.00001 #prevent 0
+            body_len = abs(df.at[i, 'close'] - df.at[i, 'open']) + 0.00001  #prevent 0
             lower_shadow_len = min(df.at[i, 'open'], df.at[i, 'close']) - df.at[i, 'low']
-
 
             df.iloc[i, df.columns.get_loc('upper_shadow_len')] = upper_shadow_len
             df.iloc[i, df.columns.get_loc('body_len')] = body_len
             df.iloc[i, df.columns.get_loc('lower_shadow_len')] = lower_shadow_len
 
-            if body_len / (df.at[i, 'open']+0.001) < 0.001:
+            if body_len / (df.at[i, 'open'] + 0.001) < 0.001:
                 df.iloc[i, df.columns.get_loc('small_body')] = True
-                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_SMALL_BODY+'; '
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_SMALL_BODY + '; '
 
-                if  upper_shadow_len > body_len and lower_shadow_len > body_len:
+                if upper_shadow_len > body_len and lower_shadow_len > body_len:
                     df.iloc[i, df.columns.get_loc('cross_star')] = True
-                    df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_CROSS_STAR+'; '
+                    df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_CROSS_STAR + '; '
 
-            if upper_shadow_len/body_len < threshold_small:
+            if upper_shadow_len / body_len < threshold_small:
                 df.iloc[i, df.columns.get_loc('guangtou')] = True
-                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_TOU+'; '
-            if lower_shadow_len/body_len < threshold_small:
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_TOU + '; '
+            if lower_shadow_len / body_len < threshold_small:
                 df.iloc[i, df.columns.get_loc('guangjiao')] = True
-                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_JIAO+'; '
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_GUANG_JIAO + '; '
 
-            if upper_shadow_len/body_len > threshold_large:
+            if upper_shadow_len / body_len > threshold_large:
                 df.iloc[i, df.columns.get_loc('long_upper_shadow')] = True
-                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_UPPER_SHADOW+'; '
-            if lower_shadow_len/body_len > threshold_large:
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_UPPER_SHADOW + '; '
+            if lower_shadow_len / body_len > threshold_large:
                 df.iloc[i, df.columns.get_loc('long_lower_shadow')] = True
-                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_LOWER_SHADOW+'; '
+                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_LONG_LOWER_SHADOW + '; '
 
         #yun xian
 
-        df_a = pd.DataFrame( [[False,False]] * df.__len__(), columns=['yunxian_buy','yunxian_sell'])
+        df_a = pd.DataFrame([[False, False]] * df.__len__(), columns=['yunxian_buy', 'yunxian_sell'])
         df = df.merge(df_a, left_index=True, right_index=True)
 
         if df.__len__() < 30:
-            logging.info("bar number too small (<30) to calculate yunxian "+str( df.__len__() ))
+            logging.info("bar number too small (<30) to calculate yunxian " + str(df.__len__()))
 
         #check yunxian for the latest 5 bars
         for i in range(df.__len__() - 5, df.__len__()):
-            print("i is "+str(i))
+            print("i is " + str(i))
             df_tmp = df.iloc[:i]
             junxian_seri = self.sma_jincha_sicha_duotou_koutou(df_tmp, short=ma_short, middle=ma_middle, long=ma_long).iloc[-1]
 
             #yunxian_buy: down trend, down_bar large bar.
             if (junxian_seri['kongtou_pailie']):
-                if df.iloc[i-1]['open']>df.iloc[i-1]['close']:
-                        if (not df.iloc[i-1]['long_upper_shadow'] ):
-                            if (not df.iloc[i-1]['long_lower_shadow'] ):
-                                if (not df.iloc[i-1]['small_body'] ):
-                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_'+str(ma_short)]:
-                                            # increase_bar,
-                                            if df.iloc[i]['open']< df.iloc[i]['close']:
-                                                if df.iloc[i]['low'] > df.iloc[i-1]['low']:
-                                                    if df.iloc[i]['high'] < df.iloc[i-1]['high'] :
-                                                        df.iloc[i, df.columns.get_loc('yunxian_buy')] = True
-                                                        df.iloc[i, df.columns.get_loc(
-                                                            'reason')] += constant.BAR_YUNXIAN_BUY+'; '
+                if df.iloc[i - 1]['open'] > df.iloc[i - 1]['close']:
+                    if (not df.iloc[i - 1]['long_upper_shadow']):
+                        if (not df.iloc[i - 1]['long_lower_shadow']):
+                            if (not df.iloc[i - 1]['small_body']):
+                                if df.iloc[i - 1]['tr'] > 1.0 * df.iloc[i - 2]['atr_short_' + str(ma_short)]:
+                                    # increase_bar,
+                                    if df.iloc[i]['open'] < df.iloc[i]['close']:
+                                        if df.iloc[i]['low'] > df.iloc[i - 1]['low']:
+                                            if df.iloc[i]['high'] < df.iloc[i - 1]['high']:
+                                                df.iloc[i, df.columns.get_loc('yunxian_buy')] = True
+                                                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_YUNXIAN_BUY + '; '
 
-                                                        logging.info("yunxian buy point")
-
+                                                logging.info("yunxian buy point")
 
             #yunxian_sell: up trend, up_bar large bar.
             if (junxian_seri['duotou_pailie']):
-                if df.iloc[i-1]['open']<df.iloc[i-1]['close']:
-                        if (not df.iloc[i-1]['long_upper_shadow'] ):
-                            if (not df.iloc[i-1]['long_lower_shadow'] ):
-                                if (not df.iloc[i-1]['small_body'] ):
-                                    if df.iloc[i-1]['tr'] > 1.0* df.iloc[i-2]['atr_short_'+str(ma_short)]:
-                                            if df.iloc[i]['open']< df.iloc[i]['close']:# decrease_bar,
-                                                if df.iloc[i]['low'] > df.iloc[i-1]['low']:
-                                                    if df.iloc[i]['high'] < df.iloc[i-1]['high'] :
-                                                        df.iloc[i, df.columns.get_loc('yunxian_sell')] = True
-                                                        df.iloc[i, df.columns.get_loc(
-                                                            'reason')] += constant.BAR_YUNXIAN_SELL+'; '
-                                                        print("yunxian sell point")
+                if df.iloc[i - 1]['open'] < df.iloc[i - 1]['close']:
+                    if (not df.iloc[i - 1]['long_upper_shadow']):
+                        if (not df.iloc[i - 1]['long_lower_shadow']):
+                            if (not df.iloc[i - 1]['small_body']):
+                                if df.iloc[i - 1]['tr'] > 1.0 * df.iloc[i - 2]['atr_short_' + str(ma_short)]:
+                                    if df.iloc[i]['open'] < df.iloc[i]['close']:  # decrease_bar,
+                                        if df.iloc[i]['low'] > df.iloc[i - 1]['low']:
+                                            if df.iloc[i]['high'] < df.iloc[i - 1]['high']:
+                                                df.iloc[i, df.columns.get_loc('yunxian_sell')] = True
+                                                df.iloc[i, df.columns.get_loc('reason')] += constant.BAR_YUNXIAN_SELL + '; '
+                                                print("yunxian sell point")
 
         return df
 
@@ -334,9 +334,9 @@ class Finlib_indicator:
         df['sma_middle_' + str(middle)] = stock['close_' + str(middle) + '_sma']
         df['sma_long_' + str(long)] = stock['close_' + str(long) + '_sma']
 
-        df['p_ma_dikou_'+ str(short)] = df['close'].shift(short-1)
-        df['p_ma_dikou_'+ str(middle)] = df['close'].shift(middle-1)
-        df['p_ma_dikou_'+ str(long)] = df['close'].shift(long-1)
+        df['p_ma_dikou_' + str(short)] = df['close'].shift(short - 1)
+        df['p_ma_dikou_' + str(middle)] = df['close'].shift(middle - 1)
+        df['p_ma_dikou_' + str(long)] = df['close'].shift(long - 1)
 
         df['ema_short_' + str(short)] = stock['close_' + str(short) + '_ema']
         df['ema_middle_' + str(middle)] = stock['close_' + str(middle) + '_ema']
@@ -352,17 +352,14 @@ class Finlib_indicator:
         # df['std_sma_middle_' + str(middle)] = df['sma_middle_' + str(middle)].rolling(window=middle).std()
         # df['std_sma_long_' + str(long)] = df['sma_long_' + str(long)].rolling(window=long).std()
 
-        _df_tmp = df['sma_short_' + str(short)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_short_'+ str(short)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
+        _df_tmp = df['sma_short_' + str(short)].rolling(window=10)  #evaluate last two weeks.
+        df['two_week_fluctuation_sma_short_' + str(short)] = round((_df_tmp.max() - _df_tmp.min()) / _df_tmp.mean() * 100.0, 1)
 
-        _df_tmp = df['sma_middle_' + str(middle)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_middle_'+ str(middle)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
+        _df_tmp = df['sma_middle_' + str(middle)].rolling(window=10)  #evaluate last two weeks.
+        df['two_week_fluctuation_sma_middle_' + str(middle)] = round((_df_tmp.max() - _df_tmp.min()) / _df_tmp.mean() * 100.0, 1)
 
-        _df_tmp = df['sma_long_' + str(long)].rolling(window=10) #evaluate last two weeks.
-        df['two_week_fluctuation_sma_long_'+ str(long)] = round((_df_tmp.max() - _df_tmp.min())/_df_tmp.mean()*100.0,1)
-
-
-
+        _df_tmp = df['sma_long_' + str(long)].rolling(window=10)  #evaluate last two weeks.
+        df['two_week_fluctuation_sma_long_' + str(long)] = round((_df_tmp.max() - _df_tmp.min()) / _df_tmp.mean() * 100.0, 1)
 
         df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
         if 'index' in df.columns:
@@ -378,9 +375,9 @@ class Finlib_indicator:
 
         df['tr'] = stock['tr']
 
-        df['atr_short_' + str(short)] = stock[ 'atr_'+str(short)]
-        df['atr_middle_' + str(middle)] = stock[ 'atr_'+str(middle)]
-        df['atr_long_' + str(long)] = stock[ 'atr_'+str(long)]
+        df['atr_short_' + str(short)] = stock['atr_' + str(short)]
+        df['atr_middle_' + str(middle)] = stock['atr_' + str(middle)]
+        df['atr_long_' + str(long)] = stock['atr_' + str(long)]
 
         df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
 
@@ -392,14 +389,11 @@ class Finlib_indicator:
 
         return (df)
 
-
-
     #########################################################
     #must call fristly: df = self.add_ma_ema(df=df, short=short, middle=middle, long=long)
     #look back last 30 days, recommended df len is 30
     #########################################################
     def sma_jincha_sicha_duotou_koutou(self, df, short=5, middle=10, long=20):
-
 
         rtn_dict = {
             'code': None,
@@ -407,7 +401,6 @@ class Finlib_indicator:
             'close': None,
             'reason': '',
             'action': '',
-
             "short_period": short,
             "middle_period": middle,
             "long_period": long,
@@ -475,65 +468,65 @@ class Finlib_indicator:
 
         if ma_short > ma_middle and ma_short_p1 < ma_middle_p1:
             logging.info("short up across middle, jin cha minor")
-            rtn_dict['reason'] += constant.MA_JIN_CHA_MINOR+'; '
+            rtn_dict['reason'] += constant.MA_JIN_CHA_MINOR + '; '
             rtn_dict['jincha_minor'] = True
             rtn_dict['jincha_minor_strength'] = round(2 * ((ma_short - ma_middle) / (ma_short + ma_middle) + (ma_middle_p1 - ma_short_p1) / (ma_middle_p1 + ma_short_p1)), 2)
         elif ma_short < ma_middle and ma_short_p1 > ma_middle_p1:
             logging.info("short down across middle, si cha minor")
             rtn_dict['sicha_minor'] = True
-            rtn_dict['reason'] += constant.MA_SI_CHA_MINOR+'; '
+            rtn_dict['reason'] += constant.MA_SI_CHA_MINOR + '; '
 
             rtn_dict['sicha_minor_strength'] = round(2 * ((ma_middle - ma_short) / (ma_short + ma_middle) + (ma_short_p1 - ma_middle_p1) / (ma_middle_p1 + ma_short_p1)), 2)
 
         if ma_middle > ma_long and ma_middle_p1 < ma_long_p1:
             logging.info("middle up across long, jin cha major")
             rtn_dict['jincha_major'] = True
-            rtn_dict['reason'] += constant.MA_JIN_CHA_MAJOR+'; '
+            rtn_dict['reason'] += constant.MA_JIN_CHA_MAJOR + '; '
 
             rtn_dict['jincha_major_strength'] = round(2 * ((ma_middle - ma_long) / (ma_long + ma_middle) + (ma_long_p1 - ma_middle_p1) / (ma_middle_p1 + ma_long_p1)), 2)
 
         elif ma_middle < ma_long and ma_middle_p1 > ma_long_p1:
             logging.info("middle down across long, si cha major")
             rtn_dict['sicha_major'] = True
-            rtn_dict['reason'] += constant.MA_SI_CHA_MAJOR+'; '
+            rtn_dict['reason'] += constant.MA_SI_CHA_MAJOR + '; '
 
             rtn_dict['sicha_major_strength'] = round(2 * ((ma_long - ma_middle) / (ma_long + ma_middle) + (ma_middle_p1 - ma_long_p1) / (ma_middle_p1 + ma_long_p1)), 2)
 
         if ma_short > ma_middle * 1.05:
             trend_short = 'up'
             rtn_dict['trend_short'] = 'up'
-            rtn_dict['reason'] += constant.SHORT_TREND_UP+'; '
+            rtn_dict['reason'] += constant.SHORT_TREND_UP + '; '
 
             rtn_dict['trend_short_strength'] = round(ma_short / ma_middle, 2)
         elif ma_short * 1.05 < ma_middle:
             trend_short = 'down'
             rtn_dict['trend_short'] = 'down'
-            rtn_dict['reason'] += constant.SHORT_TREND_DOWN+'; '
+            rtn_dict['reason'] += constant.SHORT_TREND_DOWN + '; '
             rtn_dict['trend_short_strength'] = round(ma_middle / ma_short, 2)
 
         if ma_middle > ma_long * 1.05:
             trend_middle = 'up'
             rtn_dict['trend_middle'] = 'up'
-            rtn_dict['reason'] += constant.MIDDLE_TREND_UP+'; '
+            rtn_dict['reason'] += constant.MIDDLE_TREND_UP + '; '
             rtn_dict['trend_middle_strength'] = round(ma_middle / ma_long, 2)
         elif ma_middle * 1.05 < ma_long:
             trend_middle = 'down'
             rtn_dict['trend_middle'] = 'down'
-            rtn_dict['reason'] += constant.MIDDLE_TREND_DOWN+'; '
+            rtn_dict['reason'] += constant.MIDDLE_TREND_DOWN + '; '
             rtn_dict['trend_middle_strength'] = round(ma_long / ma_middle, 2)
 
         if (ma_short > ma_middle > ma_long):
             rtn_dict['duotou_pailie'] = True
-            rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE+'; '
+            rtn_dict['reason'] += constant.MA_DUO_TOU_PAI_LIE + '; '
 
             rtn_dict['trend_long'] = 'up'
-            rtn_dict['reason'] += constant.LONG_TREND_UP+'; '
+            rtn_dict['reason'] += constant.LONG_TREND_UP + '; '
 
             logging.info("duo tou pai lie")
             if df.iloc[-1]['low'] > ma_short:
                 logging.info("verify strong up trend")
                 rtn_dict['very_strong_up_trend'] = True
-                rtn_dict['reason'] += constant.VERY_STONG_UP_TREND+'; '
+                rtn_dict['reason'] += constant.VERY_STONG_UP_TREND + '; '
 
             logging.info("check back last 30 bars")
 
@@ -558,29 +551,29 @@ class Finlib_indicator:
 
         if (ma_short < ma_middle < ma_long):  #more interesting enter when price is up break
             rtn_dict['kongtou_pailie'] = True
-            rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE+'; '
+            rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE + '; '
 
             rtn_dict['trend_long'] = 'down'
-            rtn_dict['reason'] += constant.LONG_TREND_DOWN+'; '
+            rtn_dict['reason'] += constant.LONG_TREND_DOWN + '; '
 
             logging.info("kong tou pai lie")
             if df.iloc[-1]['high'] < ma_short:
                 logging.info("verify strong down trend")
                 rtn_dict['very_strong_down_trend'] = True
-                rtn_dict['reason'] += constant.VERY_STONG_DOWN_TREND+'; '
+                rtn_dict['reason'] += constant.VERY_STONG_DOWN_TREND + '; '
 
             logging.info("check back last 30 bars")
             for i in range(30):
                 if (df_sma_short.iloc[-i] < df_sma_middle.iloc[-i] < df_sma_long.iloc[-i]):
                     logging.info("kong tou lasts " + str(i) + "days")
                     rtn_dict['kongtou_pailie_last_bars'] = i
-                    rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
+                    rtn_dict['reason'] += constant.MA_KONG_TOU_PAI_LIE_N_days + "_" + str(i) + '; '
                     continue
 
                 if (df_sma_short.iloc[-i] > df_sma_middle.iloc[-i] > df_sma_long.iloc[-i]):
                     logging.info("latest duo tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
                     rtn_dict['last_duotou_pailie_n_days_before'] = i
-                    rtn_dict['reason'] += constant.MA_LAST_DUO_TOU_PAI_LIE_N_days+"_"+str(i)+'; '
+                    rtn_dict['reason'] += constant.MA_LAST_DUO_TOU_PAI_LIE_N_days + "_" + str(i) + '; '
                     rtn_dict['last_duotou_pailie_date'] = df.iloc[-i]['date']
                     break
 
@@ -710,7 +703,7 @@ class Finlib_indicator:
     #  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS_OVER --period D
     #  python t_daily_junxian_barstyle.py -x AG --selected
 
-    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55,market='ag', selected=False):
+    def get_indicator_critirial(self, query, period='D', fastMa=21, slowMa=55, market='ag', selected=False):
 
         # if query == constant.HS300_INDEX_BUY_CANDIDATE:
         #     print('debug stop')
@@ -726,201 +719,194 @@ class Finlib_indicator:
         else:
             dir = "/home/ryan/DATA/result"
 
-        if query in [constant.CLOSE_UNDER_SMA60,
-                     constant.CLOSE_ABOVE_SMA60,
-                     constant.MACD_DIF_MAIN_OVER_0_N_DAYS,
-                     constant.MACD_DEA_SIGNAL_OVER_0_N_DAYS,
-                     constant.MACD_HISTOGRAM_OVER_0_N_DAYS,
-                     constant.MA55_NEAR_MA21,
-                     constant.MACD_CLIMB_NEAR_0,
-                     constant.MACD_DECLINE_NEAR_0,
-
-                     constant.MACD_CROSS_OVER_0,
-                     constant.MACD_CROSS_DOWN_0,
-                     constant.MACD_DIF_CROSS_OVER_0,
-                     constant.MACD_DIF_CROSS_DOWN_0,
-                     constant.MACD_SIG_CROSS_OVER_0,
-                     constant.MACD_SIG_CROSS_DOWN_0,
-
-                     constant.MACD_DIF_CROSS_DOWN_SIG,
-                     constant.MACD_DIF_CROSS_OVER_SIG,
-
-                     constant.MACD_DIF_LT_0,
-                     constant.MACD_DIF_GT_0,
-                     constant.MACD_SIG_LT_0,
-                     constant.MACD_SIG_GT_0,
-                     constant.MACD_DIF_LT_SIG,
-                     constant.MACD_DIF_GT_SIG,
-
-                     constant.CLOSE_ABOVE_SMA60,
-                     constant.CLOSE_ABOVE_SMA60,
-
-                     constant.SMA21_UNDER_SMA60,
-
-                     constant.SELL_MUST,
-                     constant.BUY_MUST,
-
-                     ]:
-            source_csv = dir + "/macd_selection_"+period+".csv"
-        elif query in [constant.CLOSE_ABOVE_MA5_N_DAYS,
-                        constant.CLOSE_NEAR_MA5_N_DAYS,
-                        constant.MA21_NEAR_MA55_N_DAYS,
-                        constant.SMA_CROSS_OVER,
-                        ]:
-            source_csv = dir + "/ma_cross_over_selection_"+str(fastMa)+"_"+str(slowMa)+".csv"
-        elif query in [constant.BAR_SMALL_BODY,
-                       constant.BAR_CROSS_STAR,
-                       constant.BAR_GUANG_TOU,
-                       constant.BAR_GUANG_JIAO,
-                       constant.BAR_LONG_UPPER_SHADOW,
-                       constant.BAR_LONG_LOWER_SHADOW,
-                       constant.BAR_YUNXIAN_BUY,
-                       constant.BAR_YUNXIAN_SELL,
-
-                       constant.VERY_STONG_DOWN_TREND,
-                       constant.VERY_STONG_UP_TREND,
-                       constant.MA_JIN_CHA_MINOR,
-                       constant.MA_JIN_CHA_MAJOR,
-                       constant.MA_SI_CHA_MINOR,
-                       constant.MA_SI_CHA_MAJOR,
-                       constant.MA_DUO_TOU_PAI_LIE,
-                       constant.MA_KONG_TOU_PAI_LIE,
-                       constant.SHORT_TREND_UP,
-                       constant.SHORT_TREND_DOWN,
-                       constant.MIDDLE_TREND_UP,
-                       constant.MIDDLE_TREND_DOWN,
-                       constant.LONG_TREND_UP,
-                       constant.LONG_TREND_DOWN,
-
-                       ]:
-            source_csv = dir+'/'+market+'_junxian_barstyle.csv'
-
-        elif query in [constant.HS300_INDEX_BUY_CANDIDATE,
-                       ]:
-            source_csv = dir+'/hs300_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 32
-            query = constant.TO_BE_ADDED
-
-        elif query in [constant.HS300_INDEX_SELL_CANDIDATE,
-                       ]:
-            source_csv = dir+'/hs300_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 32
-            query = constant.TO_BE_REMOVED
-
-
-
-        elif query in [constant.SZ100_INDEX_BUY_CANDIDATE,
-                       ]:
-            source_csv = dir+'/sz100_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 15
-            query = constant.TO_BE_ADDED
-
-        elif query in [constant.SZ100_INDEX_SELL_CANDIDATE,
-                       ]:
-            source_csv = dir+'/sz100_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 15
-            query = constant.TO_BE_REMOVED
-
-
-        elif query in [constant.ZZ100_INDEX_BUY_CANDIDATE,
-                       ]:
-            source_csv = dir+'/zz100_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 15
-            query = constant.TO_BE_ADDED
-
-        elif query in [constant.ZZ100_INDEX_SELL_CANDIDATE,
-                       ]:
-            source_csv = dir+'/zz100_candidate_list.csv'
-            column_name = 'predict'
-            top_n = 15
-            query = constant.TO_BE_REMOVED
-
-
-        elif query in [constant.SZCZ_INDEX_BUY_CANDIDATE,
-                       ]:
-            source_csv = dir+'/szcz_candidate_list.csv'
-            column_name='predict'
-            top_n = 32
-            query = constant.TO_BE_ADDED
-
-        elif query in [constant.SZCZ_INDEX_SELL_CANDIDATE,
-                       ]:
-            source_csv = dir+'/szcz_candidate_list.csv'
-            column_name='predict'
-            top_n = 32
-            query = constant.TO_BE_REMOVED
-
-
-        elif query in [constant.MA5_UP_KOUDI_DISTANCE_GT_5,
-                       constant.MA21_UP_KOUDI_DISTANCE_GT_5,
-                       constant.MA55_UP_KOUDI_DISTANCE_GT_5,
-
-                       constant.MA5_UP_KOUDI_DISTANCE_LT_1,
-                       constant.MA21_UP_KOUDI_DISTANCE_LT_1,
-                       constant.MA55_UP_KOUDI_DISTANCE_LT_1,
-
-                       constant.TWO_WEEK_FLUC_SMA_5_LT_3,
-                       constant.TWO_WEEK_FLUC_SMA_21_LT_3,
-                       constant.TWO_WEEK_FLUC_SMA_55_LT_3,
-
-                       ]:
-            source_csv = dir+'/latest_ma_koudi.csv'
-            column_name='reason'
-
-
-        elif query in [constant.PV2_VOLUME_RATIO_BOTTOM_10P]:
-            return(pd.read_csv(dir+'/pv_2/latest/volume_ratio_bottom_10p.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_VOLUME_RATIO_TOP_20P]:
-            return(pd.read_csv(dir+'/pv_2/latest/volume_ratio_top_20p.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
-            return(pd.read_csv(dir+'/pv_2/latest/zhangting_volume_ration_lt_1.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
-            return(pd.read_csv(dir+'/pv_2/latest/zhangting_volume_ration_lt_1.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_POCKET_PIVOT]:
-            return(pd.read_csv(dir+'/pv_2/latest/pocket_pivot.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_DIE_TING]:
-            return(pd.read_csv(dir+'/pv_2/latest/die_ting.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_ZHANG_TING]:
-            return(pd.read_csv(dir+'/pv_2/latest/zhang_ting.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_PE_TOP_30P]:
-            return(pd.read_csv(dir+'/pv_2/latest/pe_top_30p.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_PE_BOTTOM_30P]:
-            return(pd.read_csv(dir+'/pv_2/latest/pe_bottom_30p.csv', converters={'date': str}, encoding="utf-8"))
-
-        elif query in [constant.PV2_STABLE_PRICE_VOLUME]:
-            return(pd.read_csv(dir+'/pv_2/latest/stable_price_volume.csv', converters={'date': str}, encoding="utf-8"))
+        if query in [
+                constant.CLOSE_UNDER_SMA60,
+                constant.CLOSE_ABOVE_SMA60,
+                constant.MACD_DIF_MAIN_OVER_0_N_DAYS,
+                constant.MACD_DEA_SIGNAL_OVER_0_N_DAYS,
+                constant.MACD_HISTOGRAM_OVER_0_N_DAYS,
+                constant.MA55_NEAR_MA21,
+                constant.MACD_CLIMB_NEAR_0,
+                constant.MACD_DECLINE_NEAR_0,
+                constant.MACD_CROSS_OVER_0,
+                constant.MACD_CROSS_DOWN_0,
+                constant.MACD_DIF_CROSS_OVER_0,
+                constant.MACD_DIF_CROSS_DOWN_0,
+                constant.MACD_SIG_CROSS_OVER_0,
+                constant.MACD_SIG_CROSS_DOWN_0,
+                constant.MACD_DIF_CROSS_DOWN_SIG,
+                constant.MACD_DIF_CROSS_OVER_SIG,
+                constant.MACD_DIF_LT_0,
+                constant.MACD_DIF_GT_0,
+                constant.MACD_SIG_LT_0,
+                constant.MACD_SIG_GT_0,
+                constant.MACD_DIF_LT_SIG,
+                constant.MACD_DIF_GT_SIG,
+                constant.CLOSE_ABOVE_SMA60,
+                constant.CLOSE_ABOVE_SMA60,
+                constant.SMA21_UNDER_SMA60,
+                constant.SELL_MUST,
+                constant.BUY_MUST,
+        ]:
+            source_csv = dir + "/macd_selection_" + period + ".csv"
+        elif query in [
+                constant.CLOSE_ABOVE_MA5_N_DAYS,
+                constant.CLOSE_NEAR_MA5_N_DAYS,
+                constant.MA21_NEAR_MA55_N_DAYS,
+                constant.SMA_CROSS_OVER,
+        ]:
+            source_csv = dir + "/ma_cross_over_selection_" + str(fastMa) + "_" + str(slowMa) + ".csv"
+        elif query in [
+                constant.BAR_SMALL_BODY,
+                constant.BAR_CROSS_STAR,
+                constant.BAR_GUANG_TOU,
+                constant.BAR_GUANG_JIAO,
+                constant.BAR_LONG_UPPER_SHADOW,
+                constant.BAR_LONG_LOWER_SHADOW,
+                constant.BAR_YUNXIAN_BUY,
+                constant.BAR_YUNXIAN_SELL,
+                constant.VERY_STONG_DOWN_TREND,
+                constant.VERY_STONG_UP_TREND,
+                constant.MA_JIN_CHA_MINOR,
+                constant.MA_JIN_CHA_MAJOR,
+                constant.MA_SI_CHA_MINOR,
+                constant.MA_SI_CHA_MAJOR,
+                constant.MA_DUO_TOU_PAI_LIE,
+                constant.MA_KONG_TOU_PAI_LIE,
+                constant.SHORT_TREND_UP,
+                constant.SHORT_TREND_DOWN,
+                constant.MIDDLE_TREND_UP,
+                constant.MIDDLE_TREND_DOWN,
+                constant.LONG_TREND_UP,
+                constant.LONG_TREND_DOWN,
+        ]:
+            source_csv = dir + '/' + market + '_junxian_barstyle.csv'
 
         elif query in [
-                       # constant.DOUBLE_BOTTOM_AG_SELECTED,
-                       # constant.DOUBLE_BOTTOM_AG,
+                constant.HS300_INDEX_BUY_CANDIDATE,
+        ]:
+            source_csv = dir + '/hs300_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_ADDED
 
-                       constant.DOUBLE_BOTTOM_123_LONG_TREND_REVERSE,
-                       constant.DOUBLE_BOTTOM_123_LONG_TREND_CONTINUE,
-                       constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE,
-                       constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE,
-                       ]:
+        elif query in [
+                constant.HS300_INDEX_SELL_CANDIDATE,
+        ]:
+            source_csv = dir + '/hs300_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_REMOVED
+
+        elif query in [
+                constant.SZ100_INDEX_BUY_CANDIDATE,
+        ]:
+            source_csv = dir + '/sz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_ADDED
+
+        elif query in [
+                constant.SZ100_INDEX_SELL_CANDIDATE,
+        ]:
+            source_csv = dir + '/sz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_REMOVED
+
+        elif query in [
+                constant.ZZ100_INDEX_BUY_CANDIDATE,
+        ]:
+            source_csv = dir + '/zz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_ADDED
+
+        elif query in [
+                constant.ZZ100_INDEX_SELL_CANDIDATE,
+        ]:
+            source_csv = dir + '/zz100_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 15
+            query = constant.TO_BE_REMOVED
+
+        elif query in [
+                constant.SZCZ_INDEX_BUY_CANDIDATE,
+        ]:
+            source_csv = dir + '/szcz_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_ADDED
+
+        elif query in [
+                constant.SZCZ_INDEX_SELL_CANDIDATE,
+        ]:
+            source_csv = dir + '/szcz_candidate_list.csv'
+            column_name = 'predict'
+            top_n = 32
+            query = constant.TO_BE_REMOVED
+
+        elif query in [
+                constant.MA5_UP_KOUDI_DISTANCE_GT_5,
+                constant.MA21_UP_KOUDI_DISTANCE_GT_5,
+                constant.MA55_UP_KOUDI_DISTANCE_GT_5,
+                constant.MA5_UP_KOUDI_DISTANCE_LT_1,
+                constant.MA21_UP_KOUDI_DISTANCE_LT_1,
+                constant.MA55_UP_KOUDI_DISTANCE_LT_1,
+                constant.TWO_WEEK_FLUC_SMA_5_LT_3,
+                constant.TWO_WEEK_FLUC_SMA_21_LT_3,
+                constant.TWO_WEEK_FLUC_SMA_55_LT_3,
+        ]:
+            source_csv = dir + '/latest_ma_koudi.csv'
+            column_name = 'reason'
+
+        elif query in [constant.PV2_VOLUME_RATIO_BOTTOM_10P]:
+            return (pd.read_csv(dir + '/pv_2/latest/volume_ratio_bottom_10p.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_VOLUME_RATIO_TOP_20P]:
+            return (pd.read_csv(dir + '/pv_2/latest/volume_ratio_top_20p.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
+            return (pd.read_csv(dir + '/pv_2/latest/zhangting_volume_ration_lt_1.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANGTING_VOLUME_RATIO_LT_1]:
+            return (pd.read_csv(dir + '/pv_2/latest/zhangting_volume_ration_lt_1.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_POCKET_PIVOT]:
+            return (pd.read_csv(dir + '/pv_2/latest/pocket_pivot.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_DIE_TING]:
+            return (pd.read_csv(dir + '/pv_2/latest/die_ting.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_ZHANG_TING]:
+            return (pd.read_csv(dir + '/pv_2/latest/zhang_ting.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_PE_TOP_30P]:
+            return (pd.read_csv(dir + '/pv_2/latest/pe_top_30p.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_PE_BOTTOM_30P]:
+            return (pd.read_csv(dir + '/pv_2/latest/pe_bottom_30p.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [constant.PV2_STABLE_PRICE_VOLUME]:
+            return (pd.read_csv(dir + '/pv_2/latest/stable_price_volume.csv', converters={'date': str}, encoding="utf-8"))
+
+        elif query in [
+                # constant.DOUBLE_BOTTOM_AG_SELECTED,
+                # constant.DOUBLE_BOTTOM_AG,
+                constant.DOUBLE_BOTTOM_123_LONG_TREND_REVERSE,
+                constant.DOUBLE_BOTTOM_123_LONG_TREND_CONTINUE,
+                constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MIN_SLOP_DEGREE,
+                constant.DOUBLE_BOTTOM_VERY_GOOD_RIGHT_MAX_SLOP_DEGREE,
+        ]:
             # df = pd.read_csv(dir+'/ag_curve_shape.csv', converters={'code': str}, encoding="utf-8")
             # df = df[df['hit']==True].reset_index().drop('index', axis=1)
             # return(df)
 
-            source_csv = dir+'/ag_curve_shape.csv'
-            column_name='reason'
+            source_csv = dir + '/ag_curve_shape.csv'
+            column_name = 'reason'
 
         else:
-            logging.error("Unknow source csv that matching query "+query)
+            logging.error("Unknow source csv that matching query " + query)
             exit(0)
 
         df = pd.read_csv(source_csv, encoding="utf-8")
@@ -931,27 +917,32 @@ class Finlib_indicator:
         if top_n > 0:
             df_match = df_match.head(top_n)
 
-
         if 'index' in df_match.columns:
             df_match = df_match.drop('index', axis=1)
 
-        perc = round(df_match.__len__()*100/df.__len__(), 2)
-        logging.info("Period: "+period+", Query: "+query+", "+str(df_match.__len__())+" of "+str(df.__len__())+", perc "+str(perc))
+        perc = round(df_match.__len__() * 100 / df.__len__(), 2)
+        logging.info("Period: " + period + ", Query: " + query + ", " + str(df_match.__len__()) + " of " + str(df.__len__()) + ", perc " + str(perc))
         finlib.Finlib().pprint(df_match.head(2))
 
-        col = ['code', 'name', 'date', 'close', 'action','strength','reason','operation',"total_mv_perc","amount_perc",
-        "my_index_weight",
-        "weight",
-        "mkt_cap",
-        "predict",
+        col = [
+            'code',
+            'name',
+            'date',
+            'close',
+            'action',
+            'strength',
+            'reason',
+            'operation',
+            "total_mv_perc",
+            "amount_perc",
+            "my_index_weight",
+            "weight",
+            "mkt_cap",
+            "predict",
         ]
         df_match = finlib.Finlib().keep_column(df_match, col)
 
-        return(df_match)
-
-
-
-
+        return (df_match)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
@@ -977,7 +968,7 @@ class Finlib_indicator:
 
         rtn_list = list(df['data'])
         # logging.info("after smoothing, rtn_list " + str(rtn_list))
-        return(rtn_list)
+        return (rtn_list)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
@@ -989,33 +980,32 @@ class Finlib_indicator:
     # = (190 – 150) / 25 = 1.6.
 
     def get_outier(self, df, on_column, zscore_threshold=3):
-        rtn_dict={}
+        rtn_dict = {}
 
         df = df[df[on_column].notna()]
-        df['zscore_'+on_column] = stats.zscore(df[on_column])
+        df['zscore_' + on_column] = stats.zscore(df[on_column])
 
-        o_all = df[abs(df['zscore_'+on_column]) > zscore_threshold].reset_index().drop('index', axis=1)
-        o_min = df[df['zscore_'+on_column] < -1*zscore_threshold].reset_index().drop('index', axis=1)
-        o_max = df[df['zscore_'+on_column] > zscore_threshold ].reset_index().drop('index', axis=1)
+        o_all = df[abs(df['zscore_' + on_column]) > zscore_threshold].reset_index().drop('index', axis=1)
+        o_min = df[df['zscore_' + on_column] < -1 * zscore_threshold].reset_index().drop('index', axis=1)
+        o_max = df[df['zscore_' + on_column] > zscore_threshold].reset_index().drop('index', axis=1)
 
-        return(o_all,o_min, o_max)
-
+        return (o_all, o_min, o_max)
 
     #input: df [open,high, low, close]
     #output:
     def _get_key_support_price_from_pv(self, df, period):
         df['increase'] = df['close'].pct_change()
-        df['inday_fluctuation'] = round((df['high'] - df['low'])/df['low'], 2)
-        df['inday_increase'] = round((df['close'] - df['open'])/df['open'],2)
+        df['inday_fluctuation'] = round((df['high'] - df['low']) / df['low'], 2)
+        df['inday_increase'] = round((df['close'] - df['open']) / df['open'], 2)
         #
         # df_t = df[['code','date','increase', 'volume','inday_fluctuation', 'inday_increase']]
         # print(df_t.corr())
 
-        (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase',zscore_threshold=1)
-        (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase',zscore_threshold=1)
-        (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation',zscore_threshold=1)
+        (df_outier_increase, df_low_outier_increase, df_high_outier_increase) = self.get_outier(df=df, on_column='increase', zscore_threshold=1)
+        (df_outier_inday_increase, df_low_outier_inday_increase, df_high_outier_inday_increase) = self.get_outier(df=df, on_column='inday_increase', zscore_threshold=1)
+        (df_outier_inday_fluctuation, _df_low_outier_inday_fluctuation, df_high_outier_inday_fluctuation) = self.get_outier(df=df, on_column='inday_fluctuation', zscore_threshold=1)
 
-        (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume',zscore_threshold=1)
+        (df_outier_volume, _df_low_outier_volume, df_high_outier_volume) = self.get_outier(df=df, on_column='volume', zscore_threshold=1)
 
         max_increase_dict = {}
         if df_high_outier_increase.__len__() > 0:
@@ -1024,11 +1014,10 @@ class Finlib_indicator:
             max_increase_dict = {
                 "date": _row.date,
                 "open": _row.open,
-                "high" : _row.high,
-                "low" : _row.low,
-                "close" : _row.close,
+                "high": _row.high,
+                "low": _row.low,
+                "close": _row.close,
             }
-
 
         max_inday_fluctuation_dict = {}
         if df_high_outier_inday_fluctuation.__len__() > 0:
@@ -1037,12 +1026,10 @@ class Finlib_indicator:
             max_inday_fluctuation_dict = {
                 "date": _row.date,
                 "open": _row.open,
-                "high" : _row.high,
-                "low" : _row.low,
-                "close" : _row.close,
+                "high": _row.high,
+                "low": _row.low,
+                "close": _row.close,
             }
-
-
 
         max_volume_dict = {}
         if df_high_outier_volume.__len__() > 0:
@@ -1051,18 +1038,17 @@ class Finlib_indicator:
             max_volume_dict = {
                 "date": _row.date,
                 "open": _row.open,
-                "high" : _row.high,
-                "low" : _row.low,
-                "close" : _row.close,
-
+                "high": _row.high,
+                "low": _row.low,
+                "close": _row.close,
             }
 
-        return({
-            "period":period,
-            "period_cnt":df.__len__(),
-            "max_increase":max_increase_dict,
-            "max_inday_fluctuation":max_inday_fluctuation_dict,
-            "max_volume":max_volume_dict,
+        return ({
+            "period": period,
+            "period_cnt": df.__len__(),
+            "max_increase": max_increase_dict,
+            "max_inday_fluctuation": max_inday_fluctuation_dict,
+            "max_volume": max_volume_dict,
         })
 
     #input: df [open,high, low, close]
@@ -1077,15 +1063,11 @@ class Finlib_indicator:
         weekly_support_dict = self._get_key_support_price_from_pv(df=df_weekly, period='W')
         monthly_support_dict = self._get_key_support_price_from_pv(df=df_monthly, period='M')
 
-        return(
-            {
-                'daily_support':daily_support_dict,
-                'weekly_support':weekly_support_dict,
-                'monthly_support':monthly_support_dict,
-            }
-
-        )
-
+        return ({
+            'daily_support': daily_support_dict,
+            'weekly_support': weekly_support_dict,
+            'monthly_support': monthly_support_dict,
+        })
 
     def print_support_price_by_price_volume(self, data_csv):
 
@@ -1094,12 +1076,12 @@ class Finlib_indicator:
         last_date = df.iloc[-1].date
         code = df.iloc[-1].code
 
-        a_dict = self.get_support_price_by_price_volume(df_daily_ohlc_volume=df,  verify_last_n_days=250)
+        a_dict = self.get_support_price_by_price_volume(df_daily_ohlc_volume=df, verify_last_n_days=250)
 
         p_list = []
         for k1 in a_dict.keys():
             for k2 in a_dict[k1].keys():
-                if type(a_dict[k1][k2]) is dict  and a_dict[k1][k2].__len__() > 0:
+                if type(a_dict[k1][k2]) is dict and a_dict[k1][k2].__len__() > 0:
                     # print(a_dict[k1][k2])
                     p_list.append(a_dict[k1][k2]['open'])
                     p_list.append(a_dict[k1][k2]['high'])
@@ -1113,20 +1095,19 @@ class Finlib_indicator:
         spt2 = support.T
         last_price_rank = spt2[spt2[0] < last_price].__len__()
 
-        logging.info("\n\nkey price list and perctage distance, code "+str(code)+", date "+last_date+ ", close "+str(round(last_price,2))+", rank "+str(last_price_rank) +"/"+str(spt2.__len__()))
+        logging.info("\n\nkey price list and perctage distance, code " + str(code) + ", date " + last_date + ", close " + str(round(last_price, 2)) + ", rank " + str(last_price_rank) + "/" + str(spt2.__len__()))
 
         # print s every 10 columns
         col_p = 0
-        for i in range(s.columns.__len__()//10):
+        for i in range(s.columns.__len__() // 10):
             # print(list(range(col_p,col_p+10)))
-            logging.info(finlib.Finlib().pprint(df=s[list(range(col_p,col_p+10))]))
-            col_p = col_p+10
+            logging.info(finlib.Finlib().pprint(df=s[list(range(col_p, col_p + 10))]))
+            col_p = col_p + 10
 
         # print(list(range(col_p, s.columns.__len__())))
         logging.info(finlib.Finlib().pprint(df=s[list(range(col_p, s.columns.__len__()))]))
 
-        return(s)
-
+        return (s)
 
     def my_ma_koudi(self, df):
         code = df.iloc[0].code
@@ -1136,7 +1117,7 @@ class Finlib_indicator:
         # last_N = 100 #ryan debug
 
         if df.__len__() < last_N:
-            logging.info("No enough data in df, expected df len "+str(last_N))
+            logging.info("No enough data in df, expected df len " + str(last_N))
             return
 
         name = ''
@@ -1149,13 +1130,13 @@ class Finlib_indicator:
         # df_simple = df[['code', 'date', 'close', 'close_sma_5', 'tr', 'atr_short_5']]
         df_simple = df[['code', 'date', 'close', 'close_sma_5']]
 
-        a1 = df_simple[['close']].shift(0).fillna(0) - df_simple[['close']].shift(1).fillna(0) +df_simple[['close']].shift(period+1).fillna(0) - df_simple[['close']].shift(period).fillna(0)  # consider today close, suppose tomorror close is zero.
+        a1 = df_simple[['close']].shift(0).fillna(0) - df_simple[['close']].shift(1).fillna(0) + df_simple[['close']].shift(period + 1).fillna(0) - df_simple[['close']].shift(period).fillna(0)  # consider today close, suppose tomorror close is zero.
         a2 = df_simple[['close']].shift(period).fillna(0) - df_simple[['close']].shift(period - 1).fillna(0)  # assume tomorrow close is same as today.
         b = df_simple[['close_sma_5']].shift(1).fillna(0) - df_simple[['close_sma_5']].shift(2).fillna(0)
         df_simple['delta_MA1'] = a1['close'] / period + b['close_sma_5']
         df_simple['delta_MA2'] = a2['close'] / period + b['close_sma_5']
         df_simple['delta_MA3'] = df_simple['close_sma_5'] - df_simple['close_sma_5'].shift(1)
-        df_simple['delta_MA_chg_perc'] = round(df_simple['delta_MA3']*100/df_simple['close_sma_5'].shift(1), 2)
+        df_simple['delta_MA_chg_perc'] = round(df_simple['delta_MA3'] * 100 / df_simple['close_sma_5'].shift(1), 2)
 
         df_simple = df_simple[['code', 'date', 'close', 'delta_MA_chg_perc']]
         # print(finlib.Finlib().pprint(df_simple.tail(50)))
@@ -1169,22 +1150,15 @@ class Finlib_indicator:
 
         # -0.1 in after times 100, it is -0.1 percent. original number is -0.001
         if Day_b4_delta_MA_chg_perc < 0 and Day_b3_delta_MA_chg_perc < 0 and Day_b2_delta_MA_chg_perc < 0 and today_predicated_delta_MA_chg_perc > 0:
-            logging.info("strength "+str(strength)+", BUY " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
-                  + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
-                today_predicated_delta_MA_chg_perc)
-                  )
+            logging.info("strength " + str(strength) + ", BUY " + code + " " + name + " before today market close. based on price " + str(df_simple.iloc[-1].close) + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
         elif Day_b4_delta_MA_chg_perc > 0 and Day_b3_delta_MA_chg_perc > 0 and Day_b2_delta_MA_chg_perc > 0 and today_predicated_delta_MA_chg_perc < 0:
-            logging.info("strength "+str(strength)+", SELL " + code +" "+name+ " before today market close. based on price " + str(df_simple.iloc[-1].close)
-                  + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(
-                today_predicated_delta_MA_chg_perc)
-                  )
+            logging.info("strength " + str(strength) + ", SELL " + code + " " + name + " before today market close. based on price " + str(df_simple.iloc[-1].close) + " delta_MAs: " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
         else:
-            logging.info("strength "+str(strength)+" code " + code+" "+name+ " No operation. based on price " + str(df_simple.iloc[-1].close)+" delta_MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(
-                Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
+            logging.info("strength " + str(strength) + " code " + code + " " + name + " No operation. based on price " + str(df_simple.iloc[-1].close) + " delta_MAs " + str(Day_b4_delta_MA_chg_perc) + " " + str(Day_b3_delta_MA_chg_perc) + " " + str(Day_b2_delta_MA_chg_perc) + " " + str(today_predicated_delta_MA_chg_perc))
 
-        return()
+        return ()
 
-    def check_my_ma(self, selected=True, stock_global='AG_HOLD',allow_delay_min = 30, force_fetch=False):
+    def check_my_ma(self, selected=True, stock_global='AG_HOLD', allow_delay_min=30, force_fetch=False):
         rst = finlib.Finlib().get_stock_configuration(selected=selected, stock_global=stock_global)
         out_dir = rst['out_dir']
         csv_dir = rst['csv_dir']
@@ -1201,12 +1175,12 @@ class Finlib_indicator:
 
         ############## Get live price before market closure.
 
-        if stock_global in ['HK_HOLD','HK']:
-            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
-        elif stock_global in ['AG_HOLD','AG']:
-            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='AG', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
-        elif stock_global in ['US_HOLD','US']:
-            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min,force_fetch=force_fetch)
+        if stock_global in ['HK_HOLD', 'HK']:
+            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='HK', allow_delay_min=allow_delay_min, force_fetch=force_fetch)
+        elif stock_global in ['AG_HOLD', 'AG']:
+            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='AG', allow_delay_min=allow_delay_min, force_fetch=force_fetch)
+        elif stock_global in ['US_HOLD', 'US']:
+            in_day_price_df = finlib.Finlib().get_ak_live_price(stock_market='US', allow_delay_min=allow_delay_min, force_fetch=force_fetch)
 
         logging.info("loaded in_day_price_df")
 
@@ -1217,7 +1191,7 @@ class Finlib_indicator:
 
             df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=data_csv, exit_if_not_exist=False)
 
-            if type(df) is str: # "FILE_NOT_EXIT"
+            if type(df) is str:  # "FILE_NOT_EXIT"
                 continue
 
             df = df[['code', 'date', 'open', 'high', 'low', 'close']]
@@ -1227,24 +1201,22 @@ class Finlib_indicator:
                 logging.warning("not found current price of " + code)
                 continue
 
-            df_today = pd.DataFrame.from_dict(
-                {
-                    'code': [code],
-                    'date': [datetime.today().strftime('%Y%m%d')],
-                    'open': [a_live_df.open.values[0]],
-                    'high': [a_live_df.high.values[0]],
-                    'low': [a_live_df.low.values[0]],
-                    'close': [a_live_df.close.values[0]],
-                }
-            )
+            df_today = pd.DataFrame.from_dict({
+                'code': [code],
+                'date': [datetime.today().strftime('%Y%m%d')],
+                'open': [a_live_df.open.values[0]],
+                'high': [a_live_df.high.values[0]],
+                'low': [a_live_df.low.values[0]],
+                'close': [a_live_df.close.values[0]],
+            })
             df = df.append(df_today).reset_index().drop('index', axis=1)
             df['name'] = a_live_df.iloc[0]['name']  # add name column. AK returns name in df.
 
             rtn = self.my_ma_koudi(df=df)
 
-    def tv_login(self, browser,target_uri='https://www.tradingview.com/'):
+    def tv_login(self, browser, target_uri='https://www.tradingview.com/'):
 
-        cookie_f = os.path.expanduser("~")+'/DATA/pickle/tradingview.cookie'
+        cookie_f = os.path.expanduser("~") + '/DATA/pickle/tradingview.cookie'
 
         if finlib.Finlib().is_cached(cookie_f, day=2):
             logging.info('tvlogin, load cookies from ' + cookie_f)
@@ -1262,18 +1234,15 @@ class Finlib_indicator:
             browser.get(target_uri)
             self.tv_wait_page_to_ready(browser=browser, timeout=10)
 
-
         else:
-            browser.get(target_uri+'#signin')
+            browser.get(target_uri + '#signin')
 
             # browser.find_element_by_class_name('tv-header__area tv-header__area--user').click()
 
             browser.find_element_by_class_name('tv-signin-dialog__toggle-email').click()
 
-
             usr_box = browser.find_element_by_name('username')
             pwd_box = browser.find_element_by_name('password')
-
 
             usr_box.send_keys('sunraise2005@gmail.com')
             pwd_box.send_keys('fav8@Apple!_tv')
@@ -1287,7 +1256,7 @@ class Finlib_indicator:
             pickle.dump(browser.get_cookies(), open(cookie_f, "wb"))
             logging.info("tradingview login cookie saved to " + cookie_f)
 
-        return(browser)
+        return (browser)
 
     def tv_screener_set_interval(self, browser, interval='1D'):
         # xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
@@ -1304,7 +1273,6 @@ class Finlib_indicator:
             logging.info("interval already be " + interval)
             return (browser)
 
-
         obj_interval.click()
         interval_list = browser.find_elements_by_class_name('js-select-interval')
         for i in interval_list:
@@ -1319,8 +1287,7 @@ class Finlib_indicator:
         logging.info("interval has set to " + interval)
         return (browser)
 
-
-    def tv_wait_page_to_ready(self,browser,timeout):
+    def tv_wait_page_to_ready(self, browser, timeout):
         _bs = browser.execute_script("return document.readyState")
         t = 0
 
@@ -1329,11 +1296,11 @@ class Finlib_indicator:
             time.sleep(1)
             t += 1
 
-            if t> timeout:
+            if t > timeout:
                 print("timeout, page not ready,readystate: " + _bs)
                 break
 
-        return()
+        return ()
 
     def tv_screener_set_column_field(self, browser, column_filed='MA_CROSS'):
         # xp_cf = '/html/body/div[8]/div/div[2]/div[3]/div[1]'
@@ -1351,7 +1318,7 @@ class Finlib_indicator:
         # if browser.find_element_by_xpath(xp_cf).text == column_filed:
         if obj_cf.text == column_filed:
             logging.info("column field already be " + column_filed)
-            return(browser)
+            return (browser)
 
         # browser.find_element_by_xpath(xp_cf).click()
         obj_cf.click()
@@ -1365,13 +1332,12 @@ class Finlib_indicator:
                 self.tv_wait_page_to_ready(browser, timeout=10)
                 break
 
-
         time.sleep(1)
         while obj_cf.text != column_filed:
             logging.warning("column filed has not set to " + column_filed)
             time.sleep(1)
         logging.info("column field has set to " + column_filed)
-        return(browser)
+        return (browser)
 
     def tv_screener_set_market(self, browser, market='US'):
         # market has to be in ['SH','SZ', 'US', 'HK'], compliant with Tradingview, don't use other name like USA.
@@ -1380,16 +1346,16 @@ class Finlib_indicator:
 
         # xp_m = '/html/body/div[8]/div/div[2]/div[8]/div[1]/img'
         # try:
-            # obj_m = browser.find_element_by_xpath(xp_m)
+        # obj_m = browser.find_element_by_xpath(xp_m)
         obj_m = browser.find_element_by_css_selector('[data-name="screener-markets"]')
         # except:
-            # logging.warning("get market error, "+xp_m+" retry in 10sec")
-            # time.sleep(10)
-            # obj_cf = browser.find_element_by_xpath(xp_m)
+        # logging.warning("get market error, "+xp_m+" retry in 10sec")
+        # time.sleep(10)
+        # obj_cf = browser.find_element_by_xpath(xp_m)
 
         if obj_m.find_element_by_xpath('img').get_attribute('alt').upper() == market:
             logging.info("market already be " + market)
-            return(browser)
+            return (browser)
 
         obj_m.click()
         self.tv_wait_page_to_ready(browser, timeout=10)
@@ -1445,7 +1411,7 @@ class Finlib_indicator:
             time.sleep(1)
             # obj_m = browser.find_element_by_xpath(xp_m) #refresh
         logging.info("market has set to " + market)
-        return(browser)
+        return (browser)
 
     def tv_screener_set_filter(self, browser, filter):
         # xp_f = '/html/body/div[8]/div/div[2]/div[12]/div[1]'
@@ -1460,7 +1426,7 @@ class Finlib_indicator:
 
         if obj_f.text == filter:
             logging.info("filter already be " + filter)
-            return(browser)
+            return (browser)
 
         obj_f.click()
         self.tv_wait_page_to_ready(browser, timeout=10)
@@ -1474,22 +1440,19 @@ class Finlib_indicator:
                 break
                 time.sleep(3)
 
-
-
         time.sleep(5)  # waiting filter result, sometime slow.
         while browser.find_element_by_css_selector('[data-name="screener-filter-sets"]').text != filter:
             logging.warning("filter has not set to " + filter)
             time.sleep(1)
 
         logging.info("filter has set to " + filter)
-        return(browser)
+        return (browser)
 
-
-    def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False, max_row = 20):
+    def tv_save_result_table(self, browser, market='CN', parse_ticker_only=False, max_row=20):
         columns = []
         delay_data_flag = True
 
-        if market in ['SH','SZ']:
+        if market in ['SH', 'SZ']:
             market = 'CN'
 
         result_tbl = browser.find_elements_by_class_name('tv-data-table')
@@ -1508,7 +1471,7 @@ class Finlib_indicator:
         row_index = 0
 
         #check if it's Delayed Data.
-        if rows.__len__()>0:
+        if rows.__len__() > 0:
             cell0_0 = rows[0].find_elements_by_class_name('tv-data-table__cell')[0]
             try:
                 delay = cell0_0.find_element_by_class_name("tv-data-mode--delayed--for-screener")
@@ -1517,7 +1480,6 @@ class Finlib_indicator:
                 logging.info("No delay of the data")
                 delay_data_flag = False
 
-
         r_cnt = 0
         for r in rows:
             if (max_row > 0) and (r_cnt > max_row):
@@ -1525,11 +1487,8 @@ class Finlib_indicator:
 
             r_cnt += 1
 
-
             r_data_list = []
             cells = r.find_elements_by_class_name('tv-data-table__cell')
-
-
 
             if parse_ticker_only:
                 r_data_list.append(cells[0].text)
@@ -1576,8 +1535,7 @@ class Finlib_indicator:
             df = finlib.Finlib().add_stock_name_to_df_us_hk(df)
             # df = df.rename(columns={"name_en": "name"}, inplace=False)
 
-
-        return(df)
+        return (df)
 
     def newChromeBrowser(self, headless=False):
         # reduce webdriver session log for every request.
@@ -1597,17 +1555,16 @@ class Finlib_indicator:
 
         return browser
 
-
     def empty_chrome_tmp_download_dir(self):
         downloadPath = os.getenv('CHROME_TMP_DOWNLOAD_DIR')
         if os.path.isdir(downloadPath):
             shutil.rmtree(downloadPath)
-            logging.info("rmdir "+downloadPath)
+            logging.info("rmdir " + downloadPath)
 
         os.mkdir(downloadPath)
-        logging.info("mkdir "+downloadPath)
+        logging.info("mkdir " + downloadPath)
 
-        return(downloadPath)
+        return (downloadPath)
 
     def tv_screener_export(self, browser, to_dir, interval, symbol_link_f=None):
         dir = self.empty_chrome_tmp_download_dir()
@@ -1622,13 +1579,13 @@ class Finlib_indicator:
             logging.info("waiting download complete, file not appear")
             time.sleep(5)
 
-        while (os.listdir(dir)[0].rfind(".crdownload") > 1): #the index position of .crdownload, -1 if not include .crdownload
+        while (os.listdir(dir)[0].rfind(".crdownload") > 1):  #the index position of .crdownload, -1 if not include .crdownload
             logging.info("waiting download complete, file in .crdownload")
             time.sleep(5)
 
-        fr_file = dir+"/"+os.listdir(dir)[0]
-        to_file = to_dir+"/"+interval+"_"+os.listdir(dir)[0]
-        time.sleep(10) #wait 10 seconds to let the download file completed.
+        fr_file = dir + "/" + os.listdir(dir)[0]
+        to_file = to_dir + "/" + interval + "_" + os.listdir(dir)[0]
+        time.sleep(10)  #wait 10 seconds to let the download file completed.
 
         shutil.move(fr_file, to_file)
         logging.info("downloaded to  " + to_file)
@@ -1640,13 +1597,9 @@ class Finlib_indicator:
             os.symlink(to_file, symbol_link_f)
             logging.info("symbol link created. " + symbol_link_f + " --> " + to_file)
 
+        return (to_file)
 
-        return(to_file)
-
-
-
-
-    def tv_screener_start(self,browser, column_filed, interval, market, filter):
+    def tv_screener_start(self, browser, column_filed, interval, market, filter):
         ######################################
         # Set Column fields
         ######################################
@@ -1667,12 +1620,9 @@ class Finlib_indicator:
         ######################################
         browser = self.tv_screener_set_filter(browser=browser, filter=filter)
 
-        return(browser)
+        return (browser)
 
-
-
-
-    def _get_grid_spec(self,market='AG', high_field='52 Week High', low_field='52 Week Low', period='1D',all_columns=True):
+    def _get_grid_spec(self, market='AG', high_field='52 Week High', low_field='52 Week Low', period='1D', all_columns=True):
 
         df = finlib.Finlib().load_tv_fund(market=market, period=period)
 
@@ -1681,63 +1631,72 @@ class Finlib_indicator:
         high = df[high_field]
         low = df[low_field]
         atr_14d = df['atr_14']
-        df['volatility'] = df['volatility'].apply(lambda _d: round(_d,2))
-
-
+        df['volatility'] = df['volatility'].apply(lambda _d: round(_d, 2))
 
         delta = high - low
-        df['eq_pos'] = round((high - p) / delta, 3) #current price to high, equity position percentage.
-        df['cs_pos'] = round((p - low) / delta, 3) #current price to low, cash position percentage.
+        df['eq_pos'] = round((high - p) / delta, 3)  #current price to high, equity position percentage.
+        df['cs_pos'] = round((p - low) / delta, 3)  #current price to low, cash position percentage.
 
-        df['l1'] = round(high,2)
+        df['l1'] = round(high, 2)
         df['l2'] = round(low + delta * 0.764, 2)
         df['l3'] = round(low + delta * 0.618, 2)
         df['l4'] = round(low + delta * 0.5, 2)
         df['l5'] = round(low + delta * 0.382, 2)
         df['l6'] = round(low + delta * 0.236, 2)
-        df['l7'] = round(low,2)
+        df['l7'] = round(low, 2)
 
-        cols = ['grid_cash_perc', 'grid','grid_support','grid_resistance','grid_perc_to_support','grid_perc_to_resistance']
+        cols = ['grid_cash_perc', 'grid', 'grid_support', 'grid_resistance', 'grid_perc_to_support', 'grid_perc_to_resistance']
 
         idx = df.close < df.l7
-        df.loc[idx, cols]=[0,-4,None,df.loc[idx].l7,None,round((df.loc[idx].l7-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        df.loc[idx, cols] = [0, -4, None, df.loc[idx].l7, None, round((df.loc[idx].l7 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx = (df.l7 <= df.close) & (df.close< df.l6)
-        df.loc[idx,cols]=[0.235, -3, df.loc[idx].l7, df.loc[idx].l6, round((df.loc[idx].close-df.loc[idx].l7)*100/df.loc[idx].close,1), round((df.loc[idx].l6-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        idx = (df.l7 <= df.close) & (df.close < df.l6)
+        df.loc[idx, cols] = [0.235, -3, df.loc[idx].l7, df.loc[idx].l6, round((df.loc[idx].close - df.loc[idx].l7) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l6 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
         idx = (df.l6 <= df.close) & (df.close < df.l5)
-        df.loc[idx, cols]=[0.382, -2, df.loc[idx].l6, df.loc[idx].l5, round((df.loc[idx].close-df.loc[idx].l6)*100/df.loc[idx].close,1), round((df.loc[idx].l5-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        df.loc[idx, cols] = [0.382, -2, df.loc[idx].l6, df.loc[idx].l5, round((df.loc[idx].close - df.loc[idx].l6) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l5 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx = (df.l5 <= df.close) & (df.close< df.l4)
-        df.loc[idx, cols]=[0.5, -1, df.loc[idx].l5, df.loc[idx].l4, round((df.loc[idx].close-df.loc[idx].l5)*100/df.loc[idx].close,1), round((df.loc[idx].l4-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        idx = (df.l5 <= df.close) & (df.close < df.l4)
+        df.loc[idx, cols] = [0.5, -1, df.loc[idx].l5, df.loc[idx].l4, round((df.loc[idx].close - df.loc[idx].l5) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l4 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx = (df.l4 <= df.close) & (df.close< df.l3)
-        df.loc[idx, cols]=[0.618, 1, df.loc[idx].l4, df.loc[idx].l3, round((df.loc[idx].close-df.loc[idx].l4)*100/df.loc[idx].close,1), round((df.loc[idx].l3-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        idx = (df.l4 <= df.close) & (df.close < df.l3)
+        df.loc[idx, cols] = [0.618, 1, df.loc[idx].l4, df.loc[idx].l3, round((df.loc[idx].close - df.loc[idx].l4) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l3 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx=(df.l3 <= df.close) & (df.close< df.l2)
-        df.loc[idx, cols]=[0.764, 2, df.loc[idx].l3, df.loc[idx].l2, round((df.loc[idx].close-df.loc[idx].l3)*100/df.loc[idx].close,1), round((df.loc[idx].l2-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        idx = (df.l3 <= df.close) & (df.close < df.l2)
+        df.loc[idx, cols] = [0.764, 2, df.loc[idx].l3, df.loc[idx].l2, round((df.loc[idx].close - df.loc[idx].l3) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l2 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx=(df.l2 <= df.close) & (df.close< df.l1)
-        df.loc[idx, cols]=[1, 3, df.loc[idx].l2, df.loc[idx].l1, round((df.loc[idx].close-df.loc[idx].l2)*100/df.loc[idx].close,1), round((df.loc[idx].l1-df.loc[idx].close)*100/df.loc[idx].close,1)]
+        idx = (df.l2 <= df.close) & (df.close < df.l1)
+        df.loc[idx, cols] = [1, 3, df.loc[idx].l2, df.loc[idx].l1, round((df.loc[idx].close - df.loc[idx].l2) * 100 / df.loc[idx].close, 1), round((df.loc[idx].l1 - df.loc[idx].close) * 100 / df.loc[idx].close, 1)]
 
-        idx=df.l1 <= df.close
-        df.loc[idx, cols]=[1, 4,df.loc[idx].l1,None, round((df.loc[idx].close-df.loc[idx].l1)*100/df.loc[idx].close,1), None]
+        idx = df.l1 <= df.close
+        df.loc[idx, cols] = [1, 4, df.loc[idx].l1, None, round((df.loc[idx].close - df.loc[idx].l1) * 100 / df.loc[idx].close, 1), None]
 
-        df['grid_perc_resis_spt_dist']=df['grid_perc_to_resistance']-df['grid_perc_to_support']
-        cols=['code', 'mcap','volatility']+cols+['close',high_field, low_field,'eq_pos','cs_pos','grid_perc_resis_spt_dist',"l1","l2","l3","l4","l5","l6","l7" ,'description']
+        df['grid_perc_resis_spt_dist'] = df['grid_perc_to_resistance'] - df['grid_perc_to_support']
+        cols = ['code', 'mcap', 'volatility'] + cols + ['close', high_field, low_field, 'eq_pos', 'cs_pos', 'grid_perc_resis_spt_dist', "l1", "l2", "l3", "l4", "l5", "l6", "l7", 'description']
 
         if not all_columns:
             df = df[cols]
-            df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'name', 'close', 'eq_pos', 'cs_pos','grid_perc_resis_spt_dist',
-                                                                     'grid_perc_to_support', 'grid_perc_to_resistance',
-                                                                     'mcap', 'volatility', 'grid', 'grid_support',
-                                                                     'grid_resistance', ])
+            df = finlib.Finlib().adjust_column(df=df, col_name_list=[
+                'code',
+                'name',
+                'close',
+                'eq_pos',
+                'cs_pos',
+                'grid_perc_resis_spt_dist',
+                'grid_perc_to_support',
+                'grid_perc_to_resistance',
+                'mcap',
+                'volatility',
+                'grid',
+                'grid_support',
+                'grid_resistance',
+            ])
 
-        return(df)
+        return (df)
 
-    def grid_market_overview(self,market,high_field='52 Week High', low_field='52 Week Low',all_columns=True):
+    def grid_market_overview(self, market, high_field='52 Week High', low_field='52 Week Low', all_columns=True):
 
-        df = self._get_grid_spec(market=market,high_field=high_field,low_field=low_field, period='1D',all_columns=all_columns)
+        df = self._get_grid_spec(market=market, high_field=high_field, low_field=low_field, period='1D', all_columns=all_columns)
 
         if market == 'AG':
             df = finlib.Finlib().add_stock_name_to_df(df)
@@ -1764,7 +1723,7 @@ class Finlib_indicator:
         df_g_p4 = df[df.grid == 4].reset_index().drop('index', axis=1)
         logging.info(market + " grid  4 stocks len " + str(df_g_p4.__len__()))
 
-        return(df,df_g_n4,df_g_n3,df_g_n2,df_g_n1,df_g_p1,df_g_p2,df_g_p3,df_g_p4)
+        return (df, df_g_n4, df_g_n3, df_g_n2, df_g_n1, df_g_p1, df_g_p2, df_g_p3, df_g_p4)
 
     def graham_intrinsic_value(self):
         f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_indicator.csv'
@@ -1787,9 +1746,7 @@ class Finlib_indicator:
         # df = df0[df0['end_date']==20201231]
         df = df_last_n_years
 
-        df = df.sort_values('quick_ratio', ascending=False)[
-            ['ts_code', 'end_date', 'quick_ratio', 'basic_eps_yoy', 'eps']].reset_index().drop('index', axis=1)
-
+        df = df.sort_values('quick_ratio', ascending=False)[['ts_code', 'end_date', 'quick_ratio', 'basic_eps_yoy', 'eps']].reset_index().drop('index', axis=1)
 
         df['inner_value'] = round(df['eps'] * (2 * df['basic_eps_yoy'] + 8.5) * 4.4 / 3.78, 2)
         df = finlib.Finlib().ts_code_to_code(df=df)
@@ -1798,7 +1755,7 @@ class Finlib_indicator:
         last_trading_day = finlib.Finlib().get_last_trading_day()
 
         # today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210511.csv')
-        today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_'+last_trading_day+'.csv')
+        today_df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/pickle/daily_update_source/ag_daily_' + last_trading_day + '.csv')
         today_df = today_df[['code', 'close']]
         df = pd.merge(df, today_df, on=['code'], how='inner')
 
@@ -1807,28 +1764,24 @@ class Finlib_indicator:
         df = df.sort_values('diff_inner_market_value', ascending=True).reset_index().drop('index', axis=1)
 
         df = finlib.Finlib().add_amount_mktcap(df=df)
-        df = finlib.Finlib().add_tr_pe(df=df, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1,
-                                                                                                   dayE=finlib.Finlib().get_last_trading_day()),
-                                       df_ts_all=finlib.Finlib().add_ts_code_to_column(
-                                           df=finlib.Finlib().load_fund_n_years()))
+        df = finlib.Finlib().add_tr_pe(df=df, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
         df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
-
 
         df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
         print(finlib.Finlib().pprint(df.head(10)))
 
-        df.to_csv(csv,encoding='UTF-8', index=False)
-        logging.info("saved all to "+csv+" len"+str(df.__len__()))
+        df.to_csv(csv, encoding='UTF-8', index=False)
+        logging.info("saved all to " + csv + " len" + str(df.__len__()))
 
         #selected
         df_sel = df[df['eps'] > 0]  # 基本每股收益
         df_sel = df_sel[df_sel['basic_eps_yoy'] > 0]  # 基本每股收益同比增长率(%)
 
         df_sel = finlib.Finlib().remove_garbage(df=df_sel)
-        df_sel.to_csv(csv_sel,encoding='UTF-8', index=False)
-        logging.info("selected saved to "+csv_sel+" len"+str(df_sel.__len__()))
+        df_sel.to_csv(csv_sel, encoding='UTF-8', index=False)
+        logging.info("selected saved to " + csv_sel + " len" + str(df_sel.__len__()))
 
-        return(df,df_sel)
+        return (df, df_sel)
 
     def hong_san_bin(self):
         output_csv = '/home/ryan/DATA/result/hong_san_bin.csv'
@@ -1862,8 +1815,7 @@ class Finlib_indicator:
             if df_rst.empty:
                 df_rst = df_a_day
 
-            df_rst = pd.merge(df_rst[['code', 'date', 'close']], df_a_day[['code', 'date', 'close']], how='inner',
-                              on='code', suffixes=('_x', ''))
+            df_rst = pd.merge(df_rst[['code', 'date', 'close']], df_a_day[['code', 'date', 'close']], how='inner', on='code', suffixes=('_x', ''))
             logging.info("after merging day " + d + " ,result csv len " + str(df_rst.__len__()))
 
         df_rst = df_rst[['code', 'date', 'close']]
@@ -1872,9 +1824,9 @@ class Finlib_indicator:
         df_rst.to_csv(output_csv, encoding='UTF-8', index=False)
         logging.info(finlib.Finlib().pprint(df_rst))
         logging.info("saved to " + output_csv + " , len " + str(df_rst.__len__()))
-        return(df_rst)
+        return (df_rst)
 
-    def _hong_san_bin_day_bar_analysis(self,f):
+    def _hong_san_bin_day_bar_analysis(self, f):
         if not os.path.exists(f):
             logging.error("file not exists. " + str(f))
             return (pd.DataFrame())
@@ -1885,8 +1837,7 @@ class Finlib_indicator:
         df_in = df_in[df_in['low'] < df_in['pre_close']]
         df_in = df_in[df_in['open'] < df_in['pre_close']]
         df_in = df_in[df_in['high'] > df_in['pre_close']]
-        df_in = df_in[
-            (df_in['high'] - df_in['close']) / df_in['close'] < 0.007]  # high to close less than 0.7%. short up shadow.
+        df_in = df_in[(df_in['high'] - df_in['close']) / df_in['close'] < 0.007]  # high to close less than 0.7%. short up shadow.
         # df_in = df_in[ (df_in['open'] - df_in['low'])/ df_in['open'] < 0.01]
         return (df_in)
 
@@ -1930,68 +1881,58 @@ class Finlib_indicator:
                 trend = "bear"
                 action = "buy"
 
-            df_rtn = df_rtn.append(pd.DataFrame().from_dict({'code': [code], 'date': [da1], 'close': [d1],
-                                                             'trend': [trend], 'action':[action],
-                                                             'ma_short': [ma_short],
-                                                             'ma_middle': [ma_middle],
-                                                             'p_make_ma_across': [d0],
-                                                             'delta': [delta],
-                                                             'delta_perc': [delta_perc],
-                                                             }))
+            df_rtn = df_rtn.append(pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [da1],
+                'close': [d1],
+                'trend': [trend],
+                'action': [action],
+                'ma_short': [ma_short],
+                'ma_middle': [ma_middle],
+                'p_make_ma_across': [d0],
+                'delta': [delta],
+                'delta_perc': [delta_perc],
+            }))
 
-            logging.info(str(code) + ", day " + str(da1) + " close " + str(d1)
-                         + " , price to get mashort" + str(ma_short)
-                         + " equal malong" + str(ma_middle) + " " + str(d0)
-                         + " delta " + str(delta)
-                         + " delta_perc " + str(delta_perc)
-                         + " trend " + str(trend)
-                         )
+            logging.info(str(code) + ", day " + str(da1) + " close " + str(d1) + " , price to get mashort" + str(ma_short) + " equal malong" + str(ma_middle) + " " + str(d0) + " delta " + str(delta) + " delta_perc " + str(delta_perc) + " trend " + str(trend))
 
         df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
         df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
         logging.info("file saved to " + csv_out + " ,len " + str(df_rtn.__len__()))
-        return(df_rtn)
+        return (df_rtn)
 
     #calculate and compare different sector's volume and price change percent.
     # startD and endD have to be trading day.
     def price_amount_increase(self, startD, endD):
 
-        if startD == None and endD == None: #check latest 5 days
-            this_year = datetime.today().strftime("%Y") #2020
-            csv_f = "/home/ryan/DATA/pickle/trading_day_"+this_year+".csv"
+        if startD == None and endD == None:  #check latest 5 days
+            this_year = datetime.today().strftime("%Y")  #2020
+            csv_f = "/home/ryan/DATA/pickle/trading_day_" + this_year + ".csv"
             df_trading_day = pd.read_csv(csv_f, converters={'cal_date': str})
-            df_trading_day = df_trading_day[df_trading_day['is_open'] == 1].reset_index().drop('index',axis=1)
+            df_trading_day = df_trading_day[df_trading_day['is_open'] == 1].reset_index().drop('index', axis=1)
 
             today_index = df_trading_day[df_trading_day['cal_date'] == finlib.Finlib().get_last_trading_day()].index.values[0]
 
-            endD = df_trading_day.iloc[today_index-1].cal_date
-            startD = df_trading_day.iloc[today_index-6].cal_date
-
+            endD = df_trading_day.iloc[today_index - 1].cal_date
+            startD = df_trading_day.iloc[today_index - 6].cal_date
 
         # df_rtn=pd.DataFrame(columns=['group_name','price_change','amount_change'])
         df_rtn = pd.DataFrame()
         r_idx = 0
 
         # prepare amount df
-        df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None,
-                                                       short_period=True, debug=False, force_run=False)
+        df_amount = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5, dayS=str(startD), dayE=str(endD), daily_update=None, short_period=True, debug=False, force_run=False)
         df_close_start = df_amount[df_amount['date'] == int(startD)]
         df_close_end = df_amount[df_amount['date'] == int(endD)]
-        df_amount = pd.merge(df_close_start[['code', 'date', 'close', 'amount']],
-                             df_close_end[['code', 'date', 'close', 'amount']], on='code', how='inner',
-                             suffixes=('_dayS', '_dayE'))
-        df_amount['amount_increase'] = round(
-            (df_amount['amount_dayE'] - df_amount['amount_dayS']) * 100.0 / df_amount['amount_dayS'], 2)
+        df_amount = pd.merge(df_close_start[['code', 'date', 'close', 'amount']], df_close_end[['code', 'date', 'close', 'amount']], on='code', how='inner', suffixes=('_dayS', '_dayE'))
+        df_amount['amount_increase'] = round((df_amount['amount_dayE'] - df_amount['amount_dayS']) * 100.0 / df_amount['amount_dayS'], 2)
 
         # prepare close df
         # df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=30,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False)
-        df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10, dayS=str(startD), dayE=str(endD), daily_update=None,
-                                                    debug=False, force_run=False)
+        df_basic = finlib.Finlib().get_last_n_days_daily_basic(ndays=10, dayS=str(startD), dayE=str(endD), daily_update=None, debug=False, force_run=False)
         df_close_start = df_basic[df_basic['trade_date'] == int(startD)]
         df_close_end = df_basic[df_basic['trade_date'] == int(endD)]
-        df_close = pd.merge(df_close_start[['ts_code', 'close', 'trade_date']],
-                            df_close_end[['ts_code', 'close', 'trade_date']], on='ts_code', how='inner',
-                            suffixes=('_dayS', '_dayE'))
+        df_close = pd.merge(df_close_start[['ts_code', 'close', 'trade_date']], df_close_end[['ts_code', 'close', 'trade_date']], on='ts_code', how='inner', suffixes=('_dayS', '_dayE'))
         df_close = finlib.Finlib().ts_code_to_code(df=df_close)
         df_close = finlib.Finlib().add_stock_name_to_df(df=df_close)
 
@@ -2000,34 +1941,19 @@ class Finlib_indicator:
             return
 
         # calculate HS300
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv(
-            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close,
-                                                              df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv(
-            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close,
-                                                              df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv(
-            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close,
-                                                              df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhenChenZhi",
-                                                              df_code_column_only=pd.read_csv(
-                                                                  "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"),
-                                                              df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv(
-            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close,
-                                                              df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv(
-            "/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close,
-                                                              df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhenChenZhi", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close, df_amount=df_amount))
 
         # calculate garbage stocks close/amount increase
         df_rtn_garb = pd.DataFrame()
         for csv in glob.glob("/home/ryan/DATA/result/garbage/latest_*.csv"):
             # logging.info("reading "+csv)
             df = pd.read_csv(csv)
-            df_rtn_garb = df_rtn_garb.append(
-                self._get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']],
-                                          df_close=df_close, df_amount=df_amount))
+            df_rtn_garb = df_rtn_garb.append(self._get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount))
 
         logging.info("\n===== INDEX Increase ======")
         logging.info(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
@@ -2041,46 +1967,39 @@ class Finlib_indicator:
             logging.error("Unexpected empty input df df_close.")
             return ()
 
-        df_2 = pd.merge(df_code_column_only[['code']].drop_duplicates(),
-                        df_close[['code', 'name', 'close_dayS', 'trade_date_dayS', 'close_dayE', 'trade_date_dayE']],
-                        on='code', how='inner')
+        df_2 = pd.merge(df_code_column_only[['code']].drop_duplicates(), df_close[['code', 'name', 'close_dayS', 'trade_date_dayS', 'close_dayE', 'trade_date_dayE']], on='code', how='inner')
         df_2 = pd.merge(df_2, df_amount[['code', 'amount_increase']], on='code', how='inner')
         df_2['close_delta'] = round((df_2['close_dayE'] - df_2['close_dayS']) * 100.0 / df_2['close_dayS'], 2)
         chg_mean_perc_close = round(df_2['close_delta'].mean(), 2)
         chg_mean_perc_amt = round(df_2['amount_increase'].mean(), 2)
 
-        print(str(df_close.trade_date_dayS.iloc[0]) + "->" + str(df_close.trade_date_dayE.iloc[0]) + " len " + str(
-            df_2.__len__()) + " " + list_name + ",  change average close " + str(
-            chg_mean_perc_close) + "%,  change average amount " + str(chg_mean_perc_amt) + "%")
+        print(str(df_close.trade_date_dayS.iloc[0]) + "->" + str(df_close.trade_date_dayE.iloc[0]) + " len " + str(df_2.__len__()) + " " + list_name + ",  change average close " + str(chg_mean_perc_close) + "%,  change average amount " + str(chg_mean_perc_amt) + "%")
 
-        return (pd.DataFrame.from_dict({'date_s': [df_close['trade_date_dayS'].iloc[0]],
-                                        'date_e': [df_close['trade_date_dayE'].iloc[0]],
+        return (pd.DataFrame.from_dict({
+            'date_s': [df_close['trade_date_dayS'].iloc[0]],
+            'date_e': [df_close['trade_date_dayE'].iloc[0]],
+            'group_name': [list_name],
+            'price_change': [chg_mean_perc_close],
+            'amount_change': [chg_mean_perc_amt],
+            'len': [df_2.__len__()],
+        }))
 
-                                        'group_name': [list_name],
-                                        'price_change': [chg_mean_perc_close],
-                                        'amount_change': [chg_mean_perc_amt],
-                                        'len': [df_2.__len__()],
-                                        }))
-
-
-
-    def count_jin_cha_si_cha(self, df, check_days=220, code='',name='',ma_short=4,ma_middle=27):
+    def count_jin_cha_si_cha(self, df, check_days=220, code='', name='', ma_short=4, ma_middle=27):
         df = df.tail(check_days).reset_index().drop('index', axis=1)
 
         code = df.iloc[0]['code']
         start_date = df.iloc[0]['date']
         end_date = df.iloc[-1]['date']
 
-
         df = self.add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=60)
 
-        (df, df_si_cha, df_jin_cha) = self.slow_fast_across(df=df, fast_col_name='close_'+str(ma_short)+'_sma', slow_col_name='close_'+str(ma_middle)+'_sma')
+        (df, df_si_cha, df_jin_cha) = self.slow_fast_across(df=df, fast_col_name='close_' + str(ma_short) + '_sma', slow_col_name='close_' + str(ma_middle) + '_sma')
 
         a_dict = self._cnt_jin_cha_si_cha_days(df_all=df, df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
         jincha_days = a_dict['jincha_days']
         sicha_days = a_dict['sicha_days']
 
-        logging.info('\n'+str(code)+" "+str(name)+ ' SI CHA DAYS:')
+        logging.info('\n' + str(code) + " " + str(name) + ' SI CHA DAYS:')
         logging.info(finlib.Finlib().pprint(df_si_cha))
 
         logging.info('\n' + str(code) + " " + str(name) + ' JIN CHA DAYS:')
@@ -2099,35 +2018,26 @@ class Finlib_indicator:
             if df_profit_details.__len__() > 0:
                 profit_over_all = df_profit_details.iloc[-1]['profit_overall']
 
-
         df_rtn = pd.DataFrame({
             'code': [code],
-            'df_profit_details':[df_profit_details],
-            'profit_over_all':profit_over_all,
+            'df_profit_details': [df_profit_details],
+            'profit_over_all': profit_over_all,
             'day_cnt': [cnt_days],
             'daystart': [str(start_date)],
             'dayend': [str(end_date)],
             'jincha_cnt': [cnt_jincha],
             'sicha_cnt': [cnt_sicha],
-            'jincha_days':[jincha_days],
-            'sicha_days':[sicha_days],
+            'jincha_days': [jincha_days],
+            'sicha_days': [sicha_days],
             # 'jincha_perc': [round(cnt_jincha * 100 / cnt_days, 1)],
             # 'sicha_perc': [round(cnt_sicha * 100 / cnt_days, 1)],
-            'sum_perc': [round((cnt_jincha + cnt_sicha) * 100 /cnt_days, 1)],
-            'jincha_sicha_days_ratio' : [round(jincha_days/(sicha_days+1), 2)],
+            'sum_perc': [round((cnt_jincha + cnt_sicha) * 100 / cnt_days, 1)],
+            'jincha_sicha_days_ratio': [round(jincha_days / (sicha_days + 1), 2)],
         })
 
+        logging.info(str(code) + " " + name + ", days " + str(cnt_days) + ", jincha cnt: " + str(cnt_jincha) + "  sicha cnt: " + str(cnt_sicha) + "  jincha days: " + str(jincha_days) + "  sicha days: " + str(sicha_days) + "  profit_over_all: " + str(profit_over_all))
 
-        logging.info(str(code)+" "+name+", days " + str(cnt_days)
-                     + ", jincha cnt: "   + str(cnt_jincha)
-                     + "  sicha cnt: " + str(cnt_sicha)
-                     + "  jincha days: " + str(jincha_days)
-                     + "  sicha days: " + str(sicha_days)
-                     + "  profit_over_all: " + str(profit_over_all)
-                     )
-
-        return(df_rtn)
-
+        return (df_rtn)
 
     def _cnt_jin_cha_si_cha_days(self, df_all, df_jin_cha, df_si_cha):
         sicha_days = 0
@@ -2136,34 +2046,29 @@ class Finlib_indicator:
         jidx = df_jin_cha.index.tolist()
         sidx = df_si_cha.index.tolist()
 
+        if sidx.__len__() == 0 and jidx.__len__() == 0:
+            return ({'jincha_days': jincha_days, 'sicha_days': sicha_days})
 
-        if sidx.__len__()==0 and jidx.__len__() == 0:
-            return({'jincha_days':jincha_days,'sicha_days':sicha_days})
-
-        if sidx.__len__()==0 and jidx.__len__() > 0:
+        if sidx.__len__() == 0 and jidx.__len__() > 0:
             jincha_days = df_all.index.to_list()[-1] - jidx[0]
-            sicha_days = jidx[0] -  df_all.index.to_list()[0]
-            return({'jincha_days':jincha_days,'sicha_days':sicha_days})
+            sicha_days = jidx[0] - df_all.index.to_list()[0]
+            return ({'jincha_days': jincha_days, 'sicha_days': sicha_days})
 
-
-        if jidx.__len__()==0 and sidx.__len__() > 0:
+        if jidx.__len__() == 0 and sidx.__len__() > 0:
             sicha_days = df_all.index.to_list()[-1] - sidx[0]
-            jincha_days = sidx[0] -  df_all.index.to_list()[0]
-            return({'jincha_days':jincha_days,'sicha_days':sicha_days})
-
-
-
+            jincha_days = sidx[0] - df_all.index.to_list()[0]
+            return ({'jincha_days': jincha_days, 'sicha_days': sicha_days})
 
         if jidx.__len__() > sidx.__len__():
             trim_days = sidx[-1] - jidx[0]
-            sicha_days += jidx[-1] - sidx[-1] #days of the latest sicha period
-            jincha_days += df_all.index.to_list()[-1] - jidx[-1] # current is jincha perido, days it has been lasted.
+            sicha_days += jidx[-1] - sidx[-1]  #days of the latest sicha period
+            jincha_days += df_all.index.to_list()[-1] - jidx[-1]  # current is jincha perido, days it has been lasted.
         elif sidx.__len__() > jidx.__len__():
             trim_days = jidx[-1] - sidx[0]
-            jincha_days += sidx[-1] - jidx[-1] #days of the latest jincha period
-            sicha_days += df_all.index.to_list()[-1] - sidx[-1] #current is sicha perido, days it has been lasted.
+            jincha_days += sidx[-1] - jidx[-1]  #days of the latest jincha period
+            sicha_days += df_all.index.to_list()[-1] - sidx[-1]  #current is sicha perido, days it has been lasted.
         elif sidx.__len__() > 0 and jidx.__len__() > 0 and (sidx.__len__() == jidx.__len__()):
-            if sidx[0] < jidx[0] :
+            if sidx[0] < jidx[0]:
                 trim_days = jidx[-1] - sidx[0]
                 jincha_days += df_all.index.to_list()[-1] - jidx[-1]
 
@@ -2173,30 +2078,29 @@ class Finlib_indicator:
 
         if sidx[0] < jidx[0]:
             logging.info("start with sicha")
-            sicha_days_trim = pd.Series( list(map(sub, jidx, sidx)) ).sum()
+            sicha_days_trim = pd.Series(list(map(sub, jidx, sidx))).sum()
             sicha_days += sicha_days_trim
             jincha_days += trim_days - sicha_days_trim
             sicha_days += sidx[0]
         elif jidx[0] < sidx[0]:
             logging.info("start with jincha")
             jincha_days_trim = pd.Series(list(map(sub, sidx, jidx))).sum()
-            jincha_days += jincha_days_trim #middle body of jincha
+            jincha_days += jincha_days_trim  #middle body of jincha
             sicha_days += trim_days - jincha_days_trim
-            jincha_days += jidx[0] #head of jincha
+            jincha_days += jidx[0]  #head of jincha
 
-        return({'jincha_days':jincha_days,'sicha_days':sicha_days})
-
+        return ({'jincha_days': jincha_days, 'sicha_days': sicha_days})
 
     def _calc_jin_cha_si_cha_profit(self, df_jin_cha, df_si_cha):
-        df_jin_cha['action']="B"
-        df_si_cha['action']="S"
+        df_jin_cha['action'] = "B"
+        df_si_cha['action'] = "S"
 
         profit_this = 0
         profit_overall = 0
 
-        if df_jin_cha.__len__()>0:
+        if df_jin_cha.__len__() > 0:
             code = df_jin_cha['code'].iloc[0]
-        elif df_si_cha.__len__()>0:
+        elif df_si_cha.__len__() > 0:
             code = df_si_cha['code'].iloc[0]
         else:
             logging.error("df_jin_cha and df_si_cha all empty, quit")
@@ -2212,7 +2116,7 @@ class Finlib_indicator:
             else:
                 break
         while True:
-            if df_tmp.__len__() >= 2 and not (df_tmp.iloc[-1]['action'] == 'S' and df_tmp.iloc[-2]['action'] =='B'):
+            if df_tmp.__len__() >= 2 and not (df_tmp.iloc[-1]['action'] == 'S' and df_tmp.iloc[-2]['action'] == 'B'):
                 df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
             else:
                 break
@@ -2226,8 +2130,7 @@ class Finlib_indicator:
         #     if df_tmp.__len__() > 0 and df_tmp.iloc[-1]['action'] == 'B':
         #         df_tmp = df_tmp.drop(index=df_tmp.tail(1).index.values[0])
 
-
-        for index,row in df_tmp.iterrows():
+        for index, row in df_tmp.iterrows():
             action = row['action']
             close = row['close']
             date = row['date']
@@ -2236,30 +2139,28 @@ class Finlib_indicator:
                 b_price = close
                 # logging.info("Buy at "+row['date']+" "+str(close))
             if action == 'S':
-                profit_this = round((close - b_price)*100/b_price,2)
-                profit_overall = round(profit_overall+ profit_this,2)
+                profit_this = round((close - b_price) * 100 / b_price, 2)
+                profit_overall = round(profit_overall + profit_this, 2)
                 # logging.info("Sell at " + row['date'] + " " + str(close))
                 # logging.info("profit% this "+str(profit_this)+" profit% overall "+str(profit_overall))
 
-                tmp_df= pd.DataFrame(
-                    {
-                        'code':[code],
-                        'buy_date':[b_date],
-                        'buy_price':[b_price],
-                        'sell_date':[date],
-                        'sell_price':[close],
-                        'profit_this':[profit_this],
-                        'profit_overall':[profit_overall],
-                     }
-                )
+                tmp_df = pd.DataFrame({
+                    'code': [code],
+                    'buy_date': [b_date],
+                    'buy_price': [b_price],
+                    'sell_date': [date],
+                    'sell_price': [close],
+                    'profit_this': [profit_this],
+                    'profit_overall': [profit_overall],
+                })
 
                 rtn_df = rtn_df.append(tmp_df)
 
         rtn_df = rtn_df.reset_index().drop('index', axis=1)
-        return(rtn_df)
+        return (rtn_df)
 
     # general function to return jincha sicha on TWO columns.
-    def slow_fast_across(self, df,fast_col_name,slow_col_name):
+    def slow_fast_across(self, df, fast_col_name, slow_col_name):
 
         df['tmp_col_fast_minor_slow'] = df[fast_col_name] - df[slow_col_name]
 
@@ -2267,17 +2168,15 @@ class Finlib_indicator:
 
         df_si_cha = df[(df['b1_tmp_col_fast_minor_slow'] > 0) & (df['tmp_col_fast_minor_slow'] < 0)]
         df_jin_cha = df[(df['b1_tmp_col_fast_minor_slow'] < 0) & (df['tmp_col_fast_minor_slow'] > 0)]
-        return(df, df_si_cha, df_jin_cha)
-
+        return (df, df_si_cha, df_jin_cha)
 
     # general function to return jincha sicha on SINGLE column.
-    def single_column_across(self, df,col_name,threshod=0):
+    def single_column_across(self, df, col_name, threshod=0):
         df['b1_tmp_col'] = df[col_name].shift(1)
 
         df_si_cha = df[(df['b1_tmp_col'] >= threshod) & (df[col_name] < threshod)]
         df_jin_cha = df[(df['b1_tmp_col'] <= threshod) & (df[col_name] > threshod)]
-        return(df_si_cha, df_jin_cha)
-
+        return (df_si_cha, df_jin_cha)
 
     def zigzag_plot(self):
         # df1 =  get_data_yahoo('GOOG')
@@ -2293,9 +2192,8 @@ class Finlib_indicator:
         # ===========
         df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
         df = df[-200:].reset_index().drop('index', axis=1)
-        df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), "%Y%m%d"))
+        df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
         df = df.set_index('date')
-
 
         X = df['close']
         pivots = zigzag.peak_valley_pivots(X.values, 0.1, -0.1)
@@ -2309,13 +2207,17 @@ class Finlib_indicator:
         ts_pivots.plot(style='g-o')
         plt.show()
 
+    def _zigzag_divation(self,csv_f,code,name):
+        rtn_df_macd_div = pd.DataFrame()
+        rtn_df_kdj_div = pd.DataFrame()
+        rtn_df_rsi_div = pd.DataFrame()
 
-    def zigzag_divation(self):
         # ===========
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
+        # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
         df = df[-200:].reset_index().drop('index', axis=1)
-        df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), "%Y%m%d"))
-        df = df.set_index('date')
+        df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
+        # df = df.set_index('date') # no, we don't need to set index on date, because we will not plot.
 
         X = df['close']
         pivots = zigzag.peak_valley_pivots(X.values, 0.1, -0.1)
@@ -2326,53 +2228,156 @@ class Finlib_indicator:
         df = self.add_kdj(df=df)
         df = self.add_rsi(df=df, middle=14)
 
+        # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
+        # df = df[keep_cols]
+
         df['pivots'] = pivots  # add pivots to df, irrelevent with plot.
-        # df.loc[df['pivots']==1, 'action']='S'
-        # df.loc[df['pivots']==-1, 'action']='B'
+
         df = df[df['pivots'] != 0]
+        df = df.reset_index()  # df is stockstats.StockDataFrame
 
         ser_today = df.iloc[-1]
 
+        if df.__len__() < 4:
+            logging.info("no enought pivot, less than 4")
+            return(rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
+
         if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley, likely at low level price.
             v_b1 = df.iloc[-2]  # valley -1
-            p_b1 = df.iloc[-3]  # peak -1
+            # p_b1 = df.iloc[-3]  # peak -1
             v_b2 = df.iloc[-4]  # valley -2
-            p_b2 = df.iloc[-5]  # peak -2
+            # p_b2 = df.iloc[-5]  # peak -2
+            trend = 'UP'
+            logging.info(code+" "+ name+" "+ ", trend " + trend + ", valley_b2 " + str(v_b2['date']) + ", valley_b1 " + str(v_b1['date']))
+
             # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
             if v_b1['close'] <= v_b2['close']:
                 if v_b1['dif_main'] > v_b2['dif_main']:
-                    logging.info("divation on MACD dif_main, expect to raise up")
+                    logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to raise up. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
+                    rtn_df_macd_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [v_b2['date']],
+                        'valley_b1': [v_b1['date']],
+                        'close_b2': [v_b2['close']],
+                        'close_b1': [v_b1['close']],
+                        'dif_main': [v_b2['dif_main']],
+                        'dif_main': [v_b1['dif_main']],
+                    })
                 if v_b1['kdjj'] > v_b2['kdjj']:
-                    logging.info("divation on kdjj, expect to raise up")
+                    logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to raise up. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
+                    rtn_df_kdj_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [v_b2['date']],
+                        'valley_b1': [v_b1['date']],
+                        'close_b2': [v_b2['close']],
+                        'close_b1': [v_b1['close']],
+                        'kdjj_b2': [v_b2['kdjj']],
+                        'kdjj_b1': [v_b1['kdjj']],
+                    })
                 if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
-                    logging.info("divation on rsi, expect to raise up")
+                    logging.info(code+" "+ name+" "+ ", divation on rsi, expect to raise up. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
+                    rtn_df_rsi_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [v_b2['date']],
+                        'valley_b1': [v_b1['date']],
+                        'close_b2': [v_b2['close']],
+                        'close_b1': [v_b1['close']],
+                        'rsi_middle_14': [v_b2['rsi_middle_14']],
+                        'rsi_middle_14': [v_b1['rsi_middle_14']],
+                    })
 
         elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
             p_b1 = df.iloc[-2]
-            v_b1 = df.iloc[-3]
+            # v_b1 = df.iloc[-3]
             p_b2 = df.iloc[-4]
-            v_b2 = df.iloc[-5]
+            # v_b2 = df.iloc[-5]
+            trend = 'DOWN'
+            logging.info(code+" "+ name+" "+ ", trend " + trend + ", peak_b2 " + str(p_b2['date']) + ", peak_b1 " + str(p_b1['date']))
+
             # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
             if p_b1['close'] >= p_b2['close']:
                 if p_b1['dif_main'] < p_b2['dif_main']:
-                    logging.info("divation on MACD dif_main, expect to going down")
-                if p_b1['kdjj'] < p_b2['kdjj']:
-                    logging.info("divation on kdjj, expect to going down")
-                if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
-                    logging.info("divation on rsi, expect to going down")
+                    logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
+                    rtn_df_macd_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [p_b2['date']],
+                        'valley_b1': [p_b1['date']],
+                        'close_b2': [p_b2['close']],
+                        'close_b1': [p_b1['close']],
+                        'dif_main': [p_b2['dif_main']],
+                        'dif_main': [p_b1['dif_main']],
+                    })
 
+                if p_b1['kdjj'] < p_b2['kdjj']:
+                    logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
+                    rtn_df_kdj_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [p_b2['date']],
+                        'valley_b1': [p_b1['date']],
+                        'close_b2': [p_b2['close']],
+                        'close_b1': [p_b1['close']],
+                        'kdjj_b2': [p_b2['kdjj']],
+                        'kdjj_b1': [p_b1['kdjj']],
+                    })
+                if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
+                    logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
+                    rtn_df_rsi_div = pd.DataFrame({
+                        'code': [code],
+                        'name': [name],
+                        'trend': [trend],
+                        'valley_b2': [p_b2['date']],
+                        'valley_b1': [p_b1['date']],
+                        'close_b2': [p_b2['close']],
+                        'close_b1': [p_b1['close']],
+                        'rsi_middle_14': [p_b2['rsi_middle_14']],
+                        'rsi_middle_14': [p_b1['rsi_middle_14']],
+                    })
 
         # df_valley = df[df['pivots'] == -1].reset_index()
         # df_peak = df[df['pivots'] == 1].reset_index()
         # df_profit = self._calc_jin_cha_si_cha_profit(df_si_cha=df_peak, df_jin_cha=df_valley)
+        return (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
 
-        print(1)
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    def zigzag_divation(self,debug=False):
+        output_csv = "/home/ryan/DATA/result/macd_div.csv"
+        df_rtn = pd.DataFrame()
+        stock_list = finlib.Finlib().get_A_stock_instrment()
+        stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+
+        # stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+        if debug:
+            stock_list = stock_list.head(100)  # debug
+
+        cnt = stock_list.__len__()
+        i = 0
+        for index,row in stock_list.iterrows():
+            code = row['code']
+            name = row['name']
+            i += 1
+            csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
+            logging.info(str(i) + " of " + str(cnt) + " " + code+" "+name)
+
+            (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = self._zigzag_divation(csv_f = csv_f, code =code, name = name)
+            print(1)
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
         pass
-
 
     def w_shape_exam(self, df):
         pass

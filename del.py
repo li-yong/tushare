@@ -428,6 +428,8 @@ def plot_pivots(X, pivots):
 
 #### MAIN #####
 
+finlib_indicator.Finlib_indicator().zigzag_divation(debug=True)
+
 evaluate_grid(market='AG')
 exit()
 
