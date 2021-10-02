@@ -91,9 +91,7 @@ def _kdj(csv_f, period):
     period_kdj = 9
     df_period = df_period[-1 * (period_kdj * 3):]
 
-    stock = stockstats.StockDataFrame.retype(df_period)
-
-    df_kdj = stock[['close', 'kdjk', 'kdjd', 'kdjj']]
+    df_kdj = finlib_indicator.Finlib_indicator().add_kdj(df=df_period)
 
     if df_kdj.__len__() < 2:  #at least two month.
         return (rtn)
@@ -280,28 +278,7 @@ def _macd(csv_f, period):
     df_period = finlib_indicator.Finlib_indicator().add_ma_ema(df_period, short=90, middle=120, long=200)
 
     df_period = df_period[-100:]
-
-    #print(tabulate.tabulate(df_period[-10:], headers='keys', tablefmt='psql'))
-    '''
-    MACD: (12-day EMA - 26-day EMA)
-    Signal Line: 9-day EMA of MACD
-    MACD Histogram: 2*(MACD - Signal Line)
-    
-    df = finlib_indicator.Finlib_indicator().add_ma_ema(df[['close']], short=12, middle=26, long=60)
-    df['ema_12_minus_26'] = df['ema_short_12'] - df['ema_middle_26']  # named DIF in tradeview/eastmoney/MooMoo
-    df['signal'] = df['ema_12_minus_26'].ewm(span=9, min_periods=0, adjust=False, ignore_na=False).mean() # named DEA in tradeview/eastmoney/MooMoo
-    df['Histogram'] = 2 * (df['ema_12_minus_26'] - df['signal'])  # named MACD in tradeview/eastmoney/MooMoo
-    '''
-    df_macd = stockstats.StockDataFrame.retype(df_period).reset_index()
-    #df_macd = stock[['macd', 'macds', 'macdh','close','sma_long_60','ema_long_60','date','code']]  #macds: # MACD signal line, macdh: # MACD histogram
-    df_macd[['macd', 'macds', 'macdh', 'date']]  #macds: # MACD signal line, macdh: # MACD histogram
-    df_macd.rename(columns={
-        "macd": "DIF_main",    # DIF_Main called DIF in tradeview/eastmoney/Moomoo
-        "macds": "DEA_signal", # DEA_signal called DEA in tradeview/eastmoney/Moomoo
-        "macdh": "MACD_histogram", # MACD_histogram called 'MACD' in tradeview/eastmoney/MooMoo
-    }, inplace=True)
-    df_macd = df_macd.round({'DIF_main': 2, 'DEA_signal': 2, 'MACD_histogram': 2})
-  
+    df_macd = finlib_indicator.Finlib_indicator().add_macd(df=df_period)
  
     #print(tabulate.tabulate(df_macd[-2:], headers='keys', tablefmt='psql'))
 

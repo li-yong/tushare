@@ -68,8 +68,73 @@ SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 
+import zigzag
+# from pandas_datareader import get_data_yahoo
+
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 
 class Finlib_indicator:
+
+    def add_rsi(self, df, short=5, middle=10, long=20):
+        stock = stockstats.StockDataFrame.retype(df)
+
+        df['rsi_short_' + str(short)] = stock['rsi_' + str(short)]
+        df['rsi_middle_' + str(middle)] = stock['rsi_' + str(middle)]
+        df['rsi_long_' + str(long)] = stock['rsi_' + str(long)]
+
+        df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
+        if 'index' in df.columns:
+            df = df.drop('index', axis=1)
+
+        if 'level_0' in df.columns:
+            df = df.drop('level_0', axis=1)
+
+        return (df)
+
+    def add_kdj(self, df, period=9):
+        df = stockstats.StockDataFrame.retype(df)
+        df[['kdjk']] # will add columns 'rsv_9', 'kdjk_9', 'kdjk', 'kdjd_9', 'kdjd', 'kdjj_9', 'kdjj'
+        df[['kdjk_' + str(period)]]
+        df[['kdjd_' + str(period)]]
+        df[['kdjj_' + str(period)]]
+
+        df = df.reset_index()  # after retype, 'date' column was changed to index. reset 'date' to a column
+        if 'index' in df.columns:
+            df = df.drop('index', axis=1)
+
+        if 'level_0' in df.columns:
+            df = df.drop('level_0', axis=1)
+
+        return(df)
+
+
+
+        return(df_kdj)
+
+
+    def add_macd(self, df):
+        '''
+        MACD: (12-day EMA - 26-day EMA)
+        Signal Line: 9-day EMA of MACD
+        MACD Histogram: 2*(MACD - Signal Line)
+
+        df = finlib_indicator.Finlib_indicator().add_ma_ema(df[['close']], short=12, middle=26, long=60)
+        df['ema_12_minus_26'] = df['ema_short_12'] - df['ema_middle_26']  # named DIF in tradeview/eastmoney/MooMoo
+        df['signal'] = df['ema_12_minus_26'].ewm(span=9, min_periods=0, adjust=False, ignore_na=False).mean() # named DEA in tradeview/eastmoney/MooMoo
+        df['Histogram'] = 2 * (df['ema_12_minus_26'] - df['signal'])  # named MACD in tradeview/eastmoney/MooMoo
+        '''
+        df_macd = stockstats.StockDataFrame.retype(df).reset_index()
+        df_macd[['macd', 'macds', 'macdh', 'date']]  # macds: # MACD signal line, macdh: # MACD histogram
+        df_macd.rename(columns={
+            "macd": "DIF_main",  # DIF_Main called DIF in tradeview/eastmoney/Moomoo
+            "macds": "DEA_signal",  # DEA_signal called DEA in tradeview/eastmoney/Moomoo
+            "macdh": "MACD_histogram",  # MACD_histogram called 'MACD' in tradeview/eastmoney/MooMoo
+        }, inplace=True)
+        df_macd = df_macd.round({'DIF_main': 2, 'DEA_signal': 2, 'MACD_histogram': 2})
+        return(df_macd)
+
+
     def add_ma_ema_simple(self, df):
         logging.info("adding ma to df")
 
@@ -328,21 +393,6 @@ class Finlib_indicator:
         return (df)
 
 
-    def add_rsi(self, df, short=5, middle=10, long=20):
-        stock = stockstats.StockDataFrame.retype(df)
-
-        df['rsi_short_' + str(short)] = stock[ 'rsi_'+str(short)]
-        df['rsi_middle_' + str(middle)] = stock[ 'rsi_'+str(middle)]
-        df['rsi_long_' + str(long)] = stock[ 'rsi_'+str(long)]
-
-        df = df.reset_index()   # after retype, 'date' column was changed to index. reset 'date' to a column
-        if 'index' in df.columns:
-            df = df.drop('index', axis=1)
-
-        if 'level_0' in df.columns:
-            df = df.drop('level_0', axis=1)
-
-        return (df)
 
     #########################################################
     #must call fristly: df = self.add_ma_ema(df=df, short=short, middle=middle, long=long)
@@ -2229,6 +2279,94 @@ class Finlib_indicator:
         return(df_si_cha, df_jin_cha)
 
 
+    def zigzag_plot(self):
+        # df1 =  get_data_yahoo('GOOG')
+        # X1 = df1['Adj Close']
+        # pivots1 = peak_valley_pivots(X1.values, 0.2, -0.2)
+        # ts_pivots1 = pd.Series(X1, index=X1.index)
+        # ts_pivots1 = ts_pivots1[pivots1 != 0]
+        # X1.plot()
+        # ts_pivots1.plot(style='g-o')
+        # plt.show()
+        # plt.clf()
+        #
+        # ===========
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
+        df = df[-200:].reset_index().drop('index', axis=1)
+        df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), "%Y%m%d"))
+        df = df.set_index('date')
+
+
+        X = df['close']
+        pivots = zigzag.peak_valley_pivots(X.values, 0.1, -0.1)
+
+        # plot
+        ts_pivots = pd.Series(X, index=X.index)
+        ts_pivots = ts_pivots[pivots != 0]
+
+        plt.clf()
+        X.plot()
+        ts_pivots.plot(style='g-o')
+        plt.show()
+
+
+    def zigzag_divation(self):
+        # ===========
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
+        df = df[-200:].reset_index().drop('index', axis=1)
+        df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), "%Y%m%d"))
+        df = df.set_index('date')
+
+        X = df['close']
+        pivots = zigzag.peak_valley_pivots(X.values, 0.1, -0.1)
+
+        # Indicator Deviation
+        # add indicators
+        df = self.add_macd(df=df)
+        df = self.add_kdj(df=df)
+        df = self.add_rsi(df=df, middle=14)
+
+        df['pivots'] = pivots  # add pivots to df, irrelevent with plot.
+        # df.loc[df['pivots']==1, 'action']='S'
+        # df.loc[df['pivots']==-1, 'action']='B'
+        df = df[df['pivots'] != 0]
+
+        ser_today = df.iloc[-1]
+
+        if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley, likely at low level price.
+            v_b1 = df.iloc[-2]  # valley -1
+            p_b1 = df.iloc[-3]  # peak -1
+            v_b2 = df.iloc[-4]  # valley -2
+            p_b2 = df.iloc[-5]  # peak -2
+            # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
+            if v_b1['close'] <= v_b2['close']:
+                if v_b1['dif_main'] > v_b2['dif_main']:
+                    logging.info("divation on MACD dif_main, expect to raise up")
+                if v_b1['kdjj'] > v_b2['kdjj']:
+                    logging.info("divation on kdjj, expect to raise up")
+                if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
+                    logging.info("divation on rsi, expect to raise up")
+
+        elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
+            p_b1 = df.iloc[-2]
+            v_b1 = df.iloc[-3]
+            p_b2 = df.iloc[-4]
+            v_b2 = df.iloc[-5]
+            # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
+            if p_b1['close'] >= p_b2['close']:
+                if p_b1['dif_main'] < p_b2['dif_main']:
+                    logging.info("divation on MACD dif_main, expect to going down")
+                if p_b1['kdjj'] < p_b2['kdjj']:
+                    logging.info("divation on kdjj, expect to going down")
+                if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
+                    logging.info("divation on rsi, expect to going down")
+
+
+        # df_valley = df[df['pivots'] == -1].reset_index()
+        # df_peak = df[df['pivots'] == 1].reset_index()
+        # df_profit = self._calc_jin_cha_si_cha_profit(df_si_cha=df_peak, df_jin_cha=df_valley)
+
+        print(1)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

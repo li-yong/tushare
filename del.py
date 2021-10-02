@@ -427,52 +427,6 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
 #### MAIN #####
-from zigzag import *
-from pandas_datareader import get_data_yahoo
-
-logging.getLogger('matplotlib.font_manager').disabled = True
-
-# df1 =  get_data_yahoo('GOOG')
-# X1 = df1['Adj Close']
-# pivots1 = peak_valley_pivots(X1.values, 0.2, -0.2)
-# ts_pivots1 = pd.Series(X1, index=X1.index)
-# ts_pivots1 = ts_pivots1[pivots1 != 0]
-# X1.plot()
-# ts_pivots1.plot(style='g-o')
-# plt.show()
-# plt.clf()
-#
-
-#===========
-df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
-df = df[-200:].reset_index().drop('index', axis=1)
-df['date'] = df['date'].apply(lambda _d: datetime.datetime.strptime(str(_d), "%Y%m%d"))
-df = df.set_index('date')
-
-X = df['close']
-pivots = peak_valley_pivots(X.values, 0.1, -0.1)
-
-
-df['pivots']=pivots # add pivots to df, irrelevent with plot.
-df.loc[df['pivots']==1, 'action']='B'
-df.loc[df['pivots']==-1, 'action']='S'
-df = df[df['pivots'] != 0]
-
-df_si_cha = df[df['pivots'] == -1].reset_index()
-df_jin_cha = df[df['pivots'] == 1].reset_index()
-df_profit = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_si_cha=df_si_cha, df_jin_cha=df_jin_cha)
-
-ts_pivots = pd.Series(X, index=X.index)
-ts_pivots = ts_pivots[pivots != 0]
-
-plt.clf()
-X.plot()
-ts_pivots.plot(style='g-o')
-plt.show()
-
-
-
-print(1)
 
 evaluate_grid(market='AG')
 exit()
