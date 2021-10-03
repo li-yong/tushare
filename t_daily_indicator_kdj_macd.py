@@ -587,23 +587,28 @@ def zigzag_divation(debug=False):
     df_kdj = pd.DataFrame()
     df_rsi = pd.DataFrame()
 
-    stock_list = finlib.Finlib().get_A_stock_instrment()
-    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
 
-    # stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+    # df = finlib.Finlib().remove_garbage(df=df)
+
+    codes = df['code'].unique()
+    codes.sort()
+
     if debug:
-        stock_list = stock_list.head(100)  # debug
+        codes = codes[:100]  # debug
 
-    cnt = stock_list.__len__()
     i = 0
-    for index,row in stock_list.iterrows():
-        code = row['code']
-        name = row['name']
-        i += 1
-        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
-        logging.info(str(i) + " of " + str(cnt) + " " + code+" "+name)
+    for c in codes:
+        df_sub = df[df['code'] == c]
+        df_sub = df_sub.reset_index().drop('index', axis=1)
 
-        (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator()._zigzag_divation(csv_f = csv_f, code =code, name = name)
+        code = df_sub.iloc[0]['code']
+        name = df_sub.iloc[0]['name']
+        i += 1
+        logging.info(str(i) + " of " + str(codes.__len__()) + " " + code+" "+name)
+
+        (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator()._zigzag_divation(df=df_sub, code =code, name = name)
 
         df_macd = df_macd.append(rtn_df_macd_div)
         df_kdj = df_kdj.append(rtn_df_kdj_div)
@@ -612,12 +617,6 @@ def zigzag_divation(debug=False):
         df_macd.to_csv(output_macd, encoding='UTF-8', index=False)
         df_kdj.to_csv(output_kdj, encoding='UTF-8', index=False)
         df_rsi.to_csv(output_rsi, encoding='UTF-8', index=False)
-
-
-
-
-
-
 
     df_macd = df_macd.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
     df_kdj = df_kdj.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)

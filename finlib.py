@@ -5574,8 +5574,34 @@ class Finlib:
 
         return(df_rtn)
 
+    def read_all_ag_qfq_data(self,days=30):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
+        csv = dir + "/ag_all.csv"
+        # csv = '/home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv'
 
+        if not self.is_cached(file_path=csv, day=1):
+            logging.info("generating csv from source.")
 
+            cmd1 = "head -1 " + dir + "/SH600519.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/SH*.csv`; do tail -" + str(
+                days) + " $i |grep -vi code >> " + dir + "/ag_all.csv; done"
+            cmd3 = "for i in `ls " + dir + "/SZ*.csv`; do tail -" + str(
+                days) + " $i |grep -vi code >> " + dir + "/ag_all.csv; done"
+
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
+
+            os.system(cmd1)
+            os.system(cmd2)
+            os.system(cmd3)
+            logging.info("generated " + csv)
+        else:
+            logging.info("re-using csv as it generated in 1 days. " + csv)
+
+        df = self.regular_read_csv_to_stdard_df(data_csv=csv)
+        return (df)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

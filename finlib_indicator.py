@@ -2208,15 +2208,15 @@ class Finlib_indicator:
         ts_pivots.plot(style='g-o')
         plt.show()
 
-    def _zigzag_divation(self,csv_f,code,name):
+    def _zigzag_divation(self,df,code,name):
         rtn_df_macd_div = pd.DataFrame()
         rtn_df_kdj_div = pd.DataFrame()
         rtn_df_rsi_div = pd.DataFrame()
 
         # ===========
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
-        df = df[-200:].reset_index().drop('index', axis=1)
+        # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+        # df = df[-200:].reset_index().drop('index', axis=1)
         df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
         # df = df.set_index('date') # no, we don't need to set index on date, because we will not plot.
 

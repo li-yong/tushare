@@ -17,35 +17,6 @@ import matplotlib.pyplot as plt
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 
-def prepare_data(days=30):
-    ######### For TRIN, Advance/Decline LINE #######\
-    dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
-    csv = dir+"/ag_all.csv"
-    # csv = '/home/ryan/DATA/DAY_Global/AG/ag_all.csv'
-
-    if not finlib.Finlib().is_cached(file_path=csv, day=1):
-
-        print("generating csv from source.")
-
-        cmd1 = "head -1 "+dir+"/SH600519.csv > "+csv
-        cmd2 = "for i in `ls "+dir+"/SH*.csv`; do tail -"+str(days)+" $i |grep -vi code >> "+dir+"/ag_all.csv; done"
-        cmd3 = "for i in `ls "+dir+"/SZ*.csv`; do tail -"+str(days)+" $i |grep -vi code >> "+dir+"/ag_all.csv; done"
-
-        logging.info(cmd1)
-        logging.info(cmd2) # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
-        logging.info(cmd3) # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
-
-        os.system(cmd1)
-        os.system(cmd2)
-        os.system(cmd3)
-        logging.info("generated "+csv)
-    else:
-        print("re-using csv as it generated in 1 days. "+csv)
-
-
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
-    return(df)
-
 def market_adl_trin(df_in, df_out, days):
     ###----------- AG OverAll ------------
     a = df_in['date'].unique()
@@ -285,7 +256,7 @@ def show_result(type, csv_out,root_dir,show_plot=False):
 
 
 def check_amount_x_individual(days):
-    df = prepare_data(days=days*2)
+    df = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     df = finlib.Finlib().remove_garbage(df=df)
@@ -354,7 +325,7 @@ def check_amount_x_individual(days):
     pass
 
 def check_adr_individual(days):
-    df = prepare_data(days=days*2)
+    df = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     # df = finlib.Finlib().remove_garbage(df=df)
@@ -492,7 +463,7 @@ def main():
     csv_out_mkt = root_dir+'/ag_mkt_adl_trin_'+str(days)+'d.csv'
 
     if not finlib.Finlib().is_cached(csv_out_mkt,1):
-        df_in = prepare_data(days=days*2)
+        df_in = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
         df_out = pd.DataFrame( columns=['date','code','net_adv_perc','ADL','ADL_perc','vol_perc', 'amt_perc','net_amt','TRIN'])
 
         df_out = market_adl_trin(df_in=df_in, df_out=df_out, days=days)
@@ -508,7 +479,7 @@ def main():
     csv_out_individual = root_dir+'/ag_ind_adl_trin_'+str(days)+'d.csv'
 
     if not finlib.Finlib().is_cached(csv_out_individual, 1):
-        df_in = prepare_data(days=days*2)
+        df_in = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
         df_out = pd.DataFrame(
             columns=['date', 'code', 'net_adv_perc', 'ADL', 'ADL_perc', 'vol_perc', 'amt_perc', 'net_amt', 'TRIN'])
         df_out = individual_adl_trin(df_in = df_in, df_out=df_out, days=days) #comment the line if don't need run on each invididual stocks
