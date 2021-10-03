@@ -70,6 +70,8 @@ import zigzag
 logging.getLogger('matplotlib.font_manager').disabled = True
 import numpy
 import math
+import matplotlib.pyplot as plt
+import copy
 
 class Finlib_indicator:
     def add_rsi(self, df, short=5, middle=10, long=20):
@@ -2179,20 +2181,12 @@ class Finlib_indicator:
         df_jin_cha = df[(df['b1_tmp_col'] <= threshod) & (df[col_name] > threshod)]
         return (df_si_cha, df_jin_cha)
 
-    def zigzag_plot(self):
-        # df1 =  get_data_yahoo('GOOG')
-        # X1 = df1['Adj Close']
-        # pivots1 = peak_valley_pivots(X1.values, 0.2, -0.2)
-        # ts_pivots1 = pd.Series(X1, index=X1.index)
-        # ts_pivots1 = ts_pivots1[pivots1 != 0]
-        # X1.plot()
-        # ts_pivots1.plot(style='g-o')
-        # plt.show()
-        # plt.clf()
-        #
-        # ===========
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
-        df = df[-200:].reset_index().drop('index', axis=1)
+    def zigzag_plot(self,df, code, name, notes_in_title, dates=[]):
+
+        df = self.add_macd(df=df)
+        df = self.add_kdj(df=df)
+        df = self.add_rsi(df=df, middle=14)
+
         df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
         df = df.set_index('date')
 
@@ -2203,21 +2197,56 @@ class Finlib_indicator:
         ts_pivots = pd.Series(X, index=X.index)
         ts_pivots = ts_pivots[pivots != 0]
 
+        # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
+        # df = df[keep_cols]
+        # df = df.set_index('date')
+
         plt.clf()
+        plt.suptitle(code+" "+name+" "+notes_in_title)
+
+        plt.subplot(4, 1, 1)
+        plt.title("close")
         X.plot()
         ts_pivots.plot(style='g-o')
+
+        plt.subplot(4, 1, 2)
+        plt.title("MACD dif_main")
+        df['dif_main'].plot()
+        if dates.__len__() >=1:
+            df[df.index.isin(dates)]['dif_main'].plot(style='g-o')
+
+        plt.subplot(4, 1, 3)
+        plt.title("KDJJ")
+        df['kdjj'].plot()
+        if dates.__len__() >=1:
+            df[df.index.isin(dates)]['kdjj'].plot(style='g-o')
+
+        plt.subplot(4, 1, 4)
+        plt.title("RSI14")
+        df['rsi_middle_14'].plot()
+
+        if dates.__len__() >=1:
+            df[df.index.isin(dates)]['rsi_middle_14'].plot(style='g-o')
+
         plt.show()
 
-    def _zigzag_divation(self,df,code,name):
+    def zigzag_divation(self,df,code,name):
         rtn_df_macd_div = pd.DataFrame()
         rtn_df_kdj_div = pd.DataFrame()
         rtn_df_rsi_div = pd.DataFrame()
+
+        bool_plot = False
 
         # ===========
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
         # df = df[-200:].reset_index().drop('index', axis=1)
+
+        df_o = copy.deepcopy(df)
+
         df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
+
+
         # df = df.set_index('date') # no, we don't need to set index on date, because we will not plot.
 
         X = df['close']
@@ -2235,7 +2264,7 @@ class Finlib_indicator:
         df['pivots'] = pivots  # add pivots to df, irrelevent with plot.
 
         df = df[df['pivots'] != 0]
-        df = df.reset_index()  # df is stockstats.StockDataFrame
+        df = df.reset_index().drop('index',axis=1)  # df is stockstats.StockDataFrame
 
         ser_today = df.iloc[-1]
 
@@ -2245,16 +2274,19 @@ class Finlib_indicator:
 
         if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley, likely at low level price.
             v_b1 = df.iloc[-2]  # valley -1
-            # p_b1 = df.iloc[-3]  # peak -1
             v_b2 = df.iloc[-4]  # valley -2
-            # p_b2 = df.iloc[-5]  # peak -2
             trend = 'UP'
             days = (v_b1['date'] - v_b2['date']).days
+            date1 = v_b1['date']
+            date2 = v_b2['date']
+
             logging.info(code+" "+ name+" "+ ", trend " + trend + ", valley_b2 " + str(v_b2['date']) + ", valley_b1 " + str(v_b1['date']))
 
             # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
             if v_b1['close'] <= v_b2['close']:
                 if v_b1['dif_main'] > v_b2['dif_main']:
+                    bool_plot = True
+                    notes_in_title = "dif_main div, expect "+trend
                     logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to raise up. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
                     rtn_df_macd_div = pd.DataFrame({
                         'code': [code],
@@ -2270,6 +2302,8 @@ class Finlib_indicator:
                         'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
                     })
                 if v_b1['kdjj'] > v_b2['kdjj']:
+                    bool_plot = True
+                    notes_in_title = "kdjj div, expect " + trend
                     logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to raise up. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
                     rtn_df_kdj_div = pd.DataFrame({
                         'code': [code],
@@ -2287,6 +2321,8 @@ class Finlib_indicator:
                             2)],
                     })
                 if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
+                    bool_plot = True
+                    notes_in_title = "rsi div, expect " + trend
                     logging.info(code+" "+ name+" "+ ", divation on rsi, expect to raise up. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
                     rtn_df_rsi_div = pd.DataFrame({
                         'code': [code],
@@ -2306,16 +2342,20 @@ class Finlib_indicator:
 
         elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
             p_b1 = df.iloc[-2]
-            # v_b1 = df.iloc[-3]
             p_b2 = df.iloc[-4]
-            # v_b2 = df.iloc[-5]
             trend = 'DOWN'
+
+            date1 = p_b1['date']
+            date2 = p_b2['date']
+
             days = (p_b1['date'] - p_b2['date']).days
             logging.info(code+" "+ name+" "+ ", trend " + trend + ", peak_b2 " + str(p_b2['date']) + ", peak_b1 " + str(p_b1['date']))
 
             # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
             if p_b1['close'] >= p_b2['close']:
                 if p_b1['dif_main'] < p_b2['dif_main']:
+                    bool_plot = True
+                    notes_in_title = "dif_main div, expect " + trend
                     logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
                     rtn_df_macd_div = pd.DataFrame({
                         'code': [code],
@@ -2335,6 +2375,8 @@ class Finlib_indicator:
                     })
 
                 if p_b1['kdjj'] < p_b2['kdjj']:
+                    bool_plot = True
+                    notes_in_title = "kdjj div, expect " + trend
                     logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
                     rtn_df_kdj_div = pd.DataFrame({
                         'code': [code],
@@ -2352,6 +2394,8 @@ class Finlib_indicator:
                             2)],
                     })
                 if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
+                    bool_plot = True
+                    notes_in_title = "rsi div, expect " + trend
                     logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
                     rtn_df_rsi_div = pd.DataFrame({
                         'code': [code],
@@ -2368,6 +2412,10 @@ class Finlib_indicator:
                             (p_b1['rsi_middle_14'] - p_b2['rsi_middle_14']) / abs(p_b2['rsi_middle_14']) / math.log(days, numpy.e),
                             2)],
                     })
+
+        if bool_plot:
+            df['date'] = df['date'].apply(lambda _d: datetime.strftime(_d, "%Y%m%d"))
+            self.zigzag_plot(df=df_o, code=code, name=name,notes_in_title=notes_in_title, dates=[date1,date2])
 
         # df_valley = df[df['pivots'] == -1].reset_index()
         # df_peak = df[df['pivots'] == 1].reset_index()

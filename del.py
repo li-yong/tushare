@@ -427,6 +427,7 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
 #### MAIN #####
+plt.show()
 evaluate_grid(market='AG')
 exit()
 

@@ -608,7 +608,7 @@ def zigzag_divation(debug=False):
         i += 1
         logging.info(str(i) + " of " + str(codes.__len__()) + " " + code+" "+name)
 
-        (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator()._zigzag_divation(df=df_sub, code =code, name = name)
+        (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator().zigzag_divation(df=df_sub, code =code, name = name)
 
         df_macd = df_macd.append(rtn_df_macd_div)
         df_kdj = df_kdj.append(rtn_df_kdj_div)
@@ -633,6 +633,40 @@ def zigzag_divation(debug=False):
     logging.info("saved to "+output_macd+" len "+ str(df_macd.__len__()))
     logging.info("saved to "+output_kdj+" len "+ str(df_kdj.__len__()))
     logging.info("saved to "+output_rsi+" len "+ str(df_rsi.__len__()))
+    return()
+
+
+def zigzag_plot(debug=False):
+    output_macd = "/home/ryan/DATA/result/zigzag_macd_div.csv"
+    output_kdj = "/home/ryan/DATA/result/zigzag_kdj_div.csv"
+    output_rsi = "/home/ryan/DATA/result/zigzag_rsi_div.csv"
+
+    df_macd = pd.DataFrame()
+    df_kdj = pd.DataFrame()
+    df_rsi = pd.DataFrame()
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+    # df = finlib.Finlib().remove_garbage(df=df)
+
+    codes = df['code'].unique()
+    codes.sort()
+
+    if debug:
+        codes = codes[:10]  # debug
+
+    i = 0
+    for c in codes:
+        df_sub = df[df['code'] == c]
+        df_sub = df_sub.reset_index().drop('index', axis=1)
+
+        code = df_sub.iloc[0]['code']
+        name = df_sub.iloc[0]['name']
+        i += 1
+        logging.info(str(i) + " of " + str(codes.__len__()) + " " + code+" "+name)
+
+        finlib_indicator.Finlib_indicator().zigzag_plot(df=df_sub, code =code, name = name)
     return()
 
 
@@ -936,6 +970,7 @@ def main():
 
     parser.add_option("-a", "--analyze", action="store_true", dest="analyze_f", default=False, help="analyze based on [MACD|KDJ] M|W|D result.")
     parser.add_option("--zigzag_div", action="store_true", dest="zigzag_div_f", default=False, help="analyze zigzag_div on [MACD|KDJ|RSI] ")
+    parser.add_option("--zigzag_plt", action="store_true", dest="zigzag_plt_f", default=False, help="plot zigzag with [MACD|KDJ|RSI] ")
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug")
 
     (options, args) = parser.parse_args()
@@ -947,6 +982,7 @@ def main():
     analyze_f = options.analyze_f
     debug = options.debug_f
     zigzag_div_f = options.zigzag_div_f
+    zigzag_plt_f = options.zigzag_plt_f
 
 
 
@@ -959,7 +995,11 @@ def main():
         calculate(indicator=indicator, period=period, period_fast=period_fast,period_slow=period_slow,debug=debug)
 
     if zigzag_div_f:
+        # zigzag_plot(debug=debug)
         zigzag_divation(debug=debug)
+
+    if zigzag_plt_f:
+        zigzag_plot(debug=debug)
 
 
 ### MAIN ####
