@@ -2249,6 +2249,9 @@ class Finlib_indicator:
         bool_plot = False
         notes_in_title = ''
 
+        rel_tol = 0.01 # cmp_relative_tolerance, a/b < 1%
+        abs_tol = 0.3  # cmp_absolute_tolerance, a-b < 0.3
+
         # ===========
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
@@ -2286,6 +2289,7 @@ class Finlib_indicator:
 
 
         today_to_last_pivot = (df.iloc[-1]['date'] - df.iloc[-2]['date']).days
+        notes_in_title += df.iloc[-2]['date'].strftime('%Y%m%d')+"_"
         notes_in_title += str(today_to_last_pivot)+"_days_ago"
 
         # PLOT using last two confirmed Peaks or Valleys.
@@ -2444,8 +2448,8 @@ class Finlib_indicator:
                 logging.info(code+" "+ name+" "+ ", trend " + trend + ", b2 " + str(v_b2['date']) + ", b1 " + str(v_b1['date']))
 
                 # if div, then indicators at b2 should > b1.
-                if v_b1['close'] >= v_b2['close']:
-                    if v_b1['dif_main'] < v_b2['dif_main']:
+                if (v_b1['close'] >= v_b2['close']):
+                    if v_b1['dif_main'] < v_b2['dif_main'] and not math.isclose(v_b1['dif_main'],v_b2['dif_main'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_dif_main_"+trend
                         logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
@@ -2462,7 +2466,7 @@ class Finlib_indicator:
                             'days': [days],
                             'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
                         })
-                    if v_b1['kdjj'] < v_b2['kdjj']:
+                    if v_b1['kdjj'] < v_b2['kdjj'] and not math.isclose(v_b1['kdjj'],v_b2['kdjj'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_kdjj_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
@@ -2481,7 +2485,7 @@ class Finlib_indicator:
                                 (v_b1['kdjj'] - v_b2['kdjj']) / abs(v_b2['kdjj']) / math.log(days, numpy.e),
                                 2)],
                         })
-                    if v_b1['rsi_middle_14'] < v_b2['rsi_middle_14']:
+                    if v_b1['rsi_middle_14'] < v_b2['rsi_middle_14'] and not math.isclose(v_b1['rsi_middle_14'],v_b2['rsi_middle_14'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_rsi_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
@@ -2514,7 +2518,7 @@ class Finlib_indicator:
 
                 #
                 if p_b1['close'] <= p_b2['close']:
-                    if p_b1['dif_main'] > p_b2['dif_main']:
+                    if p_b1['dif_main'] > p_b2['dif_main'] and not math.isclose(p_b1['dif_main'],p_b2['dif_main'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_dif_main_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going up. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
@@ -2535,7 +2539,7 @@ class Finlib_indicator:
 
                         })
 
-                    if p_b1['kdjj'] > p_b2['kdjj']:
+                    if p_b1['kdjj'] > p_b2['kdjj'] and not math.isclose(p_b1['kdjj'],p_b2['kdjj'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_kdjj_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going up. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
@@ -2554,7 +2558,7 @@ class Finlib_indicator:
                                 (p_b1['kdjj'] - p_b2['kdjj']) / abs(p_b2['kdjj']) / math.log(days, numpy.e),
                                 2)],
                         })
-                    if p_b1['rsi_middle_14'] > p_b2['rsi_middle_14']:
+                    if p_b1['rsi_middle_14'] > p_b2['rsi_middle_14'] and not math.isclose(p_b1['rsi_middle_14'],p_b2['rsi_middle_14'],rel_tol=rel_tol, abs_tol=abs_tol):
                         bool_plot = True
                         notes_in_title += "_rsi_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going up. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
