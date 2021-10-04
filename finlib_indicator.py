@@ -2278,15 +2278,15 @@ class Finlib_indicator:
         df = df[df['pivots'] != 0]
         df = df.reset_index().drop('index',axis=1)  # df is stockstats.StockDataFrame
 
-        today_to_last_pivot = (df.iloc[-1]['date'] - df.iloc[-2]['date']).days
-        notes_in_title += str(today_to_last_pivot)+"_days_ago"
-
         df = df.drop(index=0) # drop the 1st point.
 
         if not (df.__len__() >= 4): # 3 points for [M or W] shape, 1 latest point is the latest day.
             logging.info("no enought pivot, at least 4 pivots required, actual "+str(df.__len__()))
             return(rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
 
+
+        today_to_last_pivot = (df.iloc[-1]['date'] - df.iloc[-2]['date']).days
+        notes_in_title += str(today_to_last_pivot)+"_days_ago"
 
         # PLOT using last two confirmed Peaks or Valleys.
         if False:
@@ -2537,7 +2537,7 @@ class Finlib_indicator:
 
                     if p_b1['kdjj'] > p_b2['kdjj']:
                         bool_plot = True
-                        notes_in_title = "_kdjj_" + trend
+                        notes_in_title += "_kdjj_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going up. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
                         rtn_df_kdj_div = pd.DataFrame({
                             'code': [code],
@@ -2556,7 +2556,7 @@ class Finlib_indicator:
                         })
                     if p_b1['rsi_middle_14'] > p_b2['rsi_middle_14']:
                         bool_plot = True
-                        notes_in_title = "_rsi_" + trend
+                        notes_in_title += "_rsi_" + trend
                         logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going up. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
                         rtn_df_rsi_div = pd.DataFrame({
                             'code': [code],
