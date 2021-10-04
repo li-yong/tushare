@@ -2201,8 +2201,8 @@ class Finlib_indicator:
         ts_pivots = ts_pivots[pivots != 0]
 
         if dates.__len__() == 0:
-            dates.append(ts_pivots.index.values[-1])
-            dates.append(ts_pivots.index.values[-2])
+            dates.append(ts_pivots.index.values[-2])  #date[0] is day B1
+            dates.append(ts_pivots.index.values[-1])  #date[1] is today
 
         # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
         # df = df[keep_cols]
@@ -2211,22 +2211,39 @@ class Finlib_indicator:
         plt.clf()
         plt.suptitle(code+" "+name+" "+notes_in_title)
 
-        plt.subplot(4, 1, 1)
-        plt.title("close")
+        ax = plt.subplot(4, 1, 1)
+        ax.xaxis.set_visible(False)
+
+        days = (pd.to_datetime(str(dates[1])) - pd.to_datetime(str(dates[0]))).days
+
+        plt.title("close_"+pd.to_datetime(str(dates[0])).strftime("%m%d")+"_"+pd.to_datetime(str(dates[1])).strftime("%m%d")+"_"+str(days)+"_days_ago")
+
         X.plot()
         ts_pivots.plot(style='g-o')
+        if dates.__len__() >=1:
+            plt.annotate(X[X.index==dates[0]].values[0], xy=(dates[0], X[X.index==dates[0]].values[0]))
+            plt.annotate(X[X.index==dates[1]].values[0], xy=(dates[1], X[X.index==dates[1]].values[0]))
 
-        plt.subplot(4, 1, 2)
+
+        ax = plt.subplot(4, 1, 2)
+        ax.xaxis.set_visible(False)
+
         plt.title("MACD dif_main")
         df['dif_main'].plot()
         if dates.__len__() >=1:
             df[df.index.isin(dates)]['dif_main'].plot(style='g-o')
+            plt.annotate(df[df.index==dates[0]]['dif_main'].values[0], xy=(dates[0], df[df.index==dates[0]]['dif_main'].values[0]))
+            plt.annotate(df[df.index==dates[1]]['dif_main'].values[0], xy=(dates[1], df[df.index==dates[1]]['dif_main'].values[0]))
 
-        plt.subplot(4, 1, 3)
+        ax = plt.subplot(4, 1, 3)
+        ax.xaxis.set_visible(False)
+
         plt.title("KDJJ")
         df['kdjj'].plot()
         if dates.__len__() >=1:
             df[df.index.isin(dates)]['kdjj'].plot(style='g-o')
+            plt.annotate(df[df.index==dates[0]]['kdjj'].values[0], xy=(dates[0], df[df.index==dates[0]]['kdjj'].values[0]))
+            plt.annotate(df[df.index==dates[1]]['kdjj'].values[0], xy=(dates[1], df[df.index==dates[1]]['kdjj'].values[0]))
 
         plt.subplot(4, 1, 4)
         plt.title("RSI14")
@@ -2234,10 +2251,13 @@ class Finlib_indicator:
 
         if dates.__len__() >=1:
             df[df.index.isin(dates)]['rsi_middle_14'].plot(style='g-o')
+            plt.annotate(df[df.index==dates[0]]['rsi_middle_14'].values[0], xy=(dates[0], df[df.index==dates[0]]['rsi_middle_14'].values[0]))
+            plt.annotate(df[df.index==dates[1]]['rsi_middle_14'].values[0], xy=(dates[1], df[df.index==dates[1]]['rsi_middle_14'].values[0]))
 
         # plt.show()
         fn ="/home/ryan/DATA/result/zigzag_div/"+code+"_"+name+"_"+notes_in_title+".svg"
-        plt.savefig(fn, bbox_inches='tight')
+        # plt.savefig(fn, bbox_inches='tight')
+        plt.savefig(fn)
         logging.info("figure saved to " + fn + "\n")
         print()
 
@@ -2249,8 +2269,9 @@ class Finlib_indicator:
         bool_plot = False
         notes_in_title = ''
 
-        rel_tol = 0.01 # cmp_relative_tolerance, a/b < 1%
-        abs_tol = 0.3  # cmp_absolute_tolerance, a-b < 0.3
+        # two number are close if ( rel_tol or abs_tol)
+        rel_tol = 0.05 # cmp_relative_tolerance, a/b < 1%
+        abs_tol = 0.5  # cmp_absolute_tolerance, a-b < 0.3
 
         # ===========
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
