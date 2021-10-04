@@ -597,6 +597,7 @@ def zigzag_divation(debug=False):
 
     if debug:
         codes = codes[:100]  # debug
+        # codes = ['SH600276']
 
     i = 0
     for c in codes:
@@ -618,9 +619,14 @@ def zigzag_divation(debug=False):
         df_kdj.to_csv(output_kdj, encoding='UTF-8', index=False)
         df_rsi.to_csv(output_rsi, encoding='UTF-8', index=False)
 
-    df_macd = df_macd.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
-    df_kdj = df_kdj.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
-    df_rsi = df_rsi.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+    if df_macd.__len__() > 0:
+        df_macd = df_macd.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+
+    if df_kdj.__len__() > 0:
+        df_kdj = df_kdj.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
+
+    if df_rsi.__len__() > 0:
+        df_rsi = df_rsi.sort_values(by="strength", ascending=False).reset_index().drop('index', axis=1)
 
     logging.info("top 3 strength of df_macd:\n"+finlib.Finlib().pprint(df=df_macd.head(3)))
     logging.info("top 3 strength of df_kdj:\n"+finlib.Finlib().pprint(df=df_kdj.head(3)))
@@ -666,7 +672,7 @@ def zigzag_plot(debug=False):
         i += 1
         logging.info(str(i) + " of " + str(codes.__len__()) + " " + code+" "+name)
 
-        finlib_indicator.Finlib_indicator().zigzag_plot(df=df_sub, code =code, name = name)
+        finlib_indicator.Finlib_indicator().zigzag_plot(df=df_sub, code =code, name = name, notes_in_title="", dates=[])
     return()
 
 

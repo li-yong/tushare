@@ -67,10 +67,13 @@ from selenium.webdriver import ActionChains
 import zigzag
 # from pandas_datareader import get_data_yahoo
 
+import matplotlib.pyplot as plt
 logging.getLogger('matplotlib.font_manager').disabled = True
+plt.rcParams['font.family'] = ['WenQuanYi Micro Hei']
+
 import numpy
 import math
-import matplotlib.pyplot as plt
+
 import copy
 
 class Finlib_indicator:
@@ -2181,7 +2184,7 @@ class Finlib_indicator:
         df_jin_cha = df[(df['b1_tmp_col'] <= threshod) & (df[col_name] > threshod)]
         return (df_si_cha, df_jin_cha)
 
-    def zigzag_plot(self,df, code, name, notes_in_title, dates=[]):
+    def zigzag_plot(self,df, code, name, notes_in_title="", dates=[]):
 
         df = self.add_macd(df=df)
         df = self.add_kdj(df=df)
@@ -2196,6 +2199,10 @@ class Finlib_indicator:
         # plot
         ts_pivots = pd.Series(X, index=X.index)
         ts_pivots = ts_pivots[pivots != 0]
+
+        if dates.__len__() == 0:
+            dates.append(ts_pivots.index.values[-1])
+            dates.append(ts_pivots.index.values[-2])
 
         # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
         # df = df[keep_cols]
@@ -2228,7 +2235,11 @@ class Finlib_indicator:
         if dates.__len__() >=1:
             df[df.index.isin(dates)]['rsi_middle_14'].plot(style='g-o')
 
-        plt.show()
+        # plt.show()
+        fn ="/home/ryan/DATA/result/zigzag_div/"+code+"_"+name+"_"+notes_in_title+".svg"
+        plt.savefig(fn, bbox_inches='tight')
+        logging.info("figure saved to " + fn + "\n")
+        print()
 
     def zigzag_divation(self,df,code,name):
         rtn_df_macd_div = pd.DataFrame()
@@ -2236,6 +2247,7 @@ class Finlib_indicator:
         rtn_df_rsi_div = pd.DataFrame()
 
         bool_plot = False
+        notes_in_title = ''
 
         # ===========
         # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv")
@@ -2266,152 +2278,301 @@ class Finlib_indicator:
         df = df[df['pivots'] != 0]
         df = df.reset_index().drop('index',axis=1)  # df is stockstats.StockDataFrame
 
-        ser_today = df.iloc[-1]
+        today_to_last_pivot = (df.iloc[-1]['date'] - df.iloc[-2]['date']).days
+        notes_in_title += str(today_to_last_pivot)+"_days_ago"
 
-        if df.__len__() < 4:
-            logging.info("no enought pivot, less than 4")
+        df = df.drop(index=0) # drop the 1st point.
+
+        if not (df.__len__() >= 4): # 3 points for [M or W] shape, 1 latest point is the latest day.
+            logging.info("no enought pivot, at least 4 pivots required, actual "+str(df.__len__()))
             return(rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
 
-        if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley, likely at low level price.
-            v_b1 = df.iloc[-2]  # valley -1
-            v_b2 = df.iloc[-4]  # valley -2
-            trend = 'UP'
-            days = (v_b1['date'] - v_b2['date']).days
-            date1 = v_b1['date']
-            date2 = v_b2['date']
 
-            logging.info(code+" "+ name+" "+ ", trend " + trend + ", valley_b2 " + str(v_b2['date']) + ", valley_b1 " + str(v_b1['date']))
+        # PLOT using last two confirmed Peaks or Valleys.
+        if False:
+            if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley, likely at low level price.
+                v_b1 = df.iloc[-2]  # valley -1
+                v_b2 = df.iloc[-4]  # valley -2
+                trend = 'UP'
+                days = (v_b1['date'] - v_b2['date']).days
+                date1 = v_b1['date']
+                date2 = v_b2['date']
 
-            # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
-            if v_b1['close'] <= v_b2['close']:
-                if v_b1['dif_main'] > v_b2['dif_main']:
-                    bool_plot = True
-                    notes_in_title = "dif_main div, expect "+trend
-                    logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to raise up. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
-                    rtn_df_macd_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [v_b2['date']],
-                        'valley_b1': [v_b1['date']],
-                        'close_b2': [v_b2['close']],
-                        'close_b1': [v_b1['close']],
-                        'dif_main_b2': [v_b2['dif_main']],
-                        'dif_main_b1': [v_b1['dif_main']],
-                        'days': [days],
-                        'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
-                    })
-                if v_b1['kdjj'] > v_b2['kdjj']:
-                    bool_plot = True
-                    notes_in_title = "kdjj div, expect " + trend
-                    logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to raise up. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
-                    rtn_df_kdj_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [v_b2['date']],
-                        'valley_b1': [v_b1['date']],
-                        'close_b2': [v_b2['close']],
-                        'close_b1': [v_b1['close']],
-                        'kdjj_b2': [v_b2['kdjj']],
-                        'kdjj_b1': [v_b1['kdjj']],
-                        'days': [days],
-                        'strength': [round(
-                            (v_b1['kdjj'] - v_b2['kdjj']) / abs(v_b2['kdjj']) / math.log(days, numpy.e),
-                            2)],
-                    })
-                if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
-                    bool_plot = True
-                    notes_in_title = "rsi div, expect " + trend
-                    logging.info(code+" "+ name+" "+ ", divation on rsi, expect to raise up. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
-                    rtn_df_rsi_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [v_b2['date']],
-                        'valley_b1': [v_b1['date']],
-                        'close_b2': [v_b2['close']],
-                        'close_b1': [v_b1['close']],
-                        'rsi_middle_14_b2': [v_b2['rsi_middle_14']],
-                        'rsi_middle_14_b1': [v_b1['rsi_middle_14']],
-                        'days': [days],
-                        'strength': [round(
-                            (v_b1['rsi_middle_14'] - v_b2['rsi_middle_14']) / abs(v_b2['rsi_middle_14']) / math.log(days, numpy.e),
-                            2)],
-                    })
+                logging.info(code+" "+ name+" "+ ", trend " + trend + ", valley_b2 " + str(v_b2['date']) + ", valley_b1 " + str(v_b1['date']))
 
-        elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
-            p_b1 = df.iloc[-2]
-            p_b2 = df.iloc[-4]
-            trend = 'DOWN'
+                # suppose at the valley now. so check valley v_b1 and v_b2 for deviation.
+                if v_b1['close'] <= v_b2['close']:
+                    if v_b1['dif_main'] > v_b2['dif_main']:
+                        bool_plot = True
+                        notes_in_title += "_dif_main_ "+trend
+                        logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to raise up. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
+                        rtn_df_macd_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'dif_main_b2': [v_b2['dif_main']],
+                            'dif_main_b1': [v_b1['dif_main']],
+                            'days': [days],
+                            'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
+                        })
+                    if v_b1['kdjj'] > v_b2['kdjj']:
+                        bool_plot = True
+                        notes_in_title += "_kdjj_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to raise up. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
+                        rtn_df_kdj_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'kdjj_b2': [v_b2['kdjj']],
+                            'kdjj_b1': [v_b1['kdjj']],
+                            'days': [days],
+                            'strength': [round(
+                                (v_b1['kdjj'] - v_b2['kdjj']) / abs(v_b2['kdjj']) / math.log(days, numpy.e),
+                                2)],
+                        })
+                    if v_b1['rsi_middle_14'] > v_b2['rsi_middle_14']:
+                        bool_plot = True
+                        notes_in_title += "_rsi_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on rsi, expect to raise up. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
+                        rtn_df_rsi_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'rsi_middle_14_b2': [v_b2['rsi_middle_14']],
+                            'rsi_middle_14_b1': [v_b1['rsi_middle_14']],
+                            'days': [days],
+                            'strength': [round(
+                                (v_b1['rsi_middle_14'] - v_b2['rsi_middle_14']) / abs(v_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                                2)],
+                        })
 
-            date1 = p_b1['date']
-            date2 = p_b2['date']
+            elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
+                p_b1 = df.iloc[-2]
+                p_b2 = df.iloc[-4]
+                trend = 'DOWN'
 
-            days = (p_b1['date'] - p_b2['date']).days
-            logging.info(code+" "+ name+" "+ ", trend " + trend + ", peak_b2 " + str(p_b2['date']) + ", peak_b1 " + str(p_b1['date']))
+                date1 = p_b1['date']
+                date2 = p_b2['date']
 
-            # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
-            if p_b1['close'] >= p_b2['close']:
-                if p_b1['dif_main'] < p_b2['dif_main']:
-                    bool_plot = True
-                    notes_in_title = "dif_main div, expect " + trend
-                    logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
-                    rtn_df_macd_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [p_b2['date']],
-                        'valley_b1': [p_b1['date']],
-                        'close_b2': [p_b2['close']],
-                        'close_b1': [p_b1['close']],
-                        'dif_main_b2': [p_b2['dif_main']],
-                        'dif_main_b1': [p_b1['dif_main']],
-                        'days': [days],
-                        'strength': [round(
-                            (p_b1['dif_main'] - p_b2['dif_main']) / abs(p_b2['dif_main']) / math.log(days, numpy.e),
-                            2)],
+                days = (p_b1['date'] - p_b2['date']).days
+                logging.info(code+" "+ name+" "+ ", trend " + trend + ", peak_b2 " + str(p_b2['date']) + ", peak_b1 " + str(p_b1['date']))
 
-                    })
+                # suppose at the peak now. so check valley p_b1 and p_b2 for deviation.
+                if p_b1['close'] >= p_b2['close']:
+                    if p_b1['dif_main'] < p_b2['dif_main']:
+                        bool_plot = True
+                        notes_in_title += "_dif_main_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
+                        rtn_df_macd_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'dif_main_b2': [p_b2['dif_main']],
+                            'dif_main_b1': [p_b1['dif_main']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['dif_main'] - p_b2['dif_main']) / abs(p_b2['dif_main']) / math.log(days, numpy.e),
+                                2)],
 
-                if p_b1['kdjj'] < p_b2['kdjj']:
-                    bool_plot = True
-                    notes_in_title = "kdjj div, expect " + trend
-                    logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
-                    rtn_df_kdj_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [p_b2['date']],
-                        'valley_b1': [p_b1['date']],
-                        'close_b2': [p_b2['close']],
-                        'close_b1': [p_b1['close']],
-                        'kdjj_b2': [p_b2['kdjj']],
-                        'kdjj_b1': [p_b1['kdjj']],
-                        'days': [days],
-                        'strength': [round(
-                            (p_b1['kdjj'] - p_b2['kdjj']) / abs(p_b2['kdjj']) / math.log(days, numpy.e),
-                            2)],
-                    })
-                if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
-                    bool_plot = True
-                    notes_in_title = "rsi div, expect " + trend
-                    logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
-                    rtn_df_rsi_div = pd.DataFrame({
-                        'code': [code],
-                        'name': [name],
-                        'trend': [trend],
-                        'valley_b2': [p_b2['date']],
-                        'valley_b1': [p_b1['date']],
-                        'close_b2': [p_b2['close']],
-                        'close_b1': [p_b1['close']],
-                        'rsi_middle_14_b2': [p_b2['rsi_middle_14']],
-                        'rsi_middle_14_b1': [p_b1['rsi_middle_14']],
-                        'days': [days],
-                        'strength': [round(
-                            (p_b1['rsi_middle_14'] - p_b2['rsi_middle_14']) / abs(p_b2['rsi_middle_14']) / math.log(days, numpy.e),
-                            2)],
-                    })
+                        })
+
+                    if p_b1['kdjj'] < p_b2['kdjj']:
+                        bool_plot = True
+                        notes_in_title = "_kdjj_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
+                        rtn_df_kdj_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'kdjj_b2': [p_b2['kdjj']],
+                            'kdjj_b1': [p_b1['kdjj']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['kdjj'] - p_b2['kdjj']) / abs(p_b2['kdjj']) / math.log(days, numpy.e),
+                                2)],
+                        })
+                    if p_b1['rsi_middle_14'] < p_b2['rsi_middle_14']:
+                        bool_plot = True
+                        notes_in_title = "_rsi_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
+                        rtn_df_rsi_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'rsi_middle_14_b2': [p_b2['rsi_middle_14']],
+                            'rsi_middle_14_b1': [p_b1['rsi_middle_14']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['rsi_middle_14'] - p_b2['rsi_middle_14']) / abs(p_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                                2)],
+                        })
+
+        # PLOT using lastest two points
+        if True:
+            if df.iloc[-2]['pivots'] == -1:  # last confirmed pivot is valley. today_close > -2.close
+                v_b1 = df.iloc[-1]  # valley -1
+                v_b2 = df.iloc[-2]  # valley -2
+                trend = 'DOWN'
+                days = (v_b1['date'] - v_b2['date']).days
+                date1 = v_b1['date']
+                date2 = v_b2['date']
+
+                logging.info(code+" "+ name+" "+ ", trend " + trend + ", b2 " + str(v_b2['date']) + ", b1 " + str(v_b1['date']))
+
+                # if div, then indicators at b2 should > b1.
+                if v_b1['close'] >= v_b2['close']:
+                    if v_b1['dif_main'] < v_b2['dif_main']:
+                        bool_plot = True
+                        notes_in_title += "_dif_main_"+trend
+                        logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going down. " + str(v_b2['dif_main']) + " " + str(v_b1['dif_main']))
+                        rtn_df_macd_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'dif_main_b2': [v_b2['dif_main']],
+                            'dif_main_b1': [v_b1['dif_main']],
+                            'days': [days],
+                            'strength': [ round((v_b1['dif_main'] - v_b2['dif_main'])/abs(v_b2['dif_main'])/math.log(days, numpy.e),2) ],
+                        })
+                    if v_b1['kdjj'] < v_b2['kdjj']:
+                        bool_plot = True
+                        notes_in_title += "_kdjj_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going down. " + str(v_b2['kdjj']) + " " + str(v_b1['kdjj']))
+                        rtn_df_kdj_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'kdjj_b2': [v_b2['kdjj']],
+                            'kdjj_b1': [v_b1['kdjj']],
+                            'days': [days],
+                            'strength': [round(
+                                (v_b1['kdjj'] - v_b2['kdjj']) / abs(v_b2['kdjj']) / math.log(days, numpy.e),
+                                2)],
+                        })
+                    if v_b1['rsi_middle_14'] < v_b2['rsi_middle_14']:
+                        bool_plot = True
+                        notes_in_title += "_rsi_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going down. " + str(v_b2['rsi_middle_14']) + " " + str(v_b1['rsi_middle_14']))
+                        rtn_df_rsi_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [v_b2['date']],
+                            'valley_b1': [v_b1['date']],
+                            'close_b2': [v_b2['close']],
+                            'close_b1': [v_b1['close']],
+                            'rsi_middle_14_b2': [v_b2['rsi_middle_14']],
+                            'rsi_middle_14_b1': [v_b1['rsi_middle_14']],
+                            'days': [days],
+                            'strength': [round(
+                                (v_b1['rsi_middle_14'] - v_b2['rsi_middle_14']) / abs(v_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                                2)],
+                        })
+
+            elif df.iloc[-2]['pivots'] == 1:  # last confirmed pivot is peak, likely at high level price.
+                p_b1 = df.iloc[-1]
+                p_b2 = df.iloc[-2]
+                trend = 'UP'
+
+                date1 = p_b1['date']
+                date2 = p_b2['date']
+
+                days = (p_b1['date'] - p_b2['date']).days
+                logging.info(code+" "+ name+" "+ ", trend " + trend + ", b2 " + str(p_b2['date']) + ", b1 " + str(p_b1['date']))
+
+                #
+                if p_b1['close'] <= p_b2['close']:
+                    if p_b1['dif_main'] > p_b2['dif_main']:
+                        bool_plot = True
+                        notes_in_title += "_dif_main_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on MACD dif_main, expect to going up. " + str(p_b2['dif_main']) + " " + str(p_b1['dif_main']))
+                        rtn_df_macd_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'dif_main_b2': [p_b2['dif_main']],
+                            'dif_main_b1': [p_b1['dif_main']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['dif_main'] - p_b2['dif_main']) / abs(p_b2['dif_main']) / math.log(days, numpy.e),
+                                2)],
+
+                        })
+
+                    if p_b1['kdjj'] > p_b2['kdjj']:
+                        bool_plot = True
+                        notes_in_title = "_kdjj_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on kdjj, expect to going up. " + str(p_b2['kdjj']) + " " + str(p_b1['kdjj']))
+                        rtn_df_kdj_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'kdjj_b2': [p_b2['kdjj']],
+                            'kdjj_b1': [p_b1['kdjj']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['kdjj'] - p_b2['kdjj']) / abs(p_b2['kdjj']) / math.log(days, numpy.e),
+                                2)],
+                        })
+                    if p_b1['rsi_middle_14'] > p_b2['rsi_middle_14']:
+                        bool_plot = True
+                        notes_in_title = "_rsi_" + trend
+                        logging.info(code+" "+ name+" "+ ", divation on rsi, expect to going up. " + str(p_b2['rsi_middle_14']) + " " + str(p_b1['rsi_middle_14']))
+                        rtn_df_rsi_div = pd.DataFrame({
+                            'code': [code],
+                            'name': [name],
+                            'trend': [trend],
+                            'valley_b2': [p_b2['date']],
+                            'valley_b1': [p_b1['date']],
+                            'close_b2': [p_b2['close']],
+                            'close_b1': [p_b1['close']],
+                            'rsi_middle_14_b2': [p_b2['rsi_middle_14']],
+                            'rsi_middle_14_b1': [p_b1['rsi_middle_14']],
+                            'days': [days],
+                            'strength': [round(
+                                (p_b1['rsi_middle_14'] - p_b2['rsi_middle_14']) / abs(p_b2['rsi_middle_14']) / math.log(days, numpy.e),
+                                2)],
+                        })
 
         if bool_plot:
             df['date'] = df['date'].apply(lambda _d: datetime.strftime(_d, "%Y%m%d"))
