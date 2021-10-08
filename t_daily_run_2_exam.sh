@@ -590,6 +590,14 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 
+################################
+# input: ~/DATA/DAY_Global/AG_qfq/*.csv
+# output: /home/ryan/DATA/result/zigzag_div/*.svg
+#        /home/ryan/DATA/result/zigzag_kdj_div.csv  zigzag_macd_div.csv  zigzag_rsi_div.csv
+
+
+python t_daily_indicator_kdj_macd.py --zigzag_div
+
 
 
 ##############################

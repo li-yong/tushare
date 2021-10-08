@@ -52,7 +52,7 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
     if (not os.path.isfile(dump)) or (os.stat(dump).st_size <= 1000):
         if add_miss:
             #today_all = ts.get_day_all(todayS_s)
-            today_all = pro.daily(trade_date=todayS_s)
+            today_all = pro.daily(trade_date=todayS_s) #本接口是未复权行情，停牌期间不提供数据。
         else:
             #today_all = ts.get_today_all()
             today_all = pro.daily(trade_date=todayS_s)

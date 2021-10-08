@@ -1352,7 +1352,32 @@ def init_dict_code(dict_code,code,ktype_short, ktype_long,ma_period_short,ma_per
     # }
     return(dict_code)
 
+
+def get_price_reminder(host='127.0.0.1',port=11111):
+    quote_ctx = OpenQuoteContext(host=host, port=port)
+
+    ret, data = quote_ctx.get_price_reminder(code='HK.00700')
+    if ret == RET_OK:
+        print(data)
+        print(data['key'].values.tolist())  # 转为 list
+    else:
+        print('error:', data)
+    print('******************************************')
+    ret, data = quote_ctx.get_price_reminder(code=None, market=Market.HK)
+    if ret == RET_OK:
+        print(data)
+        if data.shape[0] > 0:  # 如果到价提醒列表不为空
+            print(data['code'][0])  # 取第一条的股票代码
+            print(data['code'].values.tolist())  # 转为 list
+    else:
+        print('error:', data)
+    quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+
+
 def main():
+    get_price_reminder()
+    exit()
+
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
     logging.info(__file__+" "+"\n")
