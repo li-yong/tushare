@@ -170,6 +170,10 @@ def define_global(stock_global):
             "df_szcz_add_candidate": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_BUY_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
             "df_szcz_remove_candidate": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SZCZ_INDEX_SELL_CANDIDATE)", "term": "MIDDLE TERM", "price": "NA"},
 
+            "df_macd_div": {"op": "B", "file": result + "/zigzag_macd_div.csv", "column": "trend", "kw": "UP", "term": "SHORT TERM", "price": "NA"},
+            "df_kdj_div": {"op": "B", "file": result + "/zigzag_kdj_div.csv", "column": "trend", "kw": "UP", "term": "SHORT TERM", "price": "NA"},
+            "df_rsi_div": {"op": "B", "file": result + "/zigzag_rsi_div.csv", "column": "trend", "kw": "UP", "term": "SHORT TERM", "price": "NA"},
+
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
         "US": {
