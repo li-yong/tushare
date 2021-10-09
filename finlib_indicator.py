@@ -2601,7 +2601,7 @@ class Finlib_indicator:
 
         if bool_plot:
             df['date'] = df['date'].apply(lambda _d: datetime.strftime(_d, "%Y%m%d"))
-            self.zigzag_plot(df=df_o, code=code, name=name,notes_in_title=notes_in_title, dates=[date1,date2])
+            self.zigzag_plot(df=df_o, code=code, name=name,notes_in_title=notes_in_title, dates=[date2,date1])
 
         # df_valley = df[df['pivots'] == -1].reset_index()
         # df_peak = df[df['pivots'] == 1].reset_index()
