@@ -860,7 +860,7 @@ def fetch_basic_daily(fast_fetch=False):
     # trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)  #don't sort, we need create the latest_ symbol link.
 
     if fast_fetch:  # run on daily, fetch the most recent 5 day only.
-        trading_days = trading_days[:5]
+        trading_days = trading_days[-5:]
 
     # the file should keep same between t_daily_update_csv_from_tushare.py and t_daily_fundamentals_2.py
     fields = "ts_code, trade_date, close, turnover_rate, turnover_rate_f, volume_ratio, pe, pe_ttm,pb, ps, ps_ttm,"
