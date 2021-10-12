@@ -1375,8 +1375,8 @@ def get_price_reminder(host='127.0.0.1',port=11111):
 
 
 def main():
-    get_price_reminder()
-    exit()
+    # get_price_reminder()
+    # exit()
 
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
