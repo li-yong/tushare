@@ -339,16 +339,6 @@ fi
 # HK Stock update along with US at evening of the day, and exam on the next day morning at 8.00 AM.
 
 
-######################################
-## input: /home/ryan/DATA/pickle/instrument_A.csv, get code from the file
-## output: /home/ryan/DATA/DAY_No_Adj/*.csv
-## BestTV-W works
-######################################
-# not run because time consuming. 20200518
-if [ $full_or_daily == "FULL" ]; then
-  python t_fenghong.py  --fetch_no_adj_data  --force_fetch_data #time consuming
-fi
-
 
 
 ######################################  JAQS stopped working 20190305
