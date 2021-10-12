@@ -3803,6 +3803,7 @@ def _fetch_pro_pledge_stat_detail():
 
     stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
+    stock_list = finlib.Finlib().add_ts_code_to_column(stock_list)
 
     stock_cnt = 0
     df_result_stat= pd.DataFrame()
