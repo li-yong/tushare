@@ -46,11 +46,10 @@ python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
 
 
 #### update the HK stock ####
-echo "updating HK/US selected stock daily from tushare "
-#python ~/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK  --force_fetch;
-python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK;
-#python ~/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US  --force_fetch;
-python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
+# comment because not useful (and possible is broken)
+#echo "updating HK/US selected stock daily from tushare "
+#python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK;
+#python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 
 
 ######################################
@@ -68,10 +67,11 @@ python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 #   /home/ryan/DATA/pickle/hs300.csv
 #   /home/ryan/DATA/pickle/zz100.csv
 ######################################
-python t_daily_index_candidates.py --fetch_index_tv --index_name hs300
-python t_daily_index_candidates.py --fetch_index_tv --index_name zz100
-python t_daily_index_candidates.py --fetch_index_tv --index_name szcz
-python t_daily_index_candidates.py --fetch_index_tv --index_name sz100
+# Hung the entire script and not very useful, so comment it.
+#python t_daily_index_candidates.py --fetch_index_tv --index_name hs300
+#python t_daily_index_candidates.py --fetch_index_tv --index_name zz100
+#python t_daily_index_candidates.py --fetch_index_tv --index_name szcz
+#python t_daily_index_candidates.py --fetch_index_tv --index_name sz100
 
 ##############
 # update
@@ -82,6 +82,7 @@ python t_daily_get_us_index.py
 
 
 # Need a running X server. Download 15 times a day.
+# This is Broken on haha_power, but works on haha_brain. 2021/10/12
 env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
 
 
