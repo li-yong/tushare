@@ -3329,7 +3329,7 @@ class Finlib:
 
         #some 改名 stocks grow well.
         ##当第三年，公司的经营未有改善，依旧处于亏损状态，股票名称前除“ST”外还会加上“*”，意为退市风险。
-        df_gar = df_gar[df_gar['change_reason'].isin(["其他","改名",'撤销ST' ])]
+        df_gar = df_gar[~df_gar['change_reason'].isin(["其他","改名",'撤销ST'])]
 
         df_gar = self.ts_code_to_code(df_gar)
         df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
