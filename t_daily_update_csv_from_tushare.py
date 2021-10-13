@@ -29,7 +29,7 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
     todayS_s = datetime.strptime(todayS_l, '%Y-%m-%d').strftime('%Y%m%d')
     dump_csv = "/home/ryan/DATA/pickle/daily_update_source/ag_daily_" + todayS_s + ".csv"
 
-    if finlib.Finlib().is_cached(dump_csv, 1) and not add_miss:
+    if finlib.Finlib().is_cached(dump_csv, 0.5) and not add_miss:
         logging.info("csv is updated in 1 day, not fetch. "+dump_csv)
     #    return
 
