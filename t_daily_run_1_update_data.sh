@@ -78,13 +78,15 @@ python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
 # input: none
 # output: /home/ryan/DATA/pickle/INDEX_US_HK/*.csv
 # dow.csv  nasdqa100.csv  sp400.csv  sp500.csv
+# need VPN to access WikiPedia
 python t_daily_get_us_index.py
 
 
 # Need a running X server. Download 15 times a day.
+# output: /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/*
+#         /home/ryan/DATA/pickle/ag_stock_industry_wg.csv
 # This is Broken on haha_power, but works on haha_brain. 2021/10/12
 env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
-
 
 
 ######################################
@@ -228,6 +230,8 @@ if [ $full_or_daily == "FULL" ]; then
   #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_*.csv
   #ts_code,trade_date,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,total_share,float_share,total_mv,circ_mv
   python t_daily_fundamentals_2.py --fetch_basic_daily --force_run
+
+  #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/info_daily/info_*.csv
   python t_daily_fundamentals_2.py --fetch_info_daily --force_run
 
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge_detail.csv  pledge_stat.csv
@@ -265,8 +269,6 @@ if [ $full_or_daily == "FULL" ]; then
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/*.csv
   python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #pro fundation tables. 10 tables. all stocks
 fi
-
-
 
 ######################################
 #
