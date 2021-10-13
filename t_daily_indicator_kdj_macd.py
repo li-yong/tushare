@@ -99,7 +99,7 @@ def _kdj(csv_f, period):
     d2 = df_kdj.iloc[-2]
     d1 = df_kdj.iloc[-1]
 
-    this_date = d1.name.strftime("%Y-%m-%d")  #'2019-03-31'
+    this_date = d1.date.strftime("%Y-%m-%d")  #'2019-03-31'
     _k1 = d1.kdjk
     _d1 = d1.kdjd
     _j1 = d1.kdjj
@@ -500,7 +500,7 @@ def _macd(csv_f, period):
 
 
     if dea1 < 0:
-       this_reason += constant.SIG_LT_0 + "; "
+       this_reason += constant.MACD_SIG_LT_0 + "; "
     elif dea1 > 0:
         this_reason += constant.MACD_SIG_GT_0 + "; "
 
