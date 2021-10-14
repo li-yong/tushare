@@ -3408,10 +3408,8 @@ class Finlib:
         df_gar_detail = pd.read_csv(csv_detail)
 
         df_gar = df_gar[df_gar['pledge_ratio'] >= statistic_ratio_threshold]
-        df_gar = self.ts_code_to_code(df_gar)
         
         df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= detail_ratio_sum_threshold]
-        df_gar_detail = self.ts_code_to_code(df_gar_detail)
 
         # df_gar = self.ts_code_to_code(df_gar)
         # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
