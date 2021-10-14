@@ -33,6 +33,7 @@ rsync -avz ${source_host}:/home/ryan/DATA/pickle/daily_update_source/  /home/rya
 rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
 
 #us hk indices are get from WikiPedia. Download to haha_brain, then sync to haha_power
+#haha_brain need run: python t_daily_get_us_index.py
 rsync -avz /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/pickle/INDEX_US_HK
 
 #TradingView are download to haha_brain manually on Chrome.
