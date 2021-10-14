@@ -3801,8 +3801,7 @@ def _fetch_pro_pledge_stat_detail():
         logging.info(__file__ + " " + "not fetch pledge_stat as the file updated in 1 day. " + output_csv_detail)
         return ()
 
-    stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
-    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
+    stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
     stock_list = finlib.Finlib().add_ts_code_to_column(stock_list)
 
     stock_cnt = 0
@@ -3853,7 +3852,7 @@ def _fetch_pro_pledge_stat_detail():
     df_result_detail = finlib.Finlib().ts_code_to_code(df=df_result_detail)
     df_result_detail = finlib.Finlib().add_stock_name_to_df(df=df_result_detail)
     df_result_detail.to_csv(output_csv_detail, encoding="UTF-8", index=False)
-    logging.info(__file__ + " " + "pledge_stat saved to " + output_csv_detail + " . len " + str(df_result_detail.__len__()))
+    logging.info(__file__ + " " + "pledge_stat details saved to " + output_csv_detail + " . len " + str(df_result_detail.__len__()))
 
 
 

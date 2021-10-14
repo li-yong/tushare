@@ -411,6 +411,10 @@ class Finlib:
         else:
             logging.error("unknow code format "+str(df_tmp['code'].iloc[0]))
 
+
+        df = df[~df['ts_code'].isna()]
+        df['ts_code'] = df['ts_code'].apply(lambda _d: str(_d))
+
         if 'level_0' in df.columns:
             df = df.drop('level_0', axis=1, inplace=False)
 
@@ -859,8 +863,13 @@ class Finlib:
         if os.path.isfile(instrument_csv):
             df = pd.read_csv(instrument_csv, converters={'code': str})
         else:
-            print("file not exist. " + instrument_csv)
+            logging.info("file not exist. " + instrument_csv)
             exit()
+
+        df = df[~df['name'].str.contains("(测试)")]
+        df = df[~df['name'].str.contains("(测试代码)")]
+
+        df = df.reset_index().drop('index',axis=1)
 
         if code_name_only:
             df = df[['name', 'code']]
@@ -3399,7 +3408,10 @@ class Finlib:
         df_gar_detail = pd.read_csv(csv_detail)
 
         df_gar = df_gar[df_gar['pledge_ratio'] >= statistic_ratio_threshold]
+        df_gar = self.ts_code_to_code(df_gar)
+        
         df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= detail_ratio_sum_threshold]
+        df_gar_detail = self.ts_code_to_code(df_gar_detail)
 
         # df_gar = self.ts_code_to_code(df_gar)
         # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
