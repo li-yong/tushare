@@ -35,6 +35,8 @@ rsync -avzL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals
 #us hk indices are get from WikiPedia. Download to haha_brain, then sync to haha_power
 rsync -avz /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/pickle/INDEX_US_HK
 
+rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
+
 #TradingView are download to haha_brain manually on Chrome.
 rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/TradingView
 #rsync -avz /home/ryan/DATA/result/*.csv ${source_host}:/home/ryan/DATA/result/
@@ -50,9 +52,7 @@ rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}:
 
 #v: sync recursivly
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/akshare/  /home/ryan/DATA/pickle/Stock_Fundamental/akshare/
-
-rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
-
+#rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
 
 ######################################
 #
