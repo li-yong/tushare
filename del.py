@@ -426,7 +426,39 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
+
+
+def hangye_longtou():
+    # a = finlib.Finlib().get_report_publish_status()
+
+    # python t_daily_fundamentals_2.py --fetch_pro_fund  or python t_daily_fundamentals_2.py --fetch_data_all
+    # python t_daily_fundamentals_2.py  --sum_mainbz
+    # python t_daily_fundamentals_2.py  --percent_mainbz_f
+    f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv'
+    df = pd.read_csv(f)
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+    df = df[df['perc_sales']>=60]
+
+
+    b = finlib.Finlib().get_last_4q_n_years(n_year=3)
+
+    for i in b:
+        if re.search(r'\d\d1231',i) != None: #yearly report
+            f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'+"/"+"merged_all_"+i+".csv"
+            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+
+            df = df[df['bz_sales']/df['revenue'] >=0.6] #主营业务收入占比不低于60%
+            print(i)
+
+
+
+
+    print(1)
 #### MAIN #####
+
+hangye_longtou()
+exit()
+
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 
