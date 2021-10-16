@@ -282,7 +282,7 @@ if [ $full_or_daily == "DAILY" ]; then
   python t_daily_fundamentals_2.py --fetch_basic_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_info_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_new_share
-  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch #pro fundation tables. 10 tables.
+  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch --force_run #pro fundation tables. 10 tables. force_run to get all the stocks without remove garbadge
   python t_daily_fundamentals_2.py --fetch_change_name
 
   #`fetch lastest quarter fund data, all stocks
