@@ -426,6 +426,16 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
+def _hang_ye_long_tou(df,industry):
+    print("industry is "+industry)
+
+    # the current but uncompleted eps increase at now. Based on the latest report and previous yearly report
+    df['eps_incr'] = (df['eps'] - df['eps_-1'])/ df['eps']
+    df['bp_incr'] = (df['bargaining_power_-1'] - df['bargaining_power_-2'])/ df['bargaining_power_-2']
+
+    # the completed eps increase. based on year-1 and year-2 report
+    df['eps_incr_-1'] = (df['eps_-1'] - df['eps_-2'])/ df['eps_-2']
+
 
 
 def hangye_longtou():
@@ -436,19 +446,69 @@ def hangye_longtou():
     # python t_daily_fundamentals_2.py  --percent_mainbz_f
     f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv'
     df = pd.read_csv(f)
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
-    df = df[df['perc_sales']>=60]
+    df = df[df['perc_sales']>=60]  ##主营业务收入占比不低于60%
+    df = df[['ts_code', 'name', 'end_date', 'bz_cnt','perc_sales' ]]
+    df = df.sort_values(by='perc_sales', ascending=False).reset_index().drop('index', axis=1)
+    df = finlib.Finlib().ts_code_to_code(df=df)
+    df = finlib.Finlib().add_industry_to_df(df=df)
+    df = finlib.Finlib().add_amount_mktcap(df=df)
+
+    f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_indicator.csv'
+    df_last = pd.read_csv(f)
+    df_last = finlib.Finlib().ts_code_to_code(df=df_last)
+    df_last = df_last[['code', 'eps']]
+    df = pd.merge(left=df, right=df_last, on='code', how="inner")
+    logging.info("appended latest eps to df")
+
+    periods = finlib.Finlib().get_last_4q_n_years(n_year=3)
+
+    delta_year = 0
+    for p in periods:
+        if re.search(r'\d\d1231',p) != None: #yearly report
+            delta_year -= 1
+
+            f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'+"/"+"merged_all_"+p+".csv"
+            df_p = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+            df_p['bargaining_power'] = (       df_p['adv_receipts']*1.0  #预收款项
+                                               + df_p['notes_payable']*0  #应付票据
+                                               +df_p['acct_payable']*0 #应付账款
+                                       ) \
+                                       - (df_p['notes_receiv']*0.3 #应收票据. 应收票据是其他企业因为欠债而签发的不能立即兑付票据，票据包括支票、银行本票和商业汇票。
+                                          +df_p['accounts_receiv']*0.5 #应收账款. 应收账款是企业因为销售产品而应当在一年内向客户收取的销货款，也就是其他企业欠的货款。 企业因为采用赊销的办法促销商品，出售后不立即收取货款就形成了应收账款
+                                          +df_p['oth_receiv']*0.2) #其他应收款
+            df_p['bargaining_power']=df_p['bargaining_power']*100/df_p['revenue']
 
 
-    b = finlib.Finlib().get_last_4q_n_years(n_year=3)
+            df_p = df_p[['code','eps','bargaining_power']]
+            # df_p = df_p[['code','eps','notes_payable','acct_payable','adv_receipts','notes_receiv','accounts_receiv','oth_receiv']]
+            df_p = df_p.rename(columns={
+                "eps": "eps_"+str(delta_year),
+                "bargaining_power": "bargaining_power_"+str(delta_year),
 
-    for i in b:
-        if re.search(r'\d\d1231',i) != None: #yearly report
-            f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'+"/"+"merged_all_"+i+".csv"
-            df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+                # "notes_payable": "notes_payable_"+str(delta_year), #应付票据 weight 0.2
+                # "acct_payable": "acct_payable_"+str(delta_year), #应付账款 weight 0.2
+                # "adv_receipts": "adv_receipts_"+str(delta_year), #预收款项 weight 0.6
 
-            df = df[df['bz_sales']/df['revenue'] >=0.6] #主营业务收入占比不低于60%
-            print(i)
+                # "notes_receiv": "notes_receiv_"+str(delta_year), #应收票据
+                # "accounts_receiv": "accounts_receiv_"+str(delta_year), #应收账款
+                # "oth_receiv": "oth_receiv"+str(delta_year), #其他应收款
+
+                                        }, inplace=False)
+
+            df = pd.merge(left=df, right=df_p, on='code', how="inner")
+            logging.info("appended period "+p+" eps to df")
+
+
+    #2017年至2019年、2020年中报每股收益均大于0进行初步筛选
+    df = df[(df['eps']>0) & (df['eps_-1']>0) & (df['eps_-2']>0) & (df['eps_-3']>0)]
+
+    industries = df['industry_name_L1_L2_L3'].unique()
+    for i in industries:
+        df_sub = df[df['industry_name_L1_L2_L3']==i]
+        _hang_ye_long_tou(df=df_sub,industry=i)
+
+
+
 
 
 
