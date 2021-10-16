@@ -866,8 +866,8 @@ class Finlib:
             logging.info("file not exist. " + instrument_csv)
             exit()
 
-        df = df[~df['name'].str.contains("(测试)")]
-        df = df[~df['name'].str.contains("(测试代码)")]
+        df = df[~df['name'].str.contains("(测试)", regex=False)]
+        df = df[~df['name'].str.contains("(测试代码)", regex=False)]
 
         df = df.reset_index().drop('index',axis=1)
 
