@@ -458,15 +458,15 @@ def fetch_pro_fund(fast_fetch=False):
         fetch_period_list = fetch_period_list[0:1]
 
         # high_score_stock_only
-        if not force_run_global:  # ryan debug
+        if force_run_global:  # ryan debug
+            stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
+            stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)
+        else:
             stock_list = load_fund_result(mini_score=70)
             # stock_list = finlib.Finlib().ts_code_to_code(df=stock_list)
             # stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list)
             stock_list = finlib.Finlib().remove_garbage(df=stock_list) #code: SH600519
             # print(stock_list.__len__())
-        else:
-            stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
-            stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)
 
     else:
         stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999

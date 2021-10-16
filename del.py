@@ -426,15 +426,25 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
-def _hang_ye_long_tou(df,industry):
-    print("industry is "+industry)
+def _hang_ye_long_tou(df,industry,top=3):
+    df['circ_mv_perc'] = df['circ_mv'].apply(lambda _d: stats.percentileofscore(df['circ_mv'], _d))
 
-    # the current but uncompleted eps increase at now. Based on the latest report and previous yearly report
-    df['eps_incr'] = (df['eps'] - df['eps_-1'])/ df['eps']
-    df['bp_incr'] = (df['bargaining_power_-1'] - df['bargaining_power_-2'])/ df['bargaining_power_-2']
 
-    # the completed eps increase. based on year-1 and year-2 report
-    df['eps_incr_-1'] = (df['eps_-1'] - df['eps_-2'])/ df['eps_-2']
+    #formular for industry leader.
+    df['score'] = df['circ_mv_perc']*0.6+df['eps_incr_-1_perc']*0.2+df['eps_incr_perc']*0.2
+
+    df = df[['code','name','score', 'circ_mv', 'eps_incr', 'eps_incr_-1','industry_name_L1_L2_L3']].sort_values(by='score',ascending=False)
+
+    df = df.reset_index().drop('index', axis=1)
+    logging.info("top "+str(top)+" of industry " + str(industry))
+    logging.info(finlib.Finlib().pprint(df.head(top)))
+    return(df.head(top))
+
+
+
+
+
+
 
 
 
@@ -473,10 +483,10 @@ def hangye_longtou():
                                                + df_p['notes_payable']*0  #应付票据
                                                +df_p['acct_payable']*0 #应付账款
                                        ) \
-                                       - (df_p['notes_receiv']*0.3 #应收票据. 应收票据是其他企业因为欠债而签发的不能立即兑付票据，票据包括支票、银行本票和商业汇票。
-                                          +df_p['accounts_receiv']*0.5 #应收账款. 应收账款是企业因为销售产品而应当在一年内向客户收取的销货款，也就是其他企业欠的货款。 企业因为采用赊销的办法促销商品，出售后不立即收取货款就形成了应收账款
-                                          +df_p['oth_receiv']*0.2) #其他应收款
-            df_p['bargaining_power']=df_p['bargaining_power']*100/df_p['revenue']
+                                       - (df_p['notes_receiv']*0 #应收票据. 应收票据是其他企业因为欠债而签发的不能立即兑付票据，票据包括支票、银行本票和商业汇票。
+                                          +df_p['accounts_receiv']*0 #应收账款. 应收账款是企业因为销售产品而应当在一年内向客户收取的销货款，也就是其他企业欠的货款。 企业因为采用赊销的办法促销商品，出售后不立即收取货款就形成了应收账款
+                                          +df_p['oth_receiv']*0) #其他应收款
+            # df_p['bargaining_power']=df_p['bargaining_power']*100/df_p['revenue']
 
 
             df_p = df_p[['code','eps','bargaining_power']]
@@ -502,11 +512,32 @@ def hangye_longtou():
     #2017年至2019年、2020年中报每股收益均大于0进行初步筛选
     df = df[(df['eps']>0) & (df['eps_-1']>0) & (df['eps_-2']>0) & (df['eps_-3']>0)]
 
+    # 净利润增幅（用ｅｐｓ代替）
+    # the current but uncompleted eps increase at now. Based on the latest report and previous yearly report
+    df['eps_incr'] = (df['eps'] - df['eps_-1'])/ df['eps']
+    df['eps_incr_perc'] = df['eps_incr'].apply(lambda _d: stats.percentileofscore(df['eps_incr'], _d))
+    logging.info(""+finlib.Finlib().pprint(df.sort_values(by='eps_incr_perc',ascending=False).head(30)))
+
+    # df['bp_incr'] = (df['bargaining_power_-1'] - df['bargaining_power_-2'])/ df['bargaining_power_-2']
+
+
+    # the completed eps increase. based on year-1 and year-2 report
+    df['eps_incr_-1'] = (df['eps_-1'] - df['eps_-2'])/ df['eps_-2']
+    df['eps_incr_-1_perc'] = df['eps_incr_-1'].apply(lambda _d: stats.percentileofscore(df['eps_incr_-1'], _d))
+    logging.info("" + finlib.Finlib().pprint(df.sort_values(by='eps_incr_-1_perc', ascending=False).head(30)))
+
+    df_rtn = pd.DataFrame()
     industries = df['industry_name_L1_L2_L3'].unique()
     for i in industries:
         df_sub = df[df['industry_name_L1_L2_L3']==i]
-        _hang_ye_long_tou(df=df_sub,industry=i)
+        df_industry_top = _hang_ye_long_tou(df=df_sub,industry=i,top=3)
+        df_rtn = df_rtn.append(df_industry_top)
 
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
+    to_csv = "/home/ryan/DATA/result/hang_ye_long_tou.csv"
+    df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
+    logging.info("hangye longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    print(1)
 
 
 
