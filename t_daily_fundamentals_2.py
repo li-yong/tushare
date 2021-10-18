@@ -499,11 +499,6 @@ def fetch_pro_fund(fast_fetch=False):
         logging.info(__file__ + " " + "not processing fundermental data at this month. ")
         return ()
     else:
-
-        #ryan debug, remove after done
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
-
-
         #return the valid stock_list which has data.
         stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list)  # 资产负债表
