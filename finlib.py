@@ -3131,10 +3131,14 @@ class Finlib:
 
 
 
-    def add_industry_to_df(self,df):
+    def add_industry_to_df(self,df,source='all'):
         if "_".join(df.columns.to_list()).__contains__("industry_name"):
             logging.info("df already has column named industry_name, skip adding industry to df. df columns: "+",".join(df.columns.to_list()))
             return(df)
+
+        if source not in ['all','wg','ts']:
+            logging.info("unexpected source, expect 'all','wg','ts', but got "+str(source))
+            exit()
 
         f_ts = "/home/ryan/DATA/pickle/ag_stock_industry.csv"
         f_wg = "/home/ryan/DATA/pickle/ag_stock_industry_wg.csv"
@@ -3150,12 +3154,22 @@ class Finlib:
                           suffixes=("", "_x"))
         # df_industry[['industry_name_wg','industry_name_ts']] = df_industry[['industry_name_wg','industry_name_ts']].fillna("unknown")
 
-        df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']+"_" + df_industry['industry_name_ts']
+        if source =='all':
+            df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']+"_" + df_industry['industry_name_ts']
+        elif  source =='wg':
+            df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']
+        elif  source =='ts':
+            df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_ts']
+
         df_industry = df_industry.reset_index().drop('index', axis=1)
 
         df_rtn = pd.merge(left=df, right=df_industry[['code', 'industry_name_L1_L2_L3']], on='code', how='left',
                           suffixes=("", "_x"))
-        df_rtn[df_rtn['industry_name_L1_L2_L3'].isna()]
+
+        if df_rtn['industry_name_L1_L2_L3'].hasnans:
+            logging.info("following stock has nan industry")
+            logging.info(self.pprint(df_rtn[df_rtn['industry_name_L1_L2_L3'].isna()]))
+            df_rtn['industry_name_L1_L2_L3']=df_rtn['industry_name_L1_L2_L3'].fillna(value='UNKNOWN')
 
         return(df_rtn)
 
@@ -4738,8 +4752,10 @@ class Finlib:
         _a = df_field[df_field['API'] == api]['FIELD_NAME']
         logging.info(api+" csv file fields count " + str(_a.__len__()))
 
-        _c = ts.pro_api().query(api, ts_code='600519.SH', period='20201231').columns.to_series().reset_index()['index']
-        logging.info(api+" tushare fields count " + str(_c.__len__()))
+        # _c = ts.pro_api().query(api, ts_code='600519.SH', period='20201231').columns.to_series().reset_index()['index']
+        logging.info("api field preparing, query "+api)
+        _c = ts.pro_api().query(api, ts_code='600519.SH').columns.to_series().reset_index()['index']
+        logging.info(api+" tushare default query fields count " + str(_c.__len__()))
 
         _d = _a.append(_c).drop_duplicates()
         logging.info(api+" finally field count " + str(_d.__len__()))

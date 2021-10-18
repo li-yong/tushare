@@ -499,6 +499,11 @@ def fetch_pro_fund(fast_fetch=False):
         logging.info(__file__ + " " + "not processing fundermental data at this month. ")
         return ()
     else:
+
+        #ryan debug, remove after done
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+
+
         #return the valid stock_list which has data.
         stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list)  # 资产负债表
@@ -633,7 +638,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             df_tmp = pd.DataFrame()
             if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit","fina_mainbz", "disclosure_date", "express"]:
                 if fast_fetch:
-                    if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")):
+                    if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
                         continue
                     else:
                         try:
@@ -723,7 +728,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                         logging.exception("Exception occurred")
 
             logging.info(__file__ + " " + str(period) + " " + str(query) + ". received len " + str(df_tmp.__len__()))
-            finlib.Finlib().pprint(df_tmp.head(1))
+            logging.info(finlib.Finlib().pprint(df_tmp.head(1)))
 
             # signal.alarm(0)
             # df_tmp = df_tmp.astype(str)
@@ -779,7 +784,8 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
                 df_tmp_sub = df_tmp[df_tmp[field] == ed]
 
-                if df_tmp_sub.__len__() > 1 and "update_flag" in df_tmp_sub.columns:
+                # if df_tmp_sub.__len__() > 1 and "update_flag" in df_tmp_sub.columns and (query not in ['fina_mainbz','dividend']):
+                if df_tmp_sub.__len__() > 1 and "update_flag" in df_tmp_sub.columns and (df_tmp_sub[df_tmp_sub["update_flag"] == "1"].__len__()>0):
                     df_tmp_sub = df_tmp_sub[df_tmp_sub["update_flag"] == "1"]
                     # if df_tmp_sub.__len__() > 1:
                     #    df_tmp_sub = df_tmp_sub.iloc[-1]

@@ -427,11 +427,16 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
 def _hang_ye_long_tou(df,industry,top=3):
+    if df.__len__() <= 3 or df.__len__() < top*2.5:
+        logging.info("insufficent stocks in industry "+str(industry)+" , only has "+str(df.__len__())+" stocks.")
+        logging.info(finlib.Finlib().pprint(df))
+        return(pd.DataFrame())
+
     df['circ_mv_perc'] = df['circ_mv'].apply(lambda _d: stats.percentileofscore(df['circ_mv'], _d))
 
 
     #formular for industry leader.
-    df['score'] = df['circ_mv_perc']*0.6+df['eps_incr_-1_perc']*0.2+df['eps_incr_perc']*0.2
+    df['score'] = df['circ_mv_perc']*0.8+df['eps_incr_-1_perc']*0.1+df['eps_incr_perc']*0.1
 
     df = df[['code','name','score', 'circ_mv', 'eps_incr', 'eps_incr_-1','industry_name_L1_L2_L3']].sort_values(by='score',ascending=False)
 
@@ -460,7 +465,9 @@ def hangye_longtou():
     df = df[['ts_code', 'name', 'end_date', 'bz_cnt','perc_sales' ]]
     df = df.sort_values(by='perc_sales', ascending=False).reset_index().drop('index', axis=1)
     df = finlib.Finlib().ts_code_to_code(df=df)
-    df = finlib.Finlib().add_industry_to_df(df=df)
+    # df = finlib.Finlib().add_industry_to_df(df=df,source='all')
+    # df = finlib.Finlib().add_industry_to_df(df=df,source='ts')
+    df = finlib.Finlib().add_industry_to_df(df=df,source='wg')
     df = finlib.Finlib().add_amount_mktcap(df=df)
 
     f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_indicator.csv'
@@ -536,7 +543,7 @@ def hangye_longtou():
     df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
     to_csv = "/home/ryan/DATA/result/hang_ye_long_tou.csv"
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
-    logging.info("hangye longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    logging.info("hang ye long tou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
     print(1)
 
 
@@ -904,7 +911,7 @@ csv_f_top_list = dir + "/top_list_" + str(n_days) + "_days.csv"
 csv_f_top_inst = dir + "/top_inst_" + str(n_days) + "_days.csv"
 
 
-def fetch_top_list_inst():
+def fetch_top_lis_inst():
     pro = ts.pro_api()
 
     df_top_list = pd.DataFrame()
