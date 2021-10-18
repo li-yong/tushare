@@ -1637,7 +1637,7 @@ def zzz_merge_local(stock_list, feature,  output_csv, col_name_list):
 #########################
 # merge all 9 tables to one table, "merged_all_"+end_date+".csv"
 # input:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv
-# output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/*.csv
+# output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/merged_all_*.csv
 ######################
 def merge_quarterly(fast=False):
     # requires lots memory. >10 GB estimated.
@@ -4368,9 +4368,9 @@ def main():
         # generate source/*.csv, e.g source(source.dev)/income.csv;
         # combine source/income.csv ... from source/individual_per_stock/*.csv
         # merge_local()
-        # not fetching/calculating fundermental data at month 5,6,9, 11, 12
-        if not finlib.Finlib().get_report_publish_status()["process_fund_or_not"]:
-            logging.info(__file__ + " " + "not processing fundermental data at this month. ")
+        # not fetching/calculating fundamental data at month 5,6,9, 11, 12
+        if (not force_run_global) and (not finlib.Finlib().get_report_publish_status()["process_fund_or_not"]):
+            logging.info(__file__ + " " + "not processing fundamental data at this month. ")
             exit()
         else:
             merge_local_bash()

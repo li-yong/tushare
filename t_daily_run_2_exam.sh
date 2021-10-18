@@ -589,7 +589,6 @@ if [ $full_or_daily == "FULL" ]; then
     python t_top_10_holders.py --analyze --stock_global AG
 fi
 
-
 ################################
 # input: ~/DATA/DAY_Global/AG_qfq/*.csv
 # output: /home/ryan/DATA/result/zigzag_div/*.svg
