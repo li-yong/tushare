@@ -453,6 +453,39 @@ def _hang_ye_long_tou(df,industry,top=3):
 
 
 
+def mainbz_ana():
+    f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv'
+    df0 = pd.read_csv(f,converters={'end_date':str,})
+    df = df0[df0['end_date']=="20201231"]
+
+    # bz_profit = bz_sales - bz_cost
+    #which business most profitable
+    df_profit_sum  = df.groupby(by='bz_item').sum().sort_values(by="bz_profit", ascending=False).reset_index()
+    df_profit_mean = df.groupby(by='bz_item').mean().sort_values(by="bz_profit", ascending=False).reset_index()
+
+    logging.info("top business by profit sum:\n"+finlib.Finlib().pprint(df_profit_sum.head(20)))
+    logging.info("top business by profit mean:\n"+finlib.Finlib().pprint(df_profit_mean.head(20)))
+
+    df_rtn = pd.DataFrame()
+    bz = df_profit_mean['bz_item'].unique()
+    i=0
+    for b in bz:
+        i+=1
+        df_sub = df[df['bz_item']==b].sort_values(by='bz_profit',ascending=False)
+        logging.info("bz " + str(i) + " of " + str(bz.__len__()) + " " + b+ " companies has that business "+str(df_sub.__len__()))
+        logging.info(finlib.Finlib().pprint(df_sub.head(2)))
+        if df_sub.__len__() < 3 and (df_sub['bz_profit'].median() < df_profit_mean['bz_profit'].median()+2*df_profit_mean['bz_profit'].std()):
+            logging.info("ignore bz "+b+" , less than 3 companies and profit < median*2")
+            continue
+        df_rtn = df_rtn.append(df_sub.head(2))
+
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
+    to_csv = "/home/ryan/DATA/result/mainbz_top_companies.csv"
+    df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
+    logging.info("mainbz longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    print(1)
+
+
 def hangye_longtou():
     # a = finlib.Finlib().get_report_publish_status()
 
@@ -553,7 +586,7 @@ def hangye_longtou():
 
     print(1)
 #### MAIN #####
-
+mainbz_ana()
 hangye_longtou()
 exit()
 

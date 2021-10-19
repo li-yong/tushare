@@ -47,3 +47,28 @@ cat fina_indicator.csv | awk '{split($0,a,","); print a[1],a[2],a[3],a[151], a[1
 # run on AG openning, 2.30pm
 python t_daily_junxian_barstyle.py --check_my_ma --check_my_ma_allow_delay_min 30 --selected --stock_global AG_HOLD 
 python t_daily_junxian_barstyle.py --check_my_ma --check_my_ma_allow_delay_min 30 --selected --stock_global AG_HOLD --check_my_ma_force_fetch
+
+# search keywords in main bz (主营业务）, sort by 6th column (bz_profit).  5th_bz_sales
+grep 车  ~/DATA/result/mainbz_top_companies.csv | column -s',' -t | sort -k6 -g
+
+    福田汽车  600166.SH  20201231  汽车行业                                                      5.3e+10  5.5e+09   4.7e+10  CNY  0
+    中国重汽  000951.SZ  20201231  汽车制造业                                                    6.0e+10  5.7e+09   5.4e+10  CNY  0
+    福耀玻璃  600660.SH  20201231  汽车玻璃                                                      1.8e+10  6.2e+09   1.2e+10  CNY  0
+    均胜电子  600699.SH  20201231  汽车零部件(行业)                                              4.7e+10  6.3e+09   4.1e+10  CNY  0
+    一汽解放  000800.SZ  20201231  商用车                                                        1.0e+11  9.1e+09   9.4e+10  CNY  0
+    一汽解放  000800.SZ  20201231  汽车制造业                                                    1.1e+11  1.0e+10   1.0e+11  CNY  0
+    长安汽车  000625.SZ  20201231  整车                                                          8.3e+10  1.1e+10   7.1e+10  CNY  0
+    中国中车  601766.SH  20201231  城轨与城市基础设施                                            5.8e+10  1.1e+10   4.7e+10  CNY  0
+    长安汽车  000625.SZ  20201231  汽车制造业                                                    8.5e+10  1.2e+10   7.2e+10  CNY  0
+    华域汽车  600741.SH  20201231  内外饰件类                                                    8.9e+10  1.3e+10   7.5e+10  CNY  0
+    华域汽车  600741.SH  20201231  内外饰件类(行业)                                              8.9e+10  1.3e+10   7.5e+10  CNY  0
+    长城汽车  601633.SH  20201231  销售汽车收入                                                  9.2e+10  1.4e+10   7.8e+10  CNY  0
+    中国中车  601766.SH  20201231  新产业                                                        7.2e+10  1.5e+10   5.7e+10  CNY  0
+    长城汽车  601633.SH  20201231  汽车行业                                                      1.0e+11  1.7e+10   8.4e+10  CNY  0
+    潍柴动力  000338.SZ  20201231  整车及关键零部件                                              1.2e+11  1.9e+10   9.6e+10  CNY  0
+    比亚迪    002594.SZ  20201231  汽车                                                          8.4e+10  2.1e+10   6.3e+10  CNY  0
+    中国中车  601766.SH  20201231  铁路装备                                                      9.0e+10  2.2e+10   6.8e+10  CNY  0
+    上汽集团  600104.SH  20201231  整车业务                                                      5.3e+11  3.5e+10   5.0e+11  CNY  0
+    中国中车  601766.SH  20201231  轨道交通装备及其延伸产品和服务                                2.3e+11  5.1e+10   1.8e+11  CNY  0
+    上汽集团  600104.SH  20201231  汽车制造业(行业)                                              7.2e+11  7.8e+10   6.5e+11  CNY  0
+
