@@ -282,9 +282,9 @@ fi
 if [ $full_or_daily == "DAILY" ]; then
   python t_daily_fundamentals_2.py --fetch_basic_daily --fast_fetch
   python t_daily_fundamentals_2.py --fetch_info_daily --fast_fetch
-  python t_daily_fundamentals_2.py --
+  python t_daily_fundamentals_2.py --fetch_new_share
 
-  # don't fetch fund data daily
+  # don't fetch fund data
 #  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch  #--fast_fetch only fetch the latest period.
 #  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch --force_run #pro fundation tables. 10 tables. force_run to get all the stocks without remove garbadge
   python t_daily_fundamentals_2.py --fetch_change_name
