@@ -426,7 +426,7 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
-def _hang_ye_long_tou(df,industry,top=3):
+def _industry_longtou_top_mv_eps(df,industry,top=3):
     if df.__len__() <= 3 or df.__len__() < top*2.5:
         logging.info("insufficent stocks in industry "+str(industry)+" , only has "+str(df.__len__())+" stocks.")
         logging.info(finlib.Finlib().pprint(df))
@@ -446,14 +446,8 @@ def _hang_ye_long_tou(df,industry,top=3):
     return(df.head(top))
 
 
-
-
-
-
-
-
-
-def mainbz_ana():
+# This is from mainbz view. based on profit of the mainbz
+def industry_longtou_top_mainbz_profit():
     f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv'
     df0 = pd.read_csv(f,converters={'end_date':str,})
     df = df0[df0['end_date']=="20201231"]
@@ -485,8 +479,8 @@ def mainbz_ana():
     logging.info("mainbz longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
     print(1)
 
-
-def hangye_longtou():
+# This is based on cir_mkt_value + eps_incr + industry_wg view.
+def industry_longtou_top_mv_eps():
     # a = finlib.Finlib().get_report_publish_status()
 
     # python t_daily_fundamentals_2.py --fetch_pro_fund  or python t_daily_fundamentals_2.py --fetch_data_all
@@ -552,7 +546,7 @@ def hangye_longtou():
     #2017年至2019年、2020年中报每股收益均大于0进行初步筛选
     df = df[(df['eps']>0) & (df['eps_-1']>0) & (df['eps_-2']>0) & (df['eps_-3']>0)]
 
-    # 净利润增幅（用ｅｐｓ代替）
+    # 净利润增幅（用eps代替）
     # the current but uncompleted eps increase at now. Based on the latest report and previous yearly report
     df['eps_incr'] = (df['eps'] - df['eps_-1'])/ df['eps']
     df['eps_incr_perc'] = df['eps_incr'].apply(lambda _d: stats.percentileofscore(df['eps_incr'], _d))
@@ -579,15 +573,9 @@ def hangye_longtou():
     logging.info("hang ye long tou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
     print(1)
 
-
-
-
-
-
-    print(1)
 #### MAIN #####
-mainbz_ana()
-hangye_longtou()
+industry_longtou_top_mainbz_profit()
+industry_longtou_top_mv_eps()
 exit()
 
 
