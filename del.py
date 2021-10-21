@@ -454,17 +454,23 @@ def industry_top_mainbz_profit():
         logging.info("file generated in "+str(3)+" days, loading and return. "+ to_csv)
         return(pd.read_csv(to_csv))
 
-    f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv'
+    f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv'
     df0 = pd.read_csv(f,converters={'end_date':str,})
+    df0 = df0[~df0['bz_item'].str.contains("\\(行业\\)")]
+
     df = df0[df0['end_date']=="20201231"]
+    df = df[~df['bz_profit'].isna()].reset_index().drop('index',axis=1)
 
     # bz_profit = bz_sales - bz_cost
     #which business most profitable
     df_profit_sum  = df.groupby(by='bz_item').sum().sort_values(by="bz_profit", ascending=False).reset_index()
     df_profit_mean = df.groupby(by='bz_item').mean().sort_values(by="bz_profit", ascending=False).reset_index()
 
+
     logging.info("top business by profit sum:\n"+finlib.Finlib().pprint(df_profit_sum.head(20)))
     logging.info("top business by profit mean:\n"+finlib.Finlib().pprint(df_profit_mean.head(20)))
+
+    df['profit_ratio'] = (df['bz_profit'] / df['bz_sales']).round(2)
 
     df_rtn = pd.DataFrame()
     bz = df_profit_mean['bz_item'].unique()
@@ -474,15 +480,27 @@ def industry_top_mainbz_profit():
         df_sub = df[df['bz_item']==b].sort_values(by='bz_profit',ascending=False)
         logging.info("bz " + str(i) + " of " + str(bz.__len__()) + " " + b+ " companies has that business "+str(df_sub.__len__()))
         logging.info(finlib.Finlib().pprint(df_sub.head(2)))
-        if df_sub.__len__() < 3 and (df_sub['bz_profit'].median() < df_profit_mean['bz_profit'].median()+2*df_profit_mean['bz_profit'].std()):
-            logging.info("ignore bz "+b+" , less than 3 companies and profit < median*2")
+        if df_sub.__len__() < 3 and (df_sub['bz_profit'].max() < df_profit_mean['bz_profit'].mean()+2*df_profit_mean['bz_profit'].std()):
+            logging.info("ignore bz "+b+" , less than 3 companies and profit < median+2std")
             continue
-        df_rtn = df_rtn.append(df_sub.head(2))
+
+        df_rtn = df_rtn.append(df_sub[0:1])
+
+        if df_sub.__len__() >=2 and df_sub.iloc[1]['bz_profit']/df_sub.iloc[0]['bz_profit'] > 0.8:
+            df_rtn = df_rtn.append(df_sub[1:2])
+
+        if df_sub.__len__() >=3 and df_sub.iloc[2]['bz_profit']/df_sub.iloc[0]['bz_profit'] > 0.8:
+            df_rtn = df_rtn.append(df_sub[2:3])
+
+
+        # df_rtn = df_rtn.append(df_sub.head(2))
 
     df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
     df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
+
     df_rtn = df_rtn.sort_values(by='bz_profit', ascending=False).reset_index().drop('index', axis=1)
     df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision='%.1e')
+    df_rtn = finlib.Finlib().adjust_column(df=df_rtn, col_name_list=['code','name','end_date','profit_ratio','bz_item','industry_name_L1_L2_L3'])
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
     logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
@@ -588,16 +606,7 @@ def industry_top_mv_eps():
     return(df_rtn)
 
 #### MAIN #####
-# df =  industry_top_mainbz_profit()
-# df = finlib.Finlib().ts_code_to_code(df)
-# df = finlib.Finlib().add_industry_to_df(df=df)
-# df = df.sort_values(by='bz_profit', ascending=False)
-# df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
-# to_csv = "/home/ryan/DATA/result/industry_top_mainbz_profit.csv"
-# df.to_csv(to_csv, encoding='UTF-8', index=False)
-
-
-
+df =  industry_top_mainbz_profit()
 df_industry_top_mv_eps = industry_top_mv_eps()
 exit()
 
