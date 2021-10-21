@@ -502,6 +502,7 @@ def fetch_pro_fund(fast_fetch=False):
         
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_D', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_P', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        exit()
 
         
         #return the valid stock_list which has data.
