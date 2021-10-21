@@ -426,7 +426,7 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
-def _industry_longtou_top_mv_eps(df,industry,top=3):
+def _industry_top_mv_eps(df,industry,top=3):
     if df.__len__() <= 3 or df.__len__() < top*2.5:
         logging.info("insufficent stocks in industry "+str(industry)+" , only has "+str(df.__len__())+" stocks.")
         logging.info(finlib.Finlib().pprint(df))
@@ -447,7 +447,13 @@ def _industry_longtou_top_mv_eps(df,industry,top=3):
 
 
 # This is from mainbz view. based on profit of the mainbz
-def industry_longtou_top_mainbz_profit():
+def industry_top_mainbz_profit():
+    to_csv = "/home/ryan/DATA/result/industry_top_mainbz_profit.csv"
+
+    if finlib.Finlib().is_cached(file_path=to_csv, day=3):
+        logging.info("file generated in "+str(3)+" days, loading and return. "+ to_csv)
+        return(pd.read_csv(to_csv))
+
     f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv'
     df0 = pd.read_csv(f,converters={'end_date':str,})
     df = df0[df0['end_date']=="20201231"]
@@ -473,14 +479,23 @@ def industry_longtou_top_mainbz_profit():
             continue
         df_rtn = df_rtn.append(df_sub.head(2))
 
-    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
-    to_csv = "/home/ryan/DATA/result/mainbz_top_companies.csv"
+    df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
+    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
+    df_rtn = df_rtn.sort_values(by='bz_profit', ascending=False).reset_index().drop('index', axis=1)
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision='%.1e')
+
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
-    logging.info("mainbz longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
-    print(1)
+    logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    return(df_rtn)
 
 # This is based on cir_mkt_value + eps_incr + industry_wg view.
-def industry_longtou_top_mv_eps():
+def industry_top_mv_eps():
+    to_csv = "/home/ryan/DATA/result/industry_top_mv_eps.csv"
+
+    if finlib.Finlib().is_cached(file_path=to_csv, day=3):
+        logging.info("file generated in " + str(3) + " days, loading and return. "+to_csv)
+        return (pd.read_csv(to_csv))
+
     # a = finlib.Finlib().get_report_publish_status()
 
     # python t_daily_fundamentals_2.py --fetch_pro_fund  or python t_daily_fundamentals_2.py --fetch_data_all
@@ -542,7 +557,6 @@ def industry_longtou_top_mv_eps():
             df = pd.merge(left=df, right=df_p, on='code', how="inner")
             logging.info("appended period "+p+" eps to df")
 
-
     #2017年至2019年、2020年中报每股收益均大于0进行初步筛选
     df = df[(df['eps']>0) & (df['eps_-1']>0) & (df['eps_-2']>0) & (df['eps_-3']>0)]
 
@@ -564,18 +578,27 @@ def industry_longtou_top_mv_eps():
     industries = df['industry_name_L1_L2_L3'].unique()
     for i in industries:
         df_sub = df[df['industry_name_L1_L2_L3']==i]
-        df_industry_top = _hang_ye_long_tou(df=df_sub,industry=i,top=3)
+        df_industry_top = _industry_top_mv_eps(df=df_sub,industry=i,top=3)
         df_rtn = df_rtn.append(df_industry_top)
 
     df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
-    to_csv = "/home/ryan/DATA/result/hang_ye_long_tou.csv"
+
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
-    logging.info("hang ye long tou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
-    print(1)
+    logging.info("industry_top_mv_eps saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    return(df_rtn)
 
 #### MAIN #####
-industry_longtou_top_mainbz_profit()
-industry_longtou_top_mv_eps()
+# df =  industry_top_mainbz_profit()
+# df = finlib.Finlib().ts_code_to_code(df)
+# df = finlib.Finlib().add_industry_to_df(df=df)
+# df = df.sort_values(by='bz_profit', ascending=False)
+# df = finlib.Finlib().df_format_column(df=df, precision='%.1e')
+# to_csv = "/home/ryan/DATA/result/industry_top_mainbz_profit.csv"
+# df.to_csv(to_csv, encoding='UTF-8', index=False)
+
+
+
+df_industry_top_mv_eps = industry_top_mv_eps()
 exit()
 
 

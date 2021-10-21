@@ -499,6 +499,10 @@ def fetch_pro_fund(fast_fetch=False):
         logging.info(__file__ + " " + "not processing fundermental data at this month. ")
         return ()
     else:
+        
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+
+        
         #return the valid stock_list which has data.
         stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list)  # 资产负债表
@@ -652,10 +656,20 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                         try:
                             if fetch_period_flag:
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
+                                # df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
+
+                                if query == 'fina_mainbz':
+                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period, type='D')
+                                else:
+                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
                             else:  # the 1st fetch
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)  ## Income,balance, most useful api
+                                # df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
+
+                                if query == 'fina_mainbz':
+                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, type='D')
+                                else:
+                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)  ## Income,balance, most useful api
                         except Exception as e:
                             logging.exception("Exception occurred")
             elif query in ["forecast"]:
@@ -1384,6 +1398,14 @@ def merge_local_bash_basic_quarterly():
     logging.info(__file__ + " " + "merge local basic quarterly completed , saved to " + output_csv)
     return
 
+
+def fina_mainbz_product_area():
+    df = pd.read_csv(csv_fina_mainbz, converters={"end_date": str})
+
+    df = df.fillna(0)
+
+    df_result = pd.DataFrame(columns=list(df.columns))
+    df_result = df_result.drop("bz_item", axis=1)
 
 def sum_fina_mainbz():
 
@@ -4158,7 +4180,6 @@ def main():
     ########################
     #
     #########################
-
 
     logging.info(__file__ + " " + "\n")
     logging.info(__file__ + " " + "SCRIPT STARTING " + " ".join(sys.argv))
