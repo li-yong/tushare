@@ -42,6 +42,8 @@ ts_code name end_date roe_yoy
 # sort by the 5th column ascendingly
 cat fina_indicator.csv | awk '{split($0,a,","); print a[1],a[2],a[3],a[151], a[156]}' | sort -k 5,5 -n -r  | more
 
+# rename file name to all small case
+for i in `ls *fina_mainbz_D*`; do mv $i ${i,,} ; done
 
 
 # run on AG openning, 2.30pm

@@ -46,7 +46,11 @@ global csv_dividend
 global csv_express
 global csv_fina_indicator
 global csv_fina_audit
+
 global csv_fina_mainbz
+global csv_fina_mainbz_p
+global csv_fina_mainbz_d
+
 global csv_fina_mainbz_sum
 global csv_disclosure_date
 global csv_basic
@@ -61,7 +65,9 @@ global csv_express_latest
 global csv_dividend_latest
 global csv_fina_indicator_latest
 global csv_fina_audit_latest
-global csv_fina_mainbz_latest
+# global csv_fina_mainbz_latest
+global csv_fina_mainbz_p_latest
+global csv_fina_mainbz_d_latest
 global csv_fina_mainbz_sum_latest
 global csv_disclosure_date_latest
 global csv_disclosure_date_latest_notify
@@ -121,6 +127,9 @@ def set_global(debug=False, big_memory=False, force_run=False):
     global csv_fina_indicator
     global csv_fina_audit
     global csv_fina_mainbz
+    global csv_fina_mainbz_p
+    global csv_fina_mainbz_d
+
     global csv_fina_mainbz_sum
     global csv_disclosure_date
     global csv_basic
@@ -199,6 +208,8 @@ def set_global(debug=False, big_memory=False, force_run=False):
     csv_fina_indicator = fund_base_source + "/fina_indicator.csv"
     csv_fina_audit = fund_base_source + "/fina_audit.csv"
     csv_fina_mainbz = fund_base_source + "/fina_mainbz.csv"
+    csv_fina_mainbz_p = fund_base_source + "/fina_mainbz_p.csv"
+    csv_fina_mainbz_d = fund_base_source + "/fina_mainbz_d.csv"
     csv_fina_mainbz_sum = fund_base_source + "/fina_mainbz_sum.csv"
     csv_disclosure_date = fund_base_source + "/disclosure_date.csv"
     csv_basic = fund_base_source + "/basic.csv"
@@ -214,6 +225,7 @@ def set_global(debug=False, big_memory=False, force_run=False):
     csv_fina_indicator_latest = fund_base_latest + "/fina_indicator.csv"
     csv_fina_audit_latest = fund_base_latest + "/fina_audit.csv"
     csv_fina_mainbz_latest = fund_base_latest + "/fina_mainbz.csv"
+    csv_fina_mainbz_p_latest = fund_base_latest + "/fina_mainbz_p.csv"
     csv_fina_mainbz_sum_latest = fund_base_latest + "/fina_mainbz_sum.csv"
     csv_fina_mainbz_latest_percent = fund_base_latest + "/fina_mainbz_percent.csv"
     csv_disclosure_date_latest = fund_base_latest + "/disclosure_date.csv"
@@ -500,8 +512,8 @@ def fetch_pro_fund(fast_fetch=False):
         return ()
     else:
         
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_D', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_P', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_d', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_p', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
         exit()
 
         
@@ -637,26 +649,26 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
             # signal.alarm(5)
             df_tmp = pd.DataFrame()
-            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit", "fina_mainbz_P", "fina_mainbz_D", "disclosure_date", "express"]:
+            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit", "fina_mainbz_p", "fina_mainbz_d", "disclosure_date", "express"]:
                 if fast_fetch:
-                    if query in ["fina_audit", "fina_mainbz_P", "fina_mainbz_D", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
+                    if query in ["fina_audit", "fina_mainbz_p", "fina_mainbz_d", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
                         continue
                     else:
                         try:
                             if fetch_period_flag:
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                                if query == 'fina_mainbz_D':
+                                if query == 'fina_mainbz_d':
                                     df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='D')
-                                elif query == 'fina_mainbz_P':
+                                elif query == 'fina_mainbz_p':
                                     df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='P')
                                 else:
                                     df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
 
                             else:  # the 1st fetch
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                                if query == 'fina_mainbz_D':
+                                if query == 'fina_mainbz_d':
                                     df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='D')
-                                elif query == 'fina_mainbz_P':
+                                elif query == 'fina_mainbz_p':
                                     df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='P')
                                 else:
                                     df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
@@ -1219,7 +1231,8 @@ def merge_individual_bash_basic(fast_fetch=False):
 #
 #########################
 def merge_local_bash():
-    features = ["income", "balancesheet", "cashflow", "fina_mainbz", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
+    features = ["income", "balancesheet", "cashflow", "fina_mainbz_p", "fina_mainbz_d", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
+    features = ["fina_mainbz_p", "fina_mainbz_d"] #ryan debug
 
     input_dir = fund_base_source + "/individual"
 
@@ -1405,21 +1418,13 @@ def merge_local_bash_basic_quarterly():
     return
 
 
-def fina_mainbz_product_area():
-    df = pd.read_csv(csv_fina_mainbz, converters={"end_date": str})
-
-    df = df.fillna(0)
-
-    df_result = pd.DataFrame(columns=list(df.columns))
-    df_result = df_result.drop("bz_item", axis=1)
-
 def sum_fina_mainbz():
 
     if (not force_run_global) and finlib.Finlib().is_cached(csv_fina_mainbz_sum, day=6):
         logging.info(__file__ + " " + "skip file, it been updated in 6 day. " + csv_fina_mainbz_sum)
         return
 
-    df = pd.read_csv(csv_fina_mainbz, converters={"end_date": str})
+    df = pd.read_csv(csv_fina_mainbz_p, converters={"end_date": str})
 
     df = df.fillna(0)
 
@@ -1468,7 +1473,7 @@ def percent_fina_mainbz():
         logging.info(__file__ + " " + "skip file, it been updated in 6 day. " + csv_fina_mainbz_latest_percent)
         return
 
-    df = pd.read_csv(csv_fina_mainbz_latest, converters={"end_date": str})
+    df = pd.read_csv(csv_fina_mainbz_p_latest, converters={"end_date": str})
 
     df = df.fillna(0)
 
@@ -1733,6 +1738,7 @@ def _merge_quarterly(end_date, df_income, df_balancesheet, df_cashflow, df_fina_
 
     # logging.info(df_result_d[df_result_d['ts_code']=='000001.SZ'].__len__())
 
+    #@ryan todo: check if df_fina_mainbz should be here
     for df_name in ["df_balancesheet", "df_cashflow", "df_fina_indicator", "df_fina_audit", "df_fina_mainbz"]:
         # i += 1
         # suffix = "_x"+str(i)
@@ -1782,7 +1788,7 @@ def extract_latest():
     _extract_latest(csv_input=csv_express, csv_output=csv_express_latest, feature="express", col_name_list=col_list_express)
     _extract_latest(csv_input=csv_fina_indicator, csv_output=csv_fina_indicator_latest, feature="fina_indicator", col_name_list=col_list_fina_indicator)
     _extract_latest(csv_input=csv_fina_audit, csv_output=csv_fina_audit_latest, feature="fina_audit", col_name_list=col_list_fina_audit)
-    _extract_latest(csv_input=csv_fina_mainbz, csv_output=csv_fina_mainbz_latest, feature="fina_mainbz", col_name_list=col_list_fina_mainbz)
+    _extract_latest(csv_input=csv_fina_mainbz_p, csv_output=csv_fina_mainbz_p_latest, feature="fina_mainbz", col_name_list=col_list_fina_mainbz)
     _extract_latest(csv_input=csv_fina_mainbz_sum, csv_output=csv_fina_mainbz_sum_latest, feature="fina_mainbz_sum", col_name_list=col_list_fina_mainbz)
     _extract_latest(csv_input=csv_disclosure_date, csv_output=csv_disclosure_date_latest, feature="disclosure_date", col_name_list=col_list_disclosure_date)
 
