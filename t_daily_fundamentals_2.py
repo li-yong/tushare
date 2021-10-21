@@ -1469,7 +1469,15 @@ def percent_fina_mainbz():
         logging.info(__file__ + " " + "skip file, it been updated in 6 day. " + csv_fina_mainbz_latest_percent)
         return
 
-    df = pd.read_csv(csv_fina_mainbz_p_latest, converters={"end_date": str})
+
+    # df = pd.read_csv(csv_fina_mainbz_p_latest, converters={"end_date": str})
+    df = pd.read_csv(csv_fina_mainbz_p, converters={"end_date": str})
+
+    df = df[~df['bz_item'].str.contains("\\(行业\\)")]
+
+    check_date = finlib.Finlib().get_report_publish_status()['completed_year_rpt_date']
+    # check_date = finlib.Finlib().get_report_publish_status()['completed_half_year_rpt_date']
+    df = df[df['end_date']==check_date].reset_index().drop('index', axis=1)
 
     df = df.fillna(0)
 
@@ -1784,7 +1792,7 @@ def extract_latest():
     _extract_latest(csv_input=csv_express, csv_output=csv_express_latest, feature="express", col_name_list=col_list_express)
     _extract_latest(csv_input=csv_fina_indicator, csv_output=csv_fina_indicator_latest, feature="fina_indicator", col_name_list=col_list_fina_indicator)
     _extract_latest(csv_input=csv_fina_audit, csv_output=csv_fina_audit_latest, feature="fina_audit", col_name_list=col_list_fina_audit)
-    _extract_latest(csv_input=csv_fina_mainbz_p, csv_output=csv_fina_mainbz_p_latest, feature="fina_mainbz", col_name_list=col_list_fina_mainbz)
+    _extract_latest(csv_input=csv_fina_mainbz_p, csv_output=csv_fina_mainbz_p_latest, feature="fina_mainbz_p", col_name_list=col_list_fina_mainbz)
     _extract_latest(csv_input=csv_fina_mainbz_sum, csv_output=csv_fina_mainbz_sum_latest, feature="fina_mainbz_sum", col_name_list=col_list_fina_mainbz)
     _extract_latest(csv_input=csv_disclosure_date, csv_output=csv_disclosure_date_latest, feature="disclosure_date", col_name_list=col_list_disclosure_date)
 
