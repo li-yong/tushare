@@ -65,7 +65,7 @@ global csv_express_latest
 global csv_dividend_latest
 global csv_fina_indicator_latest
 global csv_fina_audit_latest
-# global csv_fina_mainbz_latest
+
 global csv_fina_mainbz_p_latest
 global csv_fina_mainbz_d_latest
 global csv_fina_mainbz_sum_latest
@@ -144,7 +144,9 @@ def set_global(debug=False, big_memory=False, force_run=False):
     global csv_dividend_latest
     global csv_fina_indicator_latest
     global csv_fina_audit_latest
-    global csv_fina_mainbz_latest
+
+    global csv_fina_mainbz_d_latest
+    global csv_fina_mainbz_p_latest
     global csv_fina_mainbz_sum_latest
     global csv_fina_mainbz_latest_percent
     global csv_disclosure_date_latest
@@ -226,6 +228,7 @@ def set_global(debug=False, big_memory=False, force_run=False):
     csv_fina_audit_latest = fund_base_latest + "/fina_audit.csv"
     csv_fina_mainbz_latest = fund_base_latest + "/fina_mainbz.csv"
     csv_fina_mainbz_p_latest = fund_base_latest + "/fina_mainbz_p.csv"
+    csv_fina_mainbz_d_latest = fund_base_latest + "/fina_mainbz_d.csv"
     csv_fina_mainbz_sum_latest = fund_base_latest + "/fina_mainbz_sum.csv"
     csv_fina_mainbz_latest_percent = fund_base_latest + "/fina_mainbz_percent.csv"
     csv_disclosure_date_latest = fund_base_latest + "/disclosure_date.csv"
