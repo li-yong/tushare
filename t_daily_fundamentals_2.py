@@ -500,7 +500,8 @@ def fetch_pro_fund(fast_fetch=False):
         return ()
     else:
         
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_D', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_P', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
 
         
         #return the valid stock_list which has data.
@@ -635,43 +636,47 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
             # signal.alarm(5)
             df_tmp = pd.DataFrame()
-            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit","fina_mainbz", "disclosure_date", "express"]:
+            if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit", "fina_mainbz_P", "fina_mainbz_D", "disclosure_date", "express"]:
                 if fast_fetch:
-                    if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
+                    if query in ["fina_audit", "fina_mainbz_P", "fina_mainbz_D", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
                         continue
                     else:
                         try:
                             if fetch_period_flag:
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
-                            else:  # the 1st fetch
-                                logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
-                        except Exception as e:
-                            logging.exception("Exception occurred")
-                else:
-                    if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")):
-                        continue
-                    else:
-                        try:
-                            if fetch_period_flag:
-                                logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                                # df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
-
-                                if query == 'fina_mainbz':
-                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period, type='D')
+                                if query == 'fina_mainbz_D':
+                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='D')
+                                elif query == 'fina_mainbz_P':
+                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='P')
                                 else:
                                     df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
+
                             else:  # the 1st fetch
                                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                                # df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
-
-                                if query == 'fina_mainbz':
-                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, type='D')
+                                if query == 'fina_mainbz_D':
+                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='D')
+                                elif query == 'fina_mainbz_P':
+                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='P')
                                 else:
-                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)  ## Income,balance, most useful api
+                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
+
                         except Exception as e:
                             logging.exception("Exception occurred")
+                # else:
+                #     if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")):
+                #         continue
+                #     else:
+                #         try:
+                #             if fetch_period_flag:
+                #                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
+                #                 df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
+                #
+                #             else:  # the 1st fetch
+                #                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
+                #                 df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields) ## Income,balance, most useful api
+                #
+                #         except Exception as e:
+                #             logging.exception("Exception occurred")
             elif query in ["forecast"]:
                 if fast_fetch:
                     if str(period).__contains__("1231"):
