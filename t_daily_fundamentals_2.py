@@ -511,12 +511,6 @@ def fetch_pro_fund(fast_fetch=False):
         logging.info(__file__ + " " + "not processing fundermental data at this month. ")
         return ()
     else:
-        
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_d', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_p', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
-        exit()
-
-        
         #return the valid stock_list which has data.
         stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)  # 利润表
         _ts_pro_fetch(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list)  # 资产负债表
@@ -1232,7 +1226,6 @@ def merge_individual_bash_basic(fast_fetch=False):
 #########################
 def merge_local_bash():
     features = ["income", "balancesheet", "cashflow", "fina_mainbz_p", "fina_mainbz_d", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
-    features = ["fina_mainbz_p", "fina_mainbz_d"] #ryan debug
 
     input_dir = fund_base_source + "/individual"
 
