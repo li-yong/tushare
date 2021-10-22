@@ -306,6 +306,24 @@ if [ $full_or_daily == "DAILY" ]; then
 fi
 
 
+######################### industry_top
+#
+#input:
+#         /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv <<< industry_top_mainbz_profit
+#         /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv <<<industry_top_mv_eps
+
+#output: /home/ryan/DATA/result/industry_top_mainbz_profit.csv
+#         /home/ryan/DATA/result/industry_top_mv_eps.csv
+######################
+if [ $full_or_daily == "FULL" ]; then
+    python t_daily_fundamentals_2.py --industry_top --force_run
+fi
+
+if [ $full_or_daily == "DAILY" ]; then
+    python t_daily_fundamentals_2.py --industry_top
+fi
+
+
 ######################### beneish
 #input: merged/*.csv
 #output:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/*.csv

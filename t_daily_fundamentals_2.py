@@ -4192,6 +4192,185 @@ def concept_top():
     pass
 
 
+# This is from mainbz view. based on profit of the mainbz
+def industry_top_mainbz_profit():
+    to_csv = "/home/ryan/DATA/result/industry_top_mainbz_profit.csv"
+
+    if finlib.Finlib().is_cached(file_path=to_csv, day=3) and (not force_run_global):
+        logging.info("file generated in "+str(3)+" days, loading and return. "+ to_csv)
+        return(pd.read_csv(to_csv))
+
+    f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv'
+    df0 = pd.read_csv(f,converters={'end_date':str,})
+    df0 = df0[~df0['bz_item'].str.contains("\\(行业\\)")]
+
+    df = df0[df0['end_date']=="20201231"]
+    df = df[~df['bz_profit'].isna()].reset_index().drop('index',axis=1)
+
+    # bz_profit = bz_sales - bz_cost
+    #which business most profitable
+    df_profit_sum  = df.groupby(by='bz_item').sum().sort_values(by="bz_profit", ascending=False).reset_index()
+    df_profit_mean = df.groupby(by='bz_item').mean().sort_values(by="bz_profit", ascending=False).reset_index()
+
+
+    logging.info("top business by profit sum:\n"+finlib.Finlib().pprint(df_profit_sum.head(20)))
+    logging.info("top business by profit mean:\n"+finlib.Finlib().pprint(df_profit_mean.head(20)))
+
+    df['profit_ratio'] = (df['bz_profit'] / df['bz_sales']).round(2)
+
+    df_rtn = pd.DataFrame()
+    bz = df_profit_mean['bz_item'].unique()
+    i=0
+    for b in bz:
+        i+=1
+        df_sub = df[df['bz_item']==b].sort_values(by='bz_profit',ascending=False)
+        logging.info("bz " + str(i) + " of " + str(bz.__len__()) + " " + b+ " companies has that business "+str(df_sub.__len__()))
+        logging.info(finlib.Finlib().pprint(df_sub.head(2)))
+        if df_sub.__len__() < 3 and (df_sub['bz_profit'].max() < df_profit_mean['bz_profit'].mean()+2*df_profit_mean['bz_profit'].std()):
+            logging.info("ignore bz "+b+" , less than 3 companies and profit < median+2std")
+            continue
+
+        df_rtn = df_rtn.append(df_sub[0:1])
+
+        if df_sub.__len__() >=2 and df_sub.iloc[1]['bz_profit']/df_sub.iloc[0]['bz_profit'] > 0.8:
+            df_rtn = df_rtn.append(df_sub[1:2])
+
+        if df_sub.__len__() >=3 and df_sub.iloc[2]['bz_profit']/df_sub.iloc[0]['bz_profit'] > 0.8:
+            df_rtn = df_rtn.append(df_sub[2:3])
+
+
+        # df_rtn = df_rtn.append(df_sub.head(2))
+
+    df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
+    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
+
+    df_rtn = df_rtn.sort_values(by='bz_profit', ascending=False).reset_index().drop('index', axis=1)
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision='%.1e')
+    df_rtn = finlib.Finlib().adjust_column(df=df_rtn, col_name_list=['code','name','end_date','profit_ratio','bz_item','industry_name_L1_L2_L3'])
+
+    df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
+    logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    return(df_rtn)
+
+def _industry_top_mv_eps(df,industry,top=3):
+    if df.__len__() <= 3 or df.__len__() < top*2.5:
+        logging.info("insufficent stocks in industry "+str(industry)+" , only has "+str(df.__len__())+" stocks.")
+        logging.info(finlib.Finlib().pprint(df))
+        return(pd.DataFrame())
+
+    df['circ_mv_perc'] = df['circ_mv'].apply(lambda _d: stats.percentileofscore(df['circ_mv'], _d))
+
+
+    #formular for industry leader.
+    df['score'] = df['circ_mv_perc']*0.8+df['eps_incr_-1_perc']*0.1+df['eps_incr_perc']*0.1
+
+    df = df[['code','name','score', 'circ_mv', 'eps_incr', 'eps_incr_-1','industry_name_L1_L2_L3']].sort_values(by='score',ascending=False)
+
+    df = df.reset_index().drop('index', axis=1)
+    logging.info("top "+str(top)+" of industry " + str(industry))
+    logging.info(finlib.Finlib().pprint(df.head(top)))
+    return(df.head(top))
+
+# This is based on cir_mkt_value + eps_incr + industry_wg view.
+def industry_top_mv_eps():
+    to_csv = "/home/ryan/DATA/result/industry_top_mv_eps.csv"
+
+    if finlib.Finlib().is_cached(file_path=to_csv, day=3) and (not force_run_global):
+        logging.info("file generated in " + str(3) + " days, loading and return. "+to_csv)
+        return (pd.read_csv(to_csv))
+
+    # a = finlib.Finlib().get_report_publish_status()
+
+    # python t_daily_fundamentals_2.py --fetch_pro_fund  or python t_daily_fundamentals_2.py --fetch_data_all
+    # python t_daily_fundamentals_2.py  --sum_mainbz
+    # python t_daily_fundamentals_2.py  --percent_mainbz_f
+    f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv'
+    df = pd.read_csv(f)
+    df = df[df['perc_sales']>=60]  ##主营业务收入占比不低于60%
+    df = df[['ts_code', 'name', 'end_date', 'bz_cnt','perc_sales' ]]
+    df = df.sort_values(by='perc_sales', ascending=False).reset_index().drop('index', axis=1)
+    df = finlib.Finlib().ts_code_to_code(df=df)
+    # df = finlib.Finlib().add_industry_to_df(df=df,source='all')
+    # df = finlib.Finlib().add_industry_to_df(df=df,source='ts')
+    df = finlib.Finlib().add_industry_to_df(df=df,source='wg')
+    df = finlib.Finlib().add_amount_mktcap(df=df)
+
+    f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_indicator.csv'
+    df_last = pd.read_csv(f)
+    df_last = finlib.Finlib().ts_code_to_code(df=df_last)
+    df_last = df_last[['code', 'eps']]
+    df = pd.merge(left=df, right=df_last, on='code', how="inner")
+    logging.info("appended latest eps to df")
+
+    periods = finlib.Finlib().get_last_4q_n_years(n_year=3)
+
+    delta_year = 0
+    for p in periods:
+        if re.search(r'\d\d1231',p) != None: #yearly report
+            delta_year -= 1
+
+            f = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'+"/"+"merged_all_"+p+".csv"
+            df_p = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+            df_p['bargaining_power'] = (       df_p['adv_receipts']*1.0  #预收款项
+                                               + df_p['notes_payable']*0  #应付票据
+                                               +df_p['acct_payable']*0 #应付账款
+                                       ) \
+                                       - (df_p['notes_receiv']*0 #应收票据. 应收票据是其他企业因为欠债而签发的不能立即兑付票据，票据包括支票、银行本票和商业汇票。
+                                          +df_p['accounts_receiv']*0 #应收账款. 应收账款是企业因为销售产品而应当在一年内向客户收取的销货款，也就是其他企业欠的货款。 企业因为采用赊销的办法促销商品，出售后不立即收取货款就形成了应收账款
+                                          +df_p['oth_receiv']*0) #其他应收款
+            # df_p['bargaining_power']=df_p['bargaining_power']*100/df_p['revenue']
+
+
+            df_p = df_p[['code','eps','bargaining_power']]
+            # df_p = df_p[['code','eps','notes_payable','acct_payable','adv_receipts','notes_receiv','accounts_receiv','oth_receiv']]
+            df_p = df_p.rename(columns={
+                "eps": "eps_"+str(delta_year),
+                "bargaining_power": "bargaining_power_"+str(delta_year),
+
+                # "notes_payable": "notes_payable_"+str(delta_year), #应付票据 weight 0.2
+                # "acct_payable": "acct_payable_"+str(delta_year), #应付账款 weight 0.2
+                # "adv_receipts": "adv_receipts_"+str(delta_year), #预收款项 weight 0.6
+
+                # "notes_receiv": "notes_receiv_"+str(delta_year), #应收票据
+                # "accounts_receiv": "accounts_receiv_"+str(delta_year), #应收账款
+                # "oth_receiv": "oth_receiv"+str(delta_year), #其他应收款
+
+                                        }, inplace=False)
+
+            df = pd.merge(left=df, right=df_p, on='code', how="inner")
+            logging.info("appended period "+p+" eps to df")
+
+    #2017年至2019年、2020年中报每股收益均大于0进行初步筛选
+    df = df[(df['eps']>0) & (df['eps_-1']>0) & (df['eps_-2']>0) & (df['eps_-3']>0)]
+
+    # 净利润增幅（用eps代替）
+    # the current but uncompleted eps increase at now. Based on the latest report and previous yearly report
+    df['eps_incr'] = (df['eps'] - df['eps_-1'])/ df['eps']
+    df['eps_incr_perc'] = df['eps_incr'].apply(lambda _d: stats.percentileofscore(df['eps_incr'], _d))
+    logging.info(""+finlib.Finlib().pprint(df.sort_values(by='eps_incr_perc',ascending=False).head(30)))
+
+    # df['bp_incr'] = (df['bargaining_power_-1'] - df['bargaining_power_-2'])/ df['bargaining_power_-2']
+
+
+    # the completed eps increase. based on year-1 and year-2 report
+    df['eps_incr_-1'] = (df['eps_-1'] - df['eps_-2'])/ df['eps_-2']
+    df['eps_incr_-1_perc'] = df['eps_incr_-1'].apply(lambda _d: stats.percentileofscore(df['eps_incr_-1'], _d))
+    logging.info("" + finlib.Finlib().pprint(df.sort_values(by='eps_incr_-1_perc', ascending=False).head(30)))
+
+    df_rtn = pd.DataFrame()
+    industries = df['industry_name_L1_L2_L3'].unique()
+    for i in industries:
+        df_sub = df[df['industry_name_L1_L2_L3']==i]
+        df_industry_top = _industry_top_mv_eps(df=df_sub,industry=i,top=3)
+        df_rtn = df_rtn.append(df_industry_top)
+
+    df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
+
+    df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
+    logging.info("industry_top_mv_eps saved to "+to_csv+" , len "+str(df_rtn.__len__()))
+    return(df_rtn)
+
+
 def main():
     ########################
     #
@@ -4241,6 +4420,7 @@ def main():
     parser.add_option("-c", "--fast_fetch", action="store_true", dest="fast_fetch_f", default=False, help="only fetch stocks whose high score >70.")
 
     parser.add_option("--wh_hencow_fcf", action="store_true", dest="white_horse_hencow_fcf_f", default=False, help="extract white horse, hen, cow, freecashflow.")
+    parser.add_option("--industry_top", action="store_true", dest="industry_top_f", default=False, help="analysis industry_top from mv_eps, mainbz_profit views. results saved to TWO csv.")
 
     parser.add_option("--merge_individual", action="store_true", dest="merge_individual_f", default=False, help="consolidate indiviaul from each period.")
 
@@ -4278,6 +4458,7 @@ def main():
     percent_mainbz_f = options.percent_mainbz_f
     fast_fetch_f = options.fast_fetch_f
     white_horse_hencow_fcf_f = options.white_horse_hencow_fcf_f
+    industry_top_f = options.industry_top_f
     merge_individual_f = options.merge_individual_f
     merge_local_f = options.merge_local_f
     merge_local_basic_f = options.merge_local_basic_f
@@ -4303,6 +4484,7 @@ def main():
     logging.info(__file__ + " " + "percent_mainbz_f: " + str(percent_mainbz_f))
     logging.info(__file__ + " " + "fast_fetch_f: " + str(fast_fetch_f))
     logging.info(__file__ + " " + "white_horse_hencow_fcf_f: " + str(white_horse_hencow_fcf_f))
+    logging.info(__file__ + " " + "industry_top_f: " + str(industry_top_f))
     logging.info(__file__ + " " + "merge_individual_f: " + str(merge_individual_f))
     logging.info(__file__ + " " + "merge_local_f: " + str(merge_local_f))
     logging.info(__file__ + " " + "merge_local_basic_f: " + str(merge_local_basic_f))
@@ -4317,6 +4499,10 @@ def main():
 
     if options.fetch_all_f or options.fetch_pro_fund_f:
         set_global_pro_fetch_field()
+
+    if options.industry_top_f:
+        df1 = industry_top_mainbz_profit()
+        df2 = industry_top_mv_eps()
 
     if options.fetch_pro_basic_f:
         _fetch_pro_basic()
