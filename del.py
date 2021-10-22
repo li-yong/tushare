@@ -432,7 +432,7 @@ def perf_review(df):
 #### MAIN #####
 df_inc = finlib.Finlib().get_stock_increase()
 df=finlib.Finlib().get_stock_configuration(selected=True,stock_global='AG')['stock_list']
-
+df = pd.merge(left=df,right=df_inc,how="inner",on='code')
 
 perf_review(df=df)
 
