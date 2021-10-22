@@ -4205,6 +4205,11 @@ def industry_top_mainbz_profit():
     df0 = df0[~df0['bz_item'].str.contains("\\(行业\\)")]
 
     df = df0[df0['end_date']=="20201231"]
+    # df = df0[df0['end_date']=="20210630"]
+    #600519 20210630 only have bz_sales, bz_profit is not disclosed in the report
+    #273690  贵州茅台  600519.SH  20210630     系列酒  6060452300.00            NaN           NaN       CNY            0
+    #273691  贵州茅台  600519.SH  20210630     茅台酒 42949397800.00            NaN           NaN       CNY            0
+    #
     df = df[~df['bz_profit'].isna()].reset_index().drop('index',axis=1)
 
     # bz_profit = bz_sales - bz_cost
@@ -4212,11 +4217,11 @@ def industry_top_mainbz_profit():
     df_profit_sum  = df.groupby(by='bz_item').sum().sort_values(by="bz_profit", ascending=False).reset_index()
     df_profit_mean = df.groupby(by='bz_item').mean().sort_values(by="bz_profit", ascending=False).reset_index()
 
-
     logging.info("top business by profit sum:\n"+finlib.Finlib().pprint(df_profit_sum.head(20)))
     logging.info("top business by profit mean:\n"+finlib.Finlib().pprint(df_profit_mean.head(20)))
 
     df['profit_ratio'] = (df['bz_profit'] / df['bz_sales']).round(2)
+    df = df[df['profit_ratio'] > 0.12]
 
     df_rtn = pd.DataFrame()
     bz = df_profit_mean['bz_item'].unique()
@@ -4225,7 +4230,7 @@ def industry_top_mainbz_profit():
         i+=1
         df_sub = df[df['bz_item']==b].sort_values(by='bz_profit',ascending=False)
         logging.info("bz " + str(i) + " of " + str(bz.__len__()) + " " + b+ " companies has that business "+str(df_sub.__len__()))
-        logging.info(finlib.Finlib().pprint(df_sub.head(2)))
+        # logging.info(finlib.Finlib().pprint(df_sub.head(2)))
         if df_sub.__len__() < 3 and (df_sub['bz_profit'].max() < df_profit_mean['bz_profit'].mean()+2*df_profit_mean['bz_profit'].std()):
             logging.info("ignore bz "+b+" , less than 3 companies and profit < median+2std")
             continue
@@ -4252,7 +4257,7 @@ def industry_top_mainbz_profit():
     logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
     return(df_rtn)
 
-def _industry_top_mv_eps(df,industry,top=3):
+def _industry_top_mv_eps(df,industry,top=2):
     if df.__len__() <= 3 or df.__len__() < top*2.5:
         logging.info("insufficent stocks in industry "+str(industry)+" , only has "+str(df.__len__())+" stocks.")
         logging.info(finlib.Finlib().pprint(df))
@@ -4268,7 +4273,7 @@ def _industry_top_mv_eps(df,industry,top=3):
 
     df = df.reset_index().drop('index', axis=1)
     logging.info("top "+str(top)+" of industry " + str(industry))
-    logging.info(finlib.Finlib().pprint(df.head(top)))
+    # logging.info(finlib.Finlib().pprint(df.head(top)))
     return(df.head(top))
 
 # This is based on cir_mkt_value + eps_incr + industry_wg view.
@@ -4503,6 +4508,10 @@ def main():
     if options.industry_top_f:
         df1 = industry_top_mainbz_profit()
         df2 = industry_top_mv_eps()
+
+        df3 = pd.merge(left=df2, right=df1, how='inner', on='code')
+        df3.to_csv("/home/ryan/DATA/result/industry_top_fund2.csv")
+        print(1)
 
     if options.fetch_pro_basic_f:
         _fetch_pro_basic()

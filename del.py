@@ -426,9 +426,15 @@ def plot_pivots(X, pivots):
     plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
     plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
+def perf_review(df):
+    print(1)
+
 #### MAIN #####
+df_inc = finlib.Finlib().get_stock_increase()
+df=finlib.Finlib().get_stock_configuration(selected=True,stock_global='AG')['stock_list']
 
 
+perf_review(df=df)
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 

@@ -5006,7 +5006,8 @@ class Finlib:
             for index, row in df.iterrows():
                 i += 1
                 name, code = row['name'], row['code']
-                csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
+                # csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
+                csv = "/home/ryan/DATA/DAY_Global/AG_qfq/" + code + ".csv"
                 if not os.path.exists(csv):
                     logging.error("file not exists, " + csv)
                     continue
@@ -5630,6 +5631,49 @@ class Finlib:
 
         df = self.regular_read_csv_to_stdard_df(data_csv=csv)
         return (df)
+
+
+    def get_stock_increase(self):
+
+        df_p = self.get_last_n_days_stocks_amount(debug=False)
+        df_p['date'] = df_p['date'].apply(lambda _d: str(_d))
+
+        today = df_p['date'].max()
+
+        date_7 = datetime.strptime(today, '%Y%m%d') - timedelta(days=7)
+        date_30 = datetime.strptime(today, '%Y%m%d') - timedelta(days=30)
+        date_180 = datetime.strptime(today, '%Y%m%d') - timedelta(days=180)
+        date_360 = datetime.strptime(today, '%Y%m%d') - timedelta(days=360)
+
+        date_7 = self.get_last_trading_day(date=date_7.strftime("%Y%m%d"))
+        date_30 = self.get_last_trading_day(date=date_30.strftime("%Y%m%d"))
+        date_180 = self.get_last_trading_day(date=date_180.strftime("%Y%m%d"))
+        date_360 = self.get_last_trading_day(date=date_360.strftime("%Y%m%d"))
+
+        df_p0 = df_p[df_p['date'] == today]
+        df_p7 = df_p[df_p['date'] == date_7]
+        df_p30 = df_p[df_p['date'] == date_30]
+        df_p180 = df_p[df_p['date'] == date_180]
+        df_p360 = df_p[df_p['date'] == date_360]
+
+        df_pp = pd.merge(left=df_p0[['code', 'close']], right=df_p7[['code', 'close']], on='code', how='inner',
+                         suffixes=('', '_7'))
+        df_pp = pd.merge(left=df_pp, right=df_p30[['code', 'close']], on='code', how='inner', suffixes=('', '_30'))
+        df_pp = pd.merge(left=df_pp, right=df_p180[['code', 'close']], on='code', how='inner', suffixes=('', '_180'))
+        df_pp = pd.merge(left=df_pp, right=df_p360[['code', 'close']], on='code', how='inner', suffixes=('', '_360'))
+
+        df_pp['inc7'] = round(100 * (df_pp['close'] - df_pp['close_7']) / df_pp['close_7'], 0)
+        df_pp['inc30'] = round(100 * (df_pp['close'] - df_pp['close_30']) / df_pp['close_30'], 0)
+        df_pp['inc180'] = round(100 * (df_pp['close'] - df_pp['close_180']) / df_pp['close_180'], 0)
+        df_pp['inc360'] = round(100 * (df_pp['close'] - df_pp['close_360']) / df_pp['close_360'], 0)
+
+        df_pp['date'] = today
+        df_pp['date7'] = date_7
+        df_pp['date30'] = date_30
+        df_pp['date180'] = date_180
+        df_pp['date360'] = date_360
+
+        return(df_pp)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
