@@ -5633,7 +5633,7 @@ class Finlib:
         return (df)
 
 
-    def get_stock_increase(self):
+    def get_stock_increase(self,short=False):
 
         df_p = self.get_last_n_days_stocks_amount(debug=False)
         df_p['date'] = df_p['date'].apply(lambda _d: str(_d))
@@ -5672,6 +5672,9 @@ class Finlib:
         df_pp['date30'] = date_30
         df_pp['date180'] = date_180
         df_pp['date360'] = date_360
+
+        if short:
+            df_pp = df_pp[['code','inc7','inc30','inc180','inc360']]
 
         return(df_pp)
 

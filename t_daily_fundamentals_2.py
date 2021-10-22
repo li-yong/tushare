@@ -4253,6 +4253,11 @@ def industry_top_mainbz_profit():
     df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision='%.1e')
     df_rtn = finlib.Finlib().adjust_column(df=df_rtn, col_name_list=['code','name','end_date','profit_ratio','bz_item','industry_name_L1_L2_L3'])
 
+
+    #add increase
+    df_inc = finlib.Finlib().get_stock_increase(short=True)
+    df_rtn = pd.merge(left=df_rtn, right=df_inc, how="inner", on='code')
+
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
     logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
     return(df_rtn)
@@ -4370,6 +4375,12 @@ def industry_top_mv_eps():
         df_rtn = df_rtn.append(df_industry_top)
 
     df_rtn = finlib.Finlib().df_format_column(df=df_rtn, precision="%.1e")
+
+
+
+    #add increase
+    df_inc = finlib.Finlib().get_stock_increase(short=True)
+    df_rtn = pd.merge(left=df_rtn, right=df_inc, how="inner", on='code')
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
     logging.info("industry_top_mv_eps saved to "+to_csv+" , len "+str(df_rtn.__len__()))
@@ -4506,6 +4517,8 @@ def main():
         set_global_pro_fetch_field()
 
     if options.industry_top_f:
+
+
         df1 = industry_top_mainbz_profit()
         df2 = industry_top_mv_eps()
 
