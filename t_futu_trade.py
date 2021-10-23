@@ -1360,7 +1360,7 @@ def clear_price_reminder(quote_ctx,market,host='127.0.0.1',port=11111):
         for c in data['code']:
             logging.info("removing reminder on "+str(c))
             ret_c, data_c = quote_ctx.set_price_reminder(code=c, op=SetPriceReminderOp.DEL_ALL)
-            time.sleep(2)
+            time.sleep(0.6)
 
 
 def get_price_reminder(host='127.0.0.1',port=11111):
@@ -1403,15 +1403,15 @@ def _set_common_ag_price_reminder(df,quote_ctx):
 
         # Cond #2
         p = round(0.5 * df_p[-60:]['close'].max(), 2)
-        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="60日最高一半;",
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="60日最高一半;"+str(round(df_p[-60:]['close'].max(),2)),
                            reminder_type=PriceReminderType.PRICE_DOWN)
 
         p = round(df_p.iloc[-1]['close'] * 1.07, 2)
-        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="涨7;",
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="涨7;"+str(round(df_p.iloc[-1]['close'],2)),
                            reminder_type=PriceReminderType.PRICE_UP)
 
         p = round(df_p.iloc[-1]['close'] * 0.93, 2)
-        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="跌7;",
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="跌7;"+str(round(df_p.iloc[-1]['close'],2)),
                            reminder_type=PriceReminderType.PRICE_DOWN)
 
         # Cond #2
@@ -1455,8 +1455,10 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
             logging.info("not a stock, skip. " + str(code) + " " + name)
             continue
 
-        hold_state = "[本" + str(round(row['cost_price'], 2)) + "仓" + str(row['number_can_sale']) + "盈" + str(
-            row['position_profit_ratio']) + "]"
+        hold_state = "[本" + str(round(row['cost_price'], 2)) + "仓" + str(row['number_can_sale']) \
+                     + "盈" + str(row['position_profit_ratio'])\
+                     + "户" + str(row['account'])\
+                     + "]"
 
         logging.info("setting reminder base on profit " + str(code) + " " + name)
         p = round(row['cost_price'] * 0.98, 2)
@@ -1504,7 +1506,7 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
                                reminder_type=PriceReminderType.PRICE_DOWN)
 
 
-def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111):
+def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, debug=False):
     if clear_all:
         clear_price_reminder(quote_ctx,market=Market.SH)
         clear_price_reminder(quote_ctx,market=Market.SZ)
@@ -1519,7 +1521,7 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111):
     # df = pd.read_csv(f,converters={'code':str},names=['code', 'name', 'date', 'o', 'h', 'l', 'c', 'vol', 'amt', 'tnv'])
     df = df[['证券代码', '证券名称', '证券数量', '可卖数量', '当前价', '成本价',
              '今日盈亏', '今日盈亏比例(%)', '持仓盈亏', '持仓盈亏比例(%)',
-             '最新市值', '成本金额']]
+             '最新市值', '成本金额','股东代码']]
 
     df = df.rename(columns={
         "证券代码": "code",
@@ -1534,11 +1536,14 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111):
         "持仓盈亏": "position_profit",
         "最新市值": "latest_market_value",
         "成本金额": "cost_amount",
+        "股东代码": "account",
     })
 
     #FUTU code in format SH.600519, SZ.000001, HK.0700
     df = finlib.Finlib().add_market_to_code(df=df,dot_f=True)
 
+    if debug:
+        df = df[df['code']=="SZ.000895"]
     _set_common_ag_price_reminder(df, quote_ctx)
     _set_act_related_ag_price_reminder(df, quote_ctx)
 
@@ -1546,13 +1551,13 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111):
 
 
 def set_price_reminder(quote_ctx, code,price, reason_cn, reminder_type=PriceReminderType.PRICE_DOWN, host='127.0.0.1',port=11111):
-
+    reason_cn = reason_cn[:34]
     # ret, data = quote_ctx.set_price_reminder(code=code,op=SetPriceReminderOp.DEL_ALL)
     ret, data = quote_ctx.set_price_reminder(code=code,op=SetPriceReminderOp.ADD,
                                              key=None, reminder_type=reminder_type,
-                                             reminder_freq=PriceReminderFreq.ONCE_A_DAY, value=(price-1), note=reason_cn)
+                                             reminder_freq=PriceReminderFreq.ONCE_A_DAY, value=price, note=reason_cn)
 
-    time.sleep(1) #('此协议请求太频繁，触发了频率限制，请稍后再试',)
+    time.sleep(0.6) #('此协议请求太频繁，触发了频率限制，请稍后再试',)
     if ret == RET_OK:
         logging.info("Added reminder " + code + " , " + reason_cn + " ," + str(price))
     else:
@@ -1626,8 +1631,9 @@ def main():
     #### fetch history bar
     if options.set_ag_reminder:
         quote_ctx = OpenQuoteContext(host=host, port=port)
-        set_ag_price_reminder(quote_ctx=quote_ctx, clear_all=True)
-        quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
+        set_ag_price_reminder(quote_ctx=quote_ctx, clear_all=True, debug=options.debug)
+        quote_ctx.close()
+        exit()
 
     #### fetch history bar
     if options.fetch_history_bar:
