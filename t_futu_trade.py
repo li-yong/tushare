@@ -1455,9 +1455,9 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
             logging.info("not a stock, skip. " + str(code) + " " + name)
             continue
 
-        hold_state = "[本" + str(round(row['cost_price'], 2)) + "仓" + str(row['number_can_sale']) \
-                     + "盈" + str(row['position_profit_ratio'])\
-                     + "户" + str(row['account'])\
+        hold_state = "[本" + str(round(row['cost_price'], 1)) + "仓" + str(round(row['number_can_sale'],1)) \
+                     + "盈" + str(round(row['position_profit_ratio'],1))\
+                     + "户" + str(row['account'])[:4]\
                      + "]"
 
         logging.info("setting reminder base on profit " + str(code) + " " + name)
@@ -1516,7 +1516,7 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
     # export from ZhaoShangZhengquan --> ZiJinGuFeng.
     # In open excel, change format of ZhenQuanDaiMa to text
     # Save excel to UFT-8 formatted CSV (00.csv)
-    f = '/home/ryan/00.csv'
+    f = '/home/ryan/ag_account.csv'
     df = pd.read_csv(f, converters={'证券代码': str})
     # df = pd.read_csv(f,converters={'code':str},names=['code', 'name', 'date', 'o', 'h', 'l', 'c', 'vol', 'amt', 'tnv'])
     df = df[['证券代码', '证券名称', '证券数量', '可卖数量', '当前价', '成本价',

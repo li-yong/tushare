@@ -802,6 +802,9 @@ python t_futu_trade.py --check_high_volume --market HK_HOLD
 python t_futu_trade.py --check_high_volume --market AG
 python t_futu_trade.py --check_high_volume --market HK
 
+# Set AG Price reminder at FuTu Client, based on the daily price. run after 3:00pm
+python t_futu_trade.py --set_ag_reminder
+
 #############--calc_base
 # output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt
 #         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
