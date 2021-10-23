@@ -430,11 +430,8 @@ def perf_review(df):
     print(1)
 
 #### MAIN #####
-df_inc = finlib.Finlib().get_stock_increase(short=True)
-df=finlib.Finlib().get_stock_configuration(selected=True,stock_global='AG')['stock_list']
-df = pd.merge(left=df,right=df_inc,how="inner",on='code')
 
-perf_review(df=df)
+
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 

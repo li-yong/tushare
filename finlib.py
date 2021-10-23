@@ -1030,11 +1030,12 @@ class Finlib:
 
         return (df_result)
 
-    def ts_code_to_code(self, df):
+    def ts_code_to_code(self, df, debug=False):
         # rename col name from ts_code  to code
         # change code format from 600000.SH to SH600000
         collist = df.columns.values
-        logging.info("converting ts_code to code, lines to be converted "+str(df.__len__()))
+        if debug:
+            logging.info("converting ts_code to code, lines to be converted "+str(df.__len__()))
 
         for i in range(collist.__len__()):
             if collist[i] == 'ts_code':
@@ -4200,8 +4201,14 @@ class Finlib:
         if dir == base_dir + "/AG":
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'date': str}, header=None, skiprows=1, names=['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv'])
         elif dir == base_dir + "/AG_qfq":
-            rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str}, encoding="utf-8"))
-            rtn_df = rtn_df.rename(columns={'trade_date':'date'})
+            # ag_all_360_days
+            if re.match(dir+'/ag_all_\d+_days.csv', data_csv_fp):
+                rtn_df = pd.read_csv(data_csv_fp, converters={'trade_date': str}, encoding="utf-8")
+                rtn_df = rtn_df.rename(columns={'trade_date':'date'})
+            else:
+                #SH600519.csv
+                rtn_df = self.ts_code_to_code(pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str}, encoding="utf-8"))
+                rtn_df = rtn_df.rename(columns={'trade_date':'date'})
         elif dir in [base_dir + "/stooq/US_INDEX", base_dir + "/stooq/US"]:
             #DOW.csv  SP500.csv, AAPL.csv
             #add_market = False
@@ -5606,17 +5613,16 @@ class Finlib:
     def read_all_ag_qfq_data(self,days=30):
         ######### For TRIN, Advance/Decline LINE #######\
         dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
-        csv = dir + "/ag_all.csv"
-        # csv = '/home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv'
+        csv = dir + "/ag_all_"+str(days)+"_days.csv"
 
         if not self.is_cached(file_path=csv, day=1):
             logging.info("generating csv from source.")
 
             cmd1 = "head -1 " + dir + "/SH600519.csv > " + csv
             cmd2 = "for i in `ls " + dir + "/SH*.csv`; do tail -" + str(
-                days) + " $i |grep -vi code >> " + dir + "/ag_all.csv; done"
+                days) + " $i |grep -vi code >> " + csv + "; done"
             cmd3 = "for i in `ls " + dir + "/SZ*.csv`; do tail -" + str(
-                days) + " $i |grep -vi code >> " + dir + "/ag_all.csv; done"
+                days) + " $i |grep -vi code >> " + csv + "; done"
 
             logging.info(cmd1)
             logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
@@ -5625,11 +5631,18 @@ class Finlib:
             os.system(cmd1)
             os.system(cmd2)
             os.system(cmd3)
+
+            #adding code to csv
+            df = self.ts_code_to_code(df=pd.read_csv(csv))  #convert ts_code to code
+            df.to_csv(csv, encoding='UTF-8', index=False)
+
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
+            df.to_csv(csv, encoding='UTF-8', index=False)
             logging.info("generated " + csv)
         else:
             logging.info("re-using csv as it generated in 1 days. " + csv)
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv)
 
-        df = self.regular_read_csv_to_stdard_df(data_csv=csv)
         return (df)
 
 

@@ -1,6 +1,7 @@
 # coding: utf-8
 #from futuquant import *
 #import futuquant as ft
+import time
 
 from futu import *
 import sys
@@ -1353,6 +1354,15 @@ def init_dict_code(dict_code,code,ktype_short, ktype_long,ma_period_short,ma_per
     return(dict_code)
 
 
+def clear_price_reminder(quote_ctx,market,host='127.0.0.1',port=11111):
+    ret, data = quote_ctx.get_price_reminder(code=None, market=market)
+    if ret == RET_OK:
+        for c in data['code']:
+            logging.info("removing reminder on "+str(c))
+            ret_c, data_c = quote_ctx.set_price_reminder(code=c, op=SetPriceReminderOp.DEL_ALL)
+            time.sleep(2)
+
+
 def get_price_reminder(host='127.0.0.1',port=11111):
     quote_ctx = OpenQuoteContext(host=host, port=port)
 
@@ -1373,11 +1383,184 @@ def get_price_reminder(host='127.0.0.1',port=11111):
         print('error:', data)
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
 
+def _set_common_ag_price_reminder(df,quote_ctx):
+    #################################################################
+    # reminder that not related to cost_price(cheng ben). so no duplicate rule for one same stock in diff accounts.
+    #################################################################
+    for code in df['code'].unique():
+        if (not re.match("^SH", code)) and (not re.match("^SZ", code)):
+            logging.info("not a stock, skip. " + str(code))
+            continue
+
+        logging.info("setting reminder common " + str(code))
+
+        sell = False
+        sell_reason_cn = ''
+
+        f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
+        df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
+        df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
+
+        # Cond #2
+        p = round(0.5 * df_p[-60:]['close'].max(), 2)
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="60日最高一半;",
+                           reminder_type=PriceReminderType.PRICE_DOWN)
+
+        p = round(df_p.iloc[-1]['close'] * 1.07, 2)
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="涨7;",
+                           reminder_type=PriceReminderType.PRICE_UP)
+
+        p = round(df_p.iloc[-1]['close'] * 0.93, 2)
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="跌7;",
+                           reminder_type=PriceReminderType.PRICE_DOWN)
+
+        # Cond #2
+        if 100 * (df_p.iloc[-1]['close'] - df_p.iloc[-2]['close']) / df_p.iloc[-2]['close'] < -8:
+            sell = True
+            sell_reason_cn += "日内跌幅;"  # "daily drop gt 8%;"
+
+        # Cond #2
+        if 100 * (df_p[-5:]['close'].max() - df_p.iloc[-1]['close']) / df_p[-5:]['close'].max() > 8:
+            sell = True
+            sell_reason_cn += "5日跌幅;"  # "drop gt 8 in 5 trading days;"
+
+        # Cond #2
+        if df_p.iloc[-1]['close_4_sma'] < df_p.iloc[-1]['close_27_sma']:
+            if df_p.iloc[-2]['close_4_sma'] < df_p.iloc[-2]['close_27_sma']:
+                if df_p.iloc[-3]['close_4_sma'] < df_p.iloc[-3]['close_27_sma']:
+                    sell = True
+                    sell_reason_cn += '连3日均4低27;'  # "sma4 lt sma27 3 days in a roll;"
+
+        # Cond #2
+        if df_p.iloc[-1]['close'] < df_p.iloc[-1]['close_4_sma']:
+            if df_p.iloc[-2]['close'] < df_p.iloc[-2]['close_4_sma']:
+                if df_p.iloc[-3]['close'] < df_p.iloc[-3]['close_4_sma']:
+                    sell = True
+                    sell_reason_cn += '连3日低均4;'  # "under SMA4 3 days in a roll;"
+
+        # sell logic end
+        if sell:
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=df_p.iloc[-1]['close'], reason_cn=sell_reason_cn,
+                               reminder_type=PriceReminderType.PRICE_DOWN)
+
+
+def _set_act_related_ag_price_reminder(df,quote_ctx):
+    #################################################################
+    # Reminder related to account (cost_price , position_profit_ratio etc)
+    #################################################################
+    for index, row in df.iterrows():
+        code, name = row['code'], row['name']
+
+        if (not re.match("^SH", code)) and (not re.match("^SZ", code)):
+            logging.info("not a stock, skip. " + str(code) + " " + name)
+            continue
+
+        hold_state = "[本" + str(round(row['cost_price'], 2)) + "仓" + str(row['number_can_sale']) + "盈" + str(
+            row['position_profit_ratio']) + "]"
+
+        logging.info("setting reminder base on profit " + str(code) + " " + name)
+        p = round(row['cost_price'] * 0.98, 2)
+        set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="2帕损;" + hold_state,
+                           reminder_type=PriceReminderType.PRICE_DOWN)
+
+        if row['position_profit_ratio'] < 5:
+            p = round(row['cost_price'] * 1.05, 2)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="5帕盈;" + hold_state,
+                               reminder_type=PriceReminderType.PRICE_UP)
+
+        if row['position_profit_ratio'] < 10:
+            p = round(row['cost_price'] * 1.1, 2)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="10帕盈;" + hold_state,
+                               reminder_type=PriceReminderType.PRICE_UP)
+
+        if row['position_profit_ratio'] < 15:
+            p = round(row['cost_price'] * 1.15, 2)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p, reason_cn="15帕盈;" + hold_state,
+                               reminder_type=PriceReminderType.PRICE_UP)
+
+        if row['position_profit_ratio'] > 0:
+            p = row['current_price'] * (1 + row['position_profit_ratio'] / 100 - 0.05)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=round(p, 2),
+                               reason_cn="5帕盈利回撤;" + hold_state, reminder_type=PriceReminderType.PRICE_DOWN)
+
+        logging.info("checking sell condition, " + str(code) + " " + name)
+
+        f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
+        df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
+        df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
+
+        sell = False
+        sell_reason_cn = ''
+
+        # sell logic start
+        # Cond #1
+        if row['position_profit_ratio'] < -8:
+            sell = True
+            sell_reason_cn += "损8;"  # 'position lost gt 8%;'
+
+        # sell logic end
+        if sell:
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=df_p.iloc[-1]['close'], reason_cn=sell_reason_cn,
+                               reminder_type=PriceReminderType.PRICE_DOWN)
+
+
+def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111):
+    if clear_all:
+        clear_price_reminder(quote_ctx,market=Market.SH)
+        clear_price_reminder(quote_ctx,market=Market.SZ)
+
+
+    # How to get 00.csv
+    # export from ZhaoShangZhengquan --> ZiJinGuFeng.
+    # In open excel, change format of ZhenQuanDaiMa to text
+    # Save excel to UFT-8 formatted CSV (00.csv)
+    f = '/home/ryan/00.csv'
+    df = pd.read_csv(f, converters={'证券代码': str})
+    # df = pd.read_csv(f,converters={'code':str},names=['code', 'name', 'date', 'o', 'h', 'l', 'c', 'vol', 'amt', 'tnv'])
+    df = df[['证券代码', '证券名称', '证券数量', '可卖数量', '当前价', '成本价',
+             '今日盈亏', '今日盈亏比例(%)', '持仓盈亏', '持仓盈亏比例(%)',
+             '最新市值', '成本金额']]
+
+    df = df.rename(columns={
+        "证券代码": "code",
+        "证券名称": "name",
+        "证券数量": "number_securities",
+        "可卖数量": "number_can_sale",
+        "当前价": "current_price",
+        "成本价": "cost_price",
+        "今日盈亏": "today_profit",
+        "今日盈亏比例(%)": "today_profit_ratio",
+        "持仓盈亏比例(%)": "position_profit_ratio",
+        "持仓盈亏": "position_profit",
+        "最新市值": "latest_market_value",
+        "成本金额": "cost_amount",
+    })
+
+    #FUTU code in format SH.600519, SZ.000001, HK.0700
+    df = finlib.Finlib().add_market_to_code(df=df,dot_f=True)
+
+    _set_common_ag_price_reminder(df, quote_ctx)
+    _set_act_related_ag_price_reminder(df, quote_ctx)
+
+    logging.info("reminder set done")
+
+
+def set_price_reminder(quote_ctx, code,price, reason_cn, reminder_type=PriceReminderType.PRICE_DOWN, host='127.0.0.1',port=11111):
+
+    # ret, data = quote_ctx.set_price_reminder(code=code,op=SetPriceReminderOp.DEL_ALL)
+    ret, data = quote_ctx.set_price_reminder(code=code,op=SetPriceReminderOp.ADD,
+                                             key=None, reminder_type=reminder_type,
+                                             reminder_freq=PriceReminderFreq.ONCE_A_DAY, value=(price-1), note=reason_cn)
+
+    time.sleep(1) #('此协议请求太频繁，触发了频率限制，请稍后再试',)
+    if ret == RET_OK:
+        logging.info("Added reminder " + code + " , " + reason_cn + " ," + str(price))
+    else:
+        logging.info('error:', data)
+
+
 
 def main():
-    # get_price_reminder()
-    # exit()
-
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 
     logging.info(__file__+" "+"\n")
@@ -1404,6 +1587,7 @@ def main():
     parser.add_option("--buy_only", action="store_true", default=False, dest="buy_only", help="only buy")
     parser.add_option("--sell_only", action="store_true", default=False, dest="sell_only", help="only sell")
     parser.add_option("--close_all_positions", action="store_true", default=False, dest="close_all_positions", help="close_all_positions")
+    parser.add_option("--set_ag_reminder", action="store_true", default=False, dest="set_ag_reminder", help="set_ag_reminder")
 
 
     (options, args) = parser.parse_args()
@@ -1438,6 +1622,12 @@ def main():
     if ma_period_short > ma_period_long:
         logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
         exit(1)
+
+    #### fetch history bar
+    if options.set_ag_reminder:
+        quote_ctx = OpenQuoteContext(host=host, port=port)
+        set_ag_price_reminder(quote_ctx=quote_ctx, clear_all=True)
+        quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
 
     #### fetch history bar
     if options.fetch_history_bar:
