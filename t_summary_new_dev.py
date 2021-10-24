@@ -174,6 +174,9 @@ def define_global(stock_global):
             "df_kdj_div": {"op": "B", "file": result + "/zigzag_kdj_div.csv", "column": "trend", "kw": "UP", "term": "SHORT TERM", "price": "NA"},
             "df_rsi_div": {"op": "B", "file": result + "/zigzag_rsi_div.csv", "column": "trend", "kw": "UP", "term": "SHORT TERM", "price": "NA"},
 
+            "df_industry_top_mainbz_profit_100": {"op": "B", "file": result + "/industry_top_mainbz_profit_100.csv", "column": "", "kw": "", "term": "LONG TERM", "price": "NA"},
+            "df_industry_top_mv_eps_100": {"op": "B", "file": result + "/industry_top_mv_eps_100.csv", "column": "", "kw": "", "term": "LONG TERM", "price": "NA"},
+
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
         "US": {

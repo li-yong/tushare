@@ -4195,10 +4195,11 @@ def concept_top():
 # This is from mainbz view. based on profit of the mainbz
 def industry_top_mainbz_profit():
     to_csv = "/home/ryan/DATA/result/industry_top_mainbz_profit.csv"
+    to_csv_100 = "/home/ryan/DATA/result/industry_top_mainbz_profit_100.csv"
 
     if finlib.Finlib().is_cached(file_path=to_csv, day=3) and (not force_run_global):
         logging.info("file generated in "+str(3)+" days, loading and return. "+ to_csv)
-        return(pd.read_csv(to_csv))
+        return(pd.read_csv(to_csv),pd.read_csv(to_csv_100))
 
     f= '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv'
     df0 = pd.read_csv(f,converters={'end_date':str,})
@@ -4260,7 +4261,12 @@ def industry_top_mainbz_profit():
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
     logging.info("mainbz profit longtou saved to "+to_csv+" , len "+str(df_rtn.__len__()))
-    return(df_rtn)
+
+    df_rtn_100 = df_rtn[df_rtn['profit_ratio']>0.15][['code','name']].drop_duplicates().head(100).reset_index().drop('index',axis=1)
+
+    df_rtn_100.to_csv(to_csv_100, encoding='UTF-8', index=False)
+    logging.info("mainbz profit longtou 100 saved to "+to_csv_100+" , len "+str(df_rtn_100.__len__()))
+    return(df_rtn,df_rtn_100)
 
 def _industry_top_mv_eps(df,industry,top=2):
     if df.__len__() <= 3 or df.__len__() < top*2.5:
@@ -4284,10 +4290,11 @@ def _industry_top_mv_eps(df,industry,top=2):
 # This is based on cir_mkt_value + eps_incr + industry_wg view.
 def industry_top_mv_eps():
     to_csv = "/home/ryan/DATA/result/industry_top_mv_eps.csv"
+    to_csv_100 = "/home/ryan/DATA/result/industry_top_mv_eps_100.csv"
 
     if finlib.Finlib().is_cached(file_path=to_csv, day=3) and (not force_run_global):
         logging.info("file generated in " + str(3) + " days, loading and return. "+to_csv)
-        return (pd.read_csv(to_csv))
+        return (pd.read_csv(to_csv), pd.read_csv(to_csv_100))
 
     # a = finlib.Finlib().get_report_publish_status()
 
@@ -4384,7 +4391,12 @@ def industry_top_mv_eps():
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
     logging.info("industry_top_mv_eps saved to "+to_csv+" , len "+str(df_rtn.__len__()))
-    return(df_rtn)
+    
+    df_rtn_100 =df_rtn[['code','name']].drop_duplicates().head(100).reset_index().drop("index", axis=1)
+    df_rtn_100.to_csv(to_csv_100, encoding='UTF-8', index=False)
+    logging.info("industry_top_mv_eps_100 saved to "+to_csv_100+" , len "+str(df_rtn_100.__len__()))
+
+    return(df_rtn,df_rtn_100)
 
 
 def main():
@@ -4519,8 +4531,8 @@ def main():
     if options.industry_top_f:
 
 
-        df1 = industry_top_mainbz_profit()
-        df2 = industry_top_mv_eps()
+        df1,df1_100 = industry_top_mainbz_profit()
+        df2,df2_100 = industry_top_mv_eps()
 
         df3 = pd.merge(left=df2, right=df1, how='inner', on='code')
         df3.to_csv("/home/ryan/DATA/result/industry_top_fund2.csv")
