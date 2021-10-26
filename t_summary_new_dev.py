@@ -665,6 +665,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     # df that get from Files
     #########################
     for k in mkt_dict.keys():
+        logging.info("loading "+str(k))
+        
         if k == 'df_hs300_add_candidate':
         # if k == 'df_sz100_add_candidate':
             print("debug stop")

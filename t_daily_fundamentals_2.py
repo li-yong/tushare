@@ -1743,7 +1743,8 @@ def _merge_quarterly(end_date, df_income, df_balancesheet, df_cashflow, df_fina_
     # logging.info(df_result_d[df_result_d['ts_code']=='000001.SZ'].__len__())
 
     #@ryan todo: check if df_fina_mainbz should be here
-    for df_name in ["df_balancesheet", "df_cashflow", "df_fina_indicator", "df_fina_audit", "df_fina_mainbz"]:
+    # for df_name in ["df_balancesheet", "df_cashflow", "df_fina_indicator", "df_fina_audit", "df_fina_mainbz"]:
+    for df_name in ["df_balancesheet", "df_cashflow", "df_fina_indicator", "df_fina_audit"]:
         # i += 1
         # suffix = "_x"+str(i)
         suffix = "_" + df_name
