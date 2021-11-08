@@ -74,3 +74,7 @@ grep 车  ~/DATA/result/mainbz_top_companies.csv | column -s',' -t | sort -k6 -g
     中国中车  601766.SH  20201231  轨道交通装备及其延伸产品和服务                                2.3e+11  5.1e+10   1.8e+11  CNY  0
     上汽集团  600104.SH  20201231  汽车制造业(行业)                                              7.2e+11  7.8e+10   6.5e+11  CNY  0
 
+
+# most decreased stock of industry top
+cat /home/ryan/DATA/result/industry_top_mv_eps.csv | column -s',' -t | sort -k 11 -n | vim -
+
