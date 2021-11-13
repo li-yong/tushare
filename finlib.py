@@ -5646,48 +5646,140 @@ class Finlib:
         return (df)
 
 
-    def get_stock_increase(self,short=False):
+    def add_stock_increase(self,df):
+        csv_f = "/home/ryan/DATA/result/stock_increase.csv"
+        df_inc = pd.DataFrame()
+
+        if self.is_cached(file_path=csv_f,day=1):
+            logging.info("loading stock increase from "+csv_f)
+            df_inc = pd.read_csv(csv_f)
+        else:
+            df_inc = self.get_stock_increase(increase_only=True)
+            df_inc.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info("incrase csv saved to "+csv_f)
+
+        df_rtn = pd.merge(left=df, right=df_inc, how="inner", on='code')
+        return(df_rtn)
+
+
+
+
+
+    def get_stock_increase(self,increase_only=False):
 
         df_p = self.get_last_n_days_stocks_amount(debug=False)
         df_p['date'] = df_p['date'].apply(lambda _d: str(_d))
 
         today = df_p['date'].max()
 
+        date_2 = datetime.strptime(today, '%Y%m%d') - timedelta(days=2)
+        date_3 = datetime.strptime(today, '%Y%m%d') - timedelta(days=3)
+        date_5 = datetime.strptime(today, '%Y%m%d') - timedelta(days=5)
         date_7 = datetime.strptime(today, '%Y%m%d') - timedelta(days=7)
+        date_10 = datetime.strptime(today, '%Y%m%d') - timedelta(days=10)
+        date_20 = datetime.strptime(today, '%Y%m%d') - timedelta(days=20)
         date_30 = datetime.strptime(today, '%Y%m%d') - timedelta(days=30)
+        date_40 = datetime.strptime(today, '%Y%m%d') - timedelta(days=40)
+        date_50 = datetime.strptime(today, '%Y%m%d') - timedelta(days=50)
+        date_60 = datetime.strptime(today, '%Y%m%d') - timedelta(days=60)
+        date_70 = datetime.strptime(today, '%Y%m%d') - timedelta(days=70)
+        date_80 = datetime.strptime(today, '%Y%m%d') - timedelta(days=80)
+        date_90 = datetime.strptime(today, '%Y%m%d') - timedelta(days=90)
+        date_100 = datetime.strptime(today, '%Y%m%d') - timedelta(days=100)
         date_180 = datetime.strptime(today, '%Y%m%d') - timedelta(days=180)
         date_360 = datetime.strptime(today, '%Y%m%d') - timedelta(days=360)
 
+        date_2 = self.get_last_trading_day(date=date_2.strftime("%Y%m%d"))
+        date_3 = self.get_last_trading_day(date=date_3.strftime("%Y%m%d"))
+        date_5 = self.get_last_trading_day(date=date_5.strftime("%Y%m%d"))
         date_7 = self.get_last_trading_day(date=date_7.strftime("%Y%m%d"))
+        date_10 = self.get_last_trading_day(date=date_10.strftime("%Y%m%d"))
+        date_20 = self.get_last_trading_day(date=date_20.strftime("%Y%m%d"))
         date_30 = self.get_last_trading_day(date=date_30.strftime("%Y%m%d"))
+        date_40 = self.get_last_trading_day(date=date_40.strftime("%Y%m%d"))
+        date_50 = self.get_last_trading_day(date=date_50.strftime("%Y%m%d"))
+        date_60 = self.get_last_trading_day(date=date_60.strftime("%Y%m%d"))
+        date_70 = self.get_last_trading_day(date=date_70.strftime("%Y%m%d"))
+        date_80 = self.get_last_trading_day(date=date_80.strftime("%Y%m%d"))
+        date_90 = self.get_last_trading_day(date=date_90.strftime("%Y%m%d"))
+        date_100 = self.get_last_trading_day(date=date_100.strftime("%Y%m%d"))
         date_180 = self.get_last_trading_day(date=date_180.strftime("%Y%m%d"))
         date_360 = self.get_last_trading_day(date=date_360.strftime("%Y%m%d"))
 
         df_p0 = df_p[df_p['date'] == today]
+        df_p2 = df_p[df_p['date'] == date_2]
+        df_p3 = df_p[df_p['date'] == date_3]
+        df_p5 = df_p[df_p['date'] == date_5]
         df_p7 = df_p[df_p['date'] == date_7]
+        df_p10 = df_p[df_p['date'] == date_10]
+        df_p20 = df_p[df_p['date'] == date_20]
         df_p30 = df_p[df_p['date'] == date_30]
+        df_p40 = df_p[df_p['date'] == date_40]
+        df_p50 = df_p[df_p['date'] == date_50]
+        df_p60 = df_p[df_p['date'] == date_60]
+        df_p70 = df_p[df_p['date'] == date_70]
+        df_p80 = df_p[df_p['date'] == date_80]
+        df_p90 = df_p[df_p['date'] == date_90]
+        df_p100 = df_p[df_p['date'] == date_100]
         df_p180 = df_p[df_p['date'] == date_180]
         df_p360 = df_p[df_p['date'] == date_360]
 
-        df_pp = pd.merge(left=df_p0[['code', 'close']], right=df_p7[['code', 'close']], on='code', how='inner',
-                         suffixes=('', '_7'))
+        df_pp = pd.merge(left=df_p0[['code', 'close']], right=df_p2[['code', 'close']], on='code', how='inner', suffixes=('', '_2'))
+        df_pp = pd.merge(left=df_pp, right=df_p3[['code', 'close']], on='code', how='inner', suffixes=('', '_3'))
+        df_pp = pd.merge(left=df_pp, right=df_p5[['code', 'close']], on='code', how='inner', suffixes=('', '_5'))
+        df_pp = pd.merge(left=df_pp, right=df_p7[['code', 'close']], on='code', how='inner', suffixes=('', '_7'))
+        df_pp = pd.merge(left=df_pp, right=df_p10[['code', 'close']], on='code', how='inner', suffixes=('', '_10'))
+        df_pp = pd.merge(left=df_pp, right=df_p20[['code', 'close']], on='code', how='inner', suffixes=('', '_20'))
         df_pp = pd.merge(left=df_pp, right=df_p30[['code', 'close']], on='code', how='inner', suffixes=('', '_30'))
+        df_pp = pd.merge(left=df_pp, right=df_p40[['code', 'close']], on='code', how='inner', suffixes=('', '_40'))
+        df_pp = pd.merge(left=df_pp, right=df_p50[['code', 'close']], on='code', how='inner', suffixes=('', '_50'))
+        df_pp = pd.merge(left=df_pp, right=df_p60[['code', 'close']], on='code', how='inner', suffixes=('', '_60'))
+        df_pp = pd.merge(left=df_pp, right=df_p70[['code', 'close']], on='code', how='inner', suffixes=('', '_70'))
+        df_pp = pd.merge(left=df_pp, right=df_p80[['code', 'close']], on='code', how='inner', suffixes=('', '_80'))
+        df_pp = pd.merge(left=df_pp, right=df_p90[['code', 'close']], on='code', how='inner', suffixes=('', '_90'))
+        df_pp = pd.merge(left=df_pp, right=df_p100[['code', 'close']], on='code', how='inner', suffixes=('', '_100'))
         df_pp = pd.merge(left=df_pp, right=df_p180[['code', 'close']], on='code', how='inner', suffixes=('', '_180'))
         df_pp = pd.merge(left=df_pp, right=df_p360[['code', 'close']], on='code', how='inner', suffixes=('', '_360'))
 
+        df_pp['inc2'] = round(100 * (df_pp['close'] - df_pp['close_2']) / df_pp['close_2'], 0)
+        df_pp['inc3'] = round(100 * (df_pp['close'] - df_pp['close_3']) / df_pp['close_3'], 0)
+        df_pp['inc5'] = round(100 * (df_pp['close'] - df_pp['close_5']) / df_pp['close_5'], 0)
         df_pp['inc7'] = round(100 * (df_pp['close'] - df_pp['close_7']) / df_pp['close_7'], 0)
+        df_pp['inc10'] = round(100 * (df_pp['close'] - df_pp['close_10']) / df_pp['close_10'], 0)
+        df_pp['inc20'] = round(100 * (df_pp['close'] - df_pp['close_20']) / df_pp['close_20'], 0)
         df_pp['inc30'] = round(100 * (df_pp['close'] - df_pp['close_30']) / df_pp['close_30'], 0)
+        df_pp['inc40'] = round(100 * (df_pp['close'] - df_pp['close_40']) / df_pp['close_40'], 0)
+        df_pp['inc50'] = round(100 * (df_pp['close'] - df_pp['close_50']) / df_pp['close_50'], 0)
+        df_pp['inc60'] = round(100 * (df_pp['close'] - df_pp['close_60']) / df_pp['close_60'], 0)
+        df_pp['inc70'] = round(100 * (df_pp['close'] - df_pp['close_70']) / df_pp['close_70'], 0)
+        df_pp['inc80'] = round(100 * (df_pp['close'] - df_pp['close_80']) / df_pp['close_80'], 0)
+        df_pp['inc90'] = round(100 * (df_pp['close'] - df_pp['close_90']) / df_pp['close_90'], 0)
+        df_pp['inc100'] = round(100 * (df_pp['close'] - df_pp['close_100']) / df_pp['close_100'], 0)
         df_pp['inc180'] = round(100 * (df_pp['close'] - df_pp['close_180']) / df_pp['close_180'], 0)
         df_pp['inc360'] = round(100 * (df_pp['close'] - df_pp['close_360']) / df_pp['close_360'], 0)
 
         df_pp['date'] = today
+        df_pp['date2'] = date_2
+        df_pp['date3'] = date_3
+        df_pp['date5'] = date_5
         df_pp['date7'] = date_7
+        df_pp['date10'] = date_10
+        df_pp['date20'] = date_20
         df_pp['date30'] = date_30
+        df_pp['date40'] = date_40
+        df_pp['date50'] = date_50
+        df_pp['date60'] = date_60
+        df_pp['date70'] = date_70
+        df_pp['date80'] = date_80
+        df_pp['date90'] = date_90
+        df_pp['date100'] = date_100
         df_pp['date180'] = date_180
         df_pp['date360'] = date_360
 
-        if short:
-            df_pp = df_pp[['code','inc7','inc30','inc180','inc360']]
+        if increase_only:
+            df_pp = df_pp[['code','inc2','inc3','inc5','inc7','inc10',
+                           'inc20','inc30','inc40','inc50','inc60','inc70','inc80','inc90','inc100',
+                           'inc180','inc360']]
 
         return(df_pp)
 
