@@ -140,6 +140,8 @@ MIDDLE_TREND_DOWN = "middle trend down"
 LONG_TREND_UP = "long trend up"
 LONG_TREND_DOWN = "long trend down"
 
+BUY_MA_DISTANCE = "buy based on MA distance"
+SELL_MA_DISTANCE = "sell based on MA distance"
 
 ##############
 # CLOSE above MA5.

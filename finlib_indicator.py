@@ -784,6 +784,8 @@ class Finlib_indicator:
                 constant.MIDDLE_TREND_DOWN,
                 constant.LONG_TREND_UP,
                 constant.LONG_TREND_DOWN,
+                constant.BUY_MA_DISTANCE,
+                constant.SELL_MA_DISTANCE,
         ]:
             source_csv = dir + '/' + market + '_junxian_barstyle.csv'
 
@@ -2614,8 +2616,8 @@ class Finlib_indicator:
     def buy_sell_decision_based_on_ma4_ma27_distance_condition(self, df, ma_short, ma_middle,ma_long):
         df_rtn=df.iloc[-1:].reset_index().drop('index', axis=1)
 
-        df_rtn['buy_ma4_ma27_distance']=False
-        df_rtn['sell_ma4_ma27_distance']=False
+        df_rtn['reason']=''
+        df_rtn['action']=''
 
         col_ma_short = 'close_' + str(ma_short) + "_sma"
         col_ma_middle = 'close_' + str(ma_middle) + "_sma"
@@ -2639,7 +2641,8 @@ class Finlib_indicator:
                         logging.info("ma_short across up ma_middle in latest 5 days." + str(l + 1))
                         logging.info("all conditions are meet, found the stock expected to Buy. " + str(
                             df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
-                        df_rtn['buy_ma4_ma27_distance']=True
+                        df_rtn['reason']=constant.BUY_MA_DISTANCE + '; '
+                        df_rtn['action'] = constant.BUY_CHECK+ '; '
                         break
 
         # Sell Condition
@@ -2648,10 +2651,10 @@ class Finlib_indicator:
                 logging.info("close lower ma short in last two days in a roll")
                 logging.info("all conditions are meet, found the stock expected to Sell. " + str(
                     df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
-                df_rtn['sell_ma4_ma27_distance'] = True
-                pass
+                df_rtn['reason'] = constant.SELL_MA_DISTANCE + '; '
+                df_rtn['action'] = constant.SELL_CHECK+ '; '
 
-        df_rtn = df_rtn[['date','code','buy_ma4_ma27_distance','sell_ma4_ma27_distance']]
+        df_rtn = df_rtn[['date','code','action','reason']]
         return(df_rtn)
 
 

@@ -101,6 +101,9 @@ def define_global(stock_global):
             "df_jincha_minor": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MINOR)", "term": "SHORT TERM", "price": "NA"},
             "df_jincha_major": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA_JIN_CHA_MAJOR)", "term": "MIDDLE TERM", "price": "NA"},
 
+            "df_ma_distance_buy": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BUY_MA_DISTANCE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_ma_distance_sell": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SELL_MA_DISTANCE)", "term": "MIDDLE TERM", "price": "NA"},
+
             "df_very_strong_up_trend": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)", "term": "MIDDLE TERM", "price": "NA"},
             "df_very_strong_down_trend": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)", "term": "MIDDLE TERM", "price": "NA"},
 

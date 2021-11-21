@@ -431,7 +431,8 @@ def perf_review(df):
 
 #### MAIN #####
 
-
+db = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BUY_MA_DISTANCE,selected=True)
+ds = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SELL_MA_DISTANCE,selected=True)
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 
