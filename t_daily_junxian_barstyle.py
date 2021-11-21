@@ -21,10 +21,15 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     ###################################
     # Prepare
     ###################################
+
     df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=ma_long)
     df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=ma_short, middle=ma_middle, long=ma_long)
 
-
+    ######################################################
+    # Buy/Sell condition based on MA4_MA27_Distance
+    ######################################################
+    df_ma4_ma27_condition = finlib_indicator.Finlib_indicator().buy_sell_decision_based_on_ma4_ma27_distance_condition(df, ma_short=ma_short, ma_middle=ma_middle,ma_long=ma_long)
+    df_ma4_ma27_condition = df_ma4_ma27_condition[-1:].reset_index().drop('index', axis=1)    #<<<<<< TODAY
 
     ######################################################
     #'code', 'date', 'close', 'short_period', 'middle_period', 'long_period', 'jincha_minor', 'jincha_minor_strength', 'sicha_minor', 'sicha_minor_strength', 'jincha_major
@@ -56,8 +61,6 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     ######################################################
     analyzer_price_dict = finlib_indicator.Finlib_indicator().price_counter(df)
 
-
-
     price_dict = {'price_occurence_sum':[analyzer_price_dict['price_freq_dict'][list(analyzer_price_dict['price_freq_dict'].keys())[0]]['sum']]}
 
     for level in ['h1','l1','h2','l2','h3','l3','h4','l4','h5','l5']:
@@ -74,13 +77,20 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
 
     df_today_price_dict = pd.DataFrame.from_dict(price_dict)
 
-
     ######################################################
     # Get a stock report
     ######################################################
-    df_a_stock_report = df_today_bar_style.merge(df_today_junxian_style, left_index=True, right_index=True, suffixes=('', '_x')).merge(df_today_price_dict, left_index=True, right_index=True, suffixes=('', '_x'))
+    df_a_stock_report = df_today_bar_style\
+        .merge(df_today_junxian_style, left_index=True, right_index=True, suffixes=('', '_x'))\
+        .merge(df_today_price_dict, left_index=True, right_index=True, suffixes=('', '_x'))\
+        .merge(df_ma4_ma27_condition, left_index=True, right_index=True, suffixes=('', '_x'))
+
+    #only df_today_bar_style, df_today_junxian_style has reason column
     df_a_stock_report['reason'] = df_a_stock_report['reason']+" " +df_a_stock_report['reason_x']
     df_a_stock_report = df_a_stock_report.drop('reason_x', axis=1)
+    df_a_stock_report = df_a_stock_report.drop('code_x', axis=1)
+    df_a_stock_report = df_a_stock_report.drop('date_x', axis=1)
+    df_a_stock_report = df_a_stock_report.drop('close_x', axis=1)
 
     ######################################################
     #115 columns. Adjust column sequence
@@ -92,6 +102,9 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     col = ['code', 'date', 'open', 'low', 'high',  'close', 'volume', 'short_period', 'middle_period', 'long_period']
 
     col.extend(['very_strong_down_trend', 'very_strong_up_trend'])
+
+    #####################  ma4 ma27 distance
+    col.extend(['buy_ma4_ma27_distance', 'sell_ma4_ma27_distance'])
 
     #####################  junxian
     col.extend(['trend_short', 'trend_short_strength'])
@@ -163,6 +176,7 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
 
 
     df_a_stock_report = finlib.Finlib().adjust_column(df=df_a_stock_report, col_name_list=col)
+    # df_a_stock_report = df_a_stock_report[col]
     return(df_a_stock_report)
 
 
@@ -282,7 +296,7 @@ def main():
     parser.add_option("--calc_ma_across_count", action="store_true", dest="calc_ma_across_count", default=False,help="calculate ma_short across ma_middle counts")
 
 
-    #df_rtn = pd.DataFrame()
+    # df_rtn = pd.DataFrame()
     df_rtn = pd.DataFrame(columns=["code", "name"])
 
     (options, args) = parser.parse_args()

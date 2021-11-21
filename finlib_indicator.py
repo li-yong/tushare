@@ -278,7 +278,6 @@ class Finlib_indicator:
 
         #check yunxian for the latest 5 bars
         for i in range(df.__len__() - 5, df.__len__()):
-            print("i is " + str(i))
             df_tmp = df.iloc[:i]
             junxian_seri = self.sma_jincha_sicha_duotou_koutou(df_tmp, short=ma_short, middle=ma_middle, long=ma_long).iloc[-1]
 
@@ -2608,6 +2607,52 @@ class Finlib_indicator:
         # df_profit = self._calc_jin_cha_si_cha_profit(df_si_cha=df_peak, df_jin_cha=df_valley)
         return (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div)
 
+
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    def buy_sell_decision_based_on_ma4_ma27_distance_condition(self, df, ma_short, ma_middle,ma_long):
+        df_rtn=df.iloc[-1:].reset_index().drop('index', axis=1)
+
+        df_rtn['buy_ma4_ma27_distance']=False
+        df_rtn['sell_ma4_ma27_distance']=False
+
+        col_ma_short = 'close_' + str(ma_short) + "_sma"
+        col_ma_middle = 'close_' + str(ma_middle) + "_sma"
+        col_ma_long = 'close_' + str(ma_long) + "_sma"
+        col_ma_short_middle_distance = col_ma_short + "_to_" + col_ma_middle + "_distance"
+
+        df['close_gt_ma_short'] = df['close'] > df[col_ma_short]
+        df['close_gt_ma_middle'] = df['close'] > df[col_ma_middle]
+
+        df[col_ma_short_middle_distance] = round(100 * (df[col_ma_short] - df[col_ma_middle]) / df[col_ma_middle], 1)
+
+        # Buy Condition
+        if df.iloc[-1]['close_gt_ma_short'] == True and df.iloc[-2]['close_gt_ma_short'] == True:
+            logging.info("close above to ma short in last two days in a roll")
+
+            if df.iloc[-1][col_ma_short_middle_distance] > 1:
+                logging.info("ma_short above ma_middle 1%, " + str(df.iloc[-1][col_ma_short_middle_distance]))
+
+                for l in range(-1, -6, -1):
+                    if df.iloc[l][col_ma_short_middle_distance] < 0:
+                        logging.info("ma_short across up ma_middle in latest 5 days." + str(l + 1))
+                        logging.info("all conditions are meet, found the stock expected to Buy. " + str(
+                            df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
+                        df_rtn['buy_ma4_ma27_distance']=True
+                        break
+
+        # Sell Condition
+        if df.iloc[-1]['close_gt_ma_short'] == False and df.iloc[-2]['close_gt_ma_short'] == False:
+            if df.iloc[-1]['close_gt_ma_middle'] == False and df.iloc[-2]['close_gt_ma_middle'] == False:
+                logging.info("close lower ma short in last two days in a roll")
+                logging.info("all conditions are meet, found the stock expected to Sell. " + str(
+                    df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
+                df_rtn['sell_ma4_ma27_distance'] = True
+                pass
+
+        df_rtn = df_rtn[['date','code','buy_ma4_ma27_distance','sell_ma4_ma27_distance']]
+        return(df_rtn)
 
 
     #input: df [open,high, low, close]
