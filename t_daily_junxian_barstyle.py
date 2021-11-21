@@ -9,7 +9,7 @@ import constant
 from scipy import stats
 
 def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
-    #df must have column (code, date, open, low,high,close)
+    #df must have columns [code, date, open, low,high,close]
 
     # csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
     # csv_in = "/home/ryan/DATA/DAY_Global/AG/SZ000651.csv"
