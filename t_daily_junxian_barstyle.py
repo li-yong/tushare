@@ -9,7 +9,7 @@ import constant
 from scipy import stats
 import datetime
 
-def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
+def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
     #df must have columns [code, date, open, low,high,close]
 
     # csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
@@ -29,7 +29,7 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     ######################################################
     # Buy/Sell condition based on MA4_MA27_Distance
     ######################################################
-    df_ma4_ma27_condition = finlib_indicator.Finlib_indicator().buy_sell_decision_based_on_ma4_ma27_distance_condition(df, ma_short=ma_short, ma_middle=ma_middle,ma_long=ma_long)
+    df_ma4_ma27_condition = finlib_indicator.Finlib_indicator().buy_sell_decision_based_on_ma4_ma27_distance_condition(df, ma_short=ma_short, ma_middle=ma_middle,ma_long=ma_long,period=period)
     df_ma4_ma27_condition = df_ma4_ma27_condition[-1:].reset_index().drop('index', axis=1)    #<<<<<< TODAY
 
     ######################################################
@@ -414,7 +414,7 @@ def main():
         df['name']  = pd.Series([name]*df.__len__(),name='name')
 
         logging.info("verifying "+code + " " +name)
-        df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
+        df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
 
         #print(df_t)
         if not df_t.empty:
