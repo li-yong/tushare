@@ -293,7 +293,7 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
-    parser.add_option("-p", "--period", dest="period", default='daily', help="[daily|weekly|monthly]")
+    parser.add_option("-p", "--period", dest="period", default='daily', help="[D|W|M]")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
     parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
@@ -338,11 +338,11 @@ def main():
     stock_list = rst['stock_list']
     out_f = ''
 
-    if period == 'daily':
+    if period == 'D':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
-    elif period == 'weekly':
+    elif period == 'W':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_w.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
-    elif period == 'monthly':
+    elif period == 'M':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_m.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
     else:
         logging.fatal("unknown period " + str(period))
@@ -413,20 +413,20 @@ def main():
         df = df.iloc[-min_sample_f:].reset_index().drop('index', axis=1)
         df['name']  = pd.Series([name]*df.__len__(),name='name')
 
-
         logging.info("verifying "+code + " " +name)
         df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
 
         #print(df_t)
         if not df_t.empty:
             df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
+            df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
+            logging.debug("tmp output saved to " + out_f)
 
     df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
 
     df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','name','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
 
     df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-    # print(df_rtn)
     logging.info("output saved to " + out_f)
 
     exit(0)

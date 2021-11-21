@@ -788,6 +788,16 @@ class Finlib_indicator:
                 constant.SELL_MA_DISTANCE,
         ]:
             source_csv = dir + '/' + market + '_junxian_barstyle.csv'
+        elif query in [
+                constant.BUY_MA_DISTANCE_WEEKLY,
+                constant.SELL_MA_DISTANCE_WEEKLY,
+        ]:
+            source_csv = dir + '/' + market + '_junxian_barstyle_w.csv'
+        elif query in [
+                constant.BUY_MA_DISTANCE_MONTHLY,
+                constant.SELL_MA_DISTANCE_MONTHLY,
+        ]:
+            source_csv = dir + '/' + market + '_junxian_barstyle_m.csv'
 
         elif query in [
                 constant.HS300_INDEX_BUY_CANDIDATE,
@@ -2613,8 +2623,18 @@ class Finlib_indicator:
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
-    def buy_sell_decision_based_on_ma4_ma27_distance_condition(self, df, ma_short, ma_middle,ma_long):
+    def buy_sell_decision_based_on_ma4_ma27_distance_condition(self, df, ma_short, ma_middle,ma_long,period='D'):
         df_rtn=df.iloc[-1:].reset_index().drop('index', axis=1)
+
+        if period=='D':
+            reason_b = constant.BUY_MA_DISTANCE
+            reason_s = constant.SELL_MA_DISTANCE
+        elif period=='W':
+            reason_b = constant.BUY_MA_DISTANCE_WEEKLY
+            reason_s = constant.SELL_MA_DISTANCE_WEEKLY
+        elif period=='M':
+            reason_b = constant.BUY_MA_DISTANCE_MONTHLY
+            reason_s = constant.SELL_MA_DISTANCE_MONTHLY
 
         df_rtn['reason']=''
         df_rtn['action']=''
@@ -2641,7 +2661,7 @@ class Finlib_indicator:
                         logging.info("ma_short across up ma_middle in latest 5 days." + str(l + 1))
                         logging.info("all conditions are meet, found the stock expected to Buy. " + str(
                             df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
-                        df_rtn['reason']=constant.BUY_MA_DISTANCE + '; '
+                        df_rtn['reason']=reason_b + '; '
                         df_rtn['action'] = constant.BUY_CHECK+ '; '
                         break
 
@@ -2651,7 +2671,7 @@ class Finlib_indicator:
                 logging.info("close lower ma short in last two days in a roll")
                 logging.info("all conditions are meet, found the stock expected to Sell. " + str(
                     df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
-                df_rtn['reason'] = constant.SELL_MA_DISTANCE + '; '
+                df_rtn['reason'] = reason_s + '; '
                 df_rtn['action'] = constant.SELL_CHECK+ '; '
 
         df_rtn = df_rtn[['date','code','action','reason']]

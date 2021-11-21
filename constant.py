@@ -143,6 +143,15 @@ LONG_TREND_DOWN = "long trend down"
 BUY_MA_DISTANCE = "buy based on MA distance"
 SELL_MA_DISTANCE = "sell based on MA distance"
 
+BUY_MA_DISTANCE_WEEKLY = "buy based on MA distance weekly"
+SELL_MA_DISTANCE_WEEKLY = "sell based on MA distance weekly"
+
+
+BUY_MA_DISTANCE_MONTHLY = "buy based on MA distance monthly"
+SELL_MA_DISTANCE_MONTHLY = "sell based on MA distance monthly"
+
+
+
 ##############
 # CLOSE above MA5.
 # small number indicates starting stage of burst
