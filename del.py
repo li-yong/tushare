@@ -430,15 +430,16 @@ def perf_review(df):
     print(1)
 
 #### MAIN #####
+# f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
 
-finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BUY_MA_DISTANCE)
+f = "/home/ryan/DATA/DAY_Global/AG_qfq/BJ831445.csv"
+df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
 
-db = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BUY_MA_DISTANCE,selected=True)
-ds = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SELL_MA_DISTANCE,selected=True)
+df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
+df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
+
 
 grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-
-
 plt.show()
 evaluate_grid(market='AG')
 exit()

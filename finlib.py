@@ -3675,6 +3675,10 @@ class Finlib:
 
         # df_daily = df_daily.reset_index().set_index('date')
 
+        if df_daily.empty:
+            logging.error("daily_to_monthly_bar: received empty dataframe")
+            return(df_daily)
+
         code = df_daily['code'].iloc[0]
 
         logic_sp500_index = {
@@ -3706,8 +3710,8 @@ class Finlib:
             'amount': 'sum',
 
             'pre_close': 'last',
-            'change': 'mean',
-            'pct_chg': 'mean',
+            'change': 'sum',
+            'pct_chg': 'sum',
         }
 
         #### /home/ryan/DATA/DAY_Global/AG/*.csv
@@ -3716,19 +3720,39 @@ class Finlib:
             'high': 'max',
             'low': 'min',
             'close': 'last',
+
+            # 'tnv': 'sum',
+            'pre_close': 'last',
+            'change': 'sum',
+            'pct_chg': 'sum',
+
             'volume': 'sum',
             'amount': 'sum',
-            'tnv': 'mean',
         }
 
         if code == 'SP500' or code =='NASDAQ100':
             logic=logic_sp500_index
-        elif ('pct_chg' in df_daily.columns):
-            logic = logic_ag_index
-            logging.info("found pct_chg in columns, suppose this is AG_INDEX. ")
-        elif (re.match(r'S[H|Z]\d{6}',code)):
+
+
+        #$ head -2 /home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv
+        # ts_code,trade_date,close,open,high,low,pre_close,change,pct_chg,vol,amount
+        # 000001.SH,19901219,99.98,96.05,99.98,95.79,100.0,-0.02,-0.02,1260.0,494.311
+
+        # elif ('pct_chg' in df_daily.columns):
+        #     logic = logic_ag_index
+        #     logging.info("found pct_chg in columns, suppose this is AG_INDEX. ")
+        elif (re.match(r'S[H|Z]\d{6}',code)) or (re.match(r'BJ\d{6}',code)):
             logic = logic_ag
             logging.info("detected AG Indivial stocks, code "+code)
+
+        #(base) ryan@hahabrain2:~/tushare_ryan$ head -2 /home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv
+        # ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount
+        # 600519.SH,20010827,4.6173,5.0549,4.3952,4.7565,4.1999,0.5565999999999995,13.2527,406318.0,1410347.179
+
+        # head -2 /home/ryan/DATA/DAY_Global/AG_qfq/BJ836077.csv
+        # ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount
+        # 836077.BJ,20211115,48.8374,48.8774,43.9078,44.5065,46.1231,-1.6165999999999983,-3.505,34063.67,157049.472
+
 
         elif (re.match(r'^\w+',code)):
             logic = logic_us
@@ -3740,21 +3764,11 @@ class Finlib:
 
 #https://stackoverflow.com/questions/34597926/converting-daily-stock-data-to-weekly-based-via-pandas-in-python
         #-2 to Friday 2020-11-20.  ignore to next Sunday 2020-11-22.  -6 to Monday 2020-11-16.
-        # df_weekly = df_daily.resample('W', on='date',loffset=pd.offsets.timedelta(days=-2)).apply(logic).reset_index()
-        df_weekly = df_daily.resample('W', on='date',loffset=timedelta(days=-2)).apply(logic).reset_index()
-
-        # did not get it work.   FutureWarning: 'loffset' in .resample() and in Grouper() is deprecated.
-        # from pandas.tseries.frequencies import to_offset
-        # df_weekly = df_daily.resample('W', on='date').apply(logic).reset_index()
-        # df_weekly.index = df_weekly.index.to_timestamp() + to_offset("-2D")
+        df_weekly = df_daily.resample('W', on='date').apply(logic).reset_index()
+        df_weekly.date = df_weekly.date + pd.tseries.frequencies.to_offset(timedelta(days=-2))
 
         df_weekly['code'] = code
         df_weekly  = self.change_df_columns_order(df=df_weekly, col_list_to_head=['code'])
-        # print("\n\n df_daily 2")
-        # print(df_daily.iloc[-1])
-        #
-        # print("\n\n df_weekly")
-        # print(df_weekly.iloc[-1])
 
         #ignore to last day of the month. 2020-11-30
         df_monthly = df_daily.resample('M', on='date').apply(logic).reset_index()

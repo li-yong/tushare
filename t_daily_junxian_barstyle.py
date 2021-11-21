@@ -7,6 +7,7 @@ from optparse import OptionParser
 import tabulate
 import constant
 from scipy import stats
+import datetime
 
 def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20):
     #df must have columns [code, date, open, low,high,close]
@@ -292,6 +293,7 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
+    parser.add_option("-p", "--period", dest="period", default='daily', help="[daily|weekly|monthly]")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
     parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
@@ -315,6 +317,7 @@ def main():
     min_sample_f = options.min_sample_f
     selected = options.selected
     stock_global = options.stock_global
+    period = options.period
     remove_garbage = options.remove_garbage
 
     check_my_ma = options.check_my_ma
@@ -333,7 +336,18 @@ def main():
     out_dir = rst['out_dir']
     csv_dir = rst['csv_dir']
     stock_list = rst['stock_list']
-    out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+    out_f = ''
+
+    if period == 'daily':
+        out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+    elif period == 'weekly':
+        out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_w.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+    elif period == 'monthly':
+        out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_m.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+    else:
+        logging.fatal("unknown period " + str(period))
+        exit()
+
 
     if show_result_f:
         show_result(file=out_f, dir=out_dir, filebase= stock_global.lower() + "_junxian_barstyle", selected=selected, stock_global=stock_global)
@@ -372,9 +386,23 @@ def main():
 
         df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f,add_market=False)
 
+        # check df size at the beginging.
         if (df.__len__() < min_sample_f):
             continue
 
+        # resample
+        if period=='daily':
+            df = df
+        elif period=='weekly':
+            df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
+            df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
+        elif period=='monthly':
+            df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_monthly']
+            df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
+
+        # check df size after resample
+        if (df.__len__() < min_sample_f):
+            continue
 
         code_name_map = stock_list
 
