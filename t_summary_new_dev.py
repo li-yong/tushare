@@ -59,6 +59,8 @@ def define_global(stock_global):
             "df_fib_ag_index_selected": {"op": "B", "file": result_selected + "/ag_index_fib.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_moneyflow_top_amt_perc_selected": {"op": "B", "file": result_selected + "/mf_today_top5_large_amount.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_double_bottom_selected": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.DOUBLE_BOTTOM_123_LONG_TREND_REVERSE, selected=True)","term": "SHORT TERM", "price": "NA"},
+            "df_ma_distance_buy_selected": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BUY_MA_DISTANCE)", "term": "MIDDLE TERM", "price": "NA"},
+            "df_ma_distance_sell_selected": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.SELL_MA_DISTANCE)", "term": "MIDDLE TERM", "price": "NA"},
 
             "xxxx": {"op": "B", "file": result_selected + "/xxxx.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
         },  # end of AG selected
@@ -670,7 +672,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
     for k in mkt_dict.keys():
         logging.info("loading "+str(k))
         
-        if k == 'df_hs300_add_candidate':
+        if k == 'df_ma_distance_buy':
+        # if k == 'df_hs300_add_candidate':
         # if k == 'df_sz100_add_candidate':
             print("debug stop")
 

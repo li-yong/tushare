@@ -431,6 +431,8 @@ def perf_review(df):
 
 #### MAIN #####
 
+finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.BUY_MA_DISTANCE)
+
 db = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BUY_MA_DISTANCE,selected=True)
 ds = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.SELL_MA_DISTANCE,selected=True)
 
