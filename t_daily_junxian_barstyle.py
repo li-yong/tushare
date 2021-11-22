@@ -399,6 +399,9 @@ def main():
         elif period=='M':
             df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_monthly']
             df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
+        else:
+            logging.fatal("Unknow perird "+str(period))
+            exit()
 
         # check df size after resample
         if (df.__len__() < min_sample_f):
