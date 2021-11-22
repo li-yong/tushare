@@ -391,12 +391,12 @@ def main():
             continue
 
         # resample
-        if period=='daily':
+        if period=='D':
             df = df
-        elif period=='weekly':
+        elif period=='W':
             df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
             df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
-        elif period=='monthly':
+        elif period=='M':
             df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_monthly']
             df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
 
