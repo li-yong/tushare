@@ -2629,12 +2629,15 @@ class Finlib_indicator:
         if period=='D':
             reason_b = constant.BUY_MA_DISTANCE
             reason_s = constant.SELL_MA_DISTANCE
+            look_back_n_bars = 5
         elif period=='W':
             reason_b = constant.BUY_MA_DISTANCE_WEEKLY
             reason_s = constant.SELL_MA_DISTANCE_WEEKLY
+            look_back_n_bars = 2
         elif period=='M':
             reason_b = constant.BUY_MA_DISTANCE_MONTHLY
             reason_s = constant.SELL_MA_DISTANCE_MONTHLY
+            look_back_n_bars = 2
 
         df_rtn['reason']=''
         df_rtn['action']=''
@@ -2656,9 +2659,9 @@ class Finlib_indicator:
             if df.iloc[-1][col_ma_short_middle_distance] > 1:
                 logging.info("ma_short above ma_middle 1%, " + str(df.iloc[-1][col_ma_short_middle_distance]))
 
-                for l in range(-1, -6, -1):
+                for l in range(-1, -1*(look_back_n_bars+1), -1):
                     if df.iloc[l][col_ma_short_middle_distance] < 0:
-                        logging.info("ma_short across up ma_middle in latest 5 days." + str(l + 1))
+                        logging.info("ma_short across up ma_middle in latest "+str(look_back_n_bars)+" bars." + str(l + 1))
                         logging.info("all conditions are meet, found the stock expected to Buy. " + str(
                             df.iloc[-1]['code']) + " " + str(df.iloc[-1]['date']))
                         df_rtn['reason']=reason_b + '; '
