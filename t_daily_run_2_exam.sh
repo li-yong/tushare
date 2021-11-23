@@ -648,10 +648,21 @@ python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_a
 # output: /home/ryan/DATA/result/ag_junxian_barstyle_w.csv
 # output: /home/ryan/DATA/result/ag_junxian_barstyle_m.csv
 #######################################
-python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period D
-python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period W
-python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period M
 
+
+#if [ $full_or_daily == "DAILY" ]; then
+#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period D
+#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period W
+#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period M
+#
+#fi
+
+
+if [ $full_or_daily == "DAILY" ]; then
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M
+fi
 
 #######################################
 # output: /home/ryan/DATA/result/hong_san_bin.csv
