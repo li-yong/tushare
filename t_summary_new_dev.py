@@ -785,7 +785,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
         logging.info(__file__ + " " + "sorting " + a)
         tmp = my_sort(tmp, debug=debug)
-        tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+
+        tmp = finlib.Finlib().add_amount_mktcap(df=tmp,sorted_by_mktcap=True).head(100)
         tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
         tmp = finlib.Finlib().add_industry_to_df(df=tmp)
         tmp = finlib.Finlib().add_stock_increase(df=tmp)
