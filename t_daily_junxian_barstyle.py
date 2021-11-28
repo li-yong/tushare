@@ -370,41 +370,46 @@ def main():
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 
+   ###  Start of verify every stocks
+    df_all = finlib.Finlib().read_all_ag_qfq_data(days=600)
+    df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
+    # df = finlib.Finlib().remove_garbage(df=df)
+
+    codes = df_all['code'].unique()
+    codes.sort()
+
     i = 0
-
-    for index, row in stock_list.iterrows():
+    for c in codes:
         i += 1
-        logging.info(str(i) + " of " + str(stock_list.__len__()))
-        name, code = row['name'], row['code']
+        logging.info(str(i) + " of " + str(codes.__len__()))
 
-        csv_f = csv_dir + "/" + code + ".csv"
-        logging.info(csv_f)
+        df = df_all[df_all['code']==c].reset_index().drop('index', axis=1)
 
-        if not os.path.isfile(csv_f):
-            logging.warning(__file__+" "+"file not exist. " + csv_f)
-            continue
-
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f,add_market=False)
+        name, code = df.iloc[0]['name'], df.iloc[0]['code']
 
         # check df size at the beginging.
-        if (df.__len__() < min_sample_f):
+        if (df.__len__() < options.min_sample_f):
+            logging.info("raw, insufficient sample for "+str(code)+" "+name+' , expected at least '+str(min_sample_f)+" actual "+str(df.__len__()))
             continue
 
         # resample
         if period=='D':
             df = df
         elif period=='W':
+            min_sample_f = int(options.min_sample_f/5)
             df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
             df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
         elif period=='M':
+            min_sample_f = int(options.min_sample_f / 20)
             df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_monthly']
             df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
         else:
-            logging.fatal("Unknow period "+str(period))
+            logging.fatal("Unknown period "+str(period))
             exit()
 
         # check df size after resample
         if (df.__len__() < min_sample_f):
+            logging.info("period "+str(period)+", insufficient sample for "+str(code)+" "+name+' , expected at least '+str(min_sample_f)+" actual "+str(df.__len__()))
             continue
 
         code_name_map = stock_list

@@ -449,7 +449,7 @@ def stock_vs_index_perf():
     sell_candidate = pd.DataFrame()
 
     for c in codes:
-        df_sub = df[df['code']==c]
+        df_sub = df[df['code']==c].reset_index().drop('index', axis=1)
         # df_sub = df_sub[['code','name','date','close','amount']]
         df_sub = pd.merge(left=df_sub, right=df_index, how='inner', on='date', suffixes=('',"_idx"))
 
