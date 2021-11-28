@@ -429,9 +429,63 @@ def plot_pivots(X, pivots):
 def perf_review(df):
     print(1)
 
-#### MAIN #####
-# f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
 
+
+def stock_vs_index_perf():
+    csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+    df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index)
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
+    # df = finlib.Finlib().remove_garbage(df=df)
+
+    codes = df['code'].unique()
+    codes.sort()
+    df_profit_report = pd.DataFrame()
+    df_si_cha_report = pd.DataFrame()
+    df_jin_cha_report = pd.DataFrame()
+
+    buy_candidate = pd.DataFrame()
+    sell_candidate = pd.DataFrame()
+
+    for c in codes:
+        df_sub = df[df['code']==c]
+        # df_sub = df_sub[['code','name','date','close','amount']]
+        df_sub = pd.merge(left=df_sub, right=df_index, how='inner', on='date', suffixes=('',"_idx"))
+
+        df_sub['pct_chg_vs_idx']=df_sub['pct_chg']-df_sub['pct_chg_idx']
+        df_sub['amount_vs_idx']=df_sub['amount']*10000/df_sub['amount_idx']
+
+        df_test = df_sub[['code','name','date','pct_chg_vs_idx','amount_vs_idx']]
+        # df_test = finlib.Finlib().add_stock_name_to_df(df=df_test)
+
+        df_test = df_test.rename(columns={'pct_chg_vs_idx':'close'})
+
+        df_test = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_test, short=4, middle=27, long=60)
+        (df_test,df_si_cha, df_jin_cha) = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_test,fast_col_name='close_4_sma', slow_col_name='close_27_sma')
+
+        df_jin_cha = pd.merge(df_jin_cha[['date']], df_sub, how="inner")
+        df_si_cha = pd.merge(df_si_cha[['date']], df_sub, how="inner")
+
+        if df_jin_cha.__len__()>0 and df_si_cha.__len__()>0:
+            df_profit_details = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+            df_profit_details = finlib.Finlib().add_stock_name_to_df(df=df_profit_details)
+            logging.info(finlib.Finlib().pprint(df_profit_details))
+            df_profit_report  = df_profit_report.append(df_profit_details)
+
+        continue
+
+    logging.info("check_amount_x_individual, profit_overall describe ")
+    logging.info(df_profit_report[["profit_overall"]].describe())
+
+#### MAIN #####
+
+a = stock_vs_index_perf()
+
+
+
+
+# f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
 f = "/home/ryan/DATA/DAY_Global/AG_qfq/BJ831445.csv"
 df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
 

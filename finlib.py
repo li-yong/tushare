@@ -940,7 +940,7 @@ class Finlib:
 
         df.code = df.code.astype(str)
 
-        if re.match('^SH',  df.code.iloc[0]) or re.match('^SZ',  df.code.iloc[0]) :
+        if re.match('^SH',  df.code.iloc[0]) or re.match('^SZ',  df.code.iloc[0]) or re.match('^BJ',  df.code.iloc[0]) :
             logging.warning("df code already has market, do nothing. First code "+df.code.iloc[0])
             return(df)
 
@@ -961,6 +961,9 @@ class Finlib:
             elif re.match('^[0|3]', code):
                 code_S = "SZ" + dot + code
                 code_S2 = code + dot + "SZ"
+            elif re.match('^8', code):
+                code_S = "BJ" + dot + code
+                code_S2 = code + dot + "BJ"
             elif re.match('^[9]', code):  # B Gu
                 #logging.info(("ignore B GU " + code))
                 continue
@@ -972,6 +975,10 @@ class Finlib:
                 code_S = code
                 code_number = re.match('^SZ(.*)', code).group(1)  # 600519
                 code_S2 = code_number + dot + 'SZ'
+            elif re.match('^BJ', code):  #
+                code_S = code
+                code_number = re.match('^BJ(.*)', code).group(1)  #
+                code_S2 = code_number + dot + 'BJ'
             else:
                 #logging.info(("Fatal: UNKNOWN CODE " + code))
                 continue
@@ -1000,6 +1007,7 @@ class Finlib:
             code = code.replace(".", "")
             code = code.replace("SH", "")
             code = code.replace("SZ", "")
+            code = code.replace("BJ", "")
             df.at[index, 'code'] = code
 
         return df
@@ -4269,7 +4277,7 @@ class Finlib:
             rtn_df = pd.read_csv(data_csv_fp, converters={'ts_code': str, 'trade_date': str},encoding="utf-8")
 
         elif data_csv_fp =="/home/ryan/DATA/pickle/instrument_A.csv":
-            add_market = True
+            # add_market = True
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'list_date': str},  encoding="utf-8")
 
         elif dir.__contains__("/home/ryan/DATA/result"):
@@ -5221,6 +5229,10 @@ class Finlib:
         # if ts_pro_format:
         #     df=self.ts_code_to_code(df)
 
+        if df.empty:
+            logging.warning("empty df passed to add_stock_name_to_df")
+            return(df)
+
         name_df = self.regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/pickle/instrument_A.csv")
         name_df = name_df[['code','name']]
 
@@ -5633,18 +5645,19 @@ class Finlib:
             logging.info("generating csv from source.")
 
             cmd1 = "head -1 " + dir + "/SH600519.csv > " + csv
-            cmd2 = "for i in `ls " + dir + "/SH*.csv`; do tail -" + str(
-                days) + " $i |grep -vi code >> " + csv + "; done"
-            cmd3 = "for i in `ls " + dir + "/SZ*.csv`; do tail -" + str(
-                days) + " $i |grep -vi code >> " + csv + "; done"
+            cmd2 = "for i in `ls " + dir + "/SH*.csv`; do tail -" + str(days) + " $i |grep -vi code >> " + csv + "; done"
+            cmd3 = "for i in `ls " + dir + "/SZ*.csv`; do tail -" + str(days) + " $i |grep -vi code >> " + csv + "; done"
+            cmd4 = "for i in `ls " + dir + "/BJ*.csv`; do tail -" + str(days) + " $i |grep -vi code >> " + csv + "; done"
 
             logging.info(cmd1)
             logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
             logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
+            logging.info(cmd4)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
 
             os.system(cmd1)
             os.system(cmd2)
             os.system(cmd3)
+            os.system(cmd4)
 
             #adding code to csv
             df = self.ts_code_to_code(df=pd.read_csv(csv))  #convert ts_code to code

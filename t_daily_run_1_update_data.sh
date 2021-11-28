@@ -38,12 +38,15 @@ git pull
 # These two lines prepare data used by t_daily_pattern_Hit_Price_Volume_2.py.
 python t_daily_fundamentals_2.py --fetch_basic_daily
 
+## Output: home/ryan/DATA/DAY_Global/AG_INDEX/*.csv
+python /home/ryan/tushare_ryan/t_daily_get_ag_index_from_tushare.py --fetch_index;
+
+# output: /home/ryan/DATA/DAY_Global/AG/*.csv
 python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
 
 ############################
 # output: /home/ryan/DATA/DAY_Global/AG_qfq/*.csv
 python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
-
 
 #### update the HK stock ####
 # comment because not useful (and possible is broken)
