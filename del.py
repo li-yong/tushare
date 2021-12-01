@@ -432,6 +432,13 @@ def perf_review(df):
 
 
 def stock_vs_index_perf_perc_chg():
+    output_csv = "/home/ryan/DATA/result/df_profit_report_stock_vs_index_perf_pct_chg.csv"
+    if finlib.Finlib().is_cached(output_csv, day=1):
+        logging.info("using the result file "+output_csv)
+        df_rtn = pd.read_csv(output_csv)
+        return(df_rtn)
+
+
     csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index)
 
@@ -467,10 +474,18 @@ def stock_vs_index_perf_perc_chg():
 
     logging.info("check_amount_x_individual, profit_overall describe ")
     logging.info(df_profit_report[["profit_overall"]].describe())
-    df_profit_report.to_csv("/home/ryan/DATA/result/df_profit_report_stock_vs_index_perf_pct_chg.csv")
-
+    df_profit_report.to_csv(output_csv)
+    logging.info("result saved to "+output_csv)
 
 def stock_vs_index_perf_amount():
+    output_csv="/home/ryan/DATA/result/df_profit_report_stock_vs_index_perf_amount.csv"
+    df_rtn = pd.DataFrame()
+
+    if finlib.Finlib().is_cached(output_csv, day=1):
+        logging.info("loading the result file "+output_csv)
+        df_rtn = pd.read_csv(output_csv)
+        return(df_rtn)
+
     csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index)
 
@@ -478,11 +493,14 @@ def stock_vs_index_perf_amount():
     df = finlib.Finlib().add_stock_name_to_df(df=df)
     # df = finlib.Finlib().remove_garbage(df=df)
 
-    codes = df['code'].unique()
-    codes.sort()
-    df_profit_report = pd.DataFrame()
+    # df_today = df[df['date'] == df.date.max()]
+    df_today = df[df['date'] == finlib.Finlib().get_last_trading_day()]
+    # df_today = df[df['date'] == '20211125']
 
-    for c in codes:
+    q = df_today['amount'].quantile(0.7) #197355
+    df_today = df_today[df_today['amount']>q].sort_values('amount', ascending=False, inplace=False)
+
+    for c in df_today['code'].unique():
         df_sub = df[df['code']==c].reset_index().drop('index', axis=1)
         df_sub = pd.merge(left=df_sub, right=df_index, how='inner', on='date', suffixes=('',"_idx"))
 
@@ -496,20 +514,102 @@ def stock_vs_index_perf_amount():
         df_jin_cha = pd.merge(df_jin_cha[['date']], df_sub, how="inner")
         df_si_cha = pd.merge(df_si_cha[['date']], df_sub, how="inner")
 
+        bool_current_si_cha = False
+        bool_current_jin_cha = False
+        last_jin_cha_date = ''
+        last_si_cha_date = ''
+
+        if df_jin_cha.empty and (not df_si_cha.empty):
+            bool_current_si_cha = True
+            last_si_cha_date = df_si_cha.iloc[-1]['date']
+        elif df_si_cha.empty and (not df_jin_cha.empty):
+            bool_current_jin_cha = True
+            last_jin_cha_date = df_jin_cha.iloc[-1]['date']
+        elif (not df_si_cha.empty) and (not df_jin_cha.empty):
+            if df_si_cha.iloc[-1]['date'] > df_jin_cha.iloc[-1]['date']:
+                bool_current_si_cha = True
+                last_si_cha_date = df_si_cha.iloc[-1]['date']
+            else:
+                bool_current_jin_cha = True
+                last_jin_cha_date=df_jin_cha.iloc[-1]['date']
+
         if df_jin_cha.__len__()>0 and df_si_cha.__len__()>0:
             df_profit_details = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
+
+            if df_profit_details.empty:
+                continue
+
             df_profit_details = finlib.Finlib().add_stock_name_to_df(df=df_profit_details)
-            logging.info(finlib.Finlib().pprint(df_profit_details))
-            df_profit_report  = df_profit_report.append(df_profit_details)
+            logging.info(finlib.Finlib().pprint(df_profit_details.tail(1)))
+
+            df_tmp = df_profit_details.tail(1)[['code',  'name', 'profit_overall']]
+            df_tmp['transaction_count']=df_profit_details.__len__()
+            df_tmp['current_si_cha']=bool_current_si_cha
+            df_tmp['last_jin_cha_date']=last_jin_cha_date
+
+            df_tmp['current_jin_cha']=bool_current_jin_cha
+            df_tmp['last_si_cha_date']=last_si_cha_date
+
+            df_rtn  = df_rtn.append(df_tmp)
 
         continue
 
     logging.info("check_amount_x_individual, profit_overall describe ")
-    logging.info(df_profit_report[["profit_overall"]].describe())
-    df_profit_report.to_csv("/home/ryan/DATA/result/df_profit_report_stock_vs_index_perf_amount.csv")
-    logging.info("exit")
+    logging.info(df_rtn[["profit_overall"]].describe())
+
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(output_csv)
+    logging.info("result saved to "+output_csv)
+
+    df_buy = df_rtn[df_rtn['profit_overall']>0]
+    # df_buy = df_buy[df_buy['last_jin_cha_date']=='20211125']
+    df_buy = df_buy[df_buy['last_jin_cha_date']==finlib.Finlib().get_last_trading_day()]
+    df_buy = df_buy.sort_values(by='profit_overall', ascending=False)
+    print(finlib.Finlib().pprint(df_buy.head(100)))
+
+    logging.info("hhh")
+
+
+
+def func_del():
+    f = "/home/ryan/handover/handover_log_2021_0601_1130.csv"
+
+    df = pd.read_csv(f)
+
+    df_c = df[df['Target Shift'] == 'China Shift']
+    df_c = df_c[~df_c['Assign Date'].isna()]
+    df_c['date_d'] = df_c['Assign Date'].apply(lambda _d: datetime.datetime.strptime(str(_d), '%Y-%m-%d %H:%M:%S'))
+    df_c['date_d'] = df_c['date_d'].apply(lambda _d: _d + datetime.timedelta(days=1))  # US to BJ time
+    df_c['date_wod'] = df_c['date_d'].apply(lambda _d: _d.day_name())
+
+    df_a = df_c[['Ticket # ', 'DUDL', 'Priority', 'Assigned To', 'Handover Date', 'Target Shift', 'date_wod']]
+
+    df_a[df_a['date_wod'] == 'Saturday'].sort_values(by='Handover Date').reset_index().drop('index', axis=1)
+
+    df_a[df_a['date_wod'] == 'Sunday'].sort_values(by='Handover Date').reset_index().drop('index', axis=1)
+
+    df_a.groupby('date_wod').count()
+
+    #### NEW
+    # Exported by
+    # project = UEE  AND "EE Owner" in (wange5,qinc,lir19,wangix,benc1,chena9,lil25,tommy_shi) AND createdDate > "2021-06-01 00:00"
+    f = "/home/ryan/handover/ISG-Storage Jira 2021-11-30T17_04_14+0800.csv"
+    df = pd.read_csv(f)
+
+    # 29/Nov/21 11:31 AM'
+    df['date_d'] = df['Created'].apply(lambda _d: datetime.datetime.strptime(str(_d), '%d/%b/%y %H:%M %p'))
+    df['date_dow'] = df['date_d'].apply(lambda _d: _d.day_name())
+    df['Created'] = df['date_d']
+    df_a = df[['Issue key', 'Assignee', 'Priority', 'Created', 'date_dow']]
+
+    df_a[df_a['date_dow'] == 'Saturday'].sort_values(by='Created').reset_index().drop('index', axis=1)
+    df_a[df_a['date_dow'] == 'Sunday'].sort_values(by='Created').reset_index().drop('index', axis=1)
+
+    df_a.groupby('date_dow').count()['Issue key']
+
 
 #### MAIN #####
+
 # a = stock_vs_index_perf_perc_chg()
 a = stock_vs_index_perf_amount()
 

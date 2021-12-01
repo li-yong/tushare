@@ -2185,7 +2185,7 @@ class Finlib_indicator:
 
         df_si_cha = df[(df['b1_tmp_col_fast_minor_slow'] > 0) & (df['tmp_col_fast_minor_slow'] < 0)]
         df_jin_cha = df[(df['b1_tmp_col_fast_minor_slow'] < 0) & (df['tmp_col_fast_minor_slow'] > 0)]
-        return (df, df_si_cha, df_jin_cha)
+        return(df, df_si_cha, df_jin_cha)
 
     # general function to return jincha sicha on SINGLE column.
     def single_column_across(self, df, col_name, threshod=0):
