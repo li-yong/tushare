@@ -570,8 +570,8 @@ def stock_vs_index_perf_amount():
     logging.info("hhh")
 
 
-
 def func_del():
+    #the file exported from Surge handover report
     f = "/home/ryan/handover/handover_log_2021_0601_1130.csv"
 
     df = pd.read_csv(f)
@@ -591,7 +591,7 @@ def func_del():
     df_a.groupby('date_wod').count()
 
     #### NEW
-    # Exported by
+    # Exported from Jira JQL:
     # project = UEE  AND "EE Owner" in (wange5,qinc,lir19,wangix,benc1,chena9,lil25,tommy_shi) AND createdDate > "2021-06-01 00:00"
     f = "/home/ryan/handover/ISG-Storage Jira 2021-11-30T17_04_14+0800.csv"
     df = pd.read_csv(f)
@@ -607,9 +607,102 @@ def func_del():
 
     df_a.groupby('date_dow').count()['Issue key']
 
+def handle_a_line(line):
+    result = []
+    splitdata = line.split("|")
+    splitdata.pop(0)
+    splitdata.pop(-1)
+
+    for field in splitdata:
+        field = field.strip()
+        result.append(field)
+    return(result)
+
+def combine_a_row(splitted_rows_list):
+    row=[]
+
+    for j in range(splitted_rows_list[0].__len__()):
+        x = ''
+        for k in splitted_rows_list.keys():
+            x += splitted_rows_list[k][j]
+        row.append(x)
+
+    return(row)
+
+def fun_del_2():
+    f= '/home/ryan/case/housemd/show_nodes.txt'
+
+    text_file = open(f, "r")
+    Lines = text_file.readlines()
+    text_file.close()
+
+######
+    count = 0
+
+    bool_row_marker=False
+    bool_row_data=False
+    rows=[]
+    result={}
+
+    for line in Lines:
+
+        line = line.strip()
+        # print("DEBUG, "+line)
+
+        if re.match(r'^\+\-', line):
+            bool_row_data=False
+            bool_row_marker=True
+        elif re.match(r'^\|', line):
+            bool_row_data=True
+            bool_row_marker=False
+        # else:
+            # print("DEBUG, not in table")
+
+        if bool_row_marker:
+            #combine previous rows
+            if result.__len__()>0:
+                # print("DEBUG, combine data fields")
+                row = combine_a_row(result)
+
+                str_row = ','.join(row)
+                print(str_row)
+
+                rows.append(row)
+
+            #reinit the result
+            result = {}
+            count=0
+
+
+        if bool_row_data:
+            result[count] = handle_a_line(line=line)
+            count += 1
+
+
+
+
+
+#########
+    #
+    # result = [tuple(filter(None, map(str.strip, splitline))) for line in s.splitlines() for splitline in
+    #           [line.split("|")] if len(splitline) > 1]
+    #
+    # df = pd.read_table(filepath_or_buffer=f,
+    #                    # skiprows=3,
+    #                    # skipfooter=4,
+    #                    sep="|",
+    #                    ).columns
+    # df.columns
+    #
+    #
+    #
+    # print(1)
+
+
 
 #### MAIN #####
-
+a = fun_del_2()
+exit()
 # a = stock_vs_index_perf_perc_chg()
 a = stock_vs_index_perf_amount()
 
