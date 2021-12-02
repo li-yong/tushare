@@ -42,24 +42,19 @@ def main():
         print("reading "+options.file)
 
     text_file = open(options.file, "r")
-    Lines = text_file.readlines()
+    lines = text_file.readlines()
     text_file.close()
 
-######
-    '''
-    indicate current line type.
-    row_marker: +---+--------
-    row_data: |col1| col2 | col3 |
-    '''
+    # indicate current line type.
+    # row_marker: +---+--------
+    # row_data: |col1| col2 | col3 |
     bool_row_marker=False
     bool_row_data=False
 
-    '''
-    pretty format a long filed to multiple lines.
-    '''
+    # pretty format a long filed to multiple lines.
     wrap_rows={}
 
-    for line in Lines:
+    for line in lines:
         line = line.strip()
 
         if options.debug:
