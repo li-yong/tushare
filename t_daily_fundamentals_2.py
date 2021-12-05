@@ -1227,7 +1227,7 @@ def merge_individual_bash_basic(fast_fetch=False):
 # output : /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv [ fina_mainbz_sum.csv,balancesheet.csv,dividend.csv,fina_audit.csv,fina_mainbz.csv,forecast.csv]
 #
 #########################
-def merge_local_bash():
+def merge_local_bash(debug=False):
     features = ["income", "balancesheet", "cashflow", "fina_mainbz_p", "fina_mainbz_d", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
 
     input_dir = fund_base_source + "/individual"
@@ -1237,15 +1237,22 @@ def merge_local_bash():
 
     for f in features:
         tmp_f = fund_base_tmp + "/" + f + ".txt"
-        os.system("rm -f " + tmp_f)
+        cmd="rm -f " + tmp_f
+        logging.info(cmd)
+        os.system(cmd)
 
         output_csv = fund_base_source + "/" + f + ".csv"
 
         if (not force_run_global) and finlib.Finlib().is_cached(output_csv, day=6):
             logging.info(__file__ + " " + "file updated in 6 days, not process. " + output_csv)
             continue
+        if debug:
+            #fundamentals_2/source/individual/20181231/600519.SH_balancesheet.csv
+            cmd = "find -L " + input_dir + " -size +0 -name *600519.SH_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
+        else:
+            cmd = "find -L " + input_dir + " -size +0 -name *_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
+            # cmd = "find -L " + input_dir + " -size +0 -name *600519.SH_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
 
-        cmd = " find -L " + input_dir + " -size +0 -name *_" + f + ".csv  -exec cat {} >> " + tmp_f + " \;"
         logging.info(cmd)
         start_time = time.time()
         os.system(cmd)
@@ -1253,14 +1260,24 @@ def merge_local_bash():
 
         # sort and uniq, inplace
 
-        os.system("head -1 " + tmp_f + " > " + output_csv)  # make header
+        cmd="head -1 " + tmp_f + " > " + output_csv
+        logging.info(cmd)
+        os.system(cmd)  # make header
 
-        os.system("sort -u -o " + tmp_f + " " + tmp_f)
-        os.system('grep -vE "ts_code.*name|name.*ts_code" ' + tmp_f + " >> " + output_csv)  # append body
-        os.system("rm -f " + tmp_f)
+        cmd="sort -u -o " + tmp_f + " " + tmp_f
+        logging.info(cmd)
+        os.system(cmd)
+
+        cmd='grep -vE "ts_code.*name|name.*ts_code" ' + tmp_f + " >> " + output_csv
+        logging.info(cmd)
+        os.system(cmd)  # append body
+
+        cmd="rm -f " + tmp_f
+        logging.info(cmd)
+        os.system(cmd)
 
         # os.system("mv "+tmp_f +  " "+output_csv)
-        logging.info(__file__ + " " + "merged all " + f + " to " + output_csv)
+        logging.info(__file__ + " " + "merged all " + f + " to " + output_csv+"\n\n")
 
 
 ###############################
@@ -1812,7 +1829,7 @@ def _extract_latest(csv_input, csv_output, feature, col_name_list, ts_code=None,
         return
 
     df_result = pd.DataFrame()
-    df = pd.read_csv(csv_input, converters={i: str for i in range(100)})  # convert all columns as string
+    df = pd.read_csv(csv_input, converters={i: str for i in range(200)})  # convert all columns as string
 
     if ts_code is not None:
         df = df[df["ts_code"] == ts_code]
@@ -4631,7 +4648,7 @@ def main():
             logging.info(__file__ + " " + "not processing fundamental data at this month. ")
             exit()
         else:
-            merge_local_bash()
+            merge_local_bash(debug=debug_global)
     elif merge_local_basic_f:
         merge_local_bash_basic(csv_basic, fast=fast_fetch_f)
     elif extract_latest_f:
