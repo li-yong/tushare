@@ -775,16 +775,26 @@ python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 # 	/home/ryan/DATA/result/stocks_amount_365_days.csv  << symbol link to stocks_amount_20200124_20210123.csv
 ###############################
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_index_candidates.py --index_name hs300 --period_start 20201101 --period_end 20211031  --index_source wugui --force_run  # HS300
-  python t_daily_index_candidates.py --index_name szcz --period_start 20210501 --period_end 20211031  --index_source wugui --force_run  # SHEN_ZHEN
+  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430  --index_source wugui --force_run  # HS300
+  python t_daily_index_candidates.py --index_name szcz --period_start 20211101 --period_end 20220430  --index_source wugui --force_run  # SHEN_ZHEN
 fi
 
 
-python t_daily_index_candidates.py --index_name hs300 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update --force_run
-python t_daily_index_candidates.py --index_name zz100 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update
-python t_daily_index_candidates.py --index_name szcz  --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update --force_run
-python t_daily_index_candidates.py --index_name sz100 --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update
+if [ $full_or_daily == "DAILY" ]; then
+# After 11.01
+  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update --force_run
+  python t_daily_index_candidates.py --index_name zz100 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
+  python t_daily_index_candidates.py --index_name szcz  --period_start 20211101 --period_end 20220430 --index_source wugui  --daily_update --force_run
+  python t_daily_index_candidates.py --index_name sz100 --period_start 20211101 --period_end 20220430 --index_source wugui  --daily_update
 
+# After 5.1
+#  python t_daily_index_candidates.py --index_name hs300 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update --force_run
+#  python t_daily_index_candidates.py --index_name zz100 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update
+#  python t_daily_index_candidates.py --index_name szcz  --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update --force_run
+#  python t_daily_index_candidates.py --index_name sz100 --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update
+
+
+fi
 
 
 #######################################
