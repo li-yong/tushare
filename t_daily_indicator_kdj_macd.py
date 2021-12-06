@@ -602,10 +602,14 @@ def zigzag_divation(debug=False):
     i = 0
     for c in codes:
         df_sub = df[df['code'] == c]
+
+        if df_sub.__len__()<60:
+            continue
+
         df_sub = df_sub.reset_index().drop('index', axis=1)
 
-        code = df_sub.iloc[0]['code']
-        name = df_sub.iloc[0]['name']
+        code = str(df_sub.iloc[0]['code'])
+        name = str(df_sub.iloc[0]['name'])
         i += 1
         logging.info(str(i) + " of " + str(codes.__len__()) + " " + code+" "+name)
 
