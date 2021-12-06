@@ -569,7 +569,84 @@ def stock_vs_index_perf_amount():
     logging.info("hhh")
 
 
+def xiao_hu_xian():
+
+    csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
+    df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
+
+    ZT_P= 8 #ag_all_300_days.csv
+    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_300_days.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+
+    # day_n1 =  datetime.datetime.strptime(df.date.max(), "%Y%m%d")
+    # day_n2 =  day_n1 - datetime.timedelta(days=1)
+
+    day_n1 = df.date.iloc[-1]
+    day_n2 = df.date.iloc[-2]
+
+    df_n1= df[df['date']==day_n1]
+    df_n2= df[df['date']==day_n2]
+
+    df_n1=df_n1[(df_n1['pct_chg']>ZT_P) & (df_n1['pct_chg']< 20)]
+    df_n2=df_n2[(df_n2['pct_chg']>ZT_P) & (df_n2['pct_chg']< 20)]
+
+    # last_trading_day = finlib.Finlib().get_last_trading_day()
+    # last_trading_day_dt = datetime.datetime.strptime(last_trading_day, "%Y%m%d")
+
+    for c in df_n1.code.append(df_n2.code).unique():
+        df_s=df[df['code']==c]
+
+        if df_s.__len__()<90:
+            continue
+
+        if df_s.iloc[-1].pct_chg < ZT_P and df_s.iloc[-2].pct_chg < ZT_P :
+            logging.info("skip, not hit zhangting in the latest two days "+c+" "+df_s.iloc[-1].date)
+            continue
+
+        # df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
+
+        df_s_ZT = df_s[df_s['pct_chg']>ZT_P]
+        df_s_ZT['date_dt']=df_s_ZT['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
+
+        if df_s_ZT.__len__()<2:
+            continue
+
+        n_days = (df_s_ZT.iloc[-1].date_dt - df_s_ZT.iloc[-2].date_dt).days
+        if n_days < 90:
+            logging.info("skip, two zt less than 90 days "+str(n_days))
+            continue
+
+        last_zt= df_s_ZT.iloc[-2]
+        print(c+",ZhangTing, "+df_s_ZT.iloc[-2].date+" --> "+df_s_ZT.iloc[-1].date+", "+ str(n_days)+" days")
+
+        #include zt day
+        df_since_1st_zt = df_s[df_s['date'] >= df_s_ZT.iloc[-2].date]
+
+        #following 3 days not lower than close_of_zt
+        if df_since_1st_zt[1:4]['low'].min() >= df_s_ZT.iloc[-2].close:
+            print("hit condition 1. 3 days no lower than ztclose")
+
+            df_s_basic = pd.merge(left=df_since_1st_zt, right=df_basic[df_basic['code']==c], on=['code','date'],how='inner')
+            df_s_basic = df_s_basic[['code','date','pct_chg','turnover_rate','turnover_rate_f','volume_ratio']]
+
+            sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate'].sum(),2)
+
+            if sum_tv_4_days > 30:
+                continue
+            else:
+                print("hit condition 2. zt_day+following3days turnover <30 ")
+
+            sum_tv_90_days = round(df_s_basic.head(90)['turnover_rate'].sum(),2)
+            sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
+            sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
+            print("3 days turnover rate "+str(sum_tv_3_days))
+
+    print(1)
+    exit()
+
 #### MAIN #####
+a = xiao_hu_xian()
+
 # a = stock_vs_index_perf_perc_chg()
 a = stock_vs_index_perf_amount()
 

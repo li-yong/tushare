@@ -1340,7 +1340,9 @@ def merge_local_bash_basic(output_csv, fast=False):
         cmd_header = "for i in `ls " + fund_base_source + "/basic_daily/basic_*.csv`; do sed 1q $i > " + f_header + "; break; done;"
 
         cmd_content = "rm -f " + f_content + "; "
-        cmd_content += "for i in `ls " + fund_base_source + "/basic_daily/basic_*.csv`; do sed 1d $i >> " + f_content + "; done;"
+        cmd_content += "for i in `ls " + fund_base_source + "/basic_daily/basic_2019*.csv`; do sed 1d $i >> " + f_content + "; done;"
+        cmd_content += "for i in `ls " + fund_base_source + "/basic_daily/basic_2020*.csv`; do sed 1d $i >> " + f_content + "; done;"
+        cmd_content += "for i in `ls " + fund_base_source + "/basic_daily/basic_2021*.csv`; do sed 1d $i >> " + f_content + "; done;"
 
         # cmd_exist_content_remove_header_overwrite = "sed -i 1d "+output_csv
 
