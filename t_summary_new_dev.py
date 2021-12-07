@@ -759,6 +759,8 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
     for a in arr:
         logging.info(__file__ + " " + "=== " + a + " ")
+        logging.info(finlib.Finlib().pprint(tmp_df.head(1)))
+
         if a in ("sz50"):
             logging.info(__file__ + " " + "skip list set: " + a)
             continue
@@ -784,6 +786,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
 
         logging.info(__file__ + " " + "sorting " + a)
+
         tmp = my_sort(tmp, debug=debug)
 
         tmp = finlib.Finlib().add_amount_mktcap(df=tmp,sorted_by_mktcap=True).head(100)

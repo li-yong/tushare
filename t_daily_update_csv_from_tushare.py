@@ -194,8 +194,8 @@ def fetch_ag_qfq():
         name = row['name']
         csv = '/home/ryan/DATA/DAY_Global/AG_qfq/' + code + ".csv"
         i+=1
-        if finlib.Finlib().is_cached(file_path=csv, day=1):
-            logging.info("skip "+code+" as cached 1 day.")
+        if finlib.Finlib().is_cached(file_path=csv, day=0.3):
+            logging.info("skip "+code+" as cached 0.3 day.")
             continue
 
         logging.info(str(i) + " of " + str(data.__len__()) + ' , fetching ' + ts_code + " " + name)
