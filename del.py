@@ -570,12 +570,15 @@ def stock_vs_index_perf_amount():
 
 
 def xiao_hu_xian():
-    #df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=300)
+    # df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=200)
+
 
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
 
     ZT_P= 8 #ag_all_300_days.csv
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
     csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_200_days.csv"
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
 

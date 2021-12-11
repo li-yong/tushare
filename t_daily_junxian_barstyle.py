@@ -293,7 +293,7 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
-    parser.add_option("-p", "--period", dest="period", default='daily', help="[D|W|M]")
+    parser.add_option("-p", "--period", dest="period", default='D', help="[D|W|M]")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
     parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
@@ -415,7 +415,12 @@ def main():
         code_name_map = stock_list
 
         code = df.iloc[0]['code']
-        name = code_name_map[code_name_map['code'] == code].iloc[0]['name']
+        _tmp_df =  code_name_map[code_name_map['code'] == code]
+        if _tmp_df.empty:
+            logging.warning("juxian_barstyle, empty df for code "+str(code))
+            continue
+        else:
+            name =_tmp_df.iloc[0]['name']
 
         #have to matching df and series index
         df = df.iloc[-min_sample_f:].reset_index().drop('index', axis=1)
