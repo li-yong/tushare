@@ -660,7 +660,64 @@ def xiao_hu_xian():
     exit()
 
 #### MAIN #####
-a = xiao_hu_xian()
+
+# a = xiao_hu_xian()
+
+df_holder=pd.DataFrame()
+
+out_csv = "/home/ryan/DATA/result/holdernumber.csv"
+# df_amt = finlib.Finlib().get_daily_amount_mktcap()
+
+
+if finlib.Finlib().is_cached(out_csv,day=5):
+    logging.info("loading from "+out_csv)
+    df_holder=pd.read_csv(out_csv)
+#
+pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
+
+if df_holder.__len__()<100:
+    df_holder = pro.stk_holdernumber(end_date='20211231')
+    df_holder = finlib.Finlib().ts_code_to_code(df_holder)
+    df_holder = df_holder[df_holder['holder_num']>500]
+    df_holder = df_holder[~df_holder['holder_num'].isna()]
+    df_holder= df_holder.drop_duplicates(subset=['code'],keep='first')
+
+i=0
+stock_list = finlib.Finlib().get_A_stock_instrment()
+stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+stock_list = finlib.Finlib().add_ts_code_to_column(stock_list)
+for index, row in stock_list.iterrows():
+    i += 1
+    name, code,ts_code = row['name'], row['code'],row['ts_code']
+    logging.info(str(i) + " of " + str(stock_list.__len__()) + " "+str(code)+" "+name)
+    if code in df_holder['code']:
+        logging.info("code in return")
+        continue
+    else:
+        logging.info("not in return, fetch indidual")
+        t= pro.stk_holdernumber(ts_code=ts_code)
+        t=finlib.Finlib().ts_code_to_code(t)
+        df_holder=df_holder.append(t.head(1))
+        print(str(df_holder.__len__()))
+        df_holder.to_csv(out_csv, encoding='UTF-8', index=False)
+
+df_holder.to_csv(out_csv, encoding='UTF-8', index=False)
+
+
+
+df_holder[df_holder['code']=='SZ300661']
+
+
+
+df=pd.merge(left=df_holder, right=df_amt, on='code', how='inner')
+df = df[['code','holder_num','total_mv','circ_mv','close','pe','turnover_rate']]
+df['mv_per_holder']=df['circ_mv']/df['holder_num']
+df=finlib.Finlib().add_stock_name_to_df(df=df)
+
+
+df = df.sort_values(by='mv_per_holder', ascending=False)
+
+
 
 # a = stock_vs_index_perf_perc_chg()
 a = stock_vs_index_perf_amount()
@@ -834,6 +891,7 @@ df_gar_3 = df[df['roe_pe']<0.5]
 
 
 pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
+df = pro.stk_holdernumber(ts_code='300199.SZ', start_date='20160101', end_date='20181231')
 
 
 #获取申万一级行业列表

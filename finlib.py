@@ -4216,7 +4216,7 @@ class Finlib:
         if not os.path.isfile(data_csv_fp):
             logging.fatal(__file__+" "+"file not exist. " + data_csv_fp)
             if exit_if_not_exist:
-                exit(0)
+                sys.exit(0)
             else:
                 return("FILE_NOT_EXIT")
 
