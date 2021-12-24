@@ -1708,7 +1708,7 @@ def main():
 
 
     ############## TV
-    if t_futu_trade.py:
+    if tv_source:
         browser = tv_init()
 
 

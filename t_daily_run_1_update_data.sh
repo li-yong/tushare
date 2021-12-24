@@ -3,9 +3,7 @@
 #source /home/ryan/.profile
 #source /etc/bash.bashrc
 
-
-
-
+python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK
 
 #this script runs on haha_data_source
 
@@ -396,5 +394,9 @@ python t_futu_trade.py --fetch_history_bar  --market HK
 #
 ######################################
 #python ak_share.py  --fetch_after_market
+
+python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x HK_AK
+
+
 
 echo "done, script completed"
