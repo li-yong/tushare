@@ -207,6 +207,7 @@ def fetch_ag_qfq():
 
         df = df.reindex(index=df.index[::-1])  # revert
         df.to_csv(csv, encoding='UTF-8', index=False)
+        logging.info(finlib.Finlib().pprint(df.tail(1)))
         logging.info("saved to " + csv + " len " + str(df.__len__()))
 
     logging.info("all ag stocks qfq data refreshed")

@@ -659,6 +659,149 @@ def xiao_hu_xian():
     logging.info("end of the function")
     exit()
 
+def fudu_daily_check():
+    df_base = fudu_get_base_data(base_windows=5,slide_window=3)
+    df_today=fudu_get_today_data(slide_window=3)
+    df = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
+
+
+    b = df[(df['inc_ratio'] >= 2) & (df['cnt_ratio'] >= 2)]
+    print(finlib.Finlib().pprint(b.sort_values(by='inc_ratio').tail(3)))
+
+    dfng = finlib.Finlib().remove_garbage(df)
+
+    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_ratio').tail(30)))
+
+    dfng.sort_values(by='inc_mean').tail(30)
+    dfng.sort_values(by='dec_mean').head(30)
+
+
+def fudu_get_today_data(slide_window=20):
+    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check.csv"
+
+    if finlib.Finlib().is_cached(file_path=csv_out, day=1):
+        df_rtn=pd.read_csv(csv_out)
+        return(df_rtn)
+
+
+    df_rtn = pd.DataFrame()
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_200_days.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+
+    df =df[['code','date','high','low', 'close']]
+    i=0
+    all=df.code.unique().__len__()
+    for c in df.code.unique():
+        # c = 'SH600519'
+        logging.info(str(i) + " of " + str(all))
+        i+=1
+
+        dfs=df[df['code']==c]
+
+        if dfs.__len__()<90:
+            continue
+
+        dfs=dfs.tail(slide_window).reset_index().drop('index', axis=1)
+
+        max=dfs['high'].max()
+        min=dfs['low'].min()
+        now=dfs['close'].iloc[-1]
+        drop_from_max = round( -100 * (max-now)/max, 0)
+        inc_from_min = round(100 * (now-min)/min, 0)
+
+        _df = pd.DataFrame({
+            'code':[c],
+            'drop_from_max':[drop_from_max],
+            'inc_from_min':[inc_from_min],
+        })
+        df_rtn = df_rtn.append(_df)
+
+        print(_df)
+
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("saved to " + csv_out + " len " + str(df_rtn.__len__()))
+    return(df_rtn)
+
+
+
+def fudu_get_base_data(base_windows=200, slide_window=20):
+    csv_out = "/home/ryan/DATA/result/zhangfu_tongji.csv"
+
+    if finlib.Finlib().is_cached(file_path=csv_out, day=1):
+        df_rtn=pd.read_csv(csv_out)
+        return(df_rtn)
+
+    df_rtn = pd.DataFrame()
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
+    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+
+    df =df[['code','date','high','low', 'close']]
+    for c in df.code.unique():
+        # c = 'SH600519'
+        dfs=df[df['code']==c].tail(base_windows).reset_index().drop('index', axis=1)
+
+        if dfs.__len__()<base_windows:
+            continue
+
+        h=dfs['high']
+        l=dfs['low']
+
+        dfs['win_max'] = h.rolling(slide_window).max()
+        dfs['win_min'] = l.rolling(slide_window).min()
+
+        dfs['win_max_idx'] = h.rolling(slide_window).apply(np.argmax)[slide_window-1:].astype(int)+np.arange(len(h)-slide_window+1)
+        dfs['win_min_idx'] = l.rolling(slide_window).apply(np.argmin)[slide_window-1:].astype(int)+np.arange(len(l)-slide_window+1)
+
+        dfs_inc = dfs[dfs['win_max_idx']>dfs['win_min_idx']]
+        dfs_dec = dfs[dfs['win_max_idx']<dfs['win_min_idx']]
+
+        dfs_inc = dfs_inc.drop_duplicates(subset=['win_max_idx','win_min_idx'], keep='last')
+        dfs_dec = dfs_dec.drop_duplicates(subset=['win_max_idx','win_min_idx'], keep='last')
+
+        dfs_inc['inc'] = round((dfs_inc['win_max'] - dfs_inc['win_min'])*100/dfs_inc['win_min'],0)
+        # logging.info(c+" increase perc of window "+str(window_size)+" days,  description\n"+ str(dfs_inc['inc'].describe()))
+
+        dfs_dec['dec'] = round((dfs_dec['win_min'] - dfs_dec['win_max'])*100/dfs_dec['win_max'],0)
+        # logging.info(c+" decrease perc of window "+str(window_size)+" days,  description\n"+ str(dfs_dec['dec'].describe()))
+
+        inc_desc=dfs_inc['inc'].describe()
+        dec_desc=dfs_dec['dec'].describe()
+
+        _df = pd.DataFrame({
+            'code':[c],
+            'window_size':[slide_window],
+            'inc_cnt':[inc_desc['count']],
+            'inc_mean':[round(inc_desc['mean'],2)],
+            'inc_std':[round(inc_desc['std'],2)],
+            'inc_max':[round(inc_desc['max'],2)],
+            'inc_min':[round(inc_desc['min'],2)],
+
+            'dec_cnt': [dec_desc['count']],
+            'dec_mean': [round(dec_desc['mean'], 2)],
+            'dec_std': [round(dec_desc['std'], 2)],
+            'dec_max': [round(dec_desc['max'], 2)],
+            'dec_min': [round(dec_desc['min'], 2)],
+        })
+
+        logging.info(finlib.Finlib().pprint(_df))
+
+        df_rtn = df_rtn.append(_df)
+
+    df_rtn['cnt_ratio'] = round(df_rtn['inc_cnt'] / df_rtn['dec_cnt'], 2)
+    df_rtn['inc_ratio'] = round(df_rtn['inc_cnt'] * df_rtn['inc_mean'] / df_rtn['dec_cnt'] / abs(df_rtn['dec_min']), 2)
+
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("saved to " + csv_out + " len " + str(df_rtn.__len__()))
+    return(df_rtn)
+
 
 def fetch_holder():
     df_holder = pd.DataFrame()
@@ -713,7 +856,7 @@ def fetch_holder():
 
 
 #### MAIN #####
-
+df_rtn = fudu_daily_check()
 # a = xiao_hu_xian()
 
 df_holder = fetch_holder()
@@ -733,7 +876,7 @@ df=finlib.Finlib().add_stock_name_to_df(df=df)
 
 
 df = df.sort_values(by='mv_per_holder', ascending=False).reset_index().drop('index', axis=1)
-print("top mv_per_hoder")
+print("top mv_per_holder")
 print(finlib.Finlib().pprint(df.head(50)))
 
 a = finlib.Finlib().remove_garbage(df=df)
