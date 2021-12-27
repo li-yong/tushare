@@ -10,7 +10,7 @@ import finlib_indicator
 
 import tushare as ts
 import datetime
-
+import sys
 import talib 
 import logging
 import time
@@ -661,7 +661,7 @@ def xiao_hu_xian():
 
 def fudu_daily_check():
     df_base = fudu_get_base_data(base_windows=5,slide_window=3)
-    df_today=fudu_get_today_data(slide_window=3)
+    df_today=fudu_get_today_data(base_windows=5,slide_window=3)
     df = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
 
@@ -670,13 +670,13 @@ def fudu_daily_check():
 
     dfng = finlib.Finlib().remove_garbage(df)
 
-    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_ratio').tail(30)))
+    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_ratio').tail(10)))
 
-    dfng.sort_values(by='inc_mean').tail(30)
-    dfng.sort_values(by='dec_mean').head(30)
+    dfng.sort_values(by='inc_mean').tail(10)
+    dfng.sort_values(by='dec_mean').head(10)
+    sys.exit(0)
 
-
-def fudu_get_today_data(slide_window=20):
+def fudu_get_today_data(base_windows=5,slide_window=3):
     csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check.csv"
 
     if finlib.Finlib().is_cached(file_path=csv_out, day=1):
@@ -686,22 +686,20 @@ def fudu_get_today_data(slide_window=20):
 
     df_rtn = pd.DataFrame()
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
-    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_200_days.csv"
+    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
+    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+    df = finlib.Finlib()._remove_garbage_on_market_days(df=df,on_market_days=90)
+
 
     df =df[['code','date','high','low', 'close']]
     i=0
     all=df.code.unique().__len__()
     for c in df.code.unique():
-        # c = 'SH600519'
         logging.info(str(i) + " of " + str(all))
         i+=1
 
         dfs=df[df['code']==c]
-
-        if dfs.__len__()<90:
-            continue
 
         dfs=dfs.tail(slide_window).reset_index().drop('index', axis=1)
 
@@ -856,6 +854,7 @@ def fetch_holder():
 
 
 #### MAIN #####
+
 df_rtn = fudu_daily_check()
 # a = xiao_hu_xian()
 

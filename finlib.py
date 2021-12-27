@@ -3220,6 +3220,14 @@ class Finlib:
 
         return(df)
 
+    def _remove_garbage_on_market_days(self,df,on_market_days=90):
+        df_exam_all = self.get_today_stock_basic()
+        # on market days
+        df_gar = df_exam_all[df_exam_all['on_market_days'] < on_market_days]
+        df = self._df_sub_by_code(df=df, df_sub=df_gar, byreason="on market days less than "+str(on_market_days))
+
+        return(df)
+
     def _remove_garbage_must(self, df, b_m_score=-1,n_year=1):
         if 'ts_code' in df.columns:
             ts_code_fmt = True
