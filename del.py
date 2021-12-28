@@ -662,9 +662,50 @@ def xiao_hu_xian():
 def fudu_daily_check():
     df_base = fudu_get_base_data(base_windows=5,slide_window=3)
     df_today=fudu_get_today_data(base_windows=5,slide_window=3)
-    df = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
+    df_short = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
 
+    df_base = fudu_get_base_data(base_windows=100,slide_window=90)
+    df_today = fudu_get_today_data(base_windows=100,slide_window=90)
+    df_long = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
+
+    ###########
+    # df_short_inc_max = df_short.sort_values(by='inc_mean').tail
+    df=pd.merge(left=df_long, right=df_short, on=['code'], how='inner', suffixes=['_l', '_s'])
+
+    #dfr: df short_inc_max, and long dec min
+    dfr = df
+    dfr = dfr[(dfr['inc_std_s'].rank(pct=True) > 0.2) & (dfr['inc_std_s'].rank(pct=True) <= 0.8)]
+    dfr = dfr[(dfr['inc_mean_s'].rank(pct=True) > 0.9) & (dfr['inc_mean_r'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
+
+
+
+    # df_short_inc_max = df_short[(df_short['inc_std'].rank(pct=True) > 0.2) & (df_short['inc_std'].rank(pct=True) <= 0.8)]
+    # df_short_inc_max = df_short_inc_max[(df_short_inc_max['inc_mean'].rank(pct=True) > 0.9) & (df_short_inc_max['inc_mean'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
+
+    df_long_dec_max = df_long[(df_long['dec_std'].rank(pct=True) > 0.2) & (df_long['dec_std'].rank(pct=True) <= 0.8)]
+    df_long_dec_max = df_long_dec_max[(df_long_dec_max['dec_mean'].rank(pct=True) < 0.1) & (df_long_dec_max['dec_mean'].rank(pct=True) >=0)].sort_values(by='dec_mean',ascending=False)
+
+    print(df_short['inc_std'].describe())
+    df_short['inc_std_rank'] = df_short['inc_std'].rank(pct=True)
+    df_short['inc_std'] < 2
+    df_short_inc_max = df_short.sort_values(by='inc_from_min').tail(100)
+    # print(finlib.Finlib().pprint(df_short_inc_max))
+
+    # df_long_dec_max = df_long.sort_values(by='dec_mean').head(10)
+    df_long_dec_max = df_long.sort_values(by='drop_from_max').head(100)
+    # print(finlib.Finlib().pprint(df_long_dec_max))
+
+    df_long_drop_short_inc=pd.merge(left=df_long_dec_max, right=df_short_inc_max,on=['code'],how='inner',suffixes=['_l','_s'])
+    df_long_drop_short_inc = df_long_drop_short_inc.sort_values(by='inc_from_min_s')
+    df_long_drop_short_inc = df_long_drop_short_inc.sort_values(by='drop_from_max_l',ascending=False)
+
+
+    df_long_drop_short_inc=pd.merge(left=df_long.sort_values(by='drop_from_max').head(100),
+                                    right=df_short.sort_values(by='inc_from_min').tail(100),
+                                    on=['code'],how='inner')
+
+    df = df_short
     b = df[(df['inc_ratio'] >= 2) & (df['cnt_ratio'] >= 2)]
     print(finlib.Finlib().pprint(b.sort_values(by='inc_ratio').tail(3)))
 
@@ -672,12 +713,12 @@ def fudu_daily_check():
 
     print(finlib.Finlib().pprint(dfng.sort_values(by='inc_ratio').tail(10)))
 
-    dfng.sort_values(by='inc_mean').tail(10)
-    dfng.sort_values(by='dec_mean').head(10)
+    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_mean').tail(10)))
+    print(finlib.Finlib().pprint(dfng.sort_values(by='dec_mean').head(10)))
     sys.exit(0)
 
 def fudu_get_today_data(base_windows=5,slide_window=3):
-    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check.csv"
+    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check_base_"+str(base_windows)+"_slide_"+str(slide_window)+".csv"
 
     if finlib.Finlib().is_cached(file_path=csv_out, day=1):
         df_rtn=pd.read_csv(csv_out)
@@ -726,8 +767,8 @@ def fudu_get_today_data(base_windows=5,slide_window=3):
 
 
 
-def fudu_get_base_data(base_windows=200, slide_window=20):
-    csv_out = "/home/ryan/DATA/result/zhangfu_tongji.csv"
+def fudu_get_base_data(base_windows=5, slide_window=3):
+    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_base_"+str(base_windows)+"_slide_"+str(slide_window)+".csv"
 
     if finlib.Finlib().is_cached(file_path=csv_out, day=1):
         df_rtn=pd.read_csv(csv_out)
@@ -791,8 +832,12 @@ def fudu_get_base_data(base_windows=200, slide_window=20):
 
         df_rtn = df_rtn.append(_df)
 
-    df_rtn['cnt_ratio'] = round(df_rtn['inc_cnt'] / df_rtn['dec_cnt'], 2)
-    df_rtn['inc_ratio'] = round(df_rtn['inc_cnt'] * df_rtn['inc_mean'] / df_rtn['dec_cnt'] / abs(df_rtn['dec_min']), 2)
+    df_rtn['cnt_ratio'] = round((df_rtn['inc_cnt']+1) / (df_rtn['dec_cnt']+1), 2)
+    df_rtn['inc_ratio'] = round( (df_rtn['inc_cnt']+1) * df_rtn['inc_mean'] / (df_rtn['dec_cnt']+1) / abs(df_rtn['dec_min']), 2)
+
+    # df_rtn.loc[df_rtn['dec_cnt']==0,'cnt_ratio']=0
+    # df_rtn.loc[df_rtn['dec_cnt']==0,'cnt_ratio']=0
+
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
     df_rtn = df_rtn.reset_index().drop('index', axis=1)

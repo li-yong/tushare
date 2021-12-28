@@ -32,6 +32,7 @@ bash -x clean_result_dir.sh
 #### Process AG ########
 #mysqldump -uroot -padmin888.@_@  ryan_stock_db order_tracking_stock > order_tracking_stock.sql.backup_`hostname`_`date +"%Y-%m-%d_%H_%M_%S"`
 
+python del.py
 
 ##########################
 #input:
