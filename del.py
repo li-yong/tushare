@@ -671,20 +671,21 @@ def fudu_daily_check():
 
     ###########
     # df_short_inc_max = df_short.sort_values(by='inc_mean').tail
-    df=pd.merge(left=df_long, right=df_short, on=['code'], how='inner', suffixes=['_l', '_s'])
+    df=pd.merge(left=df_short, right=df_long, on=['code'], how='inner', suffixes=['_l', '_s'])
 
     #dfr: df short_inc_max, and long dec min
     dfr = df
     dfr = dfr[(dfr['inc_std_s'].rank(pct=True) > 0.2) & (dfr['inc_std_s'].rank(pct=True) <= 0.8)]
-    dfr = dfr[(dfr['inc_mean_s'].rank(pct=True) > 0.9) & (dfr['inc_mean_r'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
+    dfr = dfr[(dfr['inc_mean_s'].rank(pct=True) > 0.9) & (dfr['inc_mean_s'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean_s')
 
-
+    dfr = dfr[(dfr['dec_std_l'].rank(pct=True) > 0.2) & (dfr['dec_std_l'].rank(pct=True) <= 0.8)]
+    dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0.9) & (dfr['inc_mean_l'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean_l',ascending=False)
 
     # df_short_inc_max = df_short[(df_short['inc_std'].rank(pct=True) > 0.2) & (df_short['inc_std'].rank(pct=True) <= 0.8)]
     # df_short_inc_max = df_short_inc_max[(df_short_inc_max['inc_mean'].rank(pct=True) > 0.9) & (df_short_inc_max['inc_mean'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
 
-    df_long_dec_max = df_long[(df_long['dec_std'].rank(pct=True) > 0.2) & (df_long['dec_std'].rank(pct=True) <= 0.8)]
-    df_long_dec_max = df_long_dec_max[(df_long_dec_max['dec_mean'].rank(pct=True) < 0.1) & (df_long_dec_max['dec_mean'].rank(pct=True) >=0)].sort_values(by='dec_mean',ascending=False)
+    # df_long_dec_max = df_long[(df_long['dec_std'].rank(pct=True) > 0.2) & (df_long['dec_std'].rank(pct=True) <= 0.8)]
+    # df_long_dec_max = df_long_dec_max[(df_long_dec_max['dec_mean'].rank(pct=True) < 0.1) & (df_long_dec_max['dec_mean'].rank(pct=True) >=0)].sort_values(by='dec_mean',ascending=False)
 
     print(df_short['inc_std'].describe())
     df_short['inc_std_rank'] = df_short['inc_std'].rank(pct=True)
@@ -782,7 +783,7 @@ def fudu_get_base_data(base_windows=5, slide_window=3):
 
     df =df[['code','date','high','low', 'close']]
     for c in df.code.unique():
-        # c = 'SH600519'
+        # c = 'SZ300656'
         dfs=df[df['code']==c].tail(base_windows).reset_index().drop('index', axis=1)
 
         if dfs.__len__()<base_windows:
