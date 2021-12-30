@@ -669,17 +669,21 @@ def fudu_daily_check():
     df_today = fudu_get_today_data(base_windows=100,slide_window=90)
     df_long = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
+    #######
+    topN=10
+    logging.info("Recent max increase_mean  stocks, top "+str(topN))
+    logging.info(finlib.Finlib().pprint(df_short.sort_values(by='inc_mean').tail(topN)[['code','name','inc_cnt','inc_mean','dec_cnt']]))
     ###########
     # df_short_inc_max = df_short.sort_values(by='inc_mean').tail
-    df=pd.merge(left=df_short, right=df_long, on=['code'], how='inner', suffixes=['_l', '_s'])
+    df=pd.merge(left=df_short, right=df_long, on=['code'], how='inner', suffixes=['_s', '_l'])
 
     #dfr: df short_inc_max, and long dec min
     dfr = df
     dfr = dfr[(dfr['inc_std_s'].rank(pct=True) > 0.2) & (dfr['inc_std_s'].rank(pct=True) <= 0.8)]
     dfr = dfr[(dfr['inc_mean_s'].rank(pct=True) > 0.9) & (dfr['inc_mean_s'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean_s')
 
-    dfr = dfr[(dfr['dec_std_l'].rank(pct=True) > 0.2) & (dfr['dec_std_l'].rank(pct=True) <= 0.8)]
-    dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0.9) & (dfr['inc_mean_l'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean_l',ascending=False)
+    dfr = dfr[(dfr['dec_std_l'].rank(pct=True) > 0) & (dfr['dec_std_l'].rank(pct=True) <= 0.9)]
+    dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0) & (dfr['inc_mean_l'].rank(pct=True) <= 0.3)].sort_values(by='inc_mean_l',ascending=False)
 
     # df_short_inc_max = df_short[(df_short['inc_std'].rank(pct=True) > 0.2) & (df_short['inc_std'].rank(pct=True) <= 0.8)]
     # df_short_inc_max = df_short_inc_max[(df_short_inc_max['inc_mean'].rank(pct=True) > 0.9) & (df_short_inc_max['inc_mean'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
@@ -900,7 +904,6 @@ def fetch_holder():
 
 
 #### MAIN #####
-
 df_rtn = fudu_daily_check()
 # a = xiao_hu_xian()
 
