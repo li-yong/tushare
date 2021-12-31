@@ -683,7 +683,21 @@ def fudu_daily_check():
     dfr = dfr[(dfr['inc_mean_s'].rank(pct=True) > 0.9) & (dfr['inc_mean_s'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean_s')
 
     dfr = dfr[(dfr['dec_std_l'].rank(pct=True) > 0) & (dfr['dec_std_l'].rank(pct=True) <= 0.9)]
-    dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0) & (dfr['inc_mean_l'].rank(pct=True) <= 0.3)].sort_values(by='inc_mean_l',ascending=False)
+    dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0) & (dfr['dec_mean_l'].rank(pct=True) <= 0.3)].sort_values(by='dec_mean_l',ascending=False)
+
+    #############
+    logging.info("max drop in long period, top " + str(topN))
+    _df = dfr.sort_values(by="drop_from_max_l", ascending=False).tail(topN) #not much meaning on drop_from_max_s
+    logging.info(_df[['code', 'name_l', 'drop_from_max_l']])
+
+    logging.info("max drop in long period, max inc_from_min_s in short period, top " + str(topN))
+    _df = _df.sort_values(by="inc_from_min_s").tail(topN)
+    logging.info(_df[['code', 'name_l', 'drop_from_max_l','inc_from_min_s']])
+
+    logging.info("max drop in long period, max inc_mean in short period, top " + str(topN))
+    _df = _df.sort_values(by="inc_mean_s").tail(topN)
+    logging.info(_df[['code', 'name_l', 'inc_mean_s', 'drop_from_max_l','inc_from_min_s']])
+
 
     # df_short_inc_max = df_short[(df_short['inc_std'].rank(pct=True) > 0.2) & (df_short['inc_std'].rank(pct=True) <= 0.8)]
     # df_short_inc_max = df_short_inc_max[(df_short_inc_max['inc_mean'].rank(pct=True) > 0.9) & (df_short_inc_max['inc_mean'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
