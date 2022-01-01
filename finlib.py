@@ -4802,11 +4802,13 @@ class Finlib:
     def add_turnover_rate_f_sum_mean(self, df, ndays, dayE):
         df_t = self.get_last_n_days_daily_basic(ndays=ndays, dayE=dayE)
         df_t = self.ts_code_to_code(df=df_t)
-        df_t_mean = df_t[['code', 'turn_over_f']].groupby(by='code').mean()
-        df_t_sum = df_t[['code', 'turn_over_f']].groupby(by='code').sum()
+        df_t_mean = df_t[['code', 'turnover_rate_f']].groupby(by='code').mean().rename(columns={"turnover_rate_f": "tv_mean"})
+        df_t_sum = df_t[['code', 'turnover_rate_f']].groupby(by='code').sum().rename(columns={"turnover_rate_f": "tv_sum"})
 
-        # df = pd.merge(left=)
-        print(1)
+        df = pd.merge(left=df, right=df_t_mean, on='code',how='inner')
+        df = pd.merge(left=df, right=df_t_sum, on='code',how='inner')
+        return(df)
+
 
     def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False):
 
@@ -4839,16 +4841,16 @@ class Finlib:
 
         df = pd.DataFrame()
         j = 0
-        for i in range(ndays):
-            j += 1
-            date = (datetime.strptime(dayE, "%Y%m%d")  - timedelta(days=i)).strftime("%Y%m%d")
+        # for i in range(ndays):
+        while j<ndays:
+            date = (datetime.strptime(dayE, "%Y%m%d")  - timedelta(days=j)).strftime("%Y%m%d")
             input_csv = basic_dir + "/basic_" + date + ".csv"
 
             if self.is_cached(input_csv, day=1000):
                 df_sub = pd.read_csv(input_csv)
-
                 df = df.append(df_sub)
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
+                j += 1
             else:
                 logging.warning("no such file "+input_csv)
 

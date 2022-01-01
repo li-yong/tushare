@@ -666,7 +666,7 @@ def fudu_daily_check():
     df_today=fudu_get_today_data(base_windows=5,slide_window=3)
     df_short = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
-    df1 = finlib.Finlib().add_turnover_rate_f_sum_mean(df=df_short,ndays=5, dayE=finlib.Finlib().get_last_trading_day())
+    df_short = finlib.Finlib().add_turnover_rate_f_sum_mean(df=df_short,ndays=3, dayE=finlib.Finlib().get_last_trading_day())
 
     df_base = fudu_get_base_data(base_windows=100,slide_window=90)
     df_today = fudu_get_today_data(base_windows=100,slide_window=90)
