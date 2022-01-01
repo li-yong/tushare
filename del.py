@@ -569,9 +569,9 @@ def stock_vs_index_perf_amount():
     logging.info("hhh")
 
 
-def xiao_hu_xian():
-    # df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=200)
 
+
+def xiao_hu_xian():
 
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
@@ -626,6 +626,8 @@ def xiao_hu_xian():
             logging.info("skip, two zt less than 3 days "+str(n_days))
             continue
 
+        print("hit condition 0. ZT in last two 3 days, and previous ZT in [300,3] days. "+str(n_days))
+
         #include zt day
         df_since_1st_zt = df_s[df_s['date'] >= df_s_ZT.iloc[-2].date]
 
@@ -643,7 +645,7 @@ def xiao_hu_xian():
         df_s_basic = pd.merge(left=df_since_1st_zt, right=df_basic[df_basic['code']==c], on=['code','date'],how='inner')
         df_s_basic = df_s_basic[['code','date','pct_chg','turnover_rate','turnover_rate_f','volume_ratio']]
 
-        sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate'].sum(),2)
+        sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate_f'].sum(),2) #换手率（自由流通股）
 
         if sum_tv_4_days > 30:
             continue
@@ -654,7 +656,7 @@ def xiao_hu_xian():
         sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
 
 
-        logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days")
+        logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
     logging.info("end of the function")
     exit()
@@ -664,6 +666,7 @@ def fudu_daily_check():
     df_today=fudu_get_today_data(base_windows=5,slide_window=3)
     df_short = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
+    df1 = finlib.Finlib().add_turnover_rate_f_sum_mean(df=df_short,ndays=5, dayE=finlib.Finlib().get_last_trading_day())
 
     df_base = fudu_get_base_data(base_windows=100,slide_window=90)
     df_today = fudu_get_today_data(base_windows=100,slide_window=90)
@@ -686,15 +689,15 @@ def fudu_daily_check():
     dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0) & (dfr['dec_mean_l'].rank(pct=True) <= 0.3)].sort_values(by='dec_mean_l',ascending=False)
 
     #############
-    logging.info("max drop in long period, top " + str(topN))
+    logging.info("\nmax drop in long period, top " + str(topN))
     _df = dfr.sort_values(by="drop_from_max_l", ascending=False).tail(topN) #not much meaning on drop_from_max_s
     logging.info(_df[['code', 'name_l', 'drop_from_max_l']])
 
-    logging.info("max drop in long period, max inc_from_min_s in short period, top " + str(topN))
+    logging.info("\nmax drop in long period, max inc_from_min_s in short period, top " + str(topN))
     _df = _df.sort_values(by="inc_from_min_s").tail(topN)
     logging.info(_df[['code', 'name_l', 'drop_from_max_l','inc_from_min_s']])
 
-    logging.info("max drop in long period, max inc_mean in short period, top " + str(topN))
+    logging.info("\nmax drop in long period, max inc_mean in short period, top " + str(topN))
     _df = _df.sort_values(by="inc_mean_s").tail(topN)
     logging.info(_df[['code', 'name_l', 'inc_mean_s', 'drop_from_max_l','inc_from_min_s']])
 
@@ -919,7 +922,7 @@ def fetch_holder():
 
 #### MAIN #####
 df_rtn = fudu_daily_check()
-# a = xiao_hu_xian()
+a = xiao_hu_xian()
 
 df_holder = fetch_holder()
 df_holder[df_holder['code']=='SZ300661']

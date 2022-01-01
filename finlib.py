@@ -1111,7 +1111,7 @@ class Finlib:
         if a.at[tdy_idx, "is_open"] == 0:
             if debug:
                 logging.info(__file__+" "+"Today " + todayS + " is not a trading day, checking previous days")
-            tdy_idx = a[a['cal_date'] == int(todayS)].index.values[0]
+            # tdy_idx = a[a['cal_date'] == int(todayS)].index.values[0]
             for i in range(tdy_idx, 0, -1):
                 if a.at[i, "is_open"] == 1:
                     exam_date = str(a.at[i, "cal_date"])
@@ -4799,6 +4799,15 @@ class Finlib:
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
 
+    def add_turnover_rate_f_sum_mean(self, df, ndays, dayE):
+        df_t = self.get_last_n_days_daily_basic(ndays=ndays, dayE=dayE)
+        df_t = self.ts_code_to_code(df=df_t)
+        df_t_mean = df_t[['code', 'turn_over_f']].groupby(by='code').mean()
+        df_t_sum = df_t[['code', 'turn_over_f']].groupby(by='code').sum()
+
+        # df = pd.merge(left=)
+        print(1)
+
     def get_last_n_days_daily_basic(self,ndays=None,dayS=None,dayE=None,daily_update=None,debug=False, force_run=False):
 
         basic_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily"
@@ -4822,7 +4831,7 @@ class Finlib:
         out_csv = "/home/ryan/DATA/result/daily_basic_"+dayS+"_"+dayE+".csv"
 
         # if (not debug) and self.is_cached(file_path=out_csv, day=7) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
-        if self.is_cached(file_path=out_csv, day=7) and (not force_run):
+        if self.is_cached(file_path=out_csv, day=1) and (not force_run):
             logging.info("get_last_n_days_daily_basic loading cached file "+out_csv)
             return(pd.read_csv(out_csv))
 
