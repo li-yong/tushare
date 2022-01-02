@@ -1039,6 +1039,9 @@ class Finlib:
         return (df_result)
 
     def ts_code_to_code(self, df, debug=False):
+        if df.empty:
+            return(df)
+
         # rename col name from ts_code  to code
         # change code format from 600000.SH to SH600000
         collist = df.columns.values
@@ -4803,7 +4806,10 @@ class Finlib:
         df_t = self.get_last_n_days_daily_basic(ndays=ndays, dayE=dayE)
         df_t = self.ts_code_to_code(df=df_t)
         df_t_mean = df_t[['code', 'turnover_rate_f']].groupby(by='code').mean().rename(columns={"turnover_rate_f": "tv_mean"})
-        df_t_sum = df_t[['code', 'turnover_rate_f']].groupby(by='code').sum().rename(columns={"turnover_rate_f": "tv_sum"})
+        df_t_mean['tv_mean']=round(df_t_mean['tv_mean'],2)
+
+        df_t_sum  = df_t[['code', 'turnover_rate_f']].groupby(by='code').sum().rename(columns={"turnover_rate_f": "tv_sum"})
+        df_t_sum = round(df_t_sum['tv_sum'],2)
 
         df = pd.merge(left=df, right=df_t_mean, on='code',how='inner')
         df = pd.merge(left=df, right=df_t_sum, on='code',how='inner')
@@ -5576,7 +5582,7 @@ class Finlib:
         p.extend([stb2['ann_date_2q_before']])
         p.extend([stb2['ann_date_3q_before']])
         p.extend([stb2['ann_date_4q_before']])
-        p.extend(stb2['full_period_list_yearly'][1:n_year])
+        p.extend(stb2['full_period_list_yearly'][0:n_year])
 
         return(p)
 
@@ -5595,6 +5601,10 @@ class Finlib:
             # print(f)
 
             # _df = self.df_rtn(data_csv=f)
+            if not os.path.exists(f):
+                continue
+
+
             df_rtn = df_rtn.append(pd.read_csv(f, converters={'end_date': str}))
             # print(df_fund_n_years.__len__())
 

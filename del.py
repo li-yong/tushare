@@ -674,6 +674,10 @@ def fudu_daily_check():
 
     #######
     topN=10
+    logging.info("Recent max turnover_sum stocks, top "+str(topN))
+    logging.info(finlib.Finlib().pprint(df_short.sort_values(by='tv_sum').tail(topN)[['code','name','inc_cnt','inc_mean','tv_sum']]))
+    logging.info(finlib.Finlib().pprint(df_short.sort_values(by='tv_mean').tail(topN)[['code','name','inc_cnt','inc_mean','tv_mean']]))
+    ###########
     logging.info("Recent max increase_mean  stocks, top "+str(topN))
     logging.info(finlib.Finlib().pprint(df_short.sort_values(by='inc_mean').tail(topN)[['code','name','inc_cnt','inc_mean','dec_cnt']]))
     ###########
