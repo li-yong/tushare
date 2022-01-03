@@ -3537,6 +3537,10 @@ class Finlib:
                 continue
 
             csv = dir + "/" + "merged_all_" + y + ".csv"
+
+            if not os.path.exists(csv):
+                continue
+
             df_all = self.regular_read_csv_to_stdard_df(data_csv=csv)
             df_all = self._remove_gar_free_cache_a_year(df_all=df_all, year=y)
             df_rtn = pd.merge(df_rtn['code'], df_all, how='inner', on='code')
