@@ -673,12 +673,12 @@ def fudu_daily_check():
     df_long = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
 
     #######
-    topN=10
-    logging.info("Recent max turnover_sum stocks, top "+str(topN))
+    topN=5
+    logging.info("\nRecent max turnover_sum stocks, top "+str(topN))
     logging.info(finlib.Finlib().pprint(df_short.sort_values(by='tv_sum').tail(topN)[['code','name','inc_cnt','inc_mean','tv_sum']]))
-    logging.info(finlib.Finlib().pprint(df_short.sort_values(by='tv_mean').tail(topN)[['code','name','inc_cnt','inc_mean','tv_mean']]))
+    # logging.info(finlib.Finlib().pprint(df_short.sort_values(by='tv_mean').tail(topN)[['code','name','inc_cnt','inc_mean','tv_mean']]))
     ###########
-    logging.info("Recent max increase_mean  stocks, top "+str(topN))
+    logging.info("\nRecent max increase_mean stocks, top "+str(topN))
     logging.info(finlib.Finlib().pprint(df_short.sort_values(by='inc_mean').tail(topN)[['code','name','inc_cnt','inc_mean','dec_cnt']]))
     ###########
     # df_short_inc_max = df_short.sort_values(by='inc_mean').tail

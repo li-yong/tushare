@@ -4859,6 +4859,7 @@ class Finlib:
                 j += 1
             else:
                 logging.warning("no such file "+input_csv)
+                j += 1
 
 
         df.to_csv(out_csv, encoding='UTF-8', index=False)
