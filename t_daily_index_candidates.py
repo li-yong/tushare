@@ -96,8 +96,6 @@ def tv_source(index_name,idict,period_start,period_end, ndays):
                                      period_start=period_start,
                                      period_end=period_end, ndays=ndays)
 
-
-
 def compare_with_official_index_list(df_my_index,df_offical_index, index_name,period_start,period_end, ndays):
     df_merged = pd.merge(df_my_index,df_offical_index, indicator=True, on='code', how='outer',suffixes=('','_x')).reset_index().drop('index', axis=1)
 
@@ -645,10 +643,11 @@ def main():
                                               byreason='removing ST(special trade) from SZ mkt')
 
 
-
     # 对入围股票在最近半年的 A 股日均成交金额按从高到低排序，剔除排名后 10%的股票； Approximiately in all stock scope.
     my_szcz = pd.merge(my_szcz, df_amt_mktcap_weight[df_amt_mktcap_weight['amount_perc'] >= 0.7],
                        on=['code', 'name'], how='inner', suffixes=('', '_x')).reset_index().drop('index', axis=1)
+
+    my_szcz = my_szcz.drop('date_x',axis=1)
     # 对选样空间剩余股票按照最近半年的 A 股日均总市值从高到低排序，选取前 500 名股票构成指数样本股
     my_szcz = my_szcz.sort_values(by=['circ_mv'], ascending=[False]).head(500).reset_index().drop('index', axis=1)
     my_szcz['my_index_weight'] = round(

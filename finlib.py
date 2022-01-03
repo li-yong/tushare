@@ -344,7 +344,7 @@ class Finlib:
         dir = "/home/ryan/DATA/result/basic_summary"
         csv = dir + "/basic_fund_fund2_" + date_exam_day + ".csv"
 
-        df = pd.read_csv(csv, converters={'code': str,'symbol':str, 'list_date':str, 'trade_date':str})
+        df = pd.read_csv(csv, converters={'code': str,'symbol':str,'date':str, 'list_date':str, 'trade_date':str})
         return(df)
 
 
