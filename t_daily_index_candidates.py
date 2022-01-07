@@ -303,29 +303,29 @@ def get_hs300_total_share_weighted():
 
 
 ############
-def fetch_stock_industry_wugui_selenium():
+def fetch_stock_industry_wugui_selenium(browser):
     csv_o = "/home/ryan/DATA/pickle/ag_stock_industry_wg.csv"
 
-    opts = webdriver.ChromeOptions()
-    browser = webdriver.Chrome(options=opts)
-    browser.get('https://androidinvest.com/auth/login/')
-
-    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    login_link = browser.find_element_by_partial_link_text('账号密码')
-    login_link.click()
-
-    usr_box =  browser.find_element_by_id('login_user_name')
-    pwd_box =  browser.find_element_by_id('login_user_pwd')
-    sub_btn = browser.find_element_by_id('btnLogin')
-
-    usr_box.send_keys('13651887669')
-    pwd_box.send_keys('fav@Apple!')
-
-    sub_btn.click()
-    # time.sleep(5)
+    # opts = webdriver.ChromeOptions()
+    # browser = webdriver.Chrome(options=opts)
+    # browser.get('https://androidinvest.com/auth/login/')
+    #
+    # # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
+    # login_link = browser.find_element_by_partial_link_text('账号密码')
+    # login_link.click()
+    #
+    # usr_box =  browser.find_element_by_id('login_user_name')
+    # pwd_box =  browser.find_element_by_id('login_user_pwd')
+    # sub_btn = browser.find_element_by_id('btnLogin')
+    #
+    # usr_box.send_keys('13651887669')
+    # pwd_box.send_keys('fav@Apple!')
+    #
+    # sub_btn.click()
+    # # time.sleep(5)
 
     #wait maximum 10seconds to login
-    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+    # element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
 
     ### fetch industry start
     u="https://wglh.com/sector/"
@@ -365,9 +365,27 @@ def fetch_stock_industry_wugui_selenium():
     return(df_all)
 
 
-############
-def fetch_index_wugui_selenium():
 
+def wglh_login():
+    opts = webdriver.ChromeOptions()
+    # opts.add_argument("user-data-dir=/home/ryan/.config/google-chrome")
+    # opts.add_argument("profile-directory=Default")
+    browser = webdriver.Chrome(options=opts)
+    browser.get('https://wglh.com/user/account/')
+
+    #Manually login. Previous login GUI changed.
+    logging.info("Please manually login in 60 sec")
+    WebDriverWait(browser, 60).until(EC.title_contains("我的账号信息"))
+    return(browser)
+
+
+def wglh_download():
+    b = wglh_login()
+    # fetch_index_wugui_selenium(b)
+    fetch_stock_industry_wugui_selenium(b)
+
+############
+def fetch_index_wugui_selenium(browser):
     wg_d = os.path.abspath(os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/WuGuiLiangHua')
 
     wg_index_dict = {
@@ -378,27 +396,6 @@ def fetch_index_wugui_selenium():
         'sz100': {'c': 'SZ399330', 'sheet': '深证100的成分股', },  # 深证100的历史估值和成分股估值权重下载
         'tech_advance': {'c': 'CSI931087', 'sheet': '科技龙头的成分股', },  # 科技龙头
     }
-
-    opts = webdriver.ChromeOptions()
-    browser = webdriver.Chrome(options=opts)
-    browser.get('https://androidinvest.com/auth/login/')
-
-    # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    login_link = browser.find_element_by_partial_link_text('账号密码')
-    login_link.click()
-
-    usr_box =  browser.find_element_by_id('login_user_name')
-    pwd_box =  browser.find_element_by_id('login_user_pwd')
-    sub_btn = browser.find_element_by_id('btnLogin')
-
-    usr_box.send_keys('13651887669')
-    pwd_box.send_keys('fav@Apple!')
-
-    sub_btn.click()
-    # time.sleep(5)
-
-    #wait maximum 10seconds to login
-    element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
 
     for index_name in wg_index_dict.keys():
         code = wg_index_dict[index_name]['c']
@@ -574,8 +571,8 @@ def main():
         # pip install selenium
         # download chromedriver_linux64.zip
         # sudo mv chromedriver  /usr/local/bin/
-        fetch_index_wugui_selenium()
-        fetch_stock_industry_wugui_selenium()
+
+        wglh_download()
         exit()
 
     if period_end is None:

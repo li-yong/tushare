@@ -51,7 +51,7 @@ rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}:
 
 #v: sync recursivly
 rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/akshare/  /home/ryan/DATA/pickle/Stock_Fundamental/akshare/
-rsync -avz ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
+rsync -avz /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ {source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
 
 ######################################
 #

@@ -693,11 +693,23 @@ def fudu_daily_check():
     dfr = dfr[(dfr['dec_mean_l'].rank(pct=True) > 0) & (dfr['dec_mean_l'].rank(pct=True) <= 0.3)].sort_values(by='dec_mean_l',ascending=False)
 
     #############
-    logging.info("\nmax drop in long period, top " + str(topN))
+    logging.info("\nmax average decrease in long period, top " + str(topN))
+    logging.info("\nHit: place Buy order -30% of current price. Reasonable to prepare -30% lost in 90 days.")
+    logging.info(dfr.sort_values(by="dec_mean_l", ascending=False).tail(topN)[['code', 'name_l', 'dec_mean_l']])
+
+    #############
+    logging.info("\nmax average increase in long period, top " + str(topN))
+    logging.info("\nHit:Reasonable to prepare 30% increase in 90 days.")
+    logging.info(dfr.sort_values(by="inc_mean_l").tail(topN)[['code', 'name_l', 'inc_mean_l']])
+
+
+
+    #############
+    logging.info("\nstocks have max drop in long period, top " + str(topN))
     _df = dfr.sort_values(by="drop_from_max_l", ascending=False).tail(topN) #not much meaning on drop_from_max_s
     logging.info(_df[['code', 'name_l', 'drop_from_max_l']])
 
-    logging.info("\nmax drop in long period, max inc_from_min_s in short period, top " + str(topN))
+    logging.info("\nstocks have max drop in long period, max inc_from_min_s in short period, top " + str(topN))
     _df = _df.sort_values(by="inc_from_min_s").tail(topN)
     logging.info(_df[['code', 'name_l', 'drop_from_max_l','inc_from_min_s']])
 
@@ -712,15 +724,15 @@ def fudu_daily_check():
     # df_long_dec_max = df_long[(df_long['dec_std'].rank(pct=True) > 0.2) & (df_long['dec_std'].rank(pct=True) <= 0.8)]
     # df_long_dec_max = df_long_dec_max[(df_long_dec_max['dec_mean'].rank(pct=True) < 0.1) & (df_long_dec_max['dec_mean'].rank(pct=True) >=0)].sort_values(by='dec_mean',ascending=False)
 
-    print(df_short['inc_std'].describe())
+    #############
+    logging.info("\nmax increase in short period, top " + str(topN))
+    logging.info("\nHit: burst stocks")
     df_short['inc_std_rank'] = df_short['inc_std'].rank(pct=True)
-    df_short['inc_std'] < 2
-    df_short_inc_max = df_short.sort_values(by='inc_from_min').tail(100)
-    # print(finlib.Finlib().pprint(df_short_inc_max))
+    # df_short= df_short[df_short['inc_std'] < 2]
+    logging.info(df_short.sort_values(by='inc_from_min').tail(topN)[['code','name','inc_from_min','inc_std','inc_std_rank','tv_mean', 'tv_sum']])
 
-    # df_long_dec_max = df_long.sort_values(by='dec_mean').head(10)
+    df_short_inc_max = df_short.sort_values(by='inc_from_min').tail(100)
     df_long_dec_max = df_long.sort_values(by='drop_from_max').head(100)
-    # print(finlib.Finlib().pprint(df_long_dec_max))
 
     df_long_drop_short_inc=pd.merge(left=df_long_dec_max, right=df_short_inc_max,on=['code'],how='inner',suffixes=['_l','_s'])
     df_long_drop_short_inc = df_long_drop_short_inc.sort_values(by='inc_from_min_s')
