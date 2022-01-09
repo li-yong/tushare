@@ -571,7 +571,8 @@ def stock_vs_index_perf_amount():
 
 
 
-def xiao_hu_xian():
+def xiao_hu_xian(debug=False):
+    logging.info("start of func xiao_hu_xian")
 
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
@@ -604,7 +605,8 @@ def xiao_hu_xian():
             continue
 
         if df_s.iloc[-1].pct_chg < ZT_P and df_s.iloc[-2].pct_chg < ZT_P :
-            logging.info("skip, not hit zhangting in the latest two days "+c+" "+df_s.iloc[-1].date)
+            if debug:
+                logging.info("skip, not hit zhangting in the latest two days "+c+" "+df_s.iloc[-1].date)
             continue
 
         # df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
@@ -619,14 +621,17 @@ def xiao_hu_xian():
 
         n_days = (df_s_ZT.iloc[-1].date_dt - df_s_ZT.iloc[-2].date_dt).days
         if n_days > 300:
-            logging.info("skip, two zt more than 300 days "+str(n_days))
+            if debug:
+                logging.info("skip, two zt more than 300 days "+str(n_days))
             continue
 
         if n_days < 3:
-            logging.info("skip, two zt less than 3 days "+str(n_days))
+            if debug:
+                logging.info("skip, two zt less than 3 days "+str(n_days))
             continue
 
-        print("hit condition 0. ZT in last two 3 days, and previous ZT in [300,3] days. "+str(n_days))
+        if debug:
+            logging.info("hit condition 0. ZT in last two 3 days, and previous ZT in [300,3] days. "+str(n_days))
 
         #include zt day
         df_since_1st_zt = df_s[df_s['date'] >= df_s_ZT.iloc[-2].date]
@@ -635,11 +640,14 @@ def xiao_hu_xian():
         #following 3 days not lower than close_of_zt
         if df_since_1st_zt[1:4]['low'].min() < df_s_ZT.iloc[-2].close:
             continue
-        print("hit condition 1. 3 days no lower than ztclose")
+        if debug:
+            logging.info("hit condition 1. 3 days no lower than ztclose")
 
         if df_since_1st_zt[1:]['close'].min() < df_s_ZT.iloc[-2].close:
             continue
-        print("hit condition 2. later close no lower than ztclose")
+
+        if debug:
+            logging.info("hit condition 2. later close no lower than ztclose")
 
 
         df_s_basic = pd.merge(left=df_since_1st_zt, right=df_basic[df_basic['code']==c], on=['code','date'],how='inner')
@@ -649,7 +657,9 @@ def xiao_hu_xian():
 
         if sum_tv_4_days > 30:
             continue
-        print("hit condition 3. zt_day+following3days turnover <30. " + str(sum_tv_4_days))
+
+        if debug:
+            logging.info("hit condition 3. zt_day+following3days turnover <30. " + str(sum_tv_4_days))
 
         sum_tv_90_days = round(df_s_basic.head(90)['turnover_rate'].sum(),2)
         sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
@@ -658,8 +668,8 @@ def xiao_hu_xian():
 
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
-    logging.info("end of the function")
-    exit()
+    logging.info("end of the func xiao_hu_xian")
+    sys.exit(0)
 
 def fudu_daily_check():
     df_base = fudu_get_base_data(base_windows=5,slide_window=3)
@@ -753,7 +763,7 @@ def fudu_daily_check():
 
     print(finlib.Finlib().pprint(dfng.sort_values(by='inc_mean').tail(10)))
     print(finlib.Finlib().pprint(dfng.sort_values(by='dec_mean').head(10)))
-    sys.exit(0)
+    return()
 
 def fudu_get_today_data(base_windows=5,slide_window=3):
     csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check_base_"+str(base_windows)+"_slide_"+str(slide_window)+".csv"

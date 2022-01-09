@@ -1000,11 +1000,11 @@ def fetch_industry_l123():
     pro = ts.pro_api(token=myToken)
 
     # 获取申万一级行业列表
-    df1 = pro.index_classify(level='L1', src='SW')
+    df1 = pro.index_classify(level='L1', src='SW2021')
     # 获取申万二级行业列表
-    df2 = pro.index_classify(level='L2', src='SW')
+    df2 = pro.index_classify(level='L2', src='SW2021')
     # 获取申万三级级行业列表
-    df3 = pro.index_classify(level='L3', src='SW')
+    df3 = pro.index_classify(level='L3', src='SW2021')
 
     df_index = df1.append(df2).append(df3).reset_index().drop('index', axis=1)
 

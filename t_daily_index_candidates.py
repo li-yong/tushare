@@ -367,6 +367,7 @@ def wglh_download():
     fetch_index_wugui_selenium(b)
     fetch_stock_industry_wugui_selenium(b)
 
+
 ############
 def fetch_index_wugui_selenium(browser):
     wg_d = os.path.abspath(os.path.expanduser("~")+'/DATA/pickle/Stock_Fundamental/WuGuiLiangHua')
