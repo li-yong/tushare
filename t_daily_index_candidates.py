@@ -306,26 +306,9 @@ def get_hs300_total_share_weighted():
 def fetch_stock_industry_wugui_selenium(browser):
     csv_o = "/home/ryan/DATA/pickle/ag_stock_industry_wg.csv"
 
-    # opts = webdriver.ChromeOptions()
-    # browser = webdriver.Chrome(options=opts)
-    # browser.get('https://androidinvest.com/auth/login/')
-    #
-    # # login_link = browser.find_element_by_link_text('登录方式一：账号密码')
-    # login_link = browser.find_element_by_partial_link_text('账号密码')
-    # login_link.click()
-    #
-    # usr_box =  browser.find_element_by_id('login_user_name')
-    # pwd_box =  browser.find_element_by_id('login_user_pwd')
-    # sub_btn = browser.find_element_by_id('btnLogin')
-    #
-    # usr_box.send_keys('13651887669')
-    # pwd_box.send_keys('fav@Apple!')
-    #
-    # sub_btn.click()
-    # # time.sleep(5)
-
-    #wait maximum 10seconds to login
-    # element = WebDriverWait(browser, 10).until(EC.title_contains("我的账号信息"))
+    if finlib.Finlib().is_cached(file_path=csv_o,day=30):
+        logging.info("wglh industry fetched in 30 days, skip fetching. "+csv_o)
+        return()
 
     ### fetch industry start
     u="https://wglh.com/sector/"
@@ -381,7 +364,7 @@ def wglh_login():
 
 def wglh_download():
     b = wglh_login()
-    # fetch_index_wugui_selenium(b)
+    fetch_index_wugui_selenium(b)
     fetch_stock_industry_wugui_selenium(b)
 
 ############
@@ -405,6 +388,12 @@ def fetch_index_wugui_selenium(browser):
         # 20210125_IndexData_CSI931087.xls
 
         f2 = wg_d+"/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls"
+
+        if finlib.Finlib().is_cached(file_path=f2,day=30):
+            logging.info("wglh index fetched in 30 days, not fetching again. "+f2)
+            continue
+
+
         f_sl = wg_d+"/"+code+".xls"
         logging.info("Download from wugui, index_name "+index_name+", url "+u)
         browser.get(u)
