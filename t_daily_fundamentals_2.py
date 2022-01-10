@@ -1019,7 +1019,7 @@ def fetch_industry_l123():
             str(index) + " of " + str(df1.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
                 'industry_name'] + " ," + row['level'])
         df1n = df1n.append(pro.index_member(index_code=row['index_code']))
-        time.sleep(0.5) #max visiting frequency 150/min
+        time.sleep(1) #max visiting frequency 150/min
     df1n = df1n.reset_index().drop('index', axis=1)
     df1n = pd.merge(df1n, df_index, on='index_code', how='inner')
 
@@ -1029,7 +1029,7 @@ def fetch_industry_l123():
             str(index) + " of " + str(df2.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
                 'industry_name'] + " ," + row['level'])
         df2n = df2n.append(pro.index_member(index_code=row['index_code']))
-        time.sleep(0.5)
+        time.sleep(1)
     df2n = df2n.reset_index().drop('index', axis=1)
     df2n = pd.merge(df2n, df_index, on='index_code', how='inner')
 
@@ -1039,7 +1039,7 @@ def fetch_industry_l123():
             str(index) + " of " + str(df3.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
                 'industry_name'] + " ," + row['level'])
         df3n = df3n.append(pro.index_member(index_code=row['index_code']))
-        time.sleep(0.5)
+        time.sleep(1)
     df3n = df3n.reset_index().drop('index', axis=1)
     df3n = pd.merge(df3n, df_index, on='index_code', how='inner')
 
