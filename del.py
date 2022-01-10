@@ -946,7 +946,7 @@ def fetch_holder():
     return(df_holder)
 
 
-def daily_ZD_tongji():
+def daily_UD_tongji():
     df_rtn = pd.DataFrame()
 
     out_csv = "/home/ryan/DATA/result/daily_ZD_tongji.csv"
@@ -958,7 +958,8 @@ def daily_ZD_tongji():
     pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b", timeout=3)
 
     if df_rtn.__len__() < 100:
-        df_rtn = pro.limit_list(trade_date='20220105')
+        df_rtn = pro.limit_list(trade_date='20220110')
+        # df_rtn = pro.limit_list()
         df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
 
         df_D = df_rtn[df_rtn['limit']=='D']
@@ -968,45 +969,10 @@ def daily_ZD_tongji():
         logging.info(finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio')))
         logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
 
-    i = 0
-    stock_list = finlib.Finlib().get_A_stock_instrment()
-    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
-    stock_list = finlib.Finlib().add_ts_code_to_column(stock_list)
-    for index, row in stock_list.iterrows():
-        i += 1
-        name, code, ts_code = row['name'], row['code'], row['ts_code']
-        logging.info(str(i) + " of " + str(stock_list.__len__()) + " " + str(code) + " " + name)
-        if code in df_holder['code'].to_list():
-            # logging.info("code in return")
-            continue
-        else:
-            # logging.info("not in return, fetch indidual")
-            try:
-                t = pro.stk_holdernumber(ts_code=ts_code)
-            except Exception:
-                logging.info("exception on pro.stk_holdernumber")
-                continue
-
-            try:
-                t = finlib.Finlib().ts_code_to_code(t)
-            except Exception:
-                logging.info("exception on ts_code_to_code")
-                continue
-
-            time.sleep(1)
-
-            # df_holder=df_holder.append(t.head(1))
-            df_holder = df_holder.append(t)
-            # print(str(df_holder.__len__()))
-            df_holder.to_csv(out_csv, encoding='UTF-8', index=False)
-
-    df_holder.reset_index().drop('index', axis=1).to_csv(out_csv, encoding='UTF-8', index=False)
-    logging.info("df_holder saved to "+out_csv+" , len "+str(df_holder.__len__()))
-    return(df_holder)
 
 
 #### MAIN #####
-a = daily_ZD_tongji()
+a = daily_UD_tongji()
 df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
