@@ -691,7 +691,6 @@ def fudu_daily_check():
     df_base = fudu_get_base_data(base_windows=5,slide_window=3)
     df_today=fudu_get_today_data(base_windows=5,slide_window=3)
     df_short = pd.merge(left=df_base, right=df_today[['code','drop_from_max','inc_from_min']], on='code', how='inner')
-
     df_short = finlib.Finlib().add_turnover_rate_f_sum_mean(df=df_short,ndays=3, dayE=finlib.Finlib().get_last_trading_day())
 
     df_base = fudu_get_base_data(base_windows=100,slide_window=90)
@@ -781,54 +780,6 @@ def fudu_daily_check():
     print(finlib.Finlib().pprint(dfng.sort_values(by='dec_mean').head(10)))
     return()
 
-def fudu_get_today_data(base_windows=5,slide_window=3):
-    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check_base_"+str(base_windows)+"_slide_"+str(slide_window)+".csv"
-
-    if finlib.Finlib().is_cached(file_path=csv_out, day=1):
-        df_rtn=pd.read_csv(csv_out)
-        return(df_rtn)
-
-
-    df_rtn = pd.DataFrame()
-
-    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
-    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
-    df = finlib.Finlib()._remove_garbage_on_market_days(df=df,on_market_days=90)
-
-
-    df =df[['code','date','high','low', 'close']]
-    i=0
-    all=df.code.unique().__len__()
-    for c in df.code.unique():
-        logging.info(str(i) + " of " + str(all))
-        i+=1
-
-        dfs=df[df['code']==c]
-
-        dfs=dfs.tail(slide_window).reset_index().drop('index', axis=1)
-
-        max=dfs['high'].max()
-        min=dfs['low'].min()
-        now=dfs['close'].iloc[-1]
-        drop_from_max = round( -100 * (max-now)/max, 0)
-        inc_from_min = round(100 * (now-min)/min, 0)
-
-        _df = pd.DataFrame({
-            'code':[c],
-            'drop_from_max':[drop_from_max],
-            'inc_from_min':[inc_from_min],
-        })
-        df_rtn = df_rtn.append(_df)
-
-        print(_df)
-
-    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
-    df_rtn = df_rtn.reset_index().drop('index', axis=1)
-    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
-    logging.info("saved to " + csv_out + " len " + str(df_rtn.__len__()))
-    return(df_rtn)
-
 
 
 def fudu_get_base_data(base_windows=5, slide_window=3):
@@ -892,16 +843,59 @@ def fudu_get_base_data(base_windows=5, slide_window=3):
             'dec_min': [round(dec_desc['min'], 2)],
         })
 
-        logging.info(finlib.Finlib().pprint(_df))
-
+        # logging.info(finlib.Finlib().pprint(_df))
         df_rtn = df_rtn.append(_df)
 
     df_rtn['cnt_ratio'] = round((df_rtn['inc_cnt']+1) / (df_rtn['dec_cnt']+1), 2)
-    df_rtn['inc_ratio'] = round( (df_rtn['inc_cnt']+1) * df_rtn['inc_mean'] / (df_rtn['dec_cnt']+1) / abs(df_rtn['dec_min']), 2)
+    df_rtn['inc_ratio'] = round((df_rtn['inc_cnt']+1) * df_rtn['inc_mean'] / (df_rtn['dec_cnt']+1) / abs(df_rtn['dec_min']), 2)
 
-    # df_rtn.loc[df_rtn['dec_cnt']==0,'cnt_ratio']=0
-    # df_rtn.loc[df_rtn['dec_cnt']==0,'cnt_ratio']=0
 
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("saved to " + csv_out + " len " + str(df_rtn.__len__()))
+    return(df_rtn)
+
+def fudu_get_today_data(base_windows=5,slide_window=3):
+    csv_out = "/home/ryan/DATA/result/zhangfu_tongji_daily_check_base_"+str(base_windows)+"_slide_"+str(slide_window)+".csv"
+
+    if finlib.Finlib().is_cached(file_path=csv_out, day=1):
+        df_rtn=pd.read_csv(csv_out)
+        return(df_rtn)
+
+    df_rtn = pd.DataFrame()
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
+    csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
+    df = finlib.Finlib()._remove_garbage_on_market_days(df=df,on_market_days=90)
+
+    df =df[['code','date','high','low', 'close']]
+    i=0
+    all=df.code.unique().__len__()
+    for c in df.code.unique():
+        logging.info(str(i) + " of " + str(all))
+        i+=1
+
+        dfs=df[df['code']==c]
+
+        dfs=dfs.tail(slide_window).reset_index().drop('index', axis=1)
+
+        max=dfs['high'].max()
+        min=dfs['low'].min()
+        now=dfs['close'].iloc[-1]
+        drop_from_max = round(-100 * (max-now)/max, 0)
+        inc_from_min = round(100 * (now-min)/min, 0)
+
+        _df = pd.DataFrame({
+            'code':[c],
+            'window_size':[slide_window],
+            'drop_from_max':[drop_from_max],
+            'inc_from_min':[inc_from_min],
+        })
+        df_rtn = df_rtn.append(_df)
+
+        # logging.info(_df)
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
@@ -981,15 +975,15 @@ def daily_UD_tongji():
         df_D = df_rtn[df_rtn['limit']=='D']
         df_U = df_rtn[df_rtn['limit']=='U']
 
-        logging.info(finlib.Finlib().pprint(df_D.sort_values(by='fl_ratio')))
-        logging.info(finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio')))
-        logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
-
+        logging.info("Down Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_D.sort_values(by='fl_ratio').tail(10)))
+        logging.info("UP Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio').tail(10)))
+        # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
+        logging.info("end of daily_UD_tongji\n\n")
 
 
 #### MAIN #####
-# a = daily_UD_tongji()
-# df_rtn = fudu_daily_check()
+a = daily_UD_tongji()
+df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
 df_holder = fetch_holder()
