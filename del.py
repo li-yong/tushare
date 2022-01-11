@@ -719,12 +719,12 @@ def fudu_daily_check():
 
     #############
     logging.info("\nmax average decrease in long period, top " + str(topN))
-    logging.info("\nHit: place Buy order -30% of current price. Reasonable to prepare -30% lost in 90 days.")
+    logging.info("Hint: place Buy order -30% of current price. Reasonable to prepare -30% lost in 90 days.")
     logging.info(dfr.sort_values(by="dec_mean_l", ascending=False).tail(topN)[['code', 'name_l', 'dec_mean_l']])
 
     #############
     logging.info("\nmax average increase in long period, top " + str(topN))
-    logging.info("\nHit:Reasonable to prepare 30% increase in 90 days.")
+    logging.info("Hint:Reasonable to prepare 30% increase in 90 days.")
     logging.info(dfr.sort_values(by="inc_mean_l").tail(topN)[['code', 'name_l', 'inc_mean_l']])
 
 
@@ -732,26 +732,20 @@ def fudu_daily_check():
     #############
     logging.info("\nstocks have max drop in long period, top " + str(topN))
     _df = dfr.sort_values(by="drop_from_max_l", ascending=False).tail(topN) #not much meaning on drop_from_max_s
-    logging.info(_df[['code', 'name_l', 'drop_from_max_l']])
+    logging.info(_df[['code', 'name_l', 'window_size_l', 'drop_from_max_l']])
 
     logging.info("\nstocks have max drop in long period, max inc_from_min_s in short period, top " + str(topN))
     _df = _df.sort_values(by="inc_from_min_s").tail(topN)
-    logging.info(_df[['code', 'name_l', 'drop_from_max_l','inc_from_min_s']])
+    logging.info(_df[['code', 'name_l', 'window_size_l','window_size_s','drop_from_max_l','inc_from_min_s']])
 
     logging.info("\nmax drop in long period, max inc_mean in short period, top " + str(topN))
     _df = _df.sort_values(by="inc_mean_s").tail(topN)
-    logging.info(_df[['code', 'name_l', 'inc_mean_s', 'drop_from_max_l','inc_from_min_s']])
+    logging.info(_df[['code', 'name_l','window_size_l','window_size_s', 'inc_mean_s', 'drop_from_max_l','inc_from_min_s']])
 
-
-    # df_short_inc_max = df_short[(df_short['inc_std'].rank(pct=True) > 0.2) & (df_short['inc_std'].rank(pct=True) <= 0.8)]
-    # df_short_inc_max = df_short_inc_max[(df_short_inc_max['inc_mean'].rank(pct=True) > 0.9) & (df_short_inc_max['inc_mean'].rank(pct=True) <= 0.95)].sort_values(by='inc_mean')
-
-    # df_long_dec_max = df_long[(df_long['dec_std'].rank(pct=True) > 0.2) & (df_long['dec_std'].rank(pct=True) <= 0.8)]
-    # df_long_dec_max = df_long_dec_max[(df_long_dec_max['dec_mean'].rank(pct=True) < 0.1) & (df_long_dec_max['dec_mean'].rank(pct=True) >=0)].sort_values(by='dec_mean',ascending=False)
 
     #############
     logging.info("\nmax increase in short period, top " + str(topN))
-    logging.info("\nHit: burst stocks")
+    logging.info("Hint: burst stocks")
     df_short['inc_std_rank'] = df_short['inc_std'].rank(pct=True)
     # df_short= df_short[df_short['inc_std'] < 2]
     logging.info(df_short.sort_values(by='inc_from_min').tail(topN)[['code','name','inc_from_min','inc_std','inc_std_rank','tv_mean', 'tv_sum']])
@@ -767,17 +761,7 @@ def fudu_daily_check():
     df_long_drop_short_inc=pd.merge(left=df_long.sort_values(by='drop_from_max').head(100),
                                     right=df_short.sort_values(by='inc_from_min').tail(100),
                                     on=['code'],how='inner')
-
-    df = df_short
-    b = df[(df['inc_ratio'] >= 2) & (df['cnt_ratio'] >= 2)]
-    print(finlib.Finlib().pprint(b.sort_values(by='inc_ratio').tail(3)))
-
-    dfng = finlib.Finlib().remove_garbage(df)
-
-    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_ratio').tail(10)))
-
-    print(finlib.Finlib().pprint(dfng.sort_values(by='inc_mean').tail(10)))
-    print(finlib.Finlib().pprint(dfng.sort_values(by='dec_mean').head(10)))
+    logging.info("end of fudu_daily_check\n")
     return()
 
 
@@ -982,8 +966,8 @@ def daily_UD_tongji():
 
 
 #### MAIN #####
-a = daily_UD_tongji()
-df_rtn = fudu_daily_check()
+# a = daily_UD_tongji()
+# df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
 df_holder = fetch_holder()
