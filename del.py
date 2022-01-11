@@ -577,6 +577,8 @@ def xiao_hu_xian(debug=False):
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
 
+    df_rtn = pd.DataFrame()
+
     ZT_P= 8 #ag_all_300_days.csv
 
     df = finlib.Finlib().read_all_ag_qfq_data(days=200)
@@ -665,9 +667,23 @@ def xiao_hu_xian(debug=False):
         sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
         sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
 
+        df_rtn = df_rtn.append({
+            "code": c,
+            "name": df_s_ZT.iloc[-2]['name'],
+            "dateS": df_s_ZT.iloc[-2]['date'],
+            "dateE": df_s_ZT.iloc[-1]['date'],
+            "ndays": n_days,
+            "last4D_tv":sum_tv_4_days,
+        }, ignore_index=True)
 
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
+    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
+    df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn)
+    df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
+    df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
+
+    logging.info(finlib.Finlib().pprint(df_rtn))
     logging.info("end of the func xiao_hu_xian")
     sys.exit(0)
 
@@ -972,8 +988,8 @@ def daily_UD_tongji():
 
 
 #### MAIN #####
-a = daily_UD_tongji()
-df_rtn = fudu_daily_check()
+# a = daily_UD_tongji()
+# df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
 df_holder = fetch_holder()
