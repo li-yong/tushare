@@ -966,8 +966,8 @@ def daily_UD_tongji():
 
 
 #### MAIN #####
-# a = daily_UD_tongji()
-# df_rtn = fudu_daily_check()
+a = daily_UD_tongji()
+df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
 df_holder = fetch_holder()

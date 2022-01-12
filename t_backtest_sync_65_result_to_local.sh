@@ -44,16 +44,16 @@ fi
 #scp ${source_host}:/home/ryan/DATA/result/jaqs_quarterly_fundamental.csv /home/ryan/DATA/result/
 
 
-rsync -avz   ${source_host}:/home/ryan/no_hup_run_exam_ag.log  /home/ryan/
-rsync -avz   ${source_host}:/home/ryan/no_hup_run_exam_ushk.log  /home/ryan/
+rsync -avzt   ${source_host}:/home/ryan/no_hup_run_exam_ag.log  /home/ryan/
+rsync -avzt   ${source_host}:/home/ryan/no_hup_run_exam_ushk.log  /home/ryan/
 
-rsync -avz   ${source_host}:/home/ryan/DATA/result/  /home/ryan/DATA/result/
-rsync -avz   ${source_host}:/home/ryan/DATA/result/*.csv  /home/ryan/DATA/result/
-rsync -avz   ${source_host}:/home/ryan/DATA/result/*.txt  /home/ryan/DATA/result/
-rsync -az   ${source_host}:/home/ryan/DATA/result/today/  /home/ryan/DATA/result/today/
-rsync -az   ${source_host}:/home/ryan/DATA/result/wei_pan_la_sheng/  /home/ryan/DATA/result/wei_pan_la_sheng/
-rsync -az   ${source_host}:/home/ryan/DATA/result/fib_plot/  /home/ryan/DATA/result/fib_plot/
-rsync -az   ${source_host}:/home/ryan/DATA/result/curv_plot/  /home/ryan/DATA/result/curv_plot/
-rsync -az   ${source_host}:/home/ryan/DATA/result/selected/  /home/ryan/DATA/result/selected/
-rsync -az   ${source_host}:/home/ryan/DATA/result/pv_2/  /home/ryan/DATA/result/pv_2/
+rsync -avzt   ${source_host}:/home/ryan/DATA/result/  /home/ryan/DATA/result/
+rsync -avzt   ${source_host}:/home/ryan/DATA/result/*.csv  /home/ryan/DATA/result/
+rsync -avzt   ${source_host}:/home/ryan/DATA/result/*.txt  /home/ryan/DATA/result/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/today/  /home/ryan/DATA/result/today/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/wei_pan_la_sheng/  /home/ryan/DATA/result/wei_pan_la_sheng/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/fib_plot/  /home/ryan/DATA/result/fib_plot/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/curv_plot/  /home/ryan/DATA/result/curv_plot/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/selected/  /home/ryan/DATA/result/selected/
+rsync -azt   ${source_host}:/home/ryan/DATA/result/pv_2/  /home/ryan/DATA/result/pv_2/
 #rsync -az   ${source_host}:/home/ryan/DATA/result/jaqs/  /home/ryan/DATA/result/jaqs/
