@@ -678,12 +678,16 @@ def xiao_hu_xian(debug=False):
 
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
-    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
-    df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn)
-    df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
-    df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
+    if df_rtn.empty:
+        logging.info("no hit")
+    else:
+        df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
+        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn)
+        df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
+        df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
-    logging.info(finlib.Finlib().pprint(df_rtn))
+        logging.info(finlib.Finlib().pprint(df_rtn))
+
     logging.info("end of the func xiao_hu_xian")
     sys.exit(0)
 
@@ -966,7 +970,7 @@ def daily_UD_tongji():
 
 
 #### MAIN #####
-a = daily_UD_tongji()
+# a = daily_UD_tongji()
 df_rtn = fudu_daily_check()
 a = xiao_hu_xian()
 
