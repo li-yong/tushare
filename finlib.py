@@ -3232,6 +3232,10 @@ class Finlib:
         return(df)
 
     def _remove_garbage_must(self, df, b_m_score=-1,n_year=1):
+        if df.empty:
+            logging.info("del.py: _remove_garbage_must, empty df")
+            return(df)
+
         if 'ts_code' in df.columns:
             ts_code_fmt = True
             df = self.ts_code_to_code(df)
