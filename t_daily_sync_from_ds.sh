@@ -38,11 +38,6 @@ rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}
 #rsync -avzt /home/ryan/DATA/result/*.csv ${source_host}:/home/ryan/DATA/result/
 #rsync -avzt /home/ryan/DATA/result/*.txt ${source_host}:/home/ryan/DATA/result/
 #rsync -avzt /home/ryan/DATA/result/today ${source_host}:/home/ryan/DATA/result/
-#rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2
-#rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2
-#rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source
-#rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest
-#rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/  ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/
 
 
 
@@ -126,9 +121,11 @@ rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamental
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190331/
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190630/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190630/
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190930/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190930/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20191231/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210331/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220331/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
 
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/DOW_SP/  /home/ryan/DATA/pickle/DOW_SP/
@@ -150,3 +147,10 @@ rsync -avzt ${source_host}:/home/ryan/DATA/pickle/ZZ500.csv  /home/ryan/DATA/pic
 
 
 rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/  /home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/
+
+
+rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2
+rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2
+rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source
+rsync -avzt ${source_host}:home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest
+rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/

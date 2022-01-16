@@ -493,15 +493,8 @@ def fetch_pro_fund(fast_fetch=False):
 
     if debug_global:  # ryan debug start of fetching
         stock_list = stock_list[stock_list["code"] == "SH600519"]
+        fetch_period_list = ['20201231']
         # stock_list = stock_list[stock_list["code"] == "SH601995"]
-        # stock_list=stock_list[stock_list['code']=='300081.SZ']
-        # stock_list=stock_list[stock_list['code']=='000333.SZ']  #2019-04-20
-        # stock_list=stock_list[stock_list['code']=='603888.SH']  #2019-04-20
-        # stock_list=stock_list[stock_list['code']=='300602.SZ'] #2019-02-27
-        # stock_list=stock_list[stock_list['code']=='002442.SZ'] #2019-02-15  PASS
-        # stock_list=stock_list[stock_list['code']=='603638.SH'] #2019-02-20 FALSE
-        # stock_list=stock_list[stock_list['code']=='601518.SH'] #2019-03-20
-        # stock_list=stock_list[stock_list['code']=='000651.SZ'] #2019-04-29
         # stock_list=stock_list[stock_list['code']=='300319.SZ'] #income 20181231 is empty
 
     # select = datetime.datetime.today().day%2  # avoid too many requests a day
@@ -523,7 +516,8 @@ def fetch_pro_fund(fast_fetch=False):
 
 # check following as stock_list is very short after previous filter.
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list)  #分红送股
-        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_p', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成,Product
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_d', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成, Division
         #
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
         # _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
