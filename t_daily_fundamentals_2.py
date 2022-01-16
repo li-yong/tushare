@@ -298,51 +298,6 @@ def set_global_pro_fetch_field():
     query_fields_disclosure_date = finlib.Finlib().get_tspro_query_fields("disclosure_date")
 
 
-def zzz_get_jaqs_field(ts_code, date=None, big_memory=False):  # date: YYYYMMDD, code:600519, read from ~/DATA/DAY_JAQS/SH600519.csv
-    # date : None, then return the latest record.
-    dict_rtn = {"pe": 0, "pe_ttm": 0, "pb": 0, "ps": 0}
-    if big_memory:
-        df = df_all_jaqs[df_all_jaqs["ts_code"] == ts_code]
-    else:
-        f = fund_base_source + "/individual_per_stock/" + ts_code + "_basic.csv"
-        if not os.path.exists(f):
-            logging.info("file not exist " + f)
-            return dict_rtn
-        df = pd.read_csv(f, converters={"ts_code": str, "trade_date": str})
-
-    if date == None:
-        df = df.tail(1)
-    else:
-        date_Y_M_D = finlib.Finlib().get_last_trading_day(date)
-        date = datetime.datetime.strptime(date_Y_M_D, "%Y%m%d").strftime("%Y%m%d")
-        if "trade_date" not in df.columns:
-            logging.warning("trade_date is not in the df column, file " + f)
-            return dict_rtn
-        df = df[df["trade_date"] == date]
-
-        if df.__len__() == 0:
-            logging.info("ts_code " + ts_code + " has no record at date " + date + ". Use latest known date.")
-            df = df.tail(1)
-        elif df.__len__() > 0:
-            df = df.head(1)  # if multiple records, only use the 1st one.
-
-    if df["pe"].__len__() > 0:
-        dict_rtn["pe"] = df["pe"].values[0]
-
-    if df["pe_ttm"].__len__() > 0:
-        dict_rtn["pe_ttm"] = df["pe_ttm"].values[0]
-
-    if df["pb"].__len__() > 0:
-        dict_rtn["pb"] = df["pb"].values[0]
-
-    if df["ps"].__len__() > 0:
-        dict_rtn["ps"] = df["ps"].values[0]
-
-    dict_rtn["all"] = df.reset_index().drop("index", axis=1)
-    df = None
-    return dict_rtn
-
-
 def get_a_specify_stock(ts_code, end_date):  # (ts_code='600519.SH', end_date='20180630')
     odir = fund_base_tmp + "/" + ts_code + "_" + end_date
 
@@ -515,9 +470,9 @@ def fetch_pro_fund(fast_fetch=False):
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_p', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成,Product
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'fina_mainbz_d', query_fields_fina_mainbz, fetch_period_list)  # 主营业务构成, Division
         #
-        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
-        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
-        # _ts_pro_fetch(pro, stock_list, fast_fetch, 'disclosure_date', query_fields_disclosure_date, fetch_period_list)  #财报披露计划日期
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
+        _ts_pro_fetch(pro, stock_list, fast_fetch, 'disclosure_date', query_fields_disclosure_date, fetch_period_list)  #财报披露计划日期
 
 
 def handler(signum, frame):

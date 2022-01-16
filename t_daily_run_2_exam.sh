@@ -609,7 +609,7 @@ fi
 # output: /home/ryan/DATA/result/zigzag_div/*.svg
 #        /home/ryan/DATA/result/zigzag_kdj_div.csv  zigzag_macd_div.csv  zigzag_rsi_div.csv
 rm -f /home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv
-python t_daily_indicator_kdj_macd.py --zigzag_div
+python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
 
 
 
@@ -727,7 +727,7 @@ if [ $full_or_daily == "FULL" ]; then
   python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
 fi
 
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 21 --period_slow 55
+python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 4 --period_slow 27
 python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 
 
@@ -740,14 +740,14 @@ python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 ###############################
 #----------------- selected moved to t_daily_run_2_exam_ushk.sh
 # /home/ryan/DATA/result/selected/ag_index_fib.csv
-python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG_INDEX --selected
+python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG_INDEX --selected
 
 # /home/ryan/DATA/result/selected/ag_fib.csv
-python t_fibonacci.py --begin_date "20190101"  --save_fig --min_sample=500 -x AG --selected
+python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG --selected
 
 if [ $full_or_daily == "FULL" ]; then
   # /home/ryan/DATA/result/ag_fib.csv
-  python t_fibonacci.py --begin_date "20190101"  --min_sample=500 -x AG
+  python t_fibonacci.py --begin_date "20200101"  --min_sample=400 -x AG
 fi
 
 

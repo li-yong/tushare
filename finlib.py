@@ -646,7 +646,7 @@ class Finlib:
 
         # price = 0
         price = 10**10  # change price to a huge number, so will never buy this.
-        price_csv = "/home/ryan/DATA/DAY_Global/AG/" + code_m + ".csv"
+        price_csv = "/home/ryan/DATA/DAY_Global/AG_qfq/" + code_m + ".csv"
         logging.info(__file__+" "+"getting price. "+str(code_m)+ "  date "+str(date)+" source "+price_csv)
         if os.path.isfile(price_csv):
             #pd_tmp = pd.read_csv(price_csv, converters={'code': str}, header=None, names=['code', 'date', 'o', 'h', 'l', 'c', 'vol', 'amnt', 'tnv'])

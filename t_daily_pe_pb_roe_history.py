@@ -103,6 +103,7 @@ def get_indicator_history(output_csv):
     stock_list = finlib.Finlib().get_A_stock_instrment()  #600519
     #stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False) #SH600519
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  #600519.SH
+    stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list)
 
     #stock_list = stock_list[stock_list['code']=='SH600519'] #ryan debug
 
