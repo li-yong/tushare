@@ -47,7 +47,6 @@ global csv_express
 global csv_fina_indicator
 global csv_fina_audit
 
-global csv_fina_mainbz
 global csv_fina_mainbz_p
 global csv_fina_mainbz_d
 
@@ -126,7 +125,6 @@ def set_global(debug=False, big_memory=False, force_run=False):
     global csv_express
     global csv_fina_indicator
     global csv_fina_audit
-    global csv_fina_mainbz
     global csv_fina_mainbz_p
     global csv_fina_mainbz_d
 
@@ -209,7 +207,6 @@ def set_global(debug=False, big_memory=False, force_run=False):
     csv_express = fund_base_source + "/express.csv"
     csv_fina_indicator = fund_base_source + "/fina_indicator.csv"
     csv_fina_audit = fund_base_source + "/fina_audit.csv"
-    csv_fina_mainbz = fund_base_source + "/fina_mainbz.csv"
     csv_fina_mainbz_p = fund_base_source + "/fina_mainbz_p.csv"
     csv_fina_mainbz_d = fund_base_source + "/fina_mainbz_d.csv"
     csv_fina_mainbz_sum = fund_base_source + "/fina_mainbz_sum.csv"
@@ -226,7 +223,6 @@ def set_global(debug=False, big_memory=False, force_run=False):
     csv_dividend_latest = fund_base_latest + "/dividend.csv"
     csv_fina_indicator_latest = fund_base_latest + "/fina_indicator.csv"
     csv_fina_audit_latest = fund_base_latest + "/fina_audit.csv"
-    csv_fina_mainbz_latest = fund_base_latest + "/fina_mainbz.csv"
     csv_fina_mainbz_p_latest = fund_base_latest + "/fina_mainbz_p.csv"
     csv_fina_mainbz_d_latest = fund_base_latest + "/fina_mainbz_d.csv"
     csv_fina_mainbz_sum_latest = fund_base_latest + "/fina_mainbz_sum.csv"
@@ -1218,7 +1214,7 @@ def merge_individual_bash_basic(fast_fetch=False):
 
 #########################
 # input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/*.csv
-# output : /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv [ fina_mainbz_sum.csv,balancesheet.csv,dividend.csv,fina_audit.csv,fina_mainbz.csv,forecast.csv]
+# output : /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv [ fina_mainbz_sum.csv,balancesheet.csv,dividend.csv,fina_audit.csv,fina_mainbz_p.csv,fina_mainbz_d.csv,forecast.csv]
 #
 #########################
 def merge_local_bash(debug=False):
@@ -1556,131 +1552,6 @@ def percent_fina_mainbz():
     logging.info(__file__ + ": " + "percent of fina_mainbz saved to " + csv_fina_mainbz_latest_percent + "  , len " + str(df_result.__len__()))
     return df
 
-
-"""
-def zzz_merge_local(stock_list, feature,  output_csv, col_name_list):
-    if not os.path.exists(fund_base_source):
-        os.makedirs(fund_base_source)
-
-    df_exist_all = pd.DataFrame(columns=['ts_code','end_date']) #including all the ts_code
-
-    if (not force_run_global) and finlib.Finlib().is_cached(output_csv, day=3):
-        logging.info(__file__+" "+"skip file, it been updated in 3 day. "+output_csv)
-        return
-    ## start of load from exist csv
-    # fast_fetch will updating source/*.csv based on this.
-    # none fast_fetch (no source/*.csv exist) will combine from source/individual/*.csv
-
-    if ((os.path.isfile(output_csv)) and os.stat(output_csv).st_size >= 10):  # > 10 bytes
-        #df_exist_all = pd.read_csv(output_csv, converters={'end_date': str})
-        df_exist_all = pd.read_csv(output_csv, converters={i: str for i in range(100)})
-        df_exist_all = df_exist_all.drop_duplicates()
-        logging.info(__file__+" "+"loaded " + output_csv + ", len " + str(df_exist_all.__len__()))
-    else:
-        logging.info(__file__+" "+"File not exist, no local history reocrds need to merge, generate new from individual/*.csv. "+output_csv)
-
-
-    ## end of load from exist csv
-
-    j = 1
-    total_len = stock_list.__len__()
-
-    for ts_code in stock_list['code']:
-        #try:
-            exc_info = sys.exc_info()
-
-            df_sub = pd.DataFrame()
-
-            ind_csv = fund_base_source+"/individual_per_stock/"+ts_code+"_"+feature+".csv"
-
-            if (not os.path.exists(ind_csv)): #@todo: split merge_local and save_only to two functions
-                j = j+1
-                continue
-
-            logging.info(__file__+" "+"_merge_local " +feature+" "+  str(j)+" of "+str(total_len)+". ")
-            sys.stdout.flush()
-
-            #logging.info(__file__+" "+"file will be reading "+ind_csv)
-
-            #df_sub = pd.read_csv(ind_csv, converters={'end_date': str})
-            df_sub = pd.read_csv(ind_csv, converters={i: str for i in range(100)}) #read all columns as string
-
-            j += 1
-
-
-            df_exist = df_exist_all[df_exist_all['ts_code']==ts_code]
-            df_exist_exclude = df_exist_all[df_exist_all['ts_code']!=ts_code]
-
-            ### start of merge with df_exist
-            #records in exist csv only: will be keep.
-            #records in both exist csv and new fetch df: will use records in new fetched df
-            #records in new fetched df only: will be keep.
-
-            df_new = df_sub
-            df_exist_tmp = df_exist[['ts_code', 'end_date']]
-            df_new_tmp = df_sub[['ts_code', 'end_date']]
-
-            df_diff = pd.merge(df_new_tmp, df_exist_tmp, how='outer', left_on=['ts_code', 'end_date'],
-                               right_on=['ts_code', 'end_date'], indicator='Exist')
-            df_diff_only = df_diff.loc[df_diff['Exist'] == 'right_only']
-
-            df_exist_only = df_exist[df_exist['end_date'].isin(list(df_diff_only['end_date'].values))]
-            logging.info(__file__+" "+"Records only exsits in local csv, len "+str(df_exist_only.__len__())+". ")
-            sys.stdout.flush()
-
-
-            df_result = pd.concat([df_exist_only, df_new], sort=False).sort_values(by='end_date', ascending=False).reset_index(
-                drop=True)
-            df_result = df_result[df_sub.columns]
-            logging.info(__file__+" "+"Records will dump to local csv, len " + str(df_result.__len__())+". ")
-            sys.stdout.flush()
-
-
-            df_sub = df_result
-            ### end of merge with df_exist
-
-            #df = df.append(df_sub)
-            df_exist_all =  pd.concat([df_exist_exclude, df_sub], sort=False)
-
-            df_sub = pd.DataFrame() #empty the df_sub
-            logging.info(__file__+" "+"csv len "+str(df_exist_all.__len__()))
-
-
-        #except:
-        #    logging.info(traceback.print_exception(*exc_info))
-        #    logging.info(__file__+" "+"exception, sleeping 30sec then renew the ts_pro connection")
-
-        #finally:
-        #    if exc_info == (None, None, None):
-        #        pass  # no exception
-        #    else:
-        #        logging.info(traceback.print_exception(*exc_info))
-        #        del exc_info
-
-
-    #adjust column sequence here
-    df = df_exist_all
-
-    cols = df.columns.tolist()
-    name_list = list(reversed(col_name_list))
-    for i in name_list:
-        if i in cols:
-            cols.remove(i)
-            cols.insert(0, i)
-        else:
-            logging.info(__file__+" "+"warning, no column named " + i + " in cols")
-
-    df = df[cols]
-    df = df.fillna(0)
-    df = df.reset_index().drop('index', axis=1)
-
-
-    df.to_csv(output_csv, encoding='UTF-8', index=False)
-    logging.info(__file__ + ": " + "saved, " + output_csv)
-    df = None    #free memory
-    df_exist_all = None
-
-"""
 
 
 #''' COMMENT THIS FUC TO SEE IF ANY OTHER USES IT
