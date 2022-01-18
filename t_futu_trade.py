@@ -40,6 +40,21 @@ logging.getLogger("FTConsoleLog").setLevel(logging.WARNING)  #
 # logging.getLogger("Futu").setLevel(logging.WARNING)  #
 
 
+import socket
+
+def is_port_open(host,port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((host,port))
+    sock.close()
+
+    if result == 0:
+       logging.info("Port is open, host "+str(host)+" port "+str(port))
+       return(True)
+    else:
+        logging.info("Port is not open, host " + str(host) + " port " + str(port))
+        return(False)
+
+
 def pprint(df):
     print(tabulate.tabulate(df, headers='keys', tablefmt='psql'))
 
@@ -1624,27 +1639,30 @@ def main():
     tri_abnormal_price = options.tri_abnormal_price
     tv_source = options.tv_source
 
+    if not is_port_open(host=host,port=port):
+        exit()
+        
     if ma_period_short > ma_period_long:
         logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
         exit(1)
 
-    #### fetch history bar
-    if options.set_ag_reminder:
+    #### set reminder
+    if options.set_ag_reminder and is_port_open(host=host,port=port):
         quote_ctx = OpenQuoteContext(host=host, port=port)
         set_ag_price_reminder(quote_ctx=quote_ctx, clear_all=True, debug=options.debug)
         quote_ctx.close()
         exit()
 
     #### fetch history bar
-    if options.fetch_history_bar:
+    if options.fetch_history_bar and is_port_open(host=host,port=port):
         fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug)
         exit()
 
-    if options.check_high_volume:
+    if options.check_high_volume  and is_port_open(host=host,port=port):
         check_high_volume(host=host,port=port,market=options.market, debug=options.debug,ndays=5)
         exit()
 
-    if options.get_rt_ticker:
+    if options.get_rt_ticker and  is_port_open(host=host,port=port):
         get_rt_ticker(host=host,port=port,market=options.market, debug=options.debug)
         exit()
 
