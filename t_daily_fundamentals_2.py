@@ -1722,7 +1722,7 @@ def _analyze_step_1(end_date):
     # df['net_profit'].describe()
     df = pd.read_csv(f, converters={"ts_code": str, "end_date": str})
 
-    df = finlib.Finlib()._remove_garbage_must(df, b_m_score=2, n_year=5)
+    df = finlib.Finlib()._remove_garbage_must(df, b_m_score=2, n_year=3)
 
     # profit > 1E+8.  Have exception while loading on haha_65
     # df = df[df.net_profit > 1E+6] #1 million

@@ -3515,13 +3515,16 @@ class Finlib:
         df_7 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank[df_mean_rank['fcff'] <= 0.1], byreason='garbage_fcff_bottom_dot1')  # fcff企业自由现金流量to firm,
         df_8 = self._df_sub_by_code(df=df_all, df_sub=df_mean_rank_no_bank_insurance_rank[df_mean_rank_no_bank_insurance_rank['current_ratio'] <= 0.1],byreason='no_bank_roe_div_pegarbage_current_ratio_bottom_dot1')  # 流动比率,
 
-        logging.info("merge df_2");  df_rtn_2 = pd.merge(df_1,df_2['code'], on='code',how='inner')
-        logging.info("merge df_3"); df_rtn_2 = pd.merge(df_rtn_2,df_3['code'], on='code',how='inner')
-        logging.info("merge df_4"); df_rtn_2 = pd.merge(df_rtn_2,df_4['code'], on='code',how='inner')
-        logging.info("merge df_5"); df_rtn_2 = pd.merge(df_rtn_2,df_5['code'], on='code',how='inner')
-        logging.info("merge df_6"); df_rtn_2 = pd.merge(df_rtn_2,df_6['code'], on='code',how='inner')
-        logging.info("merge df_7"); df_rtn_2 = pd.merge(df_rtn_2,df_7['code'], on='code',how='inner')
-        logging.info("merge df_8"); df_rtn_2 = pd.merge(df_rtn_2,df_8['code'], on='code',how='inner')
+        logging.info("merge df_2");  df_rtn_2 = pd.merge(df_1,df_2[['code']], on='code',how='inner')
+        logging.info("merge df_3"); df_rtn_2 = pd.merge(df_rtn_2,df_3[['code']], on='code',how='inner')
+        logging.info("merge df_4"); df_rtn_2 = pd.merge(df_rtn_2,df_4[['code']], on='code',how='inner')
+        logging.info("merge df_5"); df_rtn_2 = pd.merge(df_rtn_2,df_5[['code']], on='code',how='inner')
+        logging.info("merge df_6"); df_rtn_2 = pd.merge(df_rtn_2,df_6[['code']], on='code',how='inner')
+        logging.info("merge df_7"); df_rtn_2 = pd.merge(df_rtn_2,df_7[['code']], on='code',how='inner')
+
+        logging.info("df_rtn_2 len " + str(df_rtn_2.__len__()))
+        logging.info("df_8 len " + str(df_8.__len__()))
+        logging.info("merge df_8"); df_rtn_2 = pd.merge(df_rtn_2['code'],df_8['code'], on='code',how='inner')
 
         logging.info("df len "+str(df.__len__()))
         logging.info("merge df"); df_rtn_2 = pd.merge(df,df_rtn_2['code'], on='code',how='inner')
