@@ -4959,8 +4959,8 @@ class Finlib:
 
         return(df)
 
-
-    def add_amount_mktcap(self,df,sorted_by_mktcap=True):
+    # mktcap_unit: 100M, Yi
+    def add_amount_mktcap(self,df,sorted_by_mktcap=True, mktcap_unit=None):
         cols = df.columns
 
         if 'amount' in cols and 'total_mv' in cols and 'circ_mv' in cols:
@@ -4971,6 +4971,10 @@ class Finlib:
         df = pd.merge(df, df_amt_mktcap,  on=['code'], how='left', suffixes=('', '_mktcap'))
 
         df = self.adjust_column(df=df,col_name_list=['code','amount','total_mv','circ_mv'])
+
+        if mktcap_unit=='100M':
+            df['total_mv'] = df['total_mv'].apply(lambda _d: int(_d/10000))
+            df['circ_mv'] = df['circ_mv'].apply(lambda _d: int(_d/10000))
 
         if sorted_by_mktcap:
             df = df.sort_values('total_mv', ascending=False)

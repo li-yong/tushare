@@ -1641,7 +1641,7 @@ def main():
 
     if not is_port_open(host=host,port=port):
         exit()
-        
+
     if ma_period_short > ma_period_long:
         logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
         exit(1)

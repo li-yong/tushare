@@ -682,7 +682,7 @@ def xiao_hu_xian(debug=False):
         logging.info("no hit")
     else:
         df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
-        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn)
+        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn, mktcap_unit='100M')
         df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
         df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
@@ -784,6 +784,9 @@ def fudu_get_base_data(base_windows=5, slide_window=3):
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
 
     df =df[['code','date','high','low', 'close']]
+
+    logging.info("fudu base data")
+
     for c in df.code.unique():
         # c = 'SZ300656'
         dfs=df[df['code']==c].tail(base_windows).reset_index().drop('index', axis=1)
@@ -861,8 +864,9 @@ def fudu_get_today_data(base_windows=5,slide_window=3):
     df =df[['code','date','high','low', 'close']]
     i=0
     all=df.code.unique().__len__()
+    logging.info("fudu generating today data")
     for c in df.code.unique():
-        logging.info(str(i) + " of " + str(all))
+        # logging.info(str(i) + " of " + str(all))
         i+=1
 
         dfs=df[df['code']==c]
