@@ -3522,6 +3522,8 @@ class Finlib:
         logging.info("merge df_6"); df_rtn_2 = pd.merge(df_rtn_2,df_6['code'], on='code',how='inner')
         logging.info("merge df_7"); df_rtn_2 = pd.merge(df_rtn_2,df_7['code'], on='code',how='inner')
         logging.info("merge df_8"); df_rtn_2 = pd.merge(df_rtn_2,df_8['code'], on='code',how='inner')
+
+        logging.info("df len "+str(df.__len__()))
         logging.info("merge df"); df_rtn_2 = pd.merge(df,df_rtn_2['code'], on='code',how='inner')
 
         return (df_rtn_2)
