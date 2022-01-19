@@ -517,7 +517,7 @@ def fetch(year, quarter, overwrite=False):
 
 def fetch_all():
 
-    # finlib.Finlib().fetch_today_stock_basic_fund1()  #get today basic
+    finlib.Finlib().fetch_today_stock_basic_fund1()  #get today basic
 
     fetch_pickle()
 
@@ -529,13 +529,9 @@ def fetch_all():
         year_q = finlib.Finlib().get_year_month_quarter()
         fetch(year_q['last_quarter']['year'], year_q['last_quarter']['quarter'], overwrite=True)  #Manually Change last Quarterly
         fetch(year_q['year'], year_q['quarter'], overwrite=True)  #Manually Change last Quarterly
-        fetch(year=2020, quarter=3, overwrite=True)
-        fetch(2020, 2, overwrite=True)
-        fetch(2020, 1, overwrite=True)
-        fetch(2019, 4, overwrite=True)
-        fetch(2018, 4, overwrite=True)
-        fetch(2017, 4, overwrite=True)
-        fetch(2016, 4, overwrite=True)
+        fetch(year=2020, quarter=4, overwrite=True)
+
+
 
 def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
 
