@@ -424,7 +424,7 @@ def fetch(year, quarter, overwrite=False):
         except:
             logging.info(__file__ + ": " + "read exception " + csv_report)
 
-    if ((not finlib.Finlib().is_cached(csv_profit)) or overwrite) and (year >= 2010):
+    if ((not finlib.Finlib().is_cached(csv_profit, day=14)) or overwrite) and (year >= 2020):
         logging.info(__file__+" "+"\nGetting Profit, ts.get_profit_data" + ". Y " + str(year) + ",Q " + str(quarter))  # 盈利能力
         try:
             df_profit = ts.get_profit_data(year, quarter)
@@ -441,7 +441,7 @@ def fetch(year, quarter, overwrite=False):
         except:
             logging.info(__file__ + ": " + "read exception " + csv_profit)
 
-    if ((not finlib.Finlib().is_cached(csv_operation)) or overwrite) and (year >= 2010):
+    if ((not finlib.Finlib().is_cached(csv_operation, day=14)) or overwrite) and (year >= 2020):
         logging.info(__file__+" "+"\nGetting Operation, ts.get_operation_data" + ". Y " + str(year) + ",Q " + str(quarter))  #营运能力
         try:
             df_operation = ts.get_operation_data(year, quarter)
@@ -458,7 +458,7 @@ def fetch(year, quarter, overwrite=False):
         except:
             logging.info(__file__ + ": " + "read exception " + csv_operation)
 
-    if ((not finlib.Finlib().is_cached(csv_growth)) or overwrite) and (year >= 2010):
+    if ((not finlib.Finlib().is_cached(csv_growth, day=14)) or overwrite) and (year >= 2020):
         logging.info(__file__+" "+"\nGetting Growth, ts.get_growth_data" + ". Y " + str(year) + ",Q " + str(quarter))  # 成长能力
         try:
             df_growth = ts.get_growth_data(year, quarter)
@@ -475,7 +475,7 @@ def fetch(year, quarter, overwrite=False):
         except:
             logging.info(__file__ + ": " + "read exception " + csv_growth)
 
-    if ((not finlib.Finlib().is_cached(csv_debtpaying)) or overwrite) and (year >= 2010):
+    if ((not finlib.Finlib().is_cached(csv_debtpaying, day=14)) or overwrite) and (year >= 2020):
         logging.info(__file__+" "+"\nGetting Debtpaying, ts.get_debtpaying_data" + ". Y " + str(year) + ",Q " + str(quarter))  # 偿债能力
         try:
             df_debtpaying = ts.get_debtpaying_data(year, quarter)
@@ -492,7 +492,7 @@ def fetch(year, quarter, overwrite=False):
         except:
             logging.info(__file__ + ": " + "read exception " + csv_debtpaying)
 
-    if ((not finlib.Finlib().is_cached(csv_cashflow)) or overwrite) and (year >= 2010):
+    if ((not finlib.Finlib().is_cached(csv_cashflow, day=14)) or overwrite) and (year >= 2020):
         logging.info(__file__+" "+"\nGetting Cashflow, ts.get_cashflow_data" + ". Y " + str(year) + ",Q " + str(quarter))  # 现金流量
         try:
             df_cashflow = ts.get_cashflow_data(year, quarter)
