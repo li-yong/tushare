@@ -241,7 +241,6 @@ fi
 #input:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv
 #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/merged_all_20190630.csv  <<< These files removed the dup records.
 #                                                                             the file has not on-market will not show up.
-#        /home/ryan/DATA/result/jaqs/jaqs_all.pickle
 #        /home/ryan/DATA/result/jaqs/ts_all.pickle
 ########################
 #merge all quarter data

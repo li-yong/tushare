@@ -3398,11 +3398,11 @@ def analyze(fully_a=False, daily_a=True, fast=True):
 
     for e in period_list:
         # logging.info(__file__ + " " + "e is " + str(e))
-        if e <= "20191231" and daily_a:
+        if e <= "20201231" and daily_a:
             logging.info(__file__ + " " + "not process date before 2019 in daily analysis" + str(e))
             continue
 
-        if e <= "20171231":
+        if e <= "20191231":
             logging.info(__file__ + " " + "not process date before 2017" + str(e))
             continue
 
