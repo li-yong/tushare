@@ -3521,13 +3521,9 @@ class Finlib:
         df_rtn_2 = pd.merge(df_rtn_2,df_5[['code']].drop_duplicates(), on='code',how='inner')
         df_rtn_2 = pd.merge(df_rtn_2,df_6[['code']].drop_duplicates(), on='code',how='inner')
         df_rtn_2 = pd.merge(df_rtn_2,df_7[['code']].drop_duplicates(), on='code',how='inner')
-
-        # logging.info("df_rtn_2 len " + str(df_rtn_2.__len__()))
-        # logging.info("df_8 len " + str(df_8.__len__()))
         df_rtn_2 = pd.merge(df_rtn_2,df_8[['code']].drop_duplicates(), on='code',how='inner')
 
-        logging.info("df len "+str(df.__len__()))
-        logging.info("merge df"); df_rtn_2 = pd.merge(df,df_rtn_2[['code']], on='code',how='inner')
+        df_rtn_2 = pd.merge(df,df_rtn_2[['code']], on='code',how='inner')
 
         return (df_rtn_2)
 
