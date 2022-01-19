@@ -221,7 +221,7 @@ fi
 python t_daily_fundamentals_2.py  --generate_today_fund1_fund2_stock_basic
 
 ######################### sum_mainbz
-#input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv
+#input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv
 #output : /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_sum.csv
 #########################
 if [ $full_or_daily == "FULL" ]; then
@@ -294,7 +294,7 @@ fi
 
 ######################### percent_mainbz_f
 #
-#input:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz.csv
+#input:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv
 #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv <<<  ts_code,name,end_date,bz_cnt,perc_cost,perc_profit,perc_sales,bz_cost,bz_item,bz_profit,bz_sales,curr_type
 ######################
 if [ $full_or_daily == "FULL" ]; then
@@ -303,7 +303,8 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_fundamentals_2.py  --percent_mainbz_f
+  echo "SKIP"
+  #python t_daily_fundamentals_2.py  --percent_mainbz_f
 fi
 
 

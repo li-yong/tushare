@@ -348,7 +348,8 @@ class Finlib:
         return(df)
 
 
-    #merge df daily basic of ts and tspro
+    #merge df daily basic of ts and tspro.
+    # this is no longer a fund1 depend, pure tspro.
     def generate_today_fund1_fund2_stock_basic(self,date_exam_day=None):
         dir = "/home/ryan/DATA/result/basic_summary"
         if not os.path.isdir(dir):

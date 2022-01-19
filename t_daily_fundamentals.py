@@ -517,7 +517,7 @@ def fetch(year, quarter, overwrite=False):
 
 def fetch_all():
 
-    finlib.Finlib().fetch_today_stock_basic_fund1()  #get today basic
+    # finlib.Finlib().fetch_today_stock_basic_fund1()  #get today basic.  No longer working. name or service not known
 
     fetch_pickle()
 
@@ -1418,9 +1418,9 @@ def today_fundamental_any(todayS=None):  # no longer work. tushare0
     #today_fund_csv = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/daily/fundamentals_" + todayS + ".csv"
     #dump_today = "/home/ryan/DATA/pickle/daily_update_source/"+todayS+"ts_ud.pickle"
 
-    if not os.path.isfile(today_fund_csv):
-        logging.info(__file__+" "+"csv_today file not exist, please run python t_daily_fundamentals.py  --fetch_data_all;. Abort. " + today_fund_csv)
-        exit()
+    # if not os.path.isfile(today_fund_csv):
+    #     logging.info(__file__+" "+"csv_today file not exist, please run python t_daily_fundamentals.py  --fetch_data_all;. Abort. " + today_fund_csv)
+    #     exit()
 
     if not os.path.isfile(dump_today):
         logging.info(__file__+" "+"dump file not exist, please run t_daily_update_csv_from_tushare.py. Abort." + dump_today)
@@ -1428,9 +1428,9 @@ def today_fundamental_any(todayS=None):  # no longer work. tushare0
 
     df_basic = today_all = pd.DataFrame()
 
-    #get basic
-    df_basic = pandas.read_csv(today_fund_csv, converters={'code': str})
-    logging.info(__file__ + ": " + "loading " + today_fund_csv)
+    # #get basic
+    # df_basic = pandas.read_csv(today_fund_csv, converters={'code': str})
+    # logging.info(__file__ + ": " + "loading " + today_fund_csv)
 
     today_all = pandas.read_pickle(dump_today)
 
