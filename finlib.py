@@ -4973,8 +4973,9 @@ class Finlib:
         df = self.adjust_column(df=df,col_name_list=['code','amount','total_mv','circ_mv'])
 
         if mktcap_unit=='100M':
-            df['total_mv'] = df['total_mv'].apply(lambda _d: int(_d/10000))
-            df['circ_mv'] = df['circ_mv'].apply(lambda _d: int(_d/10000))
+            df['total_mv'] = df['total_mv'].apply(lambda _d: int(round(_d/10000)))
+            df['circ_mv'] = df['circ_mv'].apply(lambda _d: int(round(_d/10000)))
+            df['amount'] = df['amount'].apply(lambda _d: int(round(_d/100000)))
 
         if sorted_by_mktcap:
             df = df.sort_values('total_mv', ascending=False)
