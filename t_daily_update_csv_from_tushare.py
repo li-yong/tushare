@@ -192,6 +192,10 @@ def update_today_ag_qfq_from_local():
         csv = "/home/ryan/DATA/DAY_Global/AG_qfq/"+row['code']+".csv"
         logging.info(str(i)+ " of "+ str(df_src.__len__())+" , updating "+csv)
 
+        if not os.path.isfile(csv):
+            logging.info("skip. csv not exist")
+            continue
+
         df_old = pd.read_csv(csv)
 
         if df_old.iloc[-1]['trade_date'] >= int(todayS_s):
