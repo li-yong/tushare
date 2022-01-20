@@ -179,6 +179,35 @@ def update_holc(todayS_l, base_dir, pickle_only, add_miss):
             fh.write(csv_append_s)
             fh.close()
 
+def update_today_ag_qfq_from_local():
+    todayS_s = finlib.Finlib().get_last_trading_day()
+    src_csv = "/home/ryan/DATA/pickle/daily_update_source/ag_daily_" + todayS_s + ".csv"
+    df_src = pd.read_csv(src_csv)
+    df_src = finlib.Finlib().ts_code_to_code(df_src)
+    df_src = finlib.Finlib().add_ts_code_to_column(df_src)
+
+    i=0
+    for index, row in df_src.iterrows():
+        i+=1
+        csv = "/home/ryan/DATA/DAY_Global/AG_qfq/"+row['code']+".csv"
+        logging.info(str(i)+ " of "+ str(df_src.__len__())+" , updating "+csv)
+
+        df_old = pd.read_csv(csv)
+
+        if df_old.iloc[-1]['trade_date'] >= int(todayS_s):
+            logging.info("skip. destination csv is already updated or ahead of source")
+            logging.info(df_old.tail(1))
+            continue
+
+        t_dict={}
+        for c in df_old.columns:
+            t_dict[c]=[row[c]]
+
+        df_today = pd.DataFrame(t_dict,index=[df_old.__len__()])
+        df_old = df_old.append(df_today)
+        df_old.to_csv(csv)
+        logging.info('saved csv')
+
 def fetch_ag_qfq():
     pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
     data = pro.query('stock_basic', exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
@@ -222,7 +251,8 @@ def main():
 
     parser.add_option("-p", "--pickle_only", action="store_true", dest="pickle_only", default=False, help="get today data, save to pickel, then exit")
 
-    parser.add_option("--refresh_qfq", action="store_true", dest="refresh_qfq", default=False, help="refresh qfq data")
+    parser.add_option("--refresh_qfq", action="store_true", dest="refresh_qfq", default=False, help="refresh qfq data from tushare")
+    parser.add_option("--refresh_today_qfq_from_local", action="store_true", dest="refresh_today_qfq_from_local", default=False, help="daily refresh qfq data from local csv. ")
 
     parser.add_option("-e", "--exam_date", dest="exam_date", help="exam_date, YYYY-MM--DD, no default value, missing will calc the nearest trading day, most time is today")
 
@@ -238,6 +268,11 @@ def main():
     logging.info(__file__+" "+"pickle_only: " + str(pickle_only))
     logging.info(__file__+" "+"exam_date: " + str(exam_date))
     logging.info(__file__+" "+"refresh_qfq: " + str(refresh_qfq))
+
+
+    if options.refresh_today_qfq_from_local:
+        update_today_ag_qfq_from_local()
+        exit()
 
     if refresh_qfq:
         fetch_ag_qfq()

@@ -44,7 +44,14 @@ python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
 
 ############################
 # output: /home/ryan/DATA/DAY_Global/AG_qfq/*.csv
-python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
+if [ $full_or_daily == "FULL" ]; then
+  python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
+fi
+
+if [ $full_or_daily == "DAILY" ]; then
+  python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_today_qfq_from_local
+fi
+
 
 #### update the HK stock ####
 # comment because not useful (and possible is broken)
