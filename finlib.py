@@ -1057,6 +1057,7 @@ class Finlib:
 
 
         def _tmp_lambda(ts_code):
+            # logging.info(str(ts_code))
             regx = re.match('(\d{6})\.(.*)', ts_code)
             #mkt + dcode
             return(regx.group(2) + regx.group(1))

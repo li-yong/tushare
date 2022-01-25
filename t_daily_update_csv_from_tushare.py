@@ -203,13 +203,16 @@ def update_today_ag_qfq_from_local():
             logging.info(df_old.tail(1))
             continue
 
+        if 'Unnamed: 0' in df_old.columns:
+            df_old = df_old.drop(columns=['Unnamed: 0'])
+
         t_dict={}
         for c in df_old.columns:
             t_dict[c]=[row[c]]
 
         df_today = pd.DataFrame(t_dict,index=[df_old.__len__()])
         df_old = df_old.append(df_today)
-        df_old.to_csv(csv)
+        df_old.to_csv(csv, encoding='UTF-8', index=False)
         logging.info('saved csv')
 
 def fetch_ag_qfq():

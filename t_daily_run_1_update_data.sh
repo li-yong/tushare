@@ -94,7 +94,9 @@ python t_daily_get_us_index.py
 # output: /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/*
 #         /home/ryan/DATA/pickle/ag_stock_industry_wg.csv
 # This is Broken on haha_power, but works on haha_brain. 2021/10/12
-env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+if [ $full_or_daily == "HAHA_BRAIN" ]; then
+  env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+fi
 
 
 ######################################
