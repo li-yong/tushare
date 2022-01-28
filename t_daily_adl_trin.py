@@ -324,7 +324,7 @@ def check_amount_x_individual(days):
 
     pass
 
-def check_adr_individual(days):
+def check_adr_individual(days, debug=False):
     df = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
@@ -332,6 +332,10 @@ def check_adr_individual(days):
 
     codes = df['code'].unique()
     codes.sort()
+
+    if debug:
+        codes=codes[:10]
+
     df_profit_report = pd.DataFrame()
     df_si_cha_report = pd.DataFrame()
     df_jin_cha_report = pd.DataFrame()
@@ -339,8 +343,11 @@ def check_adr_individual(days):
     buy_candidate = pd.DataFrame()
     sell_candidate = pd.DataFrame()
 
-
+    i=1
     for c in codes:
+        logging.info(str(i) + " of " +str(codes.__len__())+" "+str(c) )
+        i+=1
+
         df_sub = df[df['code']==c]
         df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_sub, short=4, middle=27, long=60)
 
@@ -389,14 +396,19 @@ def check_adr_individual(days):
     sell_candidate = sell_candidate.drop_duplicates()
 
     keep_cols =['code','name','date','close','close_4_sma','close_27_sma','adr_bar']
-    buy_candidate = buy_candidate[keep_cols]
-    sell_candidate = sell_candidate[keep_cols]
+    if buy_candidate.__len__()>0:
+        buy_candidate = buy_candidate[keep_cols]
+        buy_candidate = finlib.Finlib().add_amount_mktcap(df=buy_candidate)
+        logging.info("today buy candidate(ma_4>ma_27 and adb_sicha)\n:" + finlib.Finlib().pprint(buy_candidate))
+    else:
+        logging.info("empty buy_candidate today")
 
-    buy_candidate = finlib.Finlib().add_amount_mktcap(df=buy_candidate)
-    sell_candidate = finlib.Finlib().add_amount_mktcap(df=sell_candidate)
-
-    logging.info("today buy candidate(ma_4>ma_27 and adb_sicha)\n:"+finlib.Finlib().pprint(buy_candidate))
-    logging.info("today sell candidate(ma_4<ma_27 and adb_jincha)\n:"+finlib.Finlib().pprint(sell_candidate))
+    if sell_candidate.__len__() > 0:
+        sell_candidate = sell_candidate[keep_cols]
+        sell_candidate = finlib.Finlib().add_amount_mktcap(df=sell_candidate)
+        logging.info("today sell candidate(ma_4<ma_27 and adb_jincha)\n:" + finlib.Finlib().pprint(sell_candidate))
+    else:
+        logging.info("empty sell_candidate today")
 
     logging.info("check_adr_individual, profit_overall describe ")
     logging.info(df_profit_report[["profit_overall"]].describe())
@@ -426,17 +438,22 @@ def main():
     parser.add_option("-s","--show_plot", action="store_true", dest="show_plot", default=False,
                        help="show market index plot")
 
+    parser.add_option("-d","--debug", action="store_true", dest="debug", default=False,
+                       help="enable debug")
+
     (options, args) = parser.parse_args()
 
 
     days =options.exam_days
     show_plot =options.show_plot
+    debug =options.debug
+
     root_dir = "/home/ryan/DATA/result/adl"
     if not os.path.exists(root_dir):
         os.mkdir(root_dir)
 
     # check_amount_x_individual(days=days)
-    check_adr_individual(days=days)
+    check_adr_individual(days=days,debug=debug)
 
     ################################
     # Index ADR

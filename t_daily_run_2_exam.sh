@@ -487,7 +487,8 @@ fi
 #rm -f /home/ryan/DATA/result/latest_fundamental_day.csv
 #rm -f /home/ryan/DATA/result/today/fundamentals.csv
 
-python t_daily_fundamentals.py --exam_daily  --force_run #refresh every run.  #<<< 20 sec
+# no longer work. not reasonable to check fundamental everyday.  ryan-2022-01-28
+# python t_daily_fundamentals.py --exam_daily  --force_run #refresh every run.  #<<< 20 sec
 
 ################################################
 ##update this year peg

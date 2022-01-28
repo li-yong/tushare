@@ -1001,7 +1001,7 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
     # df_q_r = finlib.Finlib().change_df_columns_order(df_q_r, ['code', 'name', 'year_quarter', 'trade_date', 'result_value_quarter_fundation', 'business_income_perc', 'esp_perc', 'esp_ratio_perc', 'net_profits_perc', 'pb_perc', 'pe_perc', 'roe_perc', 'totalAssets_perc', 'esp_ratio', 'peg_1', 'peg_4'])
     df_q_r = finlib.Finlib().change_df_columns_order(df_q_r, ['code', 'name', 'year_quarter', 'trade_date',  'esp_ratio'])
 
-    df_q_r.to_csv(dump_csv_q, encoding='UTF-8', index=True)
+    df_q_r.to_csv(dump_csv_q, encoding='UTF-8', index=False)
 
     if os.path.lexists(dump_csv_q_sym_link):
         os.unlink(dump_csv_q_sym_link)
@@ -1426,7 +1426,7 @@ def today_fundamental_any(todayS=None):  # no longer work. tushare0
         logging.info(__file__+" "+"dump file not exist, please run t_daily_update_csv_from_tushare.py. Abort." + dump_today)
         exit()
 
-    df_basic = today_all = pd.DataFrame()
+    # df_basic = today_all = pd.DataFrame()
 
     # #get basic
     # df_basic = pandas.read_csv(today_fund_csv, converters={'code': str})
@@ -1464,7 +1464,7 @@ def today_fundamental_any(todayS=None):  # no longer work. tushare0
     ]
 
     today_all = finlib.Finlib().remove_market_from_tscode(today_all)
-    today_all = pd.merge(today_all, df_basic, on='code', suffixes=('', '_df_basic'))
+    # today_all = pd.merge(today_all, df_basic, on='code', suffixes=('', '_df_basic'))
 
 
     #today_all.drop('pe_df_basic',  axis=1, inplace=True)
