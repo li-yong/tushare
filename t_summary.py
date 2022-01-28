@@ -1872,9 +1872,13 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
             logging.info(__file__+" "+"=== Inner Merge  " + a + " with df_reduced_quarter_year ====")
             #cmd = "pd.merge(" + a + ", df_reduced_quarter_year, on='code',how='inner',suffixes=('','_x')).drop('name_x', axis=1)"
             cmd = "pd.merge(" + a + ", df_reduced_quarter_year, on='code',how='inner',suffixes=('','_x'))"
-
+            logging.info(cmd)
             tmp_df = eval(cmd)
             logging.info(__file__+" "+"length after merge :" + str(tmp_df.__len__()))
+
+            if tmp_df.__len__() == 0:
+                arr.remove(a)
+                logging.info("remove "+a + " from arr as the length is 0")
 
             s = a + " = tmp_df"  #df_max_daily_increase = tmp_df
             exec(s)
@@ -2009,7 +2013,7 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
                 continue
 
             dup_suffix = "_y" + str(subset.__len__() - 2)
-            tmp = eval("pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))")
+            # tmp = eval("pd.merge(tmp," + subset[subset.__len__() - 1] + ", on='code',how='inner',suffixes=('','" + dup_suffix + "'))")
             tmp = combin_filter(tmp, post_combine=True, debug=debug)
 
             if 'date' in tmp.columns:
