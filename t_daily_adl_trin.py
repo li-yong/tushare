@@ -345,7 +345,7 @@ def check_adr_individual(days, debug=False):
 
     i=1
     for c in codes:
-        logging.info(str(i) + " of " +str(codes.__len__())+" "+str(c) )
+        logging.info(str(i) + " of " +str(codes.__len__())+", check_adr "+str(c) )
         i+=1
 
         df_sub = df[df['code']==c]

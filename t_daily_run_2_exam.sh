@@ -524,7 +524,8 @@ fi
 #t_daily_fundamentals.py: fundmental ps, peg inserted into /home/ryan/DATA/result/latest_fundamental_quarter.csv
 
 ################################################
-python t_daily_fundamentals.py --calc_ps --force_run # <<< 3 sec. Quick so always forcerun
+# no longer work. 2022-01-28
+# python t_daily_fundamentals.py --calc_ps --force_run # <<< 3 sec. Quick so always forcerun
 
 ################################################
 #input and output: /home/ryan/DATA/result/Fundamental_Quarter_Report_2018_4.csv
@@ -534,13 +535,14 @@ python t_daily_fundamentals.py --calc_ps --force_run # <<< 3 sec. Quick so alway
 ## peg_1 = price_q / egr_1 , egr_1 = 100 * ((eps_this / eps_last_1) - 1)
 ## peg_4= price_q / egr_4, egr_4 = 100 * ( (eps_this / eps_last_4) -1 )
 ################################################
-if [ $full_or_daily == "FULL" ]; then
-    python t_daily_fundamentals.py --calc_fund_2 --force_run  #<<< 50 sec
-fi
+#if [ $full_or_daily == "FULL" ]; then
+# no longer work. 2022-01-28 #KeyError: 'npr'
+#    python t_daily_fundamentals.py --calc_fund_2 --force_run  #<<< 50 sec
+#fi
 
-if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_fundamentals.py --calc_fund_2 --force_run #refresh every run.
-fi
+#if [ $full_or_daily == "DAILY" ]; then
+#    python t_daily_fundamentals.py --calc_fund_2 --force_run #refresh every run.
+#fi
 
 
 ################################################
@@ -549,16 +551,18 @@ fi
 #@todo: calculation:
 #score_sum : same as csv_q
 ################################################
-rm -f /home/ryan/DATA/result/industry_top.csv
-python t_daily_fundamentals.py --industry_rank_f #<<<  2 sec
+# no longer work. 2021-01-28 KeyError: 'score_sum'
+#rm -f /home/ryan/DATA/result/industry_top.csv
+#python t_daily_fundamentals.py --industry_rank_f #<<<  2 sec
 #python t_daily_fundamentals.py --industry_rank_f --force_run
 
 ################################################
 #input: csv_q
 #output: "/home/ryan/DATA/result/area_top.csv"
 ################################################
-rm -f /home/ryan/DATA/result/area_top.csv
-python t_daily_fundamentals.py --area_rank_f  #<<<  2 sec
+# no longer work. 2021-01-28 KeyError: 'score_sum'
+#rm -f /home/ryan/DATA/result/area_top.csv
+#python t_daily_fundamentals.py --area_rank_f  #<<<  2 sec
 #python t_daily_fundamentals.py --area_rank_f --force_run
 
 ######################################################## Step4 SUMMARY ################################################
@@ -595,23 +599,23 @@ fi
 #  /home/ryan/DATA/result/top_10_holder_summary_latest.csv"
 #  /home/ryan/DATA/result/top_10_holder_detail_latest.csv"
 ###############################
-
-if [ $full_or_daily == "DAILY" ]; then
-    python t_top_10_holders.py --analyze --stock_global AG --selected
-fi
-
-
 if [ $full_or_daily == "FULL" ]; then
     python t_top_10_holders.py --analyze --stock_global AG
 fi
+
+# not necessory run daily
+#if [ $full_or_daily == "DAILY" ]; then
+#    python t_top_10_holders.py --analyze --stock_global AG --selected
+#fi
 
 ################################
 # input: ~/DATA/DAY_Global/AG_qfq/*.csv
 # output: /home/ryan/DATA/result/zigzag_div/*.svg
 #        /home/ryan/DATA/result/zigzag_kdj_div.csv  zigzag_macd_div.csv  zigzag_rsi_div.csv
-rm -f /home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv
-python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
-
+if [ $full_or_daily == "FULL" ]; then
+  rm -f /home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv
+  python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
+fi
 
 
 ##############################
@@ -619,8 +623,9 @@ python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
 # input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/market/pro_concept.csv
 # output: /home/ryan/DATA/result/concept_top.csv
 ###############################
-python t_daily_fundamentals_2.py  --concept_top
-
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_fundamentals_2.py  --concept_top
+fi
 ################################################
 #run1
 #run2
@@ -643,8 +648,9 @@ python t_daily_junxian_barstyle.py -x AG_HOLD --ma_short 4 --ma_middle 27 --calc
 ####################################
 # output: /home/ryan/DATA/result/jin_cha_si_cha_cnt.csv
 #python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count  --remove_garbage
-python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count
-
+if [ $full_or_daily == "FULL" ]; then
+  python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count
+fi
 #######################################
 # output: /home/ryan/DATA/result/ag_junxian_barstyle.csv
 # output: /home/ryan/DATA/result/ag_junxian_barstyle_w.csv
@@ -660,7 +666,7 @@ python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_a
 #fi
 
 
-if [ $full_or_daily == "DAILY" ]; then
+if [ $full_or_daily == "FULL" ]; then
     python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D
     python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W
     python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M
@@ -776,17 +782,17 @@ python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 # 	/home/ryan/DATA/result/stocks_amount_20200124_20210123.csv 
 # 	/home/ryan/DATA/result/stocks_amount_365_days.csv  << symbol link to stocks_amount_20200124_20210123.csv
 ###############################
+#if [ $full_or_daily == "FULL" ]; then
+#  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430  --index_source wugui --force_run  # HS300
+#  python t_daily_index_candidates.py --index_name szcz --period_start 20211101 --period_end 20220430  --index_source wugui --force_run  # SHEN_ZHEN
+#fi
+
+
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430  --index_source wugui --force_run  # HS300
-  python t_daily_index_candidates.py --index_name szcz --period_start 20211101 --period_end 20220430  --index_source wugui --force_run  # SHEN_ZHEN
-fi
-
-
-if [ $full_or_daily == "DAILY" ]; then
 # After 11.01
-  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update --force_run
+  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
   python t_daily_index_candidates.py --index_name zz100 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
-  python t_daily_index_candidates.py --index_name szcz  --period_start 20211101 --period_end 20220430 --index_source wugui  --daily_update --force_run
+  python t_daily_index_candidates.py --index_name szcz  --period_start 20211101 --period_end 20220430 --index_source wugui  --daily_update
   python t_daily_index_candidates.py --index_name sz100 --period_start 20211101 --period_end 20220430 --index_source wugui  --daily_update
 
 # After 5.1
@@ -803,18 +809,9 @@ fi
 # run this after HS300, as this use file generated during hs300 calcuation.  /result/stocks_amount_365_days.csv
 # output: /home/ryan/DATA/result/price_let_mashort_equal_malong.csv
 #######################################
-python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
+# no longer work, 2022-01-28  [Errno 2] No such file or directory: '/home/ryan/DATA/result/stocks_amount_365_days.csv'
+#python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
 
-
-#
-#python t_daily_index_candidates.py --index_name hs300 --ndays 365 --index_source wugui --force_run
-#python t_daily_index_candidates.py --index_name zz100 --ndays 365 --index_source wugui --force_run
-#python t_daily_index_candidates.py --index_name szcz --ndays 365 --index_source wugui --force_run
-#python t_daily_index_candidates.py --index_name sz100 --ndays 365 --index_source wugui --force_run
-
-
-#python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20200430
-#python t_daily_index_candidates.py --index szcz --ndays 183 --period_end 20201031
 
 #using tradingview source.  period_start/end is not actually used, just not to broke the program
 python t_daily_index_candidates.py --index_name nasdaq100 --period_start 20210101 --period_end 20210101
