@@ -3465,7 +3465,7 @@ class Finlib:
 
         return(df)
 
-    def _remove_garbage_by_fund_n_years(self, df, n_years=3):
+    def _remove_garbage_by_fund_n_years(self, df, n_years=1):
         # a = finlib.Finlib().load_fin_indicator_n_years(n_years=4)
 
         df_all = self.load_fund_n_years(n_years=n_years)
@@ -5604,7 +5604,6 @@ class Finlib:
         return(p)
 
     def load_fund_n_years(self, n_years=3):
-
         dir = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged'
         p = self.get_last_4q_n_years(n_year=n_years)
 

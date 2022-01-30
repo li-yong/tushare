@@ -1722,7 +1722,8 @@ def _analyze_step_1(end_date):
     # df['net_profit'].describe()
     df = pd.read_csv(f, converters={"ts_code": str, "end_date": str})
 
-    df = finlib.Finlib()._remove_garbage_must(df, b_m_score=2, n_year=3)
+    #ryan debug
+    # df = finlib.Finlib()._remove_garbage_must(df, b_m_score=2, n_year=1)
 
     # profit > 1E+8.  Have exception while loading on haha_65
     # df = df[df.net_profit > 1E+6] #1 million
@@ -1730,7 +1731,7 @@ def _analyze_step_1(end_date):
     # df = df[~df.name.str.contains("ST")] #remove ST
 
     if debug_global:  # ryan debug
-        df = df[df["ts_code"] == "600743.SH"].reset_index().drop("index", axis=1)
+        df = df[df["ts_code"] == "600519.SH"].reset_index().drop("index", axis=1)
 
     # ryan_debug start
     # df = df.loc[df['ts_code'].isin(['000029.SZ', '600511.SH', '600535.SH', '600406.SH', '600519.SH', '600520.SH', '600518.SH', '600503.SH', '600506.SH'])].reset_index().drop('index', axis=1)
@@ -1980,15 +1981,15 @@ def _analyze_step_1(end_date):
             df.iloc[i, df.columns.get_loc("stopProcess")] = 1
 
         # bzsAstM
-        bz_sales = df.iloc[i]["bz_sales"]
+        c_fr_sale_sg = df.iloc[i]["c_fr_sale_sg"]
         total_assets = df.iloc[i]["total_assets"]
 
-        if bz_sales != 0.0 and total_assets != 0.0:
-            bzsAstM = bz_sales * 100 / total_assets
+        if c_fr_sale_sg != 0.0 and total_assets != 0.0:
+            bzsAstM = c_fr_sale_sg * 100 / total_assets
             df.iloc[i, df.columns.get_loc("bzsAstM")] = round(bzsAstM, 1)
 
-        if bz_sales != 0.0 and bz_sales < 1000000:
-            garbageReason += "bz_sales less than 1M:" + str(bz_sales) + ". "
+        if c_fr_sale_sg != 0.0 and c_fr_sale_sg < 1000000:
+            garbageReason += "c_fr_sale_sg less than 1M:" + str(c_fr_sale_sg) + ". "
             garbageCnt += 1
             df.iloc[i, df.columns.get_loc("stopProcess")] = 1
 
@@ -3399,11 +3400,11 @@ def analyze(fully_a=False, daily_a=True, fast=True):
     for e in period_list:
         # logging.info(__file__ + " " + "e is " + str(e))
         if e <= "20201231" and daily_a:
-            logging.info(__file__ + " " + "not process date before 2019 in daily analysis" + str(e))
+            logging.info(__file__ + " " + "not process date before 20201231 in daily analysis. " + str(e))
             continue
 
         if e <= "20191231":
-            logging.info(__file__ + " " + "not process date before 2017" + str(e))
+            logging.info(__file__ + " " + "not process date before 20191231. " + str(e))
             continue
 
         # logging.info(__file__+" "+"end_date " + e + ". ")
