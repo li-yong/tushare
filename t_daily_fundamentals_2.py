@@ -2603,7 +2603,6 @@ def _analyze_step_2(end_date):
     df = pd.DataFrame([0] * df.__len__(), columns=["scoreSumRcv"]).join(df)
     df = pd.DataFrame([0] * df.__len__(), columns=["scoreSumRcvNet"]).join(df)
     df = pd.DataFrame([0] * df.__len__(), columns=["scoresSrnAsstM"]).join(df)
-    df = pd.DataFrame([0] * df.__len__(), columns=["scoreBzSa"]).join(df)
     df = pd.DataFrame([0] * df.__len__(), columns=["scoreBzAsM"]).join(df)
     df = pd.DataFrame([0] * df.__len__(), columns=["scoreCfrSSg"]).join(df)
     df = pd.DataFrame([0] * df.__len__(), columns=["scoreHen"]).join(df)
@@ -2685,9 +2684,6 @@ def _analyze_step_2(end_date):
         scoresSrnAsstM = round(stats.percentileofscore(df["srnAsstM"], df.iloc[i]["srnAsstM"]), 2)
         df.iloc[i, df.columns.get_loc("scoresSrnAsstM")] = 100 - scoresSrnAsstM
 
-        scoreBzSa = round(stats.percentileofscore(df["bz_sales"], df.iloc[i]["bz_sales"]), 2)
-        df.iloc[i, df.columns.get_loc("scoreBzSa")] = scoreBzSa
-
         scoreBzAsM = round(stats.percentileofscore(df["bzsAstM"], df.iloc[i]["bzsAstM"]), 2)
         df.iloc[i, df.columns.get_loc("scoreBzAsM")] = scoreBzAsM
 
@@ -2706,7 +2702,7 @@ def _analyze_step_2(end_date):
         scoreCLM = round(stats.percentileofscore(df["cashLiabM"], df.iloc[i]["cashLiabM"]), 2)
         df.iloc[i, df.columns.get_loc("scoreCLM")] = scoreCLM
 
-        final_score = scoreTotRev * 1.5 + scoreGPM * 2 + scoreFiExpGr + scoreSaExpGr + scoreAdExpGr + scoreTrYoy + scoreOpP + scoreRevenue + scoreOptPrftM + scoreNPN + scoreNCA + scoreNP + scoreCPM * 2 + scoreLA + scoreSumAss + scoreTotP + scoreSumRcv + scoreSumRcvNet + scoresSrnAsstM + scoreBzSa * 2 + scoreBzAsM * 2 + scoreCfrSSg * 2 + scoreHen * 1.5 + scoreCow * 2 + scoreCI + scoreCLM + scoreRevCogM * 2 + scoreCurAssliaM * 2
+        final_score = scoreTotRev * 1.5 + scoreGPM * 2 + scoreFiExpGr + scoreSaExpGr + scoreAdExpGr + scoreTrYoy + scoreOpP + scoreRevenue + scoreOptPrftM + scoreNPN + scoreNCA + scoreNP + scoreCPM * 2 + scoreLA + scoreSumAss + scoreTotP + scoreSumRcv + scoreSumRcvNet + scoresSrnAsstM + scoreBzAsM * 2 + scoreCfrSSg * 2 + scoreHen * 1.5 + scoreCow * 2 + scoreCI + scoreCLM + scoreRevCogM * 2 + scoreCurAssliaM * 2
 
         if df.iloc[i]["stopProcess"] == 1:
             final_score = -1
@@ -2984,7 +2980,7 @@ def _analyze_step_6():
 
     logging.info(__file__ + " " + "loading " + csv_input_2)
     df_2 = pd.read_csv(csv_input_2, converters={"code": str})
-    df_2 = finlib.Finlib().add_market_to_code(df=df_2)  # code: SH600519
+    # df_2 = finlib.Finlib().add_market_to_code(df=df_2)  # code: SH600519
     df_2 = finlib.Finlib().remove_garbage(df_2)
 
     if debug_global:
@@ -3028,8 +3024,8 @@ def _analyze_step_6():
         code = df.iloc[i]["code"]
         logging.info(__file__ + " " + "analyze step_6 " + str(i) + " of " + str(df.__len__()) + ". ")
 
-        guben = df.iloc[i]["totals"] * 10 ** 8  # totals,总股本(亿)
-
+        guben = df.iloc[i]["total_share_pro_basic"] * 10 ** 8  # total_share	float	总股本 （万股）
+        # guben = df.iloc[i]["float_share_pro_basic"] * 10 ** 8  # total_share	float   流通股本 （万股）
         if guben == 0:
             logging.info(__file__ + " " + "Fatal error, guben = 0, " + code)
             # exit(1)

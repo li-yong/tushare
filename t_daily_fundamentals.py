@@ -682,9 +682,13 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
     df_basic = df_basic.reset_index().drop('index', axis=1)
 
     #df_q_r = pd.merge(df_basic,df_merged_quarterly, on='code', how='outer',suffixes=('','_others'))
-    df_q_r = pd.merge(df_merged, df_pro_merged, on='code', how='outer', suffixes=('', '_pro_merged'))
-    df_q_r = pd.merge(df_q_r, df_pro_basic, on='code', how='outer', suffixes=('', '_pro_basic'))
-    df_q_r = pd.merge(df_q_r, df_basic, on='code', how='outer', suffixes=('', '_basic'))
+    df_merged=finlib.Finlib().add_market_to_code(df=df_merged)
+    df_pro_merged=finlib.Finlib().add_market_to_code(df=df_pro_merged)
+    df_pro_basic=finlib.Finlib().add_market_to_code(df=df_pro_basic)
+
+    df_q_r = pd.merge(df_merged, df_pro_merged, on='code', how='inner', suffixes=('', '_pro_merged'))
+    df_q_r = pd.merge(df_q_r, df_pro_basic, on='code', how='inner', suffixes=('', '_pro_basic'))
+    df_q_r = pd.merge(df_q_r, df_basic, on='code', how='inner', suffixes=('', '_basic'))
     #df_q_r = df_merged_quarterly
 
     #df_q_r = pd.merge(df_q_r,df_merged, on='code', how='outer',suffixes=('','_pro_basic'))
@@ -727,8 +731,7 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
         if code in code_price_map:  #python3
             price = code_price_map[code]
         else:
-            code_m = finlib.Finlib().add_market_to_code_single(code)
-            price = finlib.Finlib().get_price(code_m)
+            price = finlib.Finlib().get_price(code)
             code_price_map[code] = price
 
         if pd.isnull(price):
@@ -994,6 +997,10 @@ def quarterly_fundamental_any(df_basic, year_quarter, debug=False):
     ]
 
     #df_q_r = df_q_r[cols]
+    df_q_r = df_q_r.drop(columns=['ts_code'], axis=1)
+    df_q_r = df_q_r.drop(columns=['name'], axis=1)
+    df_q_r = finlib.Finlib().add_stock_name_to_df(df=df_q_r)
+
     df_q_r.sort_values('result_value_quarter_fundation', ascending=False, inplace=True)
     #df_q_r = df_q_r.DataFrame.reset_index().drop('index', axis=1) #RYAN:BUG?
     df_q_r = df_q_r.reset_index().drop('index', axis=1)
