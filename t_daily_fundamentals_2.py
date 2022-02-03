@@ -3635,12 +3635,28 @@ def _fetch_stock_company():
         return ()
 
     all_fields='ts_code,exchange,chairman,manager,secretary,reg_capital,setup_date,province,city,introduction,website,email,office,employees,main_business,business_scope'.split(',')
-    df_1 = pro.stock_company()
+
+    # SH
+    df_1 = pro.stock_company(exchange='SSE')
     fields_have_fetched = df_1.columns.to_list()
-
-    df_2 = pro.stock_company(fields=','.join(set(all_fields) - set(fields_have_fetched)))
-
+    df_2 = pro.stock_company(exchange='SSE', fields=','.join(set(all_fields) - set(fields_have_fetched)))
     df = pd.merge(df_1, df_2, left_index=True, right_index=True)
+    logging.info("SSE fetched, len "+ str(df.__len__()) + " columns "+ str(df.columns.__len__()))
+
+    # SZ
+    df_1 = pro.stock_company(exchange='SZSE')
+    fields_have_fetched = df_1.columns.to_list()
+    df_2 = pro.stock_company(exchange='SZSE', fields=','.join(set(all_fields) - set(fields_have_fetched)))
+    df_tmp = pd.merge(df_1, df_2, left_index=True, right_index=True)
+    logging.info("SZ SZSE fetched, len "+ str(df_tmp.__len__()) + " columns "+ str(df_tmp.columns.__len__()))
+
+    df = df.append(df_tmp)
+    logging.info("Merged SH and SZ, len "+str(df.__len__()))
+
+
+
+
+
     df = finlib.Finlib().ts_code_to_code(df)
     df = finlib.Finlib().add_stock_name_to_df(df)
     df = finlib.Finlib().adjust_column(df,col_name_list=['code','name','exchange','employees','chairman',
