@@ -3445,7 +3445,10 @@ class Finlib:
         csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_stat.csv'
         csv_detail = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_detail.csv'
         df_gar = pd.read_csv(csv, converters={'end_date': str})
+        df_gar = self.ts_code_to_code(df=df_gar)
         df_gar_detail = pd.read_csv(csv_detail)
+        df_gar_detail = self.ts_code_to_code(df=df_gar_detail)
+
 
         df_gar = df_gar[df_gar['pledge_ratio'] >= statistic_ratio_threshold]
         

@@ -859,7 +859,7 @@ def fetch_basic_daily(fast_fetch=False):
         output_csv = dir_d + "/basic_" + trade_date + ".csv"
 
         if finlib.Finlib().is_cached(output_csv, day=90) and (not force_run_global):
-            # logging.info(__file__ + " " + "file exist and have content, not fetch again " + output_csv)
+            #logging.info(__file__ + " " + "file exist and have content, not fetch again " + output_csv)
             continue
 
         logging.info(__file__ + " " + "fetch daily_basic on date " + str(trade_date))
@@ -869,7 +869,7 @@ def fetch_basic_daily(fast_fetch=False):
         df.to_csv(output_csv, encoding="UTF-8", index=False)
         logging.info(__file__ + " " + "saved daily basic of all stocks to " + output_csv + " len " + str(df.__len__()))
 
-    pass
+    logging.info("end of function fetch_basic_daily")
 
 
 def fetch_info_daily(fast_fetch=False):

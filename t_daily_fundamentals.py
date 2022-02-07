@@ -1288,7 +1288,7 @@ def industry_rank(quarterly_fundamental_csv=None):
     df_result.to_csv(csv_industry_top, encoding='UTF-8', index=True)
 
     logging.info(__file__ + ": " + "industry topest saved to " + csv_industry_top + " , len " + str(df_result.__len__()))
-    return (df_result)
+    return(df_result)
 
 
 def area_rank(quarterly_fundamental_csv=None):
