@@ -5598,7 +5598,14 @@ class Finlib:
         stb2 = self.get_year_month_quarter()
         p = []  # p: ['20201231', '20191231', '20181231', '20171231', '20161231']
 
-        p.extend([stb2['ann_date_1q_before']])
+
+        year = int(datetime.today().strftime('%Y'))
+        month = int(datetime.today().strftime('%m'))
+        if month == 1 or month == 2 or month == 3:
+            pass
+        else:
+            p.extend([stb2['ann_date_1q_before']])
+
         p.extend([stb2['ann_date_2q_before']])
         p.extend([stb2['ann_date_3q_before']])
         p.extend([stb2['ann_date_4q_before']])

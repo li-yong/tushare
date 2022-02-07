@@ -4109,7 +4109,7 @@ def industry_top_mainbz_profit():
 
 
     #add increase
-    df_inc = finlib.Finlib().get_stock_increase(short=True)
+    df_inc = finlib.Finlib().get_stock_increase(increase_only=True)
     df_rtn = pd.merge(left=df_rtn, right=df_inc, how="inner", on='code')
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
@@ -4239,7 +4239,7 @@ def industry_top_mv_eps():
 
 
     #add increase
-    df_inc = finlib.Finlib().get_stock_increase(short=True)
+    df_inc = finlib.Finlib().get_stock_increase(increase_only=True)
     df_rtn = pd.merge(left=df_rtn, right=df_inc, how="inner", on='code')
 
     df_rtn.to_csv(to_csv, encoding='UTF-8', index=False)
