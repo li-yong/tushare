@@ -789,7 +789,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
         tmp = my_sort(tmp, debug=debug)
 
-        tmp = finlib.Finlib().add_amount_mktcap(df=tmp,sorted_by_mktcap=True).head(100)
+        tmp = finlib.Finlib().add_amount_mktcap(df=tmp,sorted_by_mktcap=True,mktcap_unit="100M").head(100)
         tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
         tmp = finlib.Finlib().add_industry_to_df(df=tmp)
         tmp = finlib.Finlib().add_stock_increase(df=tmp)
@@ -910,7 +910,7 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             if "date" in tmp.columns:
                 tmp = tmp[tmp["date"].astype("str") >= day_3_before_date_ymd]
             tmp = my_sort(tmp, debug=debug)
-            tmp = finlib.Finlib().add_amount_mktcap(df=tmp)
+            tmp = finlib.Finlib().add_amount_mktcap(df=tmp, mktcap_unit='100M')
             tmp = finlib.Finlib().add_tr_pe(df=tmp,df_daily=df_daily, df_ts_all=df_ts_all)
             tmp = finlib.Finlib().add_industry_to_df(df=tmp)
             tmp = finlib.Finlib().df_format_column(df=tmp, precision='%.1e')

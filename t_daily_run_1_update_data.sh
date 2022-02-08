@@ -3,8 +3,6 @@
 #source /home/ryan/.profile
 #source /etc/bash.bashrc
 
-python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK
-
 #this script runs on haha_data_source
 
 full_or_daily=$1
@@ -13,18 +11,35 @@ if [ $full_or_daily == "FULL" ]; then
     echo "$0: FULL RUN"
 elif [ $full_or_daily == "DAILY" ]; then
     echo "$0: DAILY RUN"
+elif [ $full_or_daily == "HAHA_BRAIN" ]; then
+    echo "$0: RUN ON HAHA_BRAIN"
 else
-    echo "Have to specify FULL or DAILY. Quiting";
+    echo "Have to specify FULL or DAILY or HAHA_BRAIN. Quiting";
     exit
 fi
 
 
-sleep 2
-
-
-
 cd /home/ryan/tushare_ryan
 git pull
+
+#sleep 2
+
+##
+#if [[ $full_or_daily == "FULL" || $full_or_daily == "DAILY" ]]; then
+#fi
+
+
+
+# Need a running X server. Download 15 times a day.
+# output: /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/*
+#         /home/ryan/DATA/pickle/ag_stock_industry_wg.csv
+# This is Broken on haha_power, but works on haha_brain. 2021/10/12
+if [ $full_or_daily == "HAHA_BRAIN" ]; then
+  env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+
+  exit
+fi
+
 
 
 #更新当天股票数据
@@ -59,6 +74,9 @@ fi
 #python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK;
 #python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 
+if [ $full_or_daily == "DAILY" ]; then
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK
+fi
 
 ######################################
 ##update SH000001 上证指数.
@@ -89,14 +107,6 @@ fi
 # need VPN to access WikiPedia
 python t_daily_get_us_index.py
 
-
-# Need a running X server. Download 15 times a day.
-# output: /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/*
-#         /home/ryan/DATA/pickle/ag_stock_industry_wg.csv
-# This is Broken on haha_power, but works on haha_brain. 2021/10/12
-if [ $full_or_daily == "HAHA_BRAIN" ]; then
-  env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
-fi
 
 
 ######################################

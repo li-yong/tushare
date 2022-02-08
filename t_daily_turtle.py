@@ -200,7 +200,7 @@ def entry(period, debug=False):
         c = row['code']
         name = row['name']
 
-        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
+        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + c + ".csv"
         logging.info(str(i) + " of " + str(cnt) + " " + c)
 
         r = _entry(csv_f=csv_f, period=period)
