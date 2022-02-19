@@ -347,8 +347,6 @@ def fetch_stock_industry_wugui_selenium(browser):
     logging.info("completed. fetched stock's industry from wugui, save to "+csv_o+" len "+str(df_all.__len__()))
     return(df_all)
 
-
-
 def wglh_login():
     opts = webdriver.ChromeOptions()
     # opts.add_argument("user-data-dir=/home/ryan/.config/google-chrome")
@@ -357,8 +355,8 @@ def wglh_login():
     browser.get('https://wglh.com/user/account/')
 
     #Manually login. Previous login GUI changed.
-    logging.info("Please manually login in 60 sec")
-    WebDriverWait(browser, 60).until(EC.title_contains("我的账号信息"))
+    logging.info("Please manually login in 120 sec")
+    WebDriverWait(browser, 120).until(EC.title_contains("我的账号信息"))
     return(browser)
 
 
@@ -466,19 +464,18 @@ def fetch_index_tradingview_selenium():
 
    # have to fetch in US->CN->HK sequence. only support scroll down. not up.
 
-    for interval in ['1D','1M', '1W']:
-        market = 'US'
+    # for interval in ['1D','1M', '1W']:
+    for interval in ['1D']:
         finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval=interval,market='US', filter='ALL_of_The_market_US' )
         f_us = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval=interval, symbol_link_f=tv_d+'/america_latest_'+interval+'.csv')
 
-    for interval in ['1D', '1M', '1W']:
-        market = 'CN'
+    # for interval in ['1D', '1M', '1W']:
+    for interval in ['1D']:
         finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval=interval,market='CN', filter='ALL_of_The_market')
         f_cn = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d, interval=interval, symbol_link_f=tv_d+'/china_latest_'+interval+'.csv')
 
     for interval in ['1D', '1M', '1W']:
-        market = 'HK'
-        finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval=interval,market=market, filter='ALL_of_The_market' )
+        finlib_indicator.Finlib_indicator().tv_screener_start(browser=browser, column_filed='ALL',interval=interval,market='HK', filter='ALL_of_The_market' )
         f_hk = finlib_indicator.Finlib_indicator().tv_screener_export(browser=browser, to_dir=tv_d,interval=interval, symbol_link_f=tv_d+'/hongkong_latest_'+interval+'.csv')
 
     browser.quit()

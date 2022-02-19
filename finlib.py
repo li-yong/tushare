@@ -35,6 +35,9 @@ import logging
 import yaml
 logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 import warnings
 import constant
 
@@ -5041,10 +5044,16 @@ class Finlib:
             ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
             logging.info("get_last_n_days_stocks_amount, using specifed dayS and dayE, ingore ndays. Use calculated ndays "+str(ndays))
         elif (dayE is not None) and (ndays is not None):
-            dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
+            # dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
+            # dayS = (datetime.strptime(self.get_last_trading_day(), "%Y%m%d") - timedelta(365)).strftime("%Y%m%d")
+            dayS = (datetime.strptime(dayE, "%Y%m%d") - timedelta(ndays)).strftime("%Y%m%d")
+            dayS = self.get_last_trading_day(date=dayS.strftime("%Y%m%d"))
         elif (dayS is None) and (dayE is None) and (ndays is not None):
-            dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
-            dayE = datetime.today().strftime("%Y%m%d")
+            # dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
+            # dayE = datetime.today().strftime("%Y%m%d")
+            dayE = self.get_last_trading_day()
+            dayS = (datetime.strptime(dayE, "%Y%m%d") - timedelta(ndays)).strftime("%Y%m%d")
+            dayS = self.get_last_trading_day(date=dayS)
         else:
             logging.fatal("unsupported input parameter. exit")
             sys.exit(1)
@@ -5807,21 +5816,50 @@ class Finlib:
         df_p360 = df_p[df_p['date'] == date_360]
 
         df_pp = pd.merge(left=df_p0[['code', 'close']], right=df_p2[['code', 'close']], on='code', how='inner', suffixes=('', '_2'))
-        df_pp = pd.merge(left=df_pp, right=df_p3[['code', 'close']], on='code', how='inner', suffixes=('', '_3'))
-        df_pp = pd.merge(left=df_pp, right=df_p5[['code', 'close']], on='code', how='inner', suffixes=('', '_5'))
-        df_pp = pd.merge(left=df_pp, right=df_p7[['code', 'close']], on='code', how='inner', suffixes=('', '_7'))
-        df_pp = pd.merge(left=df_pp, right=df_p10[['code', 'close']], on='code', how='inner', suffixes=('', '_10'))
-        df_pp = pd.merge(left=df_pp, right=df_p20[['code', 'close']], on='code', how='inner', suffixes=('', '_20'))
-        df_pp = pd.merge(left=df_pp, right=df_p30[['code', 'close']], on='code', how='inner', suffixes=('', '_30'))
-        df_pp = pd.merge(left=df_pp, right=df_p40[['code', 'close']], on='code', how='inner', suffixes=('', '_40'))
-        df_pp = pd.merge(left=df_pp, right=df_p50[['code', 'close']], on='code', how='inner', suffixes=('', '_50'))
-        df_pp = pd.merge(left=df_pp, right=df_p60[['code', 'close']], on='code', how='inner', suffixes=('', '_60'))
-        df_pp = pd.merge(left=df_pp, right=df_p70[['code', 'close']], on='code', how='inner', suffixes=('', '_70'))
-        df_pp = pd.merge(left=df_pp, right=df_p80[['code', 'close']], on='code', how='inner', suffixes=('', '_80'))
-        df_pp = pd.merge(left=df_pp, right=df_p90[['code', 'close']], on='code', how='inner', suffixes=('', '_90'))
-        df_pp = pd.merge(left=df_pp, right=df_p100[['code', 'close']], on='code', how='inner', suffixes=('', '_100'))
-        df_pp = pd.merge(left=df_pp, right=df_p180[['code', 'close']], on='code', how='inner', suffixes=('', '_180'))
-        df_pp = pd.merge(left=df_pp, right=df_p360[['code', 'close']], on='code', how='inner', suffixes=('', '_360'))
+
+        if df_p3.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p3[['code', 'close']], on='code', how='inner', suffixes=('', '_3'))
+
+        if df_p5.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p5[['code', 'close']], on='code', how='inner', suffixes=('', '_5'))
+
+        if df_p7.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p7[['code', 'close']], on='code', how='inner', suffixes=('', '_7'))
+
+        if df_p10.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p10[['code', 'close']], on='code', how='inner', suffixes=('', '_10'))
+
+        if df_p20.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p20[['code', 'close']], on='code', how='inner', suffixes=('', '_20'))
+        if df_p30.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p30[['code', 'close']], on='code', how='inner', suffixes=('', '_30'))
+
+        if df_p40.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p40[['code', 'close']], on='code', how='inner', suffixes=('', '_40'))
+
+        if df_p50.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p50[['code', 'close']], on='code', how='inner', suffixes=('', '_50'))
+
+        if df_p60.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p60[['code', 'close']], on='code', how='inner', suffixes=('', '_60'))
+
+        if df_p70.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p70[['code', 'close']], on='code', how='inner', suffixes=('', '_70'))
+
+        if df_p80.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p80[['code', 'close']], on='code', how='inner', suffixes=('', '_80'))
+
+        if df_p90.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p90[['code', 'close']], on='code', how='inner', suffixes=('', '_90'))
+
+        if df_p100.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p100[['code', 'close']], on='code', how='inner', suffixes=('', '_100'))
+
+        if df_p180.__len__() > 0:
+            df_pp = pd.merge(left=df_pp, right=df_p180[['code', 'close']], on='code', how='inner', suffixes=('', '_180'))
+
+        if df_p360.__len__()>0:
+            df_pp = pd.merge(left=df_pp, right=df_p360[['code', 'close']], on='code', how='inner', suffixes=('', '_360'))
 
         df_pp['inc2'] = round(100 * (df_pp['close'] - df_pp['close_2']) / df_pp['close_2'], 0)
         df_pp['inc3'] = round(100 * (df_pp['close'] - df_pp['close_3']) / df_pp['close_3'], 0)

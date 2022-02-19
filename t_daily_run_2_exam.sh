@@ -746,15 +746,17 @@ python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 # 	  ~/DATA/result/selected/ag_index_fib.csv
 ###############################
 #----------------- selected moved to t_daily_run_2_exam_ushk.sh
-# /home/ryan/DATA/result/selected/ag_index_fib.csv
-python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG_INDEX --selected
-
-# /home/ryan/DATA/result/selected/ag_fib.csv
-python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG --selected
-
 if [ $full_or_daily == "FULL" ]; then
+
+  # /home/ryan/DATA/result/selected/ag_index_fib.csv
+  python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG_INDEX --selected
+
   # /home/ryan/DATA/result/ag_fib.csv
   python t_fibonacci.py --begin_date "20200101"  --min_sample=400 -x AG
+
+  ## /home/ryan/DATA/result/selected/ag_fib.csv
+  python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG --selected
+
 fi
 
 
@@ -829,22 +831,6 @@ python t_futu_trade.py --check_high_volume --market HK
 # Set AG Price reminder at FuTu Client, based on the daily price. run after 3:00pm
 python t_futu_trade.py --set_ag_reminder
 
-#############--calc_base
-# output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt
-#         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
-#############
-python t_summary_new_dev.py -x AG --operation B --action generate_report
-python t_summary_new_dev.py -x AG --operation B --action generate_report --remove_garbage
-python t_summary_new_dev.py -x AG --operation S --action generate_report
-
-#### Check performance of each day's selected.
-# output:  /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
-# $ grep === /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
-#=== df_szcz_add_candidate , 0126: -3.28, 0127: -0.15, 0128: -2.2, 0129: -0.98
-#=== df_sz100_add_candidate , 0126: -4.3, 0127: 0.04, 0128: -3.06, 0129: -1.5
-python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation B
-python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
-
 
 #############
 # output: /hdd/DATA/result/report_2019-03-29_AG.txt
@@ -856,6 +842,25 @@ python t_summary.py -x AG --action generate_report
 # output: /home/ryan/DATA/result/report_2019-03-29_AG_short.csv
 #############
 python t_summary.py -x AG --action analyze_report
+
+
+#############--calc_base
+# output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt
+#         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
+#############
+python t_summary_new_dev.py -x AG --operation B --action generate_report --remove_garbage
+
+python t_summary_new_dev.py -x AG --operation B --action generate_report
+python t_summary_new_dev.py -x AG --operation S --action generate_report
+
+#### Check performance of each day's selected.
+# output:  /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
+# $ grep === /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
+#=== df_szcz_add_candidate , 0126: -3.28, 0127: -0.15, 0128: -2.2, 0129: -0.98
+#=== df_sz100_add_candidate , 0126: -4.3, 0127: 0.04, 0128: -3.06, 0129: -1.5
+python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation B
+python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
+
 
 #######
 # commit garbage to github

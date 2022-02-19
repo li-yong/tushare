@@ -974,7 +974,6 @@ def daily_UD_tongji():
 
 
 #### MAIN #####
-
 df = finlib.Finlib().read_all_ag_qfq_data(days=5)
 df = finlib.Finlib()._remove_garbage_on_market_days(df)
 df = finlib.Finlib().remove_garbage(df)

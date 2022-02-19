@@ -19,8 +19,7 @@ from optparse import OptionParser
 # matplotlib.font_manager.fontManager.ttflist
 
 #use the font
-plt.rcParams['font.family'] = ['AaTEST (Non-Commercial Use)']
-#plt.rcParams['font.sans-serif'] = ['Source Han Sans TW', 'sans-serif']
+plt.rcParams['font.family'] = ['WenQuanYi Micro Hei']
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -179,8 +178,8 @@ def main():
     #verify_fibo_f = True
 
     if debug_f:
-        #stock_list = stock_list[stock_list['code']=="SH600519"]
-        stock_list = stock_list[stock_list['code'] == "SZ300350"]
+        stock_list = stock_list[stock_list['code']=="SH600519"]
+        # stock_list = stock_list[stock_list['code'] == "SZ300350"]
 
     csv_dir = "/home/ryan/DATA/DAY_Global/AG"
     if index_f:

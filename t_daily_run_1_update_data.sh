@@ -36,6 +36,7 @@ git pull
 # This is Broken on haha_power, but works on haha_brain. 2021/10/12
 if [ $full_or_daily == "HAHA_BRAIN" ]; then
   env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
+  env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_tv
   exit
 fi
 

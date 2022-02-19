@@ -1375,16 +1375,30 @@ class Finlib_indicator:
             return (browser)
 
         obj_m.click()
-        self.tv_wait_page_to_ready(browser, timeout=10)
+        self.tv_wait_page_to_ready(browser, timeout=30)
 
         # #scroll down entire window 200 from current position
         # browser.execute_script("window.scrollTo(0, window.scrollY + 200);")
+
+        while browser.find_elements_by_css_selector('[data-name="screener-market-dialog"]').__len__()==0:
+            logging.info("wait for market select dialog load")
+            time.sleep(1)
+
+        dia_obj = browser.find_element_by_css_selector('[data-name="screener-market-dialog"]')
+
+        input_obj = dia_obj.find_elements_by_tag_name("input")[1]
         if market == 'US':
+            input_obj.send_keys("USA")
             browser.find_element_by_css_selector('[data-market="america"]').click()
         elif market == 'CN':
+            input_obj.send_keys("China")
             browser.find_element_by_css_selector('[data-market="china"]').click()
         elif market == 'HK':
+            input_obj.send_keys("Hong Kong")
             browser.find_element_by_css_selector('[data-market="hongkong"]').click()
+
+        apply_obj = browser.find_element_by_xpath('//button[normalize-space()="Apply"]')
+        apply_obj.click()
         #
         # scroll_bar = browser.find_element_by_class_name("tv-screener-market-select").find_element_by_class_name("sb-scrollbar")
         # scroll_bar.location
@@ -1420,7 +1434,7 @@ class Finlib_indicator:
         #             mkt_clicked = True
         #             break
 
-        self.tv_wait_page_to_ready(browser, timeout=10)
+        self.tv_wait_page_to_ready(browser, timeout=30)
 
         # obj_m =   # get element again. otherwise staled obj
         while browser.find_element_by_css_selector('[data-name="screener-markets"]').find_element_by_xpath('img').get_attribute('alt').upper() != market:

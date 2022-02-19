@@ -1965,7 +1965,8 @@ def generate_result_csv(full_combination=False, select=True, debug=False):
 
             logging.info(rst)
 
-    for combi in range(2, arr.__len__() + 1):
+    # for combi in range(2, arr.__len__() + 1):
+    for combi in range(2, 10):
         #def _proc_combination(arr, combi, skip_sets, df_dict, day_3_before_date, debug, rpt):
         logging.info(__file__+" "+"------ Combination " + str(combi) + " -------")
         for subset in itertools.combinations(arr, combi):
