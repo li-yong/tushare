@@ -1040,7 +1040,7 @@ def merge_individual():
     stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # 603999.SH
     stock_list = stock_list["code"]
 
-    list = ["income", "balancesheet", "cashflow", "fina_mainbz", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
+    list = ["income", "balancesheet", "cashflow", "fina_mainbz_p", "dividend", "fina_indicator", "fina_audit", "forecast", "express", "disclosure_date"]
 
     if debug_global:
         stock_list = ["600519.SH"]
