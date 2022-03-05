@@ -713,6 +713,8 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             else:
                 continue  # when getting df_tmp failed and df_tmp is None.
 
+            df_tmp = df_tmp[df_tmp[field] > '20161231']
+
             if (not force_run_global) and fast_fetch:
                 df_tmp = df_tmp[df_tmp[field] == fetch_most_recent_report_perid]
 
