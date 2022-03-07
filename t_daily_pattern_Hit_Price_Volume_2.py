@@ -45,9 +45,10 @@ def _exam_a_stock(code,date_exam_day,
         df['pocket_pivot_maxvol_N_downdays'] = exp['pocket_pivot_this_vol_gt_N_records_of_down_vol'] #>10 or >15 is positive for Pocket pivot volume condition.
     else:
         df['cond_pocket_pivot'] = False
+        df['pocket_pivot_maxvol_N_downdays'] = None
 
 
-    #-1. today volumn is the min/max of last N days
+        #-1. today volumn is the min/max of last N days
     min_max = finlib.Finlib().count_min_max_value_days(df, 'volume')
     df['vol_is_min_of_last_n_records_LastRowValidOnly']=min_max['this_is_min_of_last_n_records']
     df['vol_is_max_of_last_n_records_LastRowValidOnly']=min_max['this_is_max_of_last_n_records']
