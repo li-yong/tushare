@@ -42,6 +42,15 @@ rm -fr result_new_dev_B/*20211[0-1]*
 rm -fr result_new_dev_S/*20210[1-9]*
 rm -fr result_new_dev_S/*20211[0-1]*
 
+
+
+date --date="1 year ago" -I  | rm -f report*`awk -F- '{print $1}'`
+date --date="3 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
+date --date="2 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
+date --date="1 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
+
+
+
 rm -f basic_summary/*20210[1-9]*
 rm -f basic_summary/*20211[0-1]*
 rm -f basic_summary/*2020*
