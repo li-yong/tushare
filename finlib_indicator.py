@@ -2287,6 +2287,11 @@ class Finlib_indicator:
         print()
 
     def zigzag_divation(self,df,code,name):
+        # if (code=='BJ834765'):
+        #     logging.info('debug pause')
+
+        df = df[df['close'] != 0].reset_index().drop('index',axis=1)
+
         rtn_df_macd_div = pd.DataFrame()
         rtn_df_kdj_div = pd.DataFrame()
         rtn_df_rsi_div = pd.DataFrame()
