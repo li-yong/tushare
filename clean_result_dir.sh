@@ -44,10 +44,10 @@ rm -fr result_new_dev_S/*20211[0-1]*
 
 
 
-date --date="1 year ago" -I  | rm -f report*`awk -F- '{print $1}'`
-date --date="3 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
-date --date="2 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
-date --date="1 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`
+date --date="1 year ago" -I  | rm -f report*`awk -F- '{print $1}'`*
+date --date="3 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`*
+date --date="2 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`*
+date --date="1 month ago" -I | rm -f report*`awk -F- '{print $1""$2}'`*
 
 
 
