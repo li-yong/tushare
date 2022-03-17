@@ -278,7 +278,7 @@ def get_hs300_total_share_weighted():
     #total_share  总股本 （万股）
     #free_ration 自由流通比例 = 自由流通量 /样本总股本
     df_basic['free_ration'] = round(df_basic['free_share']*100.0/df_basic['total_share'], 4)
-
+    df_basic = df_basic[~df_basic['free_ration'].isna()]
 
     df_basic['weight_calc'] = None
     df_basic.loc[df_basic['free_ration']<=15, ['weight_calc']] = df_basic['free_ration'].apply(lambda _d: math.ceil(_d) )
