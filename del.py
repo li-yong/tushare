@@ -1241,42 +1241,55 @@ def TD_indicator(df):
     df_9_13, df_op = TD_oper(adf_countdown)
     return(df_9_13, df_op)
 
-#### MAIN #####
-# df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
-# df_9_13, df_op = TD_indicator(df_index)
-# print("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
-# print("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
 
-rtn_9_13 = pd.DataFrame()
-rtn_op = pd.DataFrame()
-td_csv_9_13 = "/home/ryan/DATA/result/td_9_13.csv"
-td_csv_op = "/home/ryan/DATA/result/td_op.csv"
+def TD_Indicator_main():
+    rst_dir="/home/ryan/DATA/result/TD_Indicator"
+    if not os.path.isdir(rst_dir):
+        os.mkdir(rst_dir)
+
+
+    df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
+    df_9_13, df_op = TD_indicator(df_index)
+    df_9_13.to_csv(rst_dir+"/szzs_9_13.csv", encoding='UTF-8', index=False)
+    df_op.to_csv(rst_dir+"/szzs_op.csv", encoding='UTF-8', index=False)
+    print("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
+    print("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
+
+    rtn_9_13 = pd.DataFrame()
+    rtn_op = pd.DataFrame()
+    td_csv_9_13 = rst_dir+"/"+"td_9_13.csv"
+    td_csv_op = rst_dir+"/"+"td_op.csv"
+
+    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib()._remove_garbage_on_market_days(df)
+    df = finlib.Finlib().remove_garbage(df)
+
+
+    for code in df['code'].unique():
+        adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
+        df_9_13, df_op = TD_indicator(adf)
+
+        rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
+        rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
+
+        rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
+        rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
+
+
+    finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
+
+    print(f"result saved to {rst_dir} CSVs")
+    return()
+
+#### MAIN #####
+
+TD_Indicator_main()
+exit()
 
 df = finlib.Finlib().read_all_ag_qfq_data(days=200)
 df = finlib.Finlib()._remove_garbage_on_market_days(df)
 df = finlib.Finlib().remove_garbage(df)
-
-
-for code in df['code'].unique():
-    adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
-    df_9_13, df_op = TD_indicator(adf)
-
-    rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
-    rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
-
-    rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
-    rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
-
-
-finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
-finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
-exit()
-
-# df = finlib.Finlib().read_all_ag_qfq_data(days=200)
-# df = finlib.Finlib()._remove_garbage_on_market_days(df)
-# df = finlib.Finlib().remove_garbage(df)
-
-
 
 # a = daily_UD_tongji()
 df_rtn = fudu_daily_check()
