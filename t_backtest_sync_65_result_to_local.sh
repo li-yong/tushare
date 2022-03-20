@@ -56,4 +56,5 @@ rsync -azt   ${source_host}:/home/ryan/DATA/result/fib_plot/  /home/ryan/DATA/re
 rsync -azt   ${source_host}:/home/ryan/DATA/result/curv_plot/  /home/ryan/DATA/result/curv_plot/
 rsync -azt   ${source_host}:/home/ryan/DATA/result/selected/  /home/ryan/DATA/result/selected/
 rsync -azt   ${source_host}:/home/ryan/DATA/result/pv_2/  /home/ryan/DATA/result/pv_2/
+rsync -azt   ${source_host}:/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_*_days.csv  /home/ryan/DATA/DAY_Global/AG_qfq/
 #rsync -az   ${source_host}:/home/ryan/DATA/result/jaqs/  /home/ryan/DATA/result/jaqs/

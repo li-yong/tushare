@@ -2908,7 +2908,7 @@ class Finlib:
                 print("exist T, update T, len " + flen + " " + file_path)
             return ({"exist": True, "update": True})
 
-    def is_cached(self, file_path, day=1):
+    def is_cached(self, file_path, day=1, use_last_trade_day=True):
         '''
         copied from /home/ryan/anaconda2/lib/python2.7/site-packages/finsymbols/symbol_helper.py
         Checks if the file cached is still valid
@@ -2923,7 +2923,11 @@ class Finlib:
             return False
 
         file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
-        current_time = datetime.now()
+        if use_last_trade_day:
+            current_time = datetime.strptime(self.get_last_trading_day(), '%Y%m%d')
+        else:
+            current_time = datetime.now()
+
         file_age = (current_time - file_time).total_seconds()
 
         # if file_age > 86400:
