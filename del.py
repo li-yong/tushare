@@ -975,9 +975,72 @@ def daily_UD_tongji():
 
 #### MAIN #####
 df = finlib.Finlib().read_all_ag_qfq_data(days=200)
-df = finlib.Finlib()._remove_garbage_on_market_days(df)
-df = finlib.Finlib().remove_garbage(df)
+# df = finlib.Finlib()._remove_garbage_on_market_days(df)
+# df = finlib.Finlib().remove_garbage(df)
 
+adf = df[df['code']=='SH600519'][['code','date','close','low']]
+
+adf['anno']=""
+
+adf['date_-4']=adf['date'].shift(periods=4) #debug
+adf['close_-4']=adf['close'].shift(periods=4) #debug
+adf['-close_-4']=adf['close']-adf['close'].shift(periods=4) #debug
+
+adf['close_gt_pre_4d'] = adf['close']-adf['close'].shift(periods=4)>0
+adf['close_gt_pre_4d_-1']=adf['close_gt_pre_4d'].shift(periods=1)
+
+adf.loc[(adf['close_gt_pre_4d']==True) & (adf['close_gt_pre_4d_-1']==False),['anno']]="UP_D1_of_9"
+adf.loc[(adf['close_gt_pre_4d']==False) & (adf['close_gt_pre_4d_-1']==True),['anno']]="DN_D1_of_9"
+
+adf = adf[['code', 'date', 'close', 'anno','close_-4']]
+
+adf[adf['anno']=="DN_D1_of_9"]
+
+pre_anno=''
+dn_cnt = 0
+up_cnt = 0
+
+for index, row in adf.iterrows():
+    date=row['date']
+    close=row['close']
+    close_b4=row['close_-4']
+    anno=row['anno']
+
+    if anno=='DN_D1_of_9':
+        pre_anno='DN_D1_of_9'
+        dn_cnt = 1
+        continue
+
+    if anno=='UP_D1_of_9':
+        pre_anno='UP_D1_of_9'
+        up_cnt = 1
+        continue
+
+    if pre_anno=='DN_D1_of_9':
+        if close < close_b4:
+            dn_cnt+=1
+            adf.at[index,'anno']='DN_D'+str(dn_cnt)+"_of_9"
+        else:
+            print("Down breaked")
+            adf.at[index,'anno'] = 'DN_Break'
+            pre_anno=''
+            dn_cnt=0
+
+
+    if pre_anno=='UP_D1_of_9' :
+        if close > close_b4:
+            up_cnt+=1
+            adf.at[index, 'anno']='UP_D'+str(up_cnt)+"_of_9"
+        else:
+            print("Up breaked")
+            adf.at[index, 'anno'] = 'UP_Break'
+            pre_anno=''
+            up_cnt=0
+
+
+    print(1)
+
+start_date = '20220201'
 
 
 # a = daily_UD_tongji()
