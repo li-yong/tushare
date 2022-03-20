@@ -1129,7 +1129,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                 if dn_cnt >= 13:
                     if low <= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
                         if close <= low_b1 and close<= low_b2:
-                            p_str=f"LONG CONDITION Meet!  {code}, {date}, {close}, anno_setup {anno_setup}"
+                            p_str=f"LONG CONDITION Meet!  {code}, {date}, {close}"
                             adf.at[index, 'anno_b13'] = p_str
                             print(p_str)
                         else:
@@ -1157,7 +1157,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                     if high >= adf[adf['anno_b13']=='UP_D8_of_13'].iloc[-1].close:
                     # if high >= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
                         if close >= high_b1 and close >= high_b2:
-                            p_str=f"SHORT CONDITION Meet! {code}, {date}, {close}, anno_setup {anno_setup}"
+                            p_str=f"SHORT CONDITION Meet! {code}, {date}, {close}"
                             adf.at[index, 'anno_b13'] = p_str
                             print(p_str)
 
@@ -1243,12 +1243,7 @@ def TD_indicator(df):
     return(df_9_13, df_op)
 
 
-def TD_Indicator_main():
-    rst_dir="/home/ryan/DATA/result/TD_Indicator"
-    if not os.path.isdir(rst_dir):
-        os.mkdir(rst_dir)
-
-
+def TD_szsz_index(rst_dir):
     df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
     df_9_13, df_op = TD_indicator(df_index)
     df_9_13.to_csv(rst_dir+"/szzs_9_13.csv", encoding='UTF-8', index=False)
@@ -1256,6 +1251,7 @@ def TD_Indicator_main():
     print("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
     print("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
 
+def TD_individual(rst_dir,df_hold=None):
     rtn_9_13 = pd.DataFrame()
     rtn_op = pd.DataFrame()
     td_csv_9_13 = rst_dir+"/"+"td_9_13.csv"
@@ -1265,6 +1261,10 @@ def TD_Indicator_main():
     # df = finlib.Finlib()._remove_garbage_on_market_days(df)
     # df = finlib.Finlib().remove_garbage(df)
 
+    if df_hold is not None:
+        td_csv_9_13 = rst_dir + "/" + "td_9_13_ag_hold.csv"
+        td_csv_op = rst_dir + "/" + "td_op_ag_hold.csv"
+        df = pd.merge(left=df, right=df_hold[['code']], on='code',how='inner').reset_index().drop('index', axis=1)
 
     for code in df['code'].unique():
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
@@ -1281,6 +1281,22 @@ def TD_Indicator_main():
     finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
 
     print(f"result saved to {rst_dir} CSVs")
+
+def TD_Indicator_main():
+    df_hold = finlib.Finlib().remove_market_from_tscode(
+        finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')['stock_list'])
+    df_hold  = finlib.Finlib().add_market_to_code(df=df_hold)
+
+    rst_dir="/home/ryan/DATA/result/TD_Indicator"
+    if not os.path.isdir(rst_dir):
+        os.mkdir(rst_dir)
+
+    TD_szsz_index(rst_dir=rst_dir)
+    TD_individual(rst_dir=rst_dir,df_hold=df_hold)
+    TD_individual(rst_dir=rst_dir)
+
+
+
     return()
 
 #### MAIN #####
