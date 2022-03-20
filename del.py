@@ -1154,9 +1154,10 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                 adf.at[index, 'C_UP_DAYS_B13']=up_cnt
 
                 if up_cnt >= 13:
-                    if high >= adf[adf['anno_b13']=='UP_D8_of_13'].iloc[-1].close:
+                    # if high >= adf[adf['anno_b13']=='UP_D8_of_13'].iloc[-1].close:
+                    if high >= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
                         if close >= high_b1 and close >= high_b2:
-                            p_str=f"SHORT CONDITION Meet! {code}, {date}, {close},anno_setup {anno_setup}"
+                            p_str=f"SHORT CONDITION Meet! {code}, {date}, {close}, anno_setup {anno_setup}"
                             adf.at[index, 'anno_b13'] = p_str
                             print(p_str)
 
@@ -1236,9 +1237,9 @@ def TD_oper(adf):
 
 
 def TD_indicator(df):
-    adf_setup = TD_setup_9_consecutive_close_4_day_lookup(adf)
-    adf_countdown = TD_countdown_13_day_lookup(adf_setup,cancle_countdown=False)
-    df_9_13, df_op = TD_oper(adf_countdown)
+    df_setup = TD_setup_9_consecutive_close_4_day_lookup(df)
+    df_countdown = TD_countdown_13_day_lookup(df_setup,cancle_countdown=False)
+    df_9_13, df_op = TD_oper(df_countdown)
     return(df_9_13, df_op)
 
 
