@@ -993,14 +993,21 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
 
     adf['C_DN_DAYS_B4']=0
     adf['C_UP_DAYS_B4']=0
-    adf['dn_setup_close']=-1
-    adf['up_setup_close']=-1
+
+    dn_setup_close=999999
+    up_setup_close=-1
+    adf['dn_setup_close']=dn_setup_close
+    adf['up_setup_close']=up_setup_close
+
 
     for index, row in adf.iterrows():
         date=row['date']
         close=row['close']
         close_b4=row['close_b4']
         anno=row['anno']
+
+        adf.at[index, 'dn_setup_close'] = dn_setup_close
+        adf.at[index, 'up_setup_close'] = up_setup_close
 
         if anno=='DN_D1_of_9':
             pre_anno='DN_D1_of_9'
@@ -1018,11 +1025,9 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                 adf.at[index,'anno']='DN_D'+str(dn_cnt)+"_of_9"
                 adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
 
-                if dn_cnt == 9:
-                    dn_setup_close = close
+                # if dn_cnt == 9:
+                dn_setup_close = close
 
-                if dn_cnt >= 9:
-                    adf.at[index, 'setup_close'] = dn_setup_close
             else:
                 print("Down breaked")
                 adf.at[index,'anno'] = 'DN_Break'
@@ -1037,11 +1042,9 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                 adf.at[index, 'anno']='UP_D'+str(up_cnt)+"_of_9"
                 adf.at[index, 'C_UP_DAYS_B4']=up_cnt
 
-                if up_cnt ==9:
-                    up_setup_close= close
+                # if up_cnt ==9:
+                up_setup_close= close
 
-                if up_cnt >=9:
-                    adf.at[index,'setup_close']=up_setup_close
             else:
                 print("Up breaked")
                 adf.at[index, 'anno'] = 'UP_Break'
@@ -1050,7 +1053,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                 adf.at[index, 'C_UP_DAYS_B4'] = up_cnt
 
 
-        print(1)
+        print("")
 
     print(finlib.Finlib().pprint(adf))
 
@@ -1070,7 +1073,10 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     '''
 
     adf['anno_b13']=""
-    adf['low_b2']=adf['low'].shift(periods=pre_n_day)
+    adf['low_b2']=adf['low'].shift(periods=2)
+    adf['low_b1']=adf['low'].shift(periods=1)
+    adf['high_b1']=adf['high'].shift(periods=1)
+    adf['high_b2']=adf['high'].shift(periods=2)
     adf['close_b1']=adf['close'].shift(periods=1)
 
     pre_anno=''
@@ -1081,9 +1087,13 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     adf['C_UP_DAYS_B13']=0
 
     for index, row in adf.iterrows():
+        code = row['code']
         date=row['date']
         close=row['close']
         low_b2=row['low_b2']
+        low_b1=row['low_b1']
+        high_b1=row['high_b1']
+        high_b2=row['high_b2']
         low=row['low']
         high=row['high']
         close_b1=row['close_b1']
@@ -1107,7 +1117,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
             continue
 
         if pre_anno=='DN_D9_of_9':
-            if min(low, close_b1) >= dn_setup_close and cancle_countdown:
+            if min(low,close_b1) > dn_setup_close and cancle_countdown:
                 print("DN Countdown cancelled.")
                 adf.at[index, 'anno_b13'] = 'DN_cancelled'
                 pre_anno=''
@@ -1118,13 +1128,23 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                 dn_cnt+=1
                 adf.at[index,'anno_b13']='DN_D'+str(dn_cnt)+"_of_13"
                 adf.at[index, 'C_DN_DAYS_B13'] = dn_cnt
+
+                if dn_cnt >= 13:
+                    if low <= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
+                        if close <= low_b1 and close<= low_b2:
+                            print(f"LONG CONDITION!, {code}, {date}, {close}")
+                        else:
+                            print("Bar 13 is deferred, close > low_b1 b2")
+                    else:
+                        print("Bar 13 is deferred, low > DN_D8_of_13 close")
+
+
             else:
-                # print("Down pass")
                 adf.at[index,'anno_b13'] = 'DN_pass'
 
 
         if pre_anno=='UP_D9_of_9' :
-            if  max(high, close_b1) >= dn_setup_close and cancle_countdown:
+            if  max(high, close_b1) <= up_setup_close and cancle_countdown:
                 print("UP Countdown cancelled.")
                 adf.at[index, 'anno_b13'] = 'UP_cancelled'
                 pre_anno=''
@@ -1133,10 +1153,21 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
 
             if close >= low_b2:
                 up_cnt+=1
-                adf.at[index, 'anno']='UP_D'+str(up_cnt)+"_of_9"
-                adf.at[index, 'C_UP_DAYS_B4']=up_cnt
+                adf.at[index, 'anno_b13']='UP_D'+str(up_cnt)+"_of_13"
+                adf.at[index, 'C_UP_DAYS_B13']=up_cnt
+
+                if up_cnt >= 13:
+                    if high >= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
+                        if close >= high_b1 and close >= high_b2:
+                            print(f"SHORT CONDITION!, {code}, {date}, {close}")
+
+                        else:
+                            print("Bar 13 short is deferred, close < high_b1 b2")
+                    else:
+                        print("Bar 13 short is deferred, high < DN_D8_of_13 close")
+
+
             else:
-                print("Up pass")
                 adf.at[index, 'anno_b13'] = 'UP_pass'
 
 
@@ -1152,9 +1183,9 @@ df = finlib.Finlib().read_all_ag_qfq_data(days=200)
 # df = finlib.Finlib()._remove_garbage_on_market_days(df)
 # df = finlib.Finlib().remove_garbage(df)
 
-adf = df[df['code']=='SH600519'][['code','date','close','low']]
+adf = df[df['code']=='SH600519'][['code','date','close','high', 'open', 'low']]
 adf_setup = TD_setup_9_consecutive_close_4_day_lookup(adf)
-adf_countdown = TD_countdown_13_day_lookup(adf_setup)
+adf_countdown = TD_countdown_13_day_lookup(adf_setup,cancle_countdown=False)
 
 
 start_date = '20220201'
