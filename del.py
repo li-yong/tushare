@@ -1262,8 +1262,8 @@ def TD_Indicator_main():
     td_csv_op = rst_dir+"/"+"td_op.csv"
 
     df = finlib.Finlib().read_all_ag_qfq_data(days=200)
-    df = finlib.Finlib()._remove_garbage_on_market_days(df)
-    df = finlib.Finlib().remove_garbage(df)
+    # df = finlib.Finlib()._remove_garbage_on_market_days(df)
+    # df = finlib.Finlib().remove_garbage(df)
 
 
     for code in df['code'].unique():
