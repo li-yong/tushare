@@ -1154,8 +1154,8 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                 adf.at[index, 'C_UP_DAYS_B13']=up_cnt
 
                 if up_cnt >= 13:
-                    # if high >= adf[adf['anno_b13']=='UP_D8_of_13'].iloc[-1].close:
-                    if high >= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
+                    if high >= adf[adf['anno_b13']=='UP_D8_of_13'].iloc[-1].close:
+                    # if high >= adf[adf['anno_b13']=='DN_D8_of_13'].iloc[-1].close:
                         if close >= high_b1 and close >= high_b2:
                             p_str=f"SHORT CONDITION Meet! {code}, {date}, {close}, anno_setup {anno_setup}"
                             adf.at[index, 'anno_b13'] = p_str
