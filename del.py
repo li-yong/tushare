@@ -1082,8 +1082,6 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                             last_completed_stg1_perfect='True'
 
 
-                dn_setup_close = close
-                adf.at[index, 'dn_setup_close'] = dn_setup_close
             else:
                 # print("Down breaked")
                 adf.at[index,'anno_setup'] = 'DN_Break_At_'+str(dn_cnt)
@@ -1116,9 +1114,6 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                         if adf.at[index, 'high'] > adf.at[index - 2, 'high'] and adf.at[index, 'high'] > adf.at[
                             index - 3, 'high']:
                             last_completed_stg1_perfect = 'True'
-
-                up_setup_close= close
-                adf.at[index, 'up_setup_close'] = up_setup_close
 
             else:
                 # print("Up breaked")
@@ -1179,10 +1174,6 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
         high=row['high']
         close_b1=row['close_b1']
         anno_setup=row['anno_setup']
-
-        dn_setup_close=row['dn_setup_close']
-        up_setup_close=row['up_setup_close']
-
 
         if row['C_DN_DAYS_B4']==9:
             if pre_anno_setup == 'UP_D9_of_9':
