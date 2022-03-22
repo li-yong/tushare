@@ -1003,10 +1003,8 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
     last_completed_stg1_close =''
     last_completed_stg1_start_date =''
     last_completed_stg1_end_date = ''
+    last_completed_stg1_perfect =''
 
-
-    adf['dn_setup_close']=999999
-    adf['up_setup_close']=-1
 
     adf['C_DN_DAYS_B4']=0
     adf['C_UP_DAYS_B4']=0
@@ -1033,6 +1031,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
         if anno_setup=='DN_D1_of_9':
             setup_dir='DN'
             dn_cnt = 1
+
             adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
 
             adf.at[index, 'last_completed_stg1_anno'] = last_completed_stg1_anno
@@ -1042,6 +1041,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
             adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
             adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
             adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
+            adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
 
             continue
         elif anno_setup=='UP_D1_of_9':
@@ -1056,6 +1056,8 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
             adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
             adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
             adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
+            adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
+
             continue
 
         if setup_dir=='DN':
@@ -1064,7 +1066,6 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                 adf.at[index,'anno_setup']='DN_D'+str(dn_cnt)+"_of_9"
                 adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
 
-                # if dn_cnt >= 9:
                 if dn_cnt == 9:
                     df_setup = adf.iloc[index-9+1:index+1]
                     last_completed_stg1_high = df_setup['high'].max()
@@ -1074,6 +1075,12 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                     last_completed_stg1_start_date = df_setup.head(1)['date'].values[0]
                     last_completed_stg1_end_date = df_setup.tail(1)['date'].values[0]
                     last_completed_stg1_anno = df_setup.tail(1)['anno_setup'].values[0]
+
+                    last_completed_stg1_perfect = ''
+                    if adf.at[index-1,'low'] < adf.at[index-2,'low'] and adf.at[index-1,'low'] < adf.at[index-3,'low']:
+                        if adf.at[index,'low'] < adf.at[index-2,'low'] and adf.at[index,'low'] < adf.at[index-3,'low']:
+                            last_completed_stg1_perfect='True'
+
 
                 dn_setup_close = close
                 adf.at[index, 'dn_setup_close'] = dn_setup_close
@@ -1103,6 +1110,13 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
                     last_completed_stg1_end_date = df_setup.tail(1)['date'].values[0]
                     last_completed_stg1_anno = df_setup.tail(1)['anno_setup'].values[0]
 
+                    last_completed_stg1_perfect = ''
+                    if adf.at[index - 1, 'high'] > adf.at[index - 2, 'high'] and adf.at[index - 1, 'high'] > adf.at[
+                        index - 3, 'high']:
+                        if adf.at[index, 'high'] > adf.at[index - 2, 'high'] and adf.at[index, 'high'] > adf.at[
+                            index - 3, 'high']:
+                            last_completed_stg1_perfect = 'True'
+
                 up_setup_close= close
                 adf.at[index, 'up_setup_close'] = up_setup_close
 
@@ -1121,6 +1135,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
         adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
         adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
         adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
+        adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
 
     return(adf)
 
