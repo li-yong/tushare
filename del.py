@@ -1420,10 +1420,10 @@ def TD_Indicator_main():
     if not os.path.isdir(rst_dir):
         os.mkdir(rst_dir)
 
-    # TD_debug(rst_dir=rst_dir)
+    TD_debug(rst_dir=rst_dir)
     TD_szsz_index(rst_dir=rst_dir)
-    # TD_stocks(rst_dir=rst_dir, stock_global='AG_HOLD')
-    # TD_stocks(rst_dir=rst_dir)
+    TD_stocks(rst_dir=rst_dir, stock_global='AG_HOLD')
+    TD_stocks(rst_dir=rst_dir)
 
     return()
 
