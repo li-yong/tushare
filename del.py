@@ -1278,7 +1278,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     # adf[adf['Stage2_DN_DAYS_13']>=13]
     # adf[adf['Stage2_UP_DAYS_13']>=13]
     collist=['code', 'date', 'close', 'anno_setup', 'anno_stg2',
-            'last_completed_stg1_anno', 'last_completed_stg1_start','last_completed_stg1_end',
+            'last_completed_stg1_anno','last_completed_stg1_perfect', 'last_completed_stg1_end',
             'last_completed_stg1_close', 'C_DN_DAYS_B4',
             'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13',
             'Stage2_UP_DAYS_13']
@@ -1339,10 +1339,10 @@ def TD_oper(adf):
             oper_cnt_long = 0
 
     rtn_op_df = adf[(adf['anno_oper'].str.contains('OPER_LONG')) | (adf['anno_oper'].str.contains('OPER_SHORT')) ]
-    rtn_op_df = rtn_op_df[['code', 'date', 'close','anno_oper','anno_stg2', 'anno_setup' ]].reset_index().drop('index',axis=1)
+    rtn_op_df = rtn_op_df[['code', 'date', 'close','anno_oper','anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
 
     rtn_9_13_df = adf[(adf['anno_stg2'].str.contains('SHORT CONDITION Meet')) | (adf['anno_stg2'].str.contains('LONG CONDITION Meet')) ]
-    rtn_9_13_df = rtn_9_13_df[['code', 'date', 'close', 'anno_oper', 'anno_stg2', 'anno_setup']].reset_index().drop('index',axis=1)
+    rtn_9_13_df = rtn_9_13_df[['code', 'date', 'close', 'anno_oper', 'anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
     return(rtn_9_13_df, rtn_op_df)
 
 
@@ -1416,7 +1416,6 @@ def TD_stocks(rst_dir,stock_global=None):
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}")
 
 def TD_Indicator_main():
-
     rst_dir="/home/ryan/DATA/result/TD_Indicator"
     if not os.path.isdir(rst_dir):
         os.mkdir(rst_dir)
