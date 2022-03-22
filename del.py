@@ -1202,6 +1202,8 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
         bars_after_setup = index - setup_bar_index
         adf.at[index, 'bars_after_setup'] = bars_after_setup
 
+
+
         if setup_bar_index > 0 and bars_after_setup > 13*5 and pre_anno_setup !='':
             pre_anno_setup = ''
             logging.info(f"code {code},{date} too far from setupbar, no trending present.{str(bars_after_setup)}  "
@@ -1209,10 +1211,15 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
 
         if pre_anno_setup=='DN_D9_of_9':
             if min(low,close_b1) > row['last_completed_stg1_high'] and cancle_countdown:
-                # print("DN Countdown cancelled.")
                 adf.at[index, 'anno_stg2'] = 'DN_cancelled_by_p_break_up_setup'
                 pre_anno_setup=''
                 dn_cnt=0
+                continue
+
+            if row['C_DN_DAYS_B4'] >= 18:
+                adf.at[index, 'anno_stg2'] = 'DN_cancelled_by_setup_exceed_18D'
+                pre_anno_setup = ''
+                dn_cnt = 0
                 continue
 
             if close <= low_b2:
@@ -1238,10 +1245,15 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
 
         if pre_anno_setup=='UP_D9_of_9' :
             if  max(high, close_b1) <= row['last_completed_stg1_low'] and cancle_countdown:
-                # print("UP Countdown cancelled.")
                 adf.at[index, 'anno_stg2'] = 'UP_cancelled_by_p_break_dn_setup'
                 pre_anno_setup=''
                 up_cnt=0
+                continue
+
+            if row['C_UP_DAYS_B4'] >= 18:
+                adf.at[index, 'anno_stg2'] = 'UP_cancelled_by_setup_exceed_18D'
+                pre_anno_setup = ''
+                up_cnt = 0
                 continue
 
             if close >= high_b2:
