@@ -2922,7 +2922,8 @@ class Finlib:
         if os.stat(file_path).st_size <= 300: #not work
             return False
 
-        file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+        file_time = datetime.fromtimestamp(os.path.getmtime(file_path))  #datetime.datetime(2022, 3, 22, 17, 56, 41, 506147)
+        file_time = datetime.strptime(file_time.strftime("%Y%m%d"), '%Y%m%d') # datetime.datetime(2022, 3, 22, 0, 0)
         if use_last_trade_day:
             current_time = datetime.strptime(self.get_last_trading_day(), '%Y%m%d')
         else:
@@ -2931,7 +2932,7 @@ class Finlib:
         file_age = (current_time - file_time).total_seconds()
 
         # if file_age > 86400:
-        if file_age > day * 24 * 3600:
+        if file_age >= day * 24 * 3600:
             return False
         else:
             return True
