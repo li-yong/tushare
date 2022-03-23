@@ -1145,6 +1145,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     '''
 
     adf['anno_stg2']=""
+    adf['anno_bar10']=""
     adf['low_b2']=adf['low'].shift(periods=2)
     adf['low_b1']=adf['low'].shift(periods=1)
     adf['high_b1']=adf['high'].shift(periods=1)
@@ -1202,12 +1203,31 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
         bars_after_setup = index - setup_bar_index
         adf.at[index, 'bars_after_setup'] = bars_after_setup
 
-
-
         if setup_bar_index > 0 and bars_after_setup > 13*5 and pre_anno_setup !='':
             pre_anno_setup = ''
             logging.info(f"code {code},{date} too far from setupbar, no trending present.{str(bars_after_setup)}  "
                          + f" ann_setup {anno_setup} pre_anno_setup {pre_anno_setup}")
+
+        if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='DN_D9_of_9':
+            if close < adf.at[setup_bar_index, 'close']:
+                anno_bar10 = f'Bar10_start_DN_13_CD'
+                print(f"{code} {date} {close} {anno_bar10}.")
+                adf.at[index, 'anno_bar10'] = anno_bar10
+            elif close > adf.at[setup_bar_index, 'close']:
+                anno_bar10 = f'Bar10_reverse_9_dn_to_up'
+                print(f"{code} {date} {close} {anno_bar10}.")
+                adf.at[index, 'anno_bar10'] = anno_bar10
+
+
+        if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='UP_D9_of_9':
+            if close < adf.at[setup_bar_index, 'close']:
+                anno_bar10 = f'Bar10_start_reverse_9_up_to_dn'
+                print(f"{code} {date} {close} {anno_bar10}.")
+                adf.at[index, 'anno_bar10'] = anno_bar10
+            elif close > adf.at[setup_bar_index, 'close']:
+                anno_bar10 = f'Bar10_start_UP_13_CD'
+                print(f"{code} {date} {close} {anno_bar10}.")
+                adf.at[index, 'anno_bar10'] = anno_bar10
 
         if pre_anno_setup=='DN_D9_of_9':
             if min(low,close_b1) > row['last_completed_stg1_high'] and cancle_countdown:
@@ -1241,7 +1261,6 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
                 adf.at[index,'anno_stg2'] = 'DN_D'+str(dn_cnt)+'_of_13_pass'
                 adf.at[index, 'Stage2_DN_DAYS_13'] = dn_cnt
                 #
-
 
         if pre_anno_setup=='UP_D9_of_9' :
             if  max(high, close_b1) <= row['last_completed_stg1_low'] and cancle_countdown:
@@ -1280,11 +1299,12 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     # print(finlib.Finlib().pprint(adf))
     # adf[adf['Stage2_DN_DAYS_13']>=13]
     # adf[adf['Stage2_UP_DAYS_13']>=13]
-    collist=['code', 'date', 'close', 'anno_setup', 'anno_stg2',
+    collist=['code', 'date', 'close', 'anno_setup', 'anno_stg2','anno_bar10',
             'last_completed_stg1_anno','last_completed_stg1_perfect', 'last_completed_stg1_end',
-            'last_completed_stg1_close', 'C_DN_DAYS_B4',
-            'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13',
-            'Stage2_UP_DAYS_13']
+            'last_completed_stg1_close',
+             'C_DN_DAYS_B4','C_UP_DAYS_B4',
+             'Stage2_DN_DAYS_13','Stage2_UP_DAYS_13'
+             ]
 
     # adf = finlib.Finlib().adjust_column(df=adf, col_name_list=collist)
     adf = adf[collist]
