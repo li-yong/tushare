@@ -978,8 +978,8 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
     pre_n_day=4
     adf['anno_setup']=""
     adf['last_completed_stg1_anno']=""
-    adf['last_completed_stg1_start']=""
-    adf['last_completed_stg1_end']=""
+    adf['last_completed_stg1_start_date']=""
+    adf['last_completed_stg1_end_date']=""
     adf['last_completed_stg1_close']=""
 
     adf['close_b4']=adf['close'].shift(periods=pre_n_day)
@@ -1300,7 +1300,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     # adf[adf['Stage2_DN_DAYS_13']>=13]
     # adf[adf['Stage2_UP_DAYS_13']>=13]
     collist=['code', 'date', 'close', 'anno_setup', 'anno_stg2','anno_bar10',
-            'last_completed_stg1_anno','last_completed_stg1_perfect', 'last_completed_stg1_end',
+            'last_completed_stg1_anno','last_completed_stg1_perfect', 'last_completed_stg1_end_date',
             'last_completed_stg1_close',
              'C_DN_DAYS_B4','C_UP_DAYS_B4',
              'Stage2_DN_DAYS_13','Stage2_UP_DAYS_13'
@@ -1362,10 +1362,10 @@ def TD_oper(adf):
             oper_cnt_long = 0
 
     rtn_op_df = adf[(adf['anno_oper'].str.contains('OPER_LONG')) | (adf['anno_oper'].str.contains('OPER_SHORT')) ]
-    rtn_op_df = rtn_op_df[['code', 'date', 'close','anno_oper','anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
+    rtn_op_df = rtn_op_df[['code', 'date', 'close','anno_oper','anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end_date', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
 
     rtn_9_13_df = adf[(adf['anno_stg2'].str.contains('SHORT CONDITION Meet')) | (adf['anno_stg2'].str.contains('LONG CONDITION Meet')) ]
-    rtn_9_13_df = rtn_9_13_df[['code', 'date', 'close', 'anno_oper', 'anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
+    rtn_9_13_df = rtn_9_13_df[['code', 'date', 'close', 'anno_oper', 'anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end_date', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
     return(rtn_9_13_df, rtn_op_df)
 
 
