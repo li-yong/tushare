@@ -972,10 +972,10 @@ def daily_UD_tongji():
         # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
         logging.info("end of daily_UD_tongji\n\n")
 
-def TD_setup_9_consecutive_close_4_day_lookup(adf):
+def _td_setup_9_consecutive_close_4_day_lookup(adf,pre_n_day=4,consec_day=9):
     # https://oxfordstrat.com/indicators/td-sequential-3/
     adf = adf.reset_index().drop('index', axis=1)
-    pre_n_day=4
+    # pre_n_day=4
     adf['anno_setup']=""
     adf['last_completed_stg1_anno']=""
     adf['last_completed_stg1_start_date']=""
@@ -986,8 +986,8 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
     adf['close_gt_pre_4d'] = adf['close']-adf['close'].shift(periods=pre_n_day)>0
     adf['close_gt_pre_4d_-1']=adf['close_gt_pre_4d'].shift(periods=1)
 
-    adf.loc[(adf['close_gt_pre_4d']==True) & (adf['close_gt_pre_4d_-1']==False),['anno_setup']]="UP_D1_of_9"
-    adf.loc[(adf['close_gt_pre_4d']==False) & (adf['close_gt_pre_4d_-1']==True),['anno_setup']]="DN_D1_of_9"
+    adf.loc[(adf['close_gt_pre_4d']==True) & (adf['close_gt_pre_4d_-1']==False),['anno_setup']]="UP_D1_of_"+str(consec_day)
+    adf.loc[(adf['close_gt_pre_4d']==False) & (adf['close_gt_pre_4d_-1']==True),['anno_setup']]="DN_D1_of_"+str(consec_day)
 
     adf = adf.drop(columns=['close_gt_pre_4d','close_gt_pre_4d_-1'])
 
@@ -1028,7 +1028,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
         close_b4=row['close_b4']
         anno_setup=row['anno_setup']
 
-        if anno_setup=='DN_D1_of_9':
+        if anno_setup=='DN_D1_of_'+str(consec_day):
             setup_dir='DN'
             dn_cnt = 1
 
@@ -1044,7 +1044,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
             adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
 
             continue
-        elif anno_setup=='UP_D1_of_9':
+        elif anno_setup=='UP_D1_of_'+str(consec_day):
             setup_dir='UP'
             up_cnt = 1
             adf.at[index, 'C_UP_DAYS_B4'] = up_cnt
@@ -1063,11 +1063,11 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
         if setup_dir=='DN':
             if close < close_b4:
                 dn_cnt+=1
-                adf.at[index,'anno_setup']='DN_D'+str(dn_cnt)+"_of_9"
+                adf.at[index,'anno_setup']='DN_D'+str(dn_cnt)+"_of_"+str(consec_day)
                 adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
 
-                if dn_cnt == 9:
-                    df_setup = adf.iloc[index-9+1:index+1]
+                if dn_cnt == consec_day:
+                    df_setup = adf.iloc[index-consec_day+1:index+1]
                     last_completed_stg1_high = df_setup['high'].max()
                     last_completed_stg1_low = df_setup['low'].min()
                     last_completed_stg1_open = df_setup.head(1)['open'].values[0]
@@ -1094,12 +1094,12 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
         if setup_dir=='UP' :
             if close > close_b4:
                 up_cnt+=1
-                adf.at[index, 'anno_setup']='UP_D'+str(up_cnt)+"_of_9"
+                adf.at[index, 'anno_setup']='UP_D'+str(up_cnt)+"_of_"+str(consec_day)
                 adf.at[index, 'C_UP_DAYS_B4']=up_cnt
 
                 # if up_cnt >=9:
-                if up_cnt ==9:
-                    df_setup = adf.iloc[index-9+1:index+1]
+                if up_cnt ==consec_day:
+                    df_setup = adf.iloc[index-consec_day+1:index+1]
                     last_completed_stg1_high = df_setup['high'].max()
                     last_completed_stg1_low = df_setup['low'].min()
                     last_completed_stg1_open = df_setup.head(1)['open'].values[0]
@@ -1134,7 +1134,7 @@ def TD_setup_9_consecutive_close_4_day_lookup(adf):
 
     return(adf)
 
-def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
+def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
     # https://oxfordstrat.com/indicators/td-sequential-3/
     pre_n_day=2
     '''
@@ -1310,7 +1310,7 @@ def TD_countdown_13_day_lookup(adf,cancle_countdown = True):
     adf = adf[collist]
     return(adf)
 
-def TD_oper(adf):
+def _td_oper(adf):
     # https://oxfordstrat.com/indicators/td-sequential-3/
     consective_op_cnt=1
 
@@ -1369,34 +1369,34 @@ def TD_oper(adf):
     return(rtn_9_13_df, rtn_op_df)
 
 
-def TD_indicator(df):
-    df_setup = TD_setup_9_consecutive_close_4_day_lookup(df)
-    df_countdown = TD_countdown_13_day_lookup(df_setup,cancle_countdown=True)
-    df_9_13, df_op = TD_oper(df_countdown)
+def td_indicator(df,pre_n_day,consec_day):
+    df_setup = _td_setup_9_consecutive_close_4_day_lookup(df,pre_n_day,consec_day)
+    df_countdown = _td_countdown_13_day_lookup(df_setup,cancle_countdown=True)
+    df_9_13, df_op = _td_oper(df_countdown)
     return(df_9_13, df_op, df_countdown.tail(1))
 
 
-def TD_szsz_index(rst_dir):
+def TD_szsz_index(rst_dir,pre_n_day,consec_day):
     df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
-    df_9_13, df_op, df_today = TD_indicator(df_index)
+    df_9_13, df_op, df_today = td_indicator(df_index,pre_n_day,consec_day)
     df_9_13.to_csv(rst_dir+"/szzs_9_13.csv", encoding='UTF-8', index=False)
     df_op.to_csv(rst_dir+"/szzs_op.csv", encoding='UTF-8', index=False)
     df_today.to_csv(rst_dir+"/szzs_today.csv", encoding='UTF-8', index=False)
     print("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
     print("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
 
-def TD_debug(rst_dir):
+def TD_debug(rst_dir,pre_n_day,consec_day):
     # df=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv')[-300:]
     df=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/SH601918.csv')[-300:]
     df = df[df['date'] > '20211107'].reset_index().drop('index', axis=1)
 
-    df_9_13, df_op, df_today = TD_indicator(df)
+    df_9_13, df_op, df_today = td_indicator(df,pre_n_day,consec_day)
     df_9_13.to_csv(rst_dir+"/debug_mt_9_13.csv", encoding='UTF-8', index=False)
     df_op.to_csv(rst_dir+"/debug_mt_op.csv", encoding='UTF-8', index=False)
     print("debug 9_13: \n"+finlib.Finlib().pprint(df_9_13))
     print("debug Operation: \n"+finlib.Finlib().pprint(df_op))
 
-def TD_stocks(rst_dir,stock_global=None):
+def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     rtn_9_13 = pd.DataFrame()
     rtn_op = pd.DataFrame()
     rtn_today = pd.DataFrame()
@@ -1414,7 +1414,7 @@ def TD_stocks(rst_dir,stock_global=None):
     td_csv_op = rst_dir+"/"+"op.csv"
     td_csv_today = rst_dir+"/"+"today.csv"
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
 
     if stock_global is not None:
         df = pd.merge(left=df, right=df_hold[['code']], on='code',how='inner').reset_index().drop('index', axis=1)
@@ -1422,7 +1422,7 @@ def TD_stocks(rst_dir,stock_global=None):
     for code in df['code'].unique():
         logging.info(f"code {code}")
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
-        df_9_13, df_op, df_today = TD_indicator(adf)
+        df_9_13, df_op, df_today = td_indicator(adf,pre_n_day,consec_day)
 
         rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
         rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
@@ -1438,22 +1438,66 @@ def TD_stocks(rst_dir,stock_global=None):
 
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}")
 
-def TD_Indicator_main():
+def TD_indicator_main():
     rst_dir="/home/ryan/DATA/result/TD_Indicator"
     if not os.path.isdir(rst_dir):
         os.mkdir(rst_dir)
 
-    TD_debug(rst_dir=rst_dir)
-    TD_szsz_index(rst_dir=rst_dir)
-    TD_stocks(rst_dir=rst_dir, stock_global='AG_HOLD')
-    TD_stocks(rst_dir=rst_dir)
+    pre_n_day = 4
+    consec_day = 9
+
+    TD_debug(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    TD_szsz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
+    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
 
     return()
 
-#### MAIN #####
 
-TD_Indicator_main()
-exit()
+def not_work_da_v_zhui_zhang():
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[
+         -300:]
+
+    df['head'] = df['high'] - df['open']
+    df['body'] = df['close'] - df['open']
+    df['tail'] = df['close'] - df['low']
+
+    df1 = df[df['body'] < 0]
+    df1 = df1[df1['head'] < abs(df1['body'])]
+    df1 = df1[abs(df1['body']) < df1['tail']]
+
+    i = 0
+    for index, row in df1.iterrows():
+        # df_idx_1 = df1.iloc[i].name + 1
+        # df_idx_2 = index + 1
+        day1 = df.loc[index + 1]
+        day2 = df.loc[index + 2]
+        i += 1
+
+        day_c = day1
+
+        if day1['body'] < 0:
+            # print("skip body<0 "+str(day1['body'] ))
+            dayc = day2
+            if day2['body'] < 0:
+                continue
+
+        if day_c['body'] < day_c['tail']:
+            # print("skip body < tail " + str(day_c['tail']))
+            # continue
+            pass
+
+        if day_c['close'] < row['close']:
+            # print("skip close< lower than pre close " + str(row['close']))
+            continue
+
+        print(day_c['date'], day_c['close'])
+        print('')
+
+
+#### MAIN #####
+# TD_indicator_main()
+
 
 df = finlib.Finlib().read_all_ag_qfq_data(days=200)
 df = finlib.Finlib()._remove_garbage_on_market_days(df)

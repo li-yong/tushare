@@ -742,7 +742,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 ed = str(ed)
                 if ed == "nan":
                     continue
-                logging.info(__file__ + " " + "end date is " + ed)
+                # logging.info(__file__ + " " + "end date is " + ed)
 
                 if ed in fetch_period_list:
                     fetch_period_list.remove(ed)
@@ -771,7 +771,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 # if (not os.path.exists(ind_csv_sub)) or (force_run_global) or (os.stat(ind_csv).st_size < 2000):
                 if df_tmp_sub.__len__() > 0:
                     df_tmp_sub.to_csv(ind_csv_sub, encoding="UTF-8", index=False)
-                    logging.info(__file__ + ": " + "saved " + ind_csv_sub + " . len " + str(df_tmp_sub.__len__()))
+                    # logging.info(__file__ + ": " + "saved " + ind_csv_sub + " . len " + str(df_tmp_sub.__len__()))
                 else:
                     logging.info(__file__+" "+"empty df, skip saving "+ind_csv_sub)
 

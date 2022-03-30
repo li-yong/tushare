@@ -3189,8 +3189,8 @@ class Finlib:
                           suffixes=("", "_x"))
 
         if df_rtn['industry_name_L1_L2_L3'].hasnans:
-            logging.info("following stock has nan industry")
-            logging.info(self.pprint(df_rtn[df_rtn['industry_name_L1_L2_L3'].isna()]))
+            # logging.info("following stock has nan industry")
+            # logging.info(self.pprint(df_rtn[df_rtn['industry_name_L1_L2_L3'].isna()]))
             df_rtn['industry_name_L1_L2_L3']=df_rtn['industry_name_L1_L2_L3'].fillna(value='UNKNOWN')
 
         return(df_rtn)
@@ -5089,27 +5089,33 @@ class Finlib:
                 df = df.head(50)
 
             df = self.add_market_to_code(df) #df has all the stocks on market
+            '''
 
+            day_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_300_days.csv"
+            df_days = pd.read_csv(day_f)
+            df_days = df_days[(df_days['date'] >= int(dayS)) & (df_days['date'] <= int(dayE))]
+            i = 0
+            for code in df_days['code'].unique():
+                df_sub = df_days[df_days['code'] == code].reset_index().drop('index',axis=1)
+                i += 1
+                df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
+                df_amt = df_amt.append(df_sub)
+                logging.info(str(i)+" of " +str(df_days['code'].unique().__len__())+" "+ code + ",  append " + str(df_sub.__len__()) + " lines.")
+            '''
             i = 0
             for index, row in df.iterrows():
+
                 i += 1
                 name, code = row['name'], row['code']
-                # csv = "/home/ryan/DATA/DAY_Global/AG/" + code + ".csv"
                 csv = "/home/ryan/DATA/DAY_Global/AG_qfq/" + code + ".csv"
                 if not os.path.exists(csv):
                     logging.error("file not exists, " + csv)
                     continue
 
-                # with open(csv, 'r') as f:
-                #     q = deque(f, ndays)  # read tail ndays lines
-                #
-                # df_sub = pd.read_csv(StringIO(''.join(q)), header=None)
-
                 df_sub = self.regular_read_csv_to_stdard_df(csv)
                 df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] <= dayE)]
 
                 df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
-
                 df_amt = df_amt.append(df_sub)
                 logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
 
