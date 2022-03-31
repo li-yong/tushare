@@ -1496,7 +1496,7 @@ def not_work_da_v_zhui_zhang():
 
 
 #### MAIN #####
-# TD_indicator_main()
+TD_indicator_main()
 
 
 df = finlib.Finlib().read_all_ag_qfq_data(days=200)
