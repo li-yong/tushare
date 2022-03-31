@@ -355,15 +355,16 @@ def wglh_login():
     browser.get('https://wglh.com/user/account/')
 
     #Manually login. Previous login GUI changed.
-    logging.info("Please manually login in 120 sec")
-    WebDriverWait(browser, 120).until(EC.title_contains("我的账号信息"))
+    logging.info("Please manually login in 360 sec")
+    WebDriverWait(browser, 360).until(EC.title_contains("我的账号信息"))
     return(browser)
 
 
 def wglh_download():
-    b = wglh_login()
-    fetch_index_wugui_selenium(b)
-    fetch_stock_industry_wugui_selenium(b)
+    browser = wglh_login()
+    fetch_index_wugui_selenium(browser)
+    fetch_stock_industry_wugui_selenium(browser)
+    browser.quit()
 
 
 ############
@@ -431,7 +432,7 @@ def fetch_index_wugui_selenium(browser):
         #### save the sheet to csv
 
     print("end of webdriver wugui index download.")
-    browser.quit()
+    # browser.quit() # don't quit here, the left routine need use browser
 
 
 

@@ -16,6 +16,9 @@ if [[ ${source_host} == "haha_power" ]]; then
     echo "haha_power";
 fi
 
+#### Most frequent used
+rsync -avzt ${source_host}:/home/ryan/DATA/pickle/daily_update_source/  /home/ryan/DATA/pickle/daily_update_source/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
 
 
 ######################################
@@ -26,8 +29,6 @@ fi
 #rsync -avzt   /home/ryan/tushare_ryan/  haha_data_source:/home/ryan/tushare_ryan/
 #ssh haha_data_source "cd ~/tushare_ryan;  git pull"
 
-rsync -avzt ${source_host}:/home/ryan/DATA/pickle/daily_update_source/  /home/ryan/DATA/pickle/daily_update_source/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/
 
 #us hk indices are get from WikiPedia. Download to haha_brain, then sync to haha_power
 #haha_brain need run: python t_daily_get_us_index.py
@@ -35,15 +36,14 @@ rsync -avzt /home/ryan/DATA/pickle/INDEX_US_HK/ ${source_host}:/home/ryan/DATA/p
 
 #TradingView are download to haha_brain manually on Chrome.
 rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/ ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/TradingView
-#rsync -avzt /home/ryan/DATA/result/*.csv ${source_host}:/home/ryan/DATA/result/
-#rsync -avzt /home/ryan/DATA/result/*.txt ${source_host}:/home/ryan/DATA/result/
-#rsync -avzt /home/ryan/DATA/result/today ${source_host}:/home/ryan/DATA/result/
 
+#wglh from laptop to haha_power
+rsync -avzt /home/ryan/DATA/pickle/ag_stock_industry_wg.csv ${source_host}:/home/ryan/DATA/pickle/ag_stock_industry_wg.csv
+rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua
 
 
 #v: sync recursivly
 rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/akshare/  /home/ryan/DATA/pickle/Stock_Fundamental/akshare/
-rsync -avzt /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/ {source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/
 
 ######################################
 #
