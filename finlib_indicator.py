@@ -1270,8 +1270,39 @@ class Finlib_indicator:
 
             WebDriverWait(browser, 10).until(EC.title_contains("TradingView"))
 
-            pickle.dump(browser.get_cookies(), open(cookie_f, "wb"))
+            with open(cookie_f, "wb") as f:
+                pickle.dump(browser.get_cookies(),f)
+
             logging.info("tradingview login cookie saved to " + cookie_f)
+
+        return (browser)
+
+    def wglh_login(self, browser, target_uri='https://wglh.com/user/account/'):
+
+        cookie_f = os.path.expanduser("~") + '/DATA/pickle/wglh.cookie'
+
+        if finlib.Finlib().is_cached(cookie_f, day=2):
+            browser.get('https://wglh.com/')
+
+            logging.info('wglh_login, load cookies from ' + cookie_f)
+
+            with open(cookie_f, "rb") as f:
+                cookies = pickle.load(f)
+
+            for c in cookies:
+                browser.add_cookie(c)
+
+            browser.get(target_uri)
+            WebDriverWait(browser, 360).until(EC.title_contains("我的账号信息"))
+        else:
+            browser.get(target_uri)
+            logging.info("Please manually login in 360 sec")
+            WebDriverWait(browser, 360).until(EC.title_contains("我的账号信息"))
+
+            with open(cookie_f, "wb") as f:
+                pickle.dump(browser.get_cookies(),f)
+
+            logging.info("wglh login cookie saved to " + cookie_f)
 
         return (browser)
 

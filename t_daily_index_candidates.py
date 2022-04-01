@@ -347,21 +347,9 @@ def fetch_stock_industry_wugui_selenium(browser):
     logging.info("completed. fetched stock's industry from wugui, save to "+csv_o+" len "+str(df_all.__len__()))
     return(df_all)
 
-def wglh_login():
-    opts = webdriver.ChromeOptions()
-    # opts.add_argument("user-data-dir=/home/ryan/.config/google-chrome")
-    # opts.add_argument("profile-directory=Default")
-    browser = webdriver.Chrome(options=opts)
-    browser.get('https://wglh.com/user/account/')
-
-    #Manually login. Previous login GUI changed.
-    logging.info("Please manually login in 360 sec")
-    WebDriverWait(browser, 360).until(EC.title_contains("我的账号信息"))
-    return(browser)
-
-
 def wglh_download():
-    browser = wglh_login()
+    browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
+    browser = finlib_indicator.Finlib_indicator().wglh_login(browser=browser)
     fetch_index_wugui_selenium(browser)
     fetch_stock_industry_wugui_selenium(browser)
     browser.quit()
