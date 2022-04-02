@@ -1306,6 +1306,57 @@ class Finlib_indicator:
 
         return (browser)
 
+
+    def jsl_login(self, browser, target_uri='https://www.jisilu.cn/account/login/'):
+
+        cookie_f = os.path.expanduser("~") + '/DATA/pickle/jsl.cookie'
+
+        if finlib.Finlib().is_cached(cookie_f, day=2):
+            browser.get('https://www.jisilu.cn/')
+
+            logging.info('jsl_login, load cookies from ' + cookie_f)
+
+            with open(cookie_f, "rb") as f:
+                cookies = pickle.load(f)
+
+            for c in cookies:
+                browser.add_cookie(c)
+
+            # browser.get(target_uri)
+            browser.get("https://www.jisilu.cn/notifications/")
+            WebDriverWait(browser, 60).until(EC.title_contains("通知"))
+        else:
+            browser.get(target_uri)
+
+            # usr_box = browser.find_element_by_id('aw-login-user-name')
+            usr_box = browser.find_element_by_name('user_name')
+            pwd_box = browser.find_element_by_name('password')
+
+
+            usr_box.send_keys('13651887669')
+            pwd_box.send_keys('fav8@Apple!_jsl')
+
+            browser.find_element_by_id('agreement_chk').click()
+            browser.find_element_by_id('login_submit').click()
+            # browser.find_element_by_class_name('tv-button__loader').click()
+
+
+
+            logging.info("Please manually login in 360 sec")
+            WebDriverWait(browser, 60).until(EC.title_contains("集思录"))
+
+            with open(cookie_f, "wb") as f:
+                pickle.dump(browser.get_cookies(),f)
+
+            logging.info("jsl login cookie saved to " + cookie_f)
+
+        return (browser)
+
+
+
+
+
+
     def tv_screener_set_interval(self, browser, interval='1D'):
         # xp_interval = '/html/body/div[8]/div/div[2]/div[7]/div[2]'
         obj_interval = browser.find_element_by_css_selector('[data-name="screener-time-interval"]')

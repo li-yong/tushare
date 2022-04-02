@@ -20,6 +20,9 @@ import sys
 import constant
 from scipy import stats
 
+from bs4 import BeautifulSoup
+import re
+
 from selenium import webdriver
 
 from selenium.webdriver.common.by import By
@@ -507,6 +510,7 @@ def main():
     parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
     parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tradingview, saved to DATA/pickle/{index_name}.csv")
     parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
+    parser.add_option("--fetch_jsl_kzz", action="store_true", default=False, dest="fetch_jsl_kzz",  help="fetch from jisilu, saved to /home/ryan/DATA/pickle/Stock_Fundamental/jisilu/{index_name}.xls")
 
     #
 
@@ -522,6 +526,7 @@ def main():
     ndays = options.ndays
     fetch_index_tv = options.fetch_index_tv
     fetch_index_wg = options.fetch_index_wg
+    fetch_jsl_kzz = options.fetch_jsl_kzz
 
 
 
@@ -537,6 +542,73 @@ def main():
         'spx500':'spx500', #SPX/SP500 source is prepared manually.
 
     }
+
+    if fetch_jsl_kzz:
+        #login
+        browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
+        browser = finlib_indicator.Finlib_indicator().jsl_login(browser)
+
+        #open kzz page
+        browser.get('https://www.jisilu.cn/web/data/cb/list')
+        time.sleep(15)
+        WebDriverWait(browser, 60).until(EC.title_contains("列表 - 可转债"))
+
+        df =jsl_kzz_parse(browser=browser)
+
+        print(1)
+        exit()
+
+
+def jsl_kzz_parse(browser):
+    # parse data
+    tbl = browser.find_element_by_class_name('sticky-header')
+
+    tbl_header = tbl.find_element_by_class_name('jsl-table-header')
+    tbl_body = tbl.find_element_by_class_name('jsl-table-body')
+
+    hh = tbl_header.find_element_by_tag_name('thead').get_attribute('innerHTML')
+    hb = tbl_body.find_element_by_tag_name('tbody').get_attribute('innerHTML')
+
+    col = []
+
+    span = BeautifulSoup(hh, 'html.parser').find_all('span')
+    for s in span:
+        p = s.text
+        if p == '':
+            continue
+        # print(p)
+        col.append(p)
+
+    df = pd.DataFrame(columns=col)
+
+    data_rows = BeautifulSoup(hb, 'html.parser').find_all('tr')
+    for r in data_rows:
+        if not re.match(r'\d+', r.get_text('|', strip=True).split("|")[0]):
+            continue
+
+        d = []
+        for y in r.findAll('td'):
+            if y.findAll('span').__len__() > 0:
+                d.append(y.findAll('span')[0].text.strip())
+            else:
+                d.append(y.text.strip())
+
+        if d.__len__() != df.columns.__len__():
+            print("unexpected row")
+            continue
+
+        df = df.append(pd.Series(d, index=df.columns), ignore_index=True)
+
+    # print(finlib.Finlib().pprint(df.head(2)[[
+    #     '代码', '转债名称', '现价', '涨跌幅', '正股代码', '正股名称', '正股价', '正股涨跌', '转股价', '转股价值', '溢价率'
+    # ]]))
+    #
+    # |     | 行号   | 操作   | 代码   | 转债名称   | 现价    | 涨跌幅   | 正股代码   | 正股名称   | 正股价   | 正股涨跌   | 正股PB   | 转股价   | 转股价值   | 溢价率   | 双低   | 下修条件   | 地域   | 纯债价值   | 评级   | 期权价值   | 回售触发价   | 强赎触发价   | 转债流通市值占比   | 基金持仓   | 到期时间   | 剩余年限   | 剩余规模(亿元)   | 成交额(万元)   | 换手率   | 到期税前收益   | 回售收益   |
+    #
+    # df[['下修条件']]
+    return(df)
+
+
 
     if fetch_index_tv:
         fetch_index_tradingview_selenium()
