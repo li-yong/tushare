@@ -555,6 +555,12 @@ def main():
 
         df =jsl_kzz_parse(browser=browser)
 
+        print(finlib.Finlib().pprint(df.head(2)))
+
+        df['my_zhuan_gu_jia_zhi'] = round(100/df['conversion_price'].astype(float) * df['stock_price'].astype(float),2)
+        df['my_yijia'] = round(100* (1-df['my_zhuan_gu_jia_zhi']/df['cb_price'].astype(float)),2)
+        df['my_yijia_jsl'] = round(100* (df['cb_price'].astype(float)/df['my_zhuan_gu_jia_zhi'] - 1),2)
+        print(finlib.Finlib().pprint(df.tail(10)[['cb_code','cb_name','my_yijia', 'my_yijia_jsl','premium_rate','my_zhuan_gu_jia_zhi','conversion_value']]))
         print(1)
         exit()
 
@@ -599,13 +605,41 @@ def jsl_kzz_parse(browser):
 
         df = df.append(pd.Series(d, index=df.columns), ignore_index=True)
 
-    # print(finlib.Finlib().pprint(df.head(2)[[
-    #     '代码', '转债名称', '现价', '涨跌幅', '正股代码', '正股名称', '正股价', '正股涨跌', '转股价', '转股价值', '溢价率'
-    # ]]))
-    #
-    # |     | 行号   | 操作   | 代码   | 转债名称   | 现价    | 涨跌幅   | 正股代码   | 正股名称   | 正股价   | 正股涨跌   | 正股PB   | 转股价   | 转股价值   | 溢价率   | 双低   | 下修条件   | 地域   | 纯债价值   | 评级   | 期权价值   | 回售触发价   | 强赎触发价   | 转债流通市值占比   | 基金持仓   | 到期时间   | 剩余年限   | 剩余规模(亿元)   | 成交额(万元)   | 换手率   | 到期税前收益   | 回售收益   |
-    #
-    # df[['下修条件']]
+    df = df.drop(columns=['行号','操作'], axis=1)
+    df = df.rename(columns={
+        # "行号": "line_number",
+        # "操作": "operation",
+        "代码": "cb_code",
+        "转债名称": "cb_name",
+        "现价": "cb_price",
+        "涨跌幅": "chg",
+        "正股代码": "stock_code",
+        "正股名称": "stock_name",
+        "正股价": "stock_price",
+        "正股涨跌": "stock_chg",
+        "正股PB": "stock_pb",
+        "转股价": "conversion_price",
+        "转股价值": "conversion_value",
+        "溢价率": "premium_rate",
+        "双低": "double_low",
+        "下修条件": "revised_condition",
+        "地域": "region",
+        "纯债价值": "pure_debt_value",
+        "评级": "rating",
+        "期权价值": "option_value",
+        "回售触发价": "sell_back_trigger_price",
+        "强赎触发价": "foreclosure_trigger",
+        "转债流通市值占比": "p_mv_of_cb",
+        "基金持仓": "fund_positions",
+        "到期时间": "expire_date",
+        "剩余年限": "remaining_years",
+        "剩余规模(亿元)": "remaining_scale_",
+        "成交额(万元)": "transaction_value_",
+        "换手率": "turnover_rate",
+        "到期税前收益": "expiration_pre-tax_income",
+        "回售收益": "sell-back_income",
+    }, errors="raise")
+
     return(df)
 
 
