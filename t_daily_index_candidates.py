@@ -555,18 +555,16 @@ def main():
 
         df =jsl_kzz_parse(browser=browser)
 
-        print(finlib.Finlib().pprint(df.head(2)))
-
-        df['my_zhuan_gu_jia_zhi'] = round(100/df['conversion_price'].astype(float) * df['stock_price'].astype(float),2)
-        df['my_yijia'] = round(100* (1-df['my_zhuan_gu_jia_zhi']/df['cb_price'].astype(float)),2)
-        df['my_yijia_jsl'] = round(100* (df['cb_price'].astype(float)/df['my_zhuan_gu_jia_zhi'] - 1),2)
+        df['my_zhuan_gu_jia_zhi'] = round(100/df['conversion_price'] * df['stock_price'],2)
+        df['my_yijia'] = round(100* (1-df['my_zhuan_gu_jia_zhi']/df['cb_price']),2)
+        df['my_yijia_jsl'] = round(100* (df['cb_price']/df['my_zhuan_gu_jia_zhi'] - 1),2)
         print(finlib.Finlib().pprint(df.tail(10)[['cb_code','cb_name','my_yijia', 'my_yijia_jsl','premium_rate','my_zhuan_gu_jia_zhi','conversion_value']]))
         print(1)
         exit()
 
 
 def jsl_kzz_parse(browser):
-    # parse data
+    # parse dataexpiration_pre
     tbl = browser.find_element_by_class_name('sticky-header')
 
     tbl_header = tbl.find_element_by_class_name('jsl-table-header')
@@ -633,12 +631,42 @@ def jsl_kzz_parse(browser):
         "基金持仓": "fund_positions",
         "到期时间": "expire_date",
         "剩余年限": "remaining_years",
-        "剩余规模(亿元)": "remaining_scale_",
-        "成交额(万元)": "transaction_value_",
+        "剩余规模(亿元)": "remaining_scale",
+        "成交额(万元)": "transaction_value",
         "换手率": "turnover_rate",
-        "到期税前收益": "expiration_pre-tax_income",
-        "回售收益": "sell-back_income",
+        "到期税前收益": "expiration_pre_tax_income",
+        "回售收益": "sell_back_income",
     }, errors="raise")
+
+    df.replace({'chg': r'%'}, {'chg': ''}, regex=True, inplace=True)
+    df.replace({'chg': r'停牌'}, {'chg': '0'}, regex=True, inplace=True)
+    df.replace({'stock_chg': r'%'}, {'stock_chg': ''}, regex=True, inplace=True)
+    df.replace({'stock_chg': r'停牌'}, {'stock_chg': '0'}, regex=True, inplace=True)
+
+    df.replace({'premium_rate': r'%'}, {'premium_rate': ''}, regex=True, inplace=True)
+    df.replace({'p_mv_of_cb': r'%'}, {'p_mv_of_cb': ''}, regex=True, inplace=True)
+    df.replace({'turnover_rate': r'%'}, {'turnover_rate': ''}, regex=True, inplace=True)
+    df.replace({'expiration_pre_tax_income': r'%'}, {'expiration_pre_tax_income': ''}, regex=True, inplace=True)
+    df.replace({'sell_back_trigger_price': r'-'}, {'sell_back_trigger_price': 0}, regex=True, inplace=True)
+
+    df['conversion_price'] = df['conversion_price'].apply(lambda _d: float(_d))
+    df['cb_price'] = df['cb_price'].apply(lambda _d: float(_d))
+    df['chg'] = df['chg'].apply(lambda _d: float(_d))
+    df['stock_price'] = df['stock_price'].apply(lambda _d: float(_d))
+    df['stock_chg'] = df['stock_chg'].apply(lambda _d: float(_d))
+    df['stock_pb'] = df['stock_pb'].apply(lambda _d: float(_d))
+    df['conversion_value'] = df['conversion_value'].apply(lambda _d: float(_d))
+    df['premium_rate'] = df['premium_rate'].apply(lambda _d: float(_d))
+    df['sell_back_trigger_price'] = df['sell_back_trigger_price'].apply(lambda _d: float(_d))
+    df['foreclosure_trigger'] = df['foreclosure_trigger'].apply(lambda _d: float(_d))
+    df['p_mv_of_cb'] = df['p_mv_of_cb'].apply(lambda _d: float(_d))
+    df['double_low'] = df['double_low'].apply(lambda _d: float(_d))
+    df['stock_pb'] = df['stock_pb'].apply(lambda _d: float(_d))
+    df['remaining_years'] = df['remaining_years'].apply(lambda _d: float(_d))
+    df['remaining_scale'] = df['remaining_scale'].apply(lambda _d: float(_d))
+    df['transaction_value'] = df['transaction_value'].apply(lambda _d: float(_d))
+    df['turnover_rate'] = df['turnover_rate'].apply(lambda _d: float(_d))
+    df['expiration_pre_tax_income'] = df['expiration_pre_tax_income'].apply(lambda _d: float(_d))
 
     return(df)
 
