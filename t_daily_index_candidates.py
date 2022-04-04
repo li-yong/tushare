@@ -558,7 +558,21 @@ def main():
         df['my_zhuan_gu_jia_zhi'] = round(100/df['conversion_price'] * df['stock_price'],2)
         df['my_yijia'] = round(100* (1-df['my_zhuan_gu_jia_zhi']/df['cb_price']),2)
         df['my_yijia_jsl'] = round(100* (df['cb_price']/df['my_zhuan_gu_jia_zhi'] - 1),2)
-        print(finlib.Finlib().pprint(df.tail(10)[['cb_code','cb_name','my_yijia', 'my_yijia_jsl','premium_rate','my_zhuan_gu_jia_zhi','conversion_value']]))
+
+        #stock chg > 1 and stock chg increased more than twice of cb
+
+        df_low_cb = df[(df['stock_chg'] > 1) & (df['chg'] < df['stock_chg'] * 0.5)]
+        df_low_cb = df_low_cb[df_low_cb['premium_rate']<5]
+        df_low_cb['inc_ratio'] = round(df_low_cb['stock_chg']/df_low_cb['chg'],2)
+        df_low_cb = df_low_cb.sort_values('inc_ratio', ascending=True, inplace=False)
+
+        print(finlib.Finlib().pprint(df_low_cb.tail(10)[['cb_code','inc_ratio','stock_chg','chg', 'premium_rate',
+                                                         'conversion_value',
+                                                         'cb_price','stock_price','rating','turnover_rate',
+                                                         'cb_name',
+                                                         ]]))
+
+
         print(1)
         exit()
 

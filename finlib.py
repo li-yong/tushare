@@ -4562,7 +4562,8 @@ class Finlib:
         return (rtn_df)
 
     def pprint(self, df):
-        str = tabulate.tabulate(df, headers='keys', tablefmt='psql', disable_numparse=True)
+        # str = tabulate.tabulate(df, headers='keys', tablefmt='psql', disable_numparse=True)
+        str = tabulate.tabulate(df, headers='keys', tablefmt='pretty', disable_numparse=True)
         #logging.info(str)
         return(str)
 
