@@ -21,9 +21,9 @@ def _exam_a_stock(code,date_exam_day,
 
     #code = "SH600519" #ryan debug
 
-    # /home/ryan/DATA/DAY_Global/AG/SH600519.csv
+    # /home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv
     # 代码,时间,开盘价,最高价,最低价,收盘价,成交量(股),成交额(元),换手率
-    df_a_stock_price_history = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG/'+code+".csv")
+    df_a_stock_price_history = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/'+code+".csv")
     if df_a_stock_price_history.__len__() < 200:
         logging.info("No enough data for "+code+", expected 200+, actual "+str(df_a_stock_price_history.__len__()))
         return(None)

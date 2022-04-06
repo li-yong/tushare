@@ -562,6 +562,8 @@ def main():
         #stock chg > 1 and stock chg increased more than twice of cb
 
         df_low_cb = df[(df['stock_chg'] > 1) & (df['chg'] < df['stock_chg'] * 0.5)]
+
+        # yijia < 5%
         df_low_cb = df_low_cb[df_low_cb['premium_rate']<5]
         df_low_cb['inc_ratio'] = round(df_low_cb['stock_chg']/df_low_cb['chg'],2)
         df_low_cb = df_low_cb.sort_values('inc_ratio', ascending=True, inplace=False)
@@ -571,7 +573,6 @@ def main():
                                                          'cb_price','stock_price','rating','turnover_rate',
                                                          'cb_name',
                                                          ]]))
-
 
         print(1)
         exit()
