@@ -492,90 +492,6 @@ def index_weight_wg(index_name):
     return(pd.read_csv(wg_index_dict[index_name]['f']))
 
 
-def main():
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
-    # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
-    logging.info(__file__+" "+"\n")
-    logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
-
-    parser = OptionParser()
-    parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
-    parser.add_option("--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
-    parser.add_option("--daily_update", action="store_true", default=False, dest="daily_update", help="update the symbol link to the latest day, only use at daily running.")
-
-    parser.add_option( "--period_start", dest="period_start", help="the start date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
-    parser.add_option( "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
-    parser.add_option("-n", "--ndays",default=0, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
-    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
-    parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
-    parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tradingview, saved to DATA/pickle/{index_name}.csv")
-    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
-    parser.add_option("--fetch_jsl_kzz", action="store_true", default=False, dest="fetch_jsl_kzz",  help="fetch from jisilu, saved to /home/ryan/DATA/pickle/Stock_Fundamental/jisilu/{index_name}.xls")
-
-    #
-
-    (options, args) = parser.parse_args()
-    debug = options.debug
-    force_run = options.force_run
-    daily_update = options.daily_update
-
-    index_source = options.index_source
-    index_name = options.index_name
-    period_start = options.period_start
-    period_end = options.period_end
-    ndays = options.ndays
-    fetch_index_tv = options.fetch_index_tv
-    fetch_index_wg = options.fetch_index_wg
-    fetch_jsl_kzz = options.fetch_jsl_kzz
-
-
-
-
-    idict = {
-        'zz100':'000903.SH', #zhong zheng 100
-        'zz200':'000904.SH',
-        'zz500':'000905.SH',
-        'hs300':'000300.SH',
-        'szcz':'399001.SZ', #深圳成指
-        'sz100':'399330.SZ', #深圳100
-        'nasdaq100':'nasdaq100', #nasdaq100 source is prepared manually.
-        'spx500':'spx500', #SPX/SP500 source is prepared manually.
-
-    }
-
-    if fetch_jsl_kzz:
-        #login
-        browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
-        browser = finlib_indicator.Finlib_indicator().jsl_login(browser)
-
-        #open kzz page
-        browser.get('https://www.jisilu.cn/web/data/cb/list')
-        time.sleep(15)
-        WebDriverWait(browser, 60).until(EC.title_contains("列表 - 可转债"))
-
-        df =jsl_kzz_parse(browser=browser)
-
-        df['my_zhuan_gu_jia_zhi'] = round(100/df['conversion_price'] * df['stock_price'],2)
-        df['my_yijia'] = round(100* (1-df['my_zhuan_gu_jia_zhi']/df['cb_price']),2)
-        df['my_yijia_jsl'] = round(100* (df['cb_price']/df['my_zhuan_gu_jia_zhi'] - 1),2)
-
-        #stock chg > 1 and stock chg increased more than twice of cb
-
-        df_low_cb = df[(df['stock_chg'] > 1) & (df['chg'] < df['stock_chg'] * 0.5)]
-
-        # yijia < 5%
-        df_low_cb = df_low_cb[df_low_cb['premium_rate']<5]
-        df_low_cb['inc_ratio'] = round(df_low_cb['stock_chg']/df_low_cb['chg'],2)
-        df_low_cb = df_low_cb.sort_values('inc_ratio', ascending=True, inplace=False)
-
-        print(finlib.Finlib().pprint(df_low_cb.tail(10)[['cb_code','inc_ratio','stock_chg','chg', 'premium_rate',
-                                                         'conversion_value',
-                                                         'cb_price','stock_price','rating','turnover_rate',
-                                                         'cb_name',
-                                                         ]]))
-
-        print(1)
-        exit()
 
 
 def jsl_kzz_parse(browser):
@@ -685,8 +601,94 @@ def jsl_kzz_parse(browser):
 
     return(df)
 
+def jsl_kzz():
+    # login
+    browser = finlib_indicator.Finlib_indicator().newChromeBrowser(headless=False)
+    browser = finlib_indicator.Finlib_indicator().jsl_login(browser)
+
+    # open kzz page
+    browser.get('https://www.jisilu.cn/web/data/cb/list')
+    time.sleep(15)
+    WebDriverWait(browser, 60).until(EC.title_contains("列表 - 可转债"))
+
+    df = jsl_kzz_parse(browser=browser)
+
+    df['my_zhuan_gu_jia_zhi'] = round(100 / df['conversion_price'] * df['stock_price'], 2)
+    df['my_yijia'] = round(100 * (1 - df['my_zhuan_gu_jia_zhi'] / df['cb_price']), 2)
+    df['my_yijia_jsl'] = round(100 * (df['cb_price'] / df['my_zhuan_gu_jia_zhi'] - 1), 2)
+
+    # stock chg > 1 and stock chg increased more than twice of cb
+
+    df_low_cb = df[(df['stock_chg'] > 1) & (df['chg'] < df['stock_chg'] * 0.5)]
+
+    # yijia < 5%
+    df_low_cb = df_low_cb[df_low_cb['premium_rate'] < 5]
+    df_low_cb['inc_ratio'] = round(df_low_cb['stock_chg'] / df_low_cb['chg'], 2)
+    df_low_cb = df_low_cb.sort_values('inc_ratio', ascending=True, inplace=False)
+
+    print(finlib.Finlib().pprint(df_low_cb.tail(10)[['cb_code', 'inc_ratio', 'stock_chg', 'chg', 'premium_rate',
+                                                     'conversion_value',
+                                                     'cb_price', 'stock_price', 'rating', 'turnover_rate',
+                                                     'cb_name',
+                                                     ]]))
+
+    exit()
 
 
+def main():
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+    # logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
+    logging.info(__file__+" "+"\n")
+    logging.info(__file__+" "+"SCRIPT STARTING " + " ".join(sys.argv))
+
+    parser = OptionParser()
+    parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
+    parser.add_option("--force_run", action="store_true", default=False, dest="force_run", help="always check, regardless output updated in 3 days.")
+    parser.add_option("--daily_update", action="store_true", default=False, dest="daily_update", help="update the symbol link to the latest day, only use at daily running.")
+
+    parser.add_option( "--period_start", dest="period_start", help="the start date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
+    parser.add_option( "--period_end", dest="period_end", help="the END date of checking scope. default is last trading day. fmt yyyymmdd. yyyy0430, yyyy1031")
+    parser.add_option("-n", "--ndays",default=0, dest="ndays",type="int", help="N days before the period_end. Use to define the start of checking period. HS300:365 Days, SZCZ:183 Days")
+    parser.add_option("-i", "--index_name",default="hs300", dest="index_name",type="str", help="index name. [hs300|zz100|zz500|szcz|nasdaq100|spx500|cn_sse|cn_szse|cn]")
+    parser.add_option("-s", "--index_source",default="index_source", dest="index_source",type="str", help="index source. [tushare|wugui]")
+    parser.add_option("--fetch_index_tv", action="store_true", default=False, dest="fetch_index_tv",  help="fetch index list from tradingview, saved to DATA/pickle/{index_name}.csv")
+    parser.add_option("--fetch_index_wg", action="store_true", default=False, dest="fetch_index_wg",  help="fetch index list from wglh, saved to /home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/{index_name}.xls")
+    parser.add_option("--fetch_jsl_kzz", action="store_true", default=False, dest="fetch_jsl_kzz",  help="fetch from jisilu, saved to /home/ryan/DATA/pickle/Stock_Fundamental/jisilu/{index_name}.xls")
+
+    #
+
+    (options, args) = parser.parse_args()
+    debug = options.debug
+    force_run = options.force_run
+    daily_update = options.daily_update
+
+    index_source = options.index_source
+    index_name = options.index_name
+    period_start = options.period_start
+    period_end = options.period_end
+    ndays = options.ndays
+    fetch_index_tv = options.fetch_index_tv
+    fetch_index_wg = options.fetch_index_wg
+    fetch_jsl_kzz = options.fetch_jsl_kzz
+
+
+
+
+    idict = {
+        'zz100':'000903.SH', #zhong zheng 100
+        'zz200':'000904.SH',
+        'zz500':'000905.SH',
+        'hs300':'000300.SH',
+        'szcz':'399001.SZ', #深圳成指
+        'sz100':'399330.SZ', #深圳100
+        'nasdaq100':'nasdaq100', #nasdaq100 source is prepared manually.
+        'spx500':'spx500', #SPX/SP500 source is prepared manually.
+
+    }
+
+    if fetch_jsl_kzz:
+        jsl_kzz()
+        exit()
     if fetch_index_tv:
         fetch_index_tradingview_selenium()
         exit()

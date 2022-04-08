@@ -181,7 +181,7 @@ def kdj(period, debug=False):
     i = 0
     for c in stock_list['code']:
         i += 1
-        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
+        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + c + ".csv"
         logging.info(str(i) + " of " + str(cnt) + " " + c)
 
         r = _kdj(csv_f=csv_f, period=period)
@@ -699,7 +699,7 @@ def macd(period, debug=False):
     i = 0
     for c in stock_list['code']:
         i += 1
-        csv_f = '/home/ryan/DATA/DAY_Global/AG/' + c + ".csv"
+        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + c + ".csv"
         logging.info(str(i) + " of " + str(cnt) + " " + c)
 
         r = _macd(csv_f=csv_f, period=period)

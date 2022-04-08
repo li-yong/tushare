@@ -181,7 +181,7 @@ def main():
         stock_list = stock_list[stock_list['code']=="SH600519"]
         # stock_list = stock_list[stock_list['code'] == "SZ300350"]
 
-    csv_dir = "/home/ryan/DATA/DAY_Global/AG"
+    csv_dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
     if index_f:
         csv_dir = "/home/ryan/DATA/DAY_Global/AG_INDEX"
 

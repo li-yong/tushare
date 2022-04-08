@@ -1496,6 +1496,34 @@ def not_work_da_v_zhui_zhang():
 
 
 #### MAIN #####
+import zigzag
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+
+
+f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+
+df = df.tail(35)
+X = df['close']
+X_n = X - X.min()*0.8
+pivots = zigzag.peak_valley_pivots(preprocessing.minmax_scale(X)+0.1, 0.1, -0.1)
+
+plt.xlim(0, len(X))
+plt.ylim(X.min() * 0.99, X.max() * 1.01)
+plt.plot(np.arange(len(X)), X, 'k:', alpha=0.5)
+plt.plot(np.arange(len(X))[pivots != 0], X[pivots != 0], 'k-')
+plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
+plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
+plt.show()
+
+finlib_indicator.Finlib_indicator().zigzag_plot(df=df, code='000001.SH', name="index", notes_in_title="", dates=[])
+
+pass
+
+
+
+
 TD_indicator_main()
 
 

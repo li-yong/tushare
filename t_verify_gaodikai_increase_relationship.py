@@ -2,8 +2,8 @@ import pandas as pd
 import finlib
 import finlib_indicator
 
-csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
-csv_in = "/home/ryan/DATA/DAY_Global/AG/SZ000651.csv"
+csv_in = "/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv"
+csv_in = "/home/ryan/DATA/DAY_Global/AG_qfq/SZ000651.csv"
 #csv_in = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
 csv_out = "/home/ryan/DATA/result/tmp/SZ000651_del.csv"
 
