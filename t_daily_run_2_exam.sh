@@ -802,11 +802,11 @@ if [ $full_or_daily == "FULL" ]; then
 #  python t_daily_index_candidates.py --index_name zz100 --period_start 20201101 --period_end 20211031 --index_source wugui  --daily_update
 #  python t_daily_index_candidates.py --index_name szcz  --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update --force_run
 #  python t_daily_index_candidates.py --index_name sz100 --period_start 20210501 --period_end 20211031 --index_source wugui  --daily_update
-
-
 fi
 
+if [ $full_or_daily == "DAILY" ]; then
 python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
+fi
 
 #######################################
 # run this after HS300, as this use file generated during hs300 calcuation.  /result/stocks_amount_365_days.csv

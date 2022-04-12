@@ -5076,12 +5076,23 @@ class Finlib:
             logging.info("Ndays must great than 60 to calculate 60MA/60Koudi. Or overwrite by short_period=True")
             sys.exit(1)
 
-        out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS+"_"+dayE+ ".csv"
+        out_csv = "/home/ryan/DATA/result/stocks_amount_" + dayS + "_" + dayE + ".csv"
 
-        # if self.is_cached(file_path=out_csv, day=7) and (not debug) and (datetime.today() > datetime.strptime(dayE, "%Y%m%d")):
+        s = '/home/ryan/DATA/result/stocks_amount_365_days.csv'
+
+        check_365 = False
+        if os.path.exists(s) and ndays < 360:
+            t = os.readlink(s)
+            if self.is_cached(file_path=t, day=1):
+                check_365 = True
+
         if self.is_cached(file_path=out_csv, day=7) and (not force_run):
             logging.info("get_last_n_days_stocks_amount, loading cached file " + out_csv)
             df_amt = pd.read_csv(out_csv)
+        elif check_365:
+                logging.info(f"extracted stock amount from existing csv {s}")
+                df_e = pd.read_csv(t)
+                df_amt = df_e[(df_e['date']>=int(dayS)) & (df_e['date']<=int(dayE))].reset_index().drop('index',axis=1)
         else:
             df_amt = pd.DataFrame()
             df = self.get_A_stock_instrment()
@@ -5090,19 +5101,9 @@ class Finlib:
                 df = df.head(50)
 
             df = self.add_market_to_code(df) #df has all the stocks on market
-            '''
 
-            day_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_300_days.csv"
-            df_days = pd.read_csv(day_f)
-            df_days = df_days[(df_days['date'] >= int(dayS)) & (df_days['date'] <= int(dayE))]
-            i = 0
-            for code in df_days['code'].unique():
-                df_sub = df_days[df_days['code'] == code].reset_index().drop('index',axis=1)
-                i += 1
-                df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
-                df_amt = df_amt.append(df_sub)
-                logging.info(str(i)+" of " +str(df_days['code'].unique().__len__())+" "+ code + ",  append " + str(df_sub.__len__()) + " lines.")
-            '''
+
+
             i = 0
             for index, row in df.iterrows():
 

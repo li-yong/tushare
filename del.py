@@ -1495,27 +1495,135 @@ def not_work_da_v_zhui_zhang():
         print('')
 
 
+def zzplot(df, show_piv=False):
+    # X = df['close']
+    # pivots = zigzag.peak_valley_pivots(preprocessing.minmax_scale(X) + 0.1, 0.1, -0.1)
+    # df['piv'] = pivots
+    #
+    max_idx=df[df['close']==df['close'].max()].index.values[-1] #the latest peak
+    min_idx=df[df['close']==df['close'].min()].index.values[-1] #the latest valley
+
+    if min_idx > max_idx:
+        return
+
+    code = df['code'].iloc[0]
+    max = df.iloc[max_idx]['close']
+    min = df.iloc[min_idx]['close']
+    close = df['close'].iloc[-1]
+
+    inc = round((max-min)*100/min, 1)
+    if inc < 10:
+        return
+
+    dec = round((max-close)*100/max, 1)
+
+    jian_cang = round(max - 0.2*(max-min),1)
+    bu_cang = round(max*(1 - 0.222857143),1)
+    jie_tao = round((max/1.2),1)
+
+    bu=False
+    che=False
+
+    if close < bu_cang:
+        print(f"code {code}, bucang. close {str(close)} < bucang {str(bu_cang)}")
+        bu=True
+    elif close < jian_cang:
+        print(f"code {code}, che. close {str(close)} < jian_cang {str(jian_cang)}, bucang {str(bu_cang)}")
+        che=True
+
+    if bu == False and che == False:
+        return
+
+
+    rtn_dict={
+        'code':[code],
+        'close': [close],
+        "che": [che],
+        "jian_cang": [jian_cang],
+
+        "bu_cang": [bu_cang],
+        "bu": [bu],
+
+
+        "min": [min],
+        "max":[max],
+        "inc":[inc],
+        "dec":[dec],
+
+        "min_date":[df.iloc[min_idx]['date']],
+        "max_date":[df.iloc[max_idx]['date']],
+
+
+
+        "jie_tao":[jie_tao],
+    }
+    
+
+
+    df_s = pd.DataFrame.from_dict(rtn_dict)
+    return(df_s)
+
+    if show_piv:
+
+        plt.xlim(0, len(X))
+        plt.ylim(X.min() * 0.99, X.max() * 1.01)
+        plt.plot(np.arange(len(X)), X, 'k:', alpha=0.5)
+        plt.plot(np.arange(len(X))[pivots != 0], X[pivots != 0], 'k-')
+        plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
+        plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
+
+        # plt.annotate(X[pivots == 1].values, xy=(np.arange(len(X))[pivots == 1], X[pivots == 1].values))
+        # plt.annotate(X[pivots == -1], xy=(np.arange(len(X))[pivots == -1], X[pivots == -1]))
+
+        plt.show()
+
+    return(rtn_dict)
+
 #### MAIN #####
+
+
+z = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5,short_period=True)
+exit()
+
 import zigzag
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 
 
+
 f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+
+f = '/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_28_days.csv'
 df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
+df_rtn=pd.DataFrame()
+fo = "/home/ryan/DATA/result/che_bu.csv"
 
-df = df.tail(35)
-X = df['close']
-X_n = X - X.min()*0.8
-pivots = zigzag.peak_valley_pivots(preprocessing.minmax_scale(X)+0.1, 0.1, -0.1)
+debug=True
+debug=False
 
-plt.xlim(0, len(X))
-plt.ylim(X.min() * 0.99, X.max() * 1.01)
-plt.plot(np.arange(len(X)), X, 'k:', alpha=0.5)
-plt.plot(np.arange(len(X))[pivots != 0], X[pivots != 0], 'k-')
-plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
-plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
-plt.show()
+lst=df['code'].unique()
+if debug:
+    lst=lst[:100]
+
+for c in lst:
+    df_s = df[df['code']==c].reset_index().drop('index',axis=1)
+    # print(df_s)
+    rtn = zzplot(df_s)
+    if type(rtn) == type(None):
+        continue
+    elif type(rtn)!=type(pd.DataFrame()):
+        continue
+
+    df_rtn = df_rtn.append(rtn)
+    # df_rtn.to_csv(fo,index=False)
+
+df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,mktcap_unit="100M")
+df_rtn.to_csv(fo,index=False)
+logging.info(f"result saved to {fo}")
+
+
+zzplot(df.tail(35).head(30).reset_index().drop('index',axis=1))
 
 finlib_indicator.Finlib_indicator().zigzag_plot(df=df, code='000001.SH', name="index", notes_in_title="", dates=[])
 
