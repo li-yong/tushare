@@ -3169,12 +3169,14 @@ class Finlib:
 
         df_industry_wg = pd.read_csv(f_wg)
 
-        df_industry_ts[['industry_name_ts']] = df_industry_ts[['industry_name_ts']].fillna(value="unknown")
-        df_industry_wg[['industry_name_wg']] = df_industry_wg[['industry_name_wg']].fillna(value="unknown")
-
-        df_industry = pd.merge(left=df_industry_wg[['code','name','industry_name_wg','industry_code_wg']], right=df_industry_ts[['code', 'industry_name_ts']], on='code', how='left',
+        df_industry = pd.merge(left=df_industry_wg[['code','name','industry_name_wg','industry_code_wg']],
+                               right=df_industry_ts[['code', 'industry_name_ts']], on='code', how='left',
                           suffixes=("", "_x"))
-        # df_industry[['industry_name_wg','industry_name_ts']] = df_industry[['industry_name_wg','industry_name_ts']].fillna("unknown")
+
+
+        df_industry['industry_name_ts'] = df_industry['industry_name_ts'].fillna(value="nots")
+        df_industry['industry_name_wg'] = df_industry['industry_name_wg'].fillna(value="nowg")
+
 
         if source =='all':
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']+"_" + df_industry['industry_name_ts']
@@ -3182,6 +3184,7 @@ class Finlib:
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']
         elif  source =='ts':
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_ts']
+
 
         df_industry = df_industry.reset_index().drop('index', axis=1)
 

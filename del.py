@@ -1580,18 +1580,15 @@ def zzplot(df, show_piv=False):
     return(rtn_dict)
 
 #### MAIN #####
+df=finlib.Finlib().get_A_stock_instrment()
+a= finlib.Finlib().add_industry_to_df(df)
 
-
-z = finlib.Finlib().get_last_n_days_stocks_amount(ndays=5,short_period=True)
-exit()
-
-import zigzag
 import matplotlib.pyplot as plt
-from sklearn import preprocessing
+#
+# f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+# df = df.tail(35).head(30)
+# zzplot(df.reset_index().drop('index',axis=1))
 
-
-
-f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
 
 f = '/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_28_days.csv'
 df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
@@ -1599,7 +1596,7 @@ df_rtn=pd.DataFrame()
 fo = "/home/ryan/DATA/result/che_bu.csv"
 
 debug=True
-debug=False
+# debug=False
 
 lst=df['code'].unique()
 if debug:
@@ -1621,11 +1618,6 @@ df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
 df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,mktcap_unit="100M")
 df_rtn.to_csv(fo,index=False)
 logging.info(f"result saved to {fo}")
-
-
-zzplot(df.tail(35).head(30).reset_index().drop('index',axis=1))
-
-finlib_indicator.Finlib_indicator().zigzag_plot(df=df, code='000001.SH', name="index", notes_in_title="", dates=[])
 
 pass
 
