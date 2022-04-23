@@ -1846,7 +1846,7 @@ class Finlib_indicator:
         csv_sel = "/home/ryan/DATA/result/graham_intrinsic_value_selected.csv"
 
         # df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231, 20171231, 20161231, 20151231, 20141231, 20131231, 20121231, 20111231])]
-        df_last_n_years = df0[df0['end_date'].isin([20201231, 20191231, 20181231])]
+        df_last_n_years = df0[df0['end_date'].isin([20211231, 20201231, 20191231])]
 
         # #test start
         # df_test = df_last_n_years[df_last_n_years['ts_code']=="300146.SZ"]

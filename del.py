@@ -91,15 +91,6 @@ def coefficient_variation_price_amount():
     print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
 
 
-def remove_garbage_by_fcf():
-    df = finlib.Finlib()._remove_garbage_fcf_profit_act_n_years(n_year=1)
-    df = finlib.Finlib()._remove_garbage_must(df=df)
-    print(finlib.Finlib().pprint(df[['code','name']].head(100)))
-    return(df)
-
-
-
-
 def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
@@ -288,6 +279,7 @@ def ag_industry_selected():
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
 
     df_rtn = finlib.Finlib().remove_garbage(df=df_rtn)
+    df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
     out_csv = path + "/" + "ag_industry_selected.csv"
     df_rtn.to_csv(out_csv, encoding='UTF-8', index=False)
@@ -386,13 +378,15 @@ def result_effort_ratio():
 
     df = df.tail(200)
 
-    df['inc'] = round(100*(df['close']-df['close'].shift(1))/df['close'].shift(1), 2)
+    # df['inc'] = round(100*(df['close']-df['close'].shift(1))/df['close'].shift(1), 2)
+
+    df['inc'] = round(100*(df['close']-df['open'])/df['open'], 2) #inday inc
 
     df['inc_1'] = df['inc'].shift(1)
     df['v_1'] = df['volume'].shift(1)
 
     df['result_effort_ratio'] = round((df['inc']/df['inc_1'])/(df['volume']/df['v_1']),2)
-    print(finlib.Finlib().pprint(df))
+    print(finlib.Finlib().pprint(df.tail(10)))
     print(1)
 
 def check_stop_loss_based_on_ma_across():
@@ -1370,16 +1364,40 @@ def _td_oper(adf):
     return(rtn_9_13_df, rtn_op_df)
 
 
+def _td_setup_reverse(df_setup):
+    df_setup = df_setup[['code','date','close', 'anno_setup', 'last_completed_stg1_anno','last_completed_stg1_high', 'last_completed_stg1_low']]
+    df_setup_u2d = df_setup[df_setup['anno_setup'].isin(['UP_D10_of_9','UP_D11_of_9','UP_D12_of_9'])]
+    df_setup_u2d = df_setup_u2d[df_setup_u2d['close'] <= df_setup_u2d['last_completed_stg1_low']]
+
+    if df_setup_u2d.__len__()>0:
+        logging.info("TD setup up to down reverse:")
+        logging.info(finlib.Finlib().pprint(df_setup_u2d))
+
+    df_setup_d2u = df_setup[df_setup['anno_setup'].isin(['DN_D10_of_9','DN_D11_of_9','DN_D12_of_9'])]
+    df_setup_d2u = df_setup_d2u[df_setup_d2u['close'] >= df_setup_d2u['last_completed_stg1_high']]
+
+    if df_setup_d2u.__len__()>0:
+        logging.info("TD setup down to up reverse:")
+        logging.info(finlib.Finlib().pprint(df_setup_d2u))
+
+
+    return(df_setup_d2u, df_setup_u2d)
+
+
+
 def td_indicator(df,pre_n_day,consec_day):
     df_setup = _td_setup_9_consecutive_close_4_day_lookup(df,pre_n_day,consec_day)
+
+    df_setup_d2u, df_setup_u2d = _td_setup_reverse(df_setup)
+
     df_countdown = _td_countdown_13_day_lookup(df_setup,cancle_countdown=True)
     df_9_13, df_op = _td_oper(df_countdown)
-    return(df_9_13, df_op, df_countdown.tail(1))
+    return(df_9_13, df_op, df_setup_d2u, df_setup_u2d , df_countdown.tail(1))
 
 
 def TD_szsz_index(rst_dir,pre_n_day,consec_day):
     df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
-    df_9_13, df_op, df_today = td_indicator(df_index,pre_n_day,consec_day)
+    df_9_13, df_op, df_setup_d2u, df_setup_u2d,df_today = td_indicator(df_index,pre_n_day,consec_day)
     df_9_13.to_csv(rst_dir+"/szzs_9_13.csv", encoding='UTF-8', index=False)
     df_op.to_csv(rst_dir+"/szzs_op.csv", encoding='UTF-8', index=False)
     df_today.to_csv(rst_dir+"/szzs_today.csv", encoding='UTF-8', index=False)
@@ -1391,7 +1409,7 @@ def TD_debug(rst_dir,pre_n_day,consec_day):
     df=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/SH601918.csv')[-300:]
     df = df[df['date'] > '20211107'].reset_index().drop('index', axis=1)
 
-    df_9_13, df_op, df_today = td_indicator(df,pre_n_day,consec_day)
+    df_9_13, df_op, df_setup_d2u, df_setup_u2d, df_today = td_indicator(df,pre_n_day,consec_day)
     df_9_13.to_csv(rst_dir+"/debug_mt_9_13.csv", encoding='UTF-8', index=False)
     df_op.to_csv(rst_dir+"/debug_mt_op.csv", encoding='UTF-8', index=False)
     print("debug 9_13: \n"+finlib.Finlib().pprint(df_9_13))
@@ -1401,6 +1419,8 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     rtn_9_13 = pd.DataFrame()
     rtn_op = pd.DataFrame()
     rtn_today = pd.DataFrame()
+    rtn_setup_d2u = pd.DataFrame()
+    rtn_setup_u2d = pd.DataFrame()
 
     if stock_global is not None:
         rst_dir = rst_dir+"/"+str(stock_global)
@@ -1414,6 +1434,8 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     td_csv_9_13 = rst_dir+"/"+"9_13.csv"
     td_csv_op = rst_dir+"/"+"op.csv"
     td_csv_today = rst_dir+"/"+"today.csv"
+    td_csv_setup_d2u=rst_dir+"/"+"setup_d2u.csv"
+    td_csv_setup_u2d=rst_dir+"/"+"setup_u2d.csv"
 
     df = finlib.Finlib().read_all_ag_qfq_data(days=300)
 
@@ -1423,11 +1445,13 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     for code in df['code'].unique():
         logging.info(f"code {code}")
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
-        df_9_13, df_op, df_today = td_indicator(adf,pre_n_day,consec_day)
+        df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
 
         rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
         rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
         rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
+        rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
+        rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
 
         rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
         rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
@@ -1436,6 +1460,8 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
     finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
     finlib.Finlib().add_stock_name_to_df(df=rtn_today).to_csv(td_csv_today, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_d2u).to_csv(td_csv_today, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_today, encoding='UTF-8', index=False)
 
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}")
 
@@ -1526,10 +1552,10 @@ def _jie_tao(df, show_piv=False):
     che=False
 
     if close < bu_cang:
-        print(f"code {code}, bucang. close {str(close)} < bucang {str(bu_cang)}")
+        # print(f"code {code}, bucang. close {str(close)} < bucang {str(bu_cang)}")
         bu=True
     elif close < jian_cang:
-        print(f"code {code}, che. close {str(close)} < jian_cang {str(jian_cang)}, bucang {str(bu_cang)}")
+        # print(f"code {code}, che. close {str(close)} < jian_cang {str(jian_cang)}, bucang {str(bu_cang)}")
         che=True
 
     if bu == False and che == False:
@@ -1656,181 +1682,96 @@ def jie_tao():
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
     df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,mktcap_unit="100M")
+    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
+    logging.info(finlib.Finlib().pprint(df_rtn))
     df_rtn.to_csv(fo,index=False)
     logging.info(f"result saved to {fo}")
 
 
+def stock_holder_check():
+    df_holder = fetch_holder()
+    df_holder[df_holder['code'] == 'SZ300661']
+
+    # choose the latest df_holder
+    df_holder_latest = df_holder[df_holder['holder_num'] > 500]
+    df_holder_latest = df_holder_latest[~df_holder_latest['holder_num'].isna()]
+    df_holder_latest = df_holder_latest.drop_duplicates(subset=['code'], keep='first')
+
+    # merge
+    df_amt = finlib.Finlib().get_daily_amount_mktcap()
+    df = pd.merge(left=df_holder_latest, right=df_amt, on='code', how='inner')
+    df = df[['code', 'holder_num', 'total_mv', 'circ_mv', 'close', 'pe', 'turnover_rate']]
+    df['mv_per_holder'] = round(df['circ_mv'] / df['holder_num'], 0)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+    df = df.sort_values(by='mv_per_holder', ascending=False).reset_index().drop('index', axis=1)
+    print("top mv_per_holder")
+    print(finlib.Finlib().pprint(df.head(50)))
+
+    a = finlib.Finlib().remove_garbage(df=df)
+    print(finlib.Finlib().pprint(a.head(50)))
 
 
 #### MAIN #####
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # cmp_with_idx_inc()
+# exit()
+
+
 # jie_tao()
-# TD_indicator_main()
+# exit()
+
+a = TD_indicator_main()
+exit()
 
 
 # a = daily_UD_tongji()
+# exit()
+
 
 # df_rtn = fudu_daily_check()
-# a = xiao_hu_xian()
-
-df_holder = fetch_holder()
-df_holder[df_holder['code']=='SZ300661']
-
-#choose the latest df_holder
-df_holder_latest = df_holder[df_holder['holder_num']>500]
-df_holder_latest = df_holder_latest[~df_holder_latest['holder_num'].isna()]
-df_holder_latest= df_holder_latest.drop_duplicates(subset=['code'],keep='first')
-
-#merge
-df_amt = finlib.Finlib().get_daily_amount_mktcap()
-df=pd.merge(left=df_holder_latest, right=df_amt, on='code', how='inner')
-df = df[['code','holder_num','total_mv','circ_mv','close','pe','turnover_rate']]
-df['mv_per_holder']=round(df['circ_mv']/df['holder_num'],0)
-df=finlib.Finlib().add_stock_name_to_df(df=df)
+# exit()
 
 
-df = df.sort_values(by='mv_per_holder', ascending=False).reset_index().drop('index', axis=1)
-print("top mv_per_holder")
-print(finlib.Finlib().pprint(df.head(50)))
+# xiao_hu_xian()
+# exit()
 
-a = finlib.Finlib().remove_garbage(df=df)
-print(finlib.Finlib().pprint(a.head(50)))
+# stock_holder_check()
+# exit()
 
 # a = stock_vs_index_perf_perc_chg()
-a = stock_vs_index_perf_amount()
+# exit()
 
-
-# f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
-f = "/home/ryan/DATA/DAY_Global/AG_qfq/BJ831445.csv"
-df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
-
-df = finlib.Finlib().daily_to_monthly_bar(df_daily=df)['df_weekly']
-df['date'] = df['date'].apply(lambda _d: datetime.datetime.strftime(_d, "%Y%m%d"))
-
-
-grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-plt.show()
-evaluate_grid(market='AG')
-exit()
+# a = stock_vs_index_perf_amount()
+# exit()
 
 
  # startD and endD have to be trading day.
-df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
-exit()
+# df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
+# exit()
 
 # bayes_start()
-check_stop_loss_based_on_ma_across()
-
-result_effort_ratio()
-
-grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-exit()
-
-df_all = finlib.Finlib().get_A_stock_instrment()
-df_all = finlib.Finlib().add_industry_to_df(df=df_all)
-print(1)
+# exit()
 
 
-df_industry = ag_industry_selected()
-exit()
+# check_stop_loss_based_on_ma_across()
+# exit()
 
-df_fcf = remove_garbage_by_fcf() # update garbage, consider fcf and must
+
+# result_effort_ratio()
+# exit()
+
+# grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+# exit()
+
+# df_industry = ag_industry_selected()
+# exit()
 
 df_intrinsic_value = graham_intrinsic_value()
 
-#########################################
-df = finlib.Finlib().load_price_n_days(ndays=20)
 
-df = finlib.Finlib().ts_code_to_code(df=df)
-df_rtn = pd.DataFrame()
-
-for code in df['code'].unique():
-    df_1 = df[df['code']==code].reset_index().drop('index', axis=1)
-
-    if df_1.__len__() < 5:
-        continue
-
-    df_1['vol_avg_5'] = df_1['vol'].rolling(window=5).mean()
-
-    # df_1['price_change_in_day'] = round((df_1['close'] - df_1['open'])*100/df_1['open'], 2)
-    df_1['price_change_across_day'] = round((df_1['close'] - df_1['close'].shift(1))*100/df_1['close'].shift(1), 2)
-    df_1['vol_change_across_day'] = round((df_1['vol'] - df_1['vol'].shift(1))*100/df_1['vol'].shift(1), 2)
-    df_1['vol_change_vs_avg_5'] = round((df_1['vol'] - df_1['vol_avg_5'].shift(1))*100/df_1['vol_avg_5'].shift(1), 2)
-    df_1['vp_chg_ratio']= round(df_1['vol_change_across_day'] / df_1['price_change_across_day'],2)
-    df_1['pct_chg_next_day']= df_1['pct_chg'].shift(-1)
-    df_1['corr']=round(df_1['pct_chg_next_day'].corr(df_1['vp_chg_ratio']),2)
-    df_1 = df_1.drop(columns=['open','high','low','pre_close','change'])
-
-    df_rtn = df_rtn.append(df_1.tail(1))
-    # print(str(code)+" pv_chg_ration / pct_chg_next_day cor " + str(df_1['corr'].iloc[-1]))
-
-print(1)
-df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
-df_rtn.sort_values(by='corr', ascending=False)
-print(finlib.Finlib().pprint(df_rtn.sort_values(by='vp_chg_ratio', ascending=False).head(10)))
-print(finlib.Finlib().pprint(df_rtn.head(10)))
-
-#largest vol increase
-print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_across_day', ascending=False).head(10)))
-
-#smallest vol increase (compare to vol_day-1)
-print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_across_day', ascending=True).head(10)))
-
-#smallest vol increase (compare to vol_ma5)
-print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_vs_avg_5', ascending=True).head(10)))
-#smallest vol increase (compare to vol_ma5)
-print(finlib.Finlib().pprint(df_rtn.sort_values(by='vol_change_vs_avg_5', ascending=False).head(10)))
-
-
-df_pin_bar_uppershadow = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_LONG_UPPER_SHADOW)
-df_pin_bar_leg = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_LONG_LOWER_SHADOW)
-df_pin_bar_guangtou = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU)
-df_pin_bar_guangjiao = finlib_indicator.Finlib_indicator().get_indicator_critirial(query=constant.BAR_GUANG_TOU)
-
-df_hammer= pd.merge(df_pin_bar_leg, df_pin_bar_guangtou, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-df_hammer_rev= pd.merge(df_pin_bar_uppershadow, df_pin_bar_guangjiao, on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
-
-#########################################
-
-
-csv = '/home/ryan/DATA/pickle/daily_update_source/ag_daily_20210319.csv'
-df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv)
-
-df = df.sort_values(by='volume')
-df = finlib.Finlib().add_stock_name_to_df(df=df)
-
-#########################################
-df_tv = finlib.Finlib().load_tv_fund(market='AG', period="d")
-df_tv = finlib.Finlib().add_stock_name_to_df(df_tv)
-df_tv = finlib.Finlib().add_ts_code_to_column(df=df_tv)
-
-_df = df_tv[['code','name','close','52 Week High']]
-_df['ratio']=df_tv['close']/df_tv['52 Week High']
-df_low_p = _df[_df['ratio']<0.5]
-df = finlib.Finlib().remove_garbage(df=df_low_p)
-print(finlib.Finlib().pprint(df))
-exit(0)
-
-
-# df_pv_db_buy_filter = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/today/talib_and_pv_db_buy_filtered_AG.csv')
-df_hs300_candi = finlib.Finlib().regular_read_csv_to_stdard_df('/home/ryan/DATA/result/hs300_candidate_list.csv')
-df_pv_db_buy_filter = finlib.Finlib()._remove_garbage_must(df=df_hs300_candi)
-exit(0)
-
-
-df_pv_db_buy_filter.drop_duplicates(inplace=True)
-
-df_pv_db_buy_filter.sort_values('2mea', ascending=False, inplace=True)
-# already sorted by Increase_2D in t_daily_pattern_Hit_Price_Volume.py
-df_pv_db_buy_filter = df_pv_db_buy_filter.loc[df_pv_db_buy_filter['close_p'] != '0.0']
-len_df_pv_db_buy_filter_0 = str(df_pv_db_buy_filter.__len__())
-df_pv_db_buy_filter = finlib.Finlib().remove_garbage(df_pv_db_buy_filter, code_field_name='code', code_format='C2D6')
-logging.info(__file__ + " " + "\t df_pv_db_buy_filter length " + str(df_pv_db_buy_filter.__len__()))
-
-
-pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
-df = pro.stk_holdernumber(ts_code='300199.SZ', start_date='20160101', end_date='20181231')
+# pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
+# df = pro.stk_holdernumber(ts_code='300199.SZ', start_date='20160101', end_date='20181231')
 
