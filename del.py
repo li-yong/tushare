@@ -563,8 +563,6 @@ def stock_vs_index_perf_amount():
     logging.info("hhh")
 
 
-
-
 def xiao_hu_xian(debug=False):
     logging.info("start of func xiao_hu_xian")
 
@@ -1200,28 +1198,28 @@ def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
 
         if setup_bar_index > 0 and bars_after_setup > 13*5 and pre_anno_setup !='':
             pre_anno_setup = ''
-            logging.info(f"code {code},{date} too far from setupbar, no trending present.{str(bars_after_setup)}  "
-                         + f" ann_setup {anno_setup} pre_anno_setup {pre_anno_setup}")
+            # logging.info(f"code {code},{date} too far from setupbar, no trending present.{str(bars_after_setup)}  "
+            #              + f" ann_setup {anno_setup} pre_anno_setup {pre_anno_setup}")
 
         if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='DN_D9_of_9':
             if close < adf.at[setup_bar_index, 'close']:
                 anno_bar10 = f'Bar10_start_DN_13_CD'
-                print(f"{code} {date} {close} {anno_bar10}.")
+                # logging.info(f"{code} {date} {close} {anno_bar10}.")
                 adf.at[index, 'anno_bar10'] = anno_bar10
             elif close > adf.at[setup_bar_index, 'close']:
                 anno_bar10 = f'Bar10_reverse_9_dn_to_up'
-                print(f"{code} {date} {close} {anno_bar10}.")
+                # logging.info(f"{code} {date} {close} {anno_bar10}.")
                 adf.at[index, 'anno_bar10'] = anno_bar10
 
 
         if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='UP_D9_of_9':
             if close < adf.at[setup_bar_index, 'close']:
                 anno_bar10 = f'Bar10_start_reverse_9_up_to_dn'
-                print(f"{code} {date} {close} {anno_bar10}.")
+                # logging.info(f"{code} {date} {close} {anno_bar10}.")
                 adf.at[index, 'anno_bar10'] = anno_bar10
             elif close > adf.at[setup_bar_index, 'close']:
                 anno_bar10 = f'Bar10_start_UP_13_CD'
-                print(f"{code} {date} {close} {anno_bar10}.")
+                # logging.info(f"{code} {date} {close} {anno_bar10}.")
                 adf.at[index, 'anno_bar10'] = anno_bar10
 
         if pre_anno_setup=='DN_D9_of_9':
@@ -1249,7 +1247,7 @@ def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
                     if low <= adf[adf['anno_stg2']=='DN_D8_of_13'].iloc[-1].close:
                         p_str=f"LONG CONDITION Meet! bars_after_setup {str(bars_after_setup)}"
                         adf.at[index, 'anno_stg2'] = p_str
-                        print(p_str)
+                        logging.info(p_str)
                     else:
                         adf.at[index, 'anno_stg2'] ="Bar 13 is deferred, low > DN_D8_of_13 close"
             else:
@@ -1281,7 +1279,7 @@ def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
                     if high >= adf[adf['anno_stg2']=='UP_D8_of_13'].iloc[-1].close:
                         p_str=f"SHORT CONDITION Meet! bars_after_setup {str(bars_after_setup)}"
                         adf.at[index, 'anno_stg2'] = p_str
-                        print(p_str)
+                        logging.info(p_str)
                     else:
                         adf.at[index, 'anno_stg2'] ="Bar 13 short is deferred, high < DN_D8_of_13 close"
 
@@ -1364,29 +1362,53 @@ def _td_oper(adf):
     return(rtn_9_13_df, rtn_op_df)
 
 
-def _td_setup_reverse(df_setup):
-    df_setup = df_setup[['code','date','close', 'anno_setup', 'last_completed_stg1_anno','last_completed_stg1_high', 'last_completed_stg1_low']]
-    df_setup_u2d = df_setup[df_setup['anno_setup'].isin(['UP_D10_of_9','UP_D11_of_9','UP_D12_of_9'])]
-    df_setup_u2d = df_setup_u2d[df_setup_u2d['close'] <= df_setup_u2d['last_completed_stg1_low']]
+def _td_setup_reverse(df_setup, debug=False):
+    df_setup_u2d=pd.DataFrame()
+    df_setup_d2u=pd.DataFrame()
+    #
+    # df_setup = df_setup[['code','name','date','close', 'anno_setup', 'last_completed_stg1_anno',
+    #                      'last_completed_stg1_high', 'last_completed_stg1_low']]
 
-    if df_setup_u2d.__len__()>0:
+    # UP to DOWN reverse
+    for index, row in df_setup[df_setup['anno_setup']=='UP_D9_of_9'].iterrows():
+        # if (row['last_completed_stg1_close']-row['last_completed_stg1_open'])/row['last_completed_stg1_open']<0.2:
+        #     continue
+
+        df_3_days = df_setup[index+1:index+4]
+        df_3_days = df_3_days[df_3_days['close'] *0.7 <= row['last_completed_stg1_low']]
+        df_3_days['bar_body'] = round(100 * (df_3_days['close'] - df_3_days['open']) / df_3_days['open'], 1)
+        df_3_days = df_3_days[df_3_days['bar_body'] < -5]
+
+        df_setup_u2d = df_setup_u2d.append(df_3_days)
+
+
+    if debug and df_setup_u2d.__len__()>0:
         logging.info("TD setup up to down reverse:")
         logging.info(finlib.Finlib().pprint(df_setup_u2d))
 
-    df_setup_d2u = df_setup[df_setup['anno_setup'].isin(['DN_D10_of_9','DN_D11_of_9','DN_D12_of_9'])]
-    df_setup_d2u = df_setup_d2u[df_setup_d2u['close'] >= df_setup_d2u['last_completed_stg1_high']]
+    ### DOWN to UP reverse
+    for index, row in df_setup[df_setup['anno_setup']=='DN_D9_of_9'].iterrows():
+        # if (row['last_completed_stg1_close']-row['last_completed_stg1_open'])/row['last_completed_stg1_open']>-0.2:
+        #     continue
 
-    if df_setup_d2u.__len__()>0:
+        df_3_days = df_setup[index+1:index+4]
+        df_3_days = df_3_days[df_3_days['close'] >= 0.7 * row['last_completed_stg1_high']]
+
+        df_3_days['bar_body']= round(100*(df_3_days['close']-df_3_days['open'])/df_3_days['open'],1)
+        df_3_days = df_3_days[df_3_days['bar_body'] > 5]
+
+        df_setup_d2u = df_setup_d2u.append(df_3_days)
+
+    if debug and df_setup_d2u.__len__()>0:
         logging.info("TD setup down to up reverse:")
         logging.info(finlib.Finlib().pprint(df_setup_d2u))
-
 
     return(df_setup_d2u, df_setup_u2d)
 
 
-
 def td_indicator(df,pre_n_day,consec_day):
     df_setup = _td_setup_9_consecutive_close_4_day_lookup(df,pre_n_day,consec_day)
+    df_setup = finlib.Finlib().add_stock_name_to_df(df_setup)
 
     df_setup_d2u, df_setup_u2d = _td_setup_reverse(df_setup)
 
@@ -1395,25 +1417,24 @@ def td_indicator(df,pre_n_day,consec_day):
     return(df_9_13, df_op, df_setup_d2u, df_setup_u2d , df_countdown.tail(1))
 
 
-def TD_szsz_index(rst_dir,pre_n_day,consec_day):
+#shang zheng zong zhi
+def TD_szzz_index(rst_dir,pre_n_day,consec_day):
     df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
     df_9_13, df_op, df_setup_d2u, df_setup_u2d,df_today = td_indicator(df_index,pre_n_day,consec_day)
-    df_9_13.to_csv(rst_dir+"/szzs_9_13.csv", encoding='UTF-8', index=False)
-    df_op.to_csv(rst_dir+"/szzs_op.csv", encoding='UTF-8', index=False)
-    df_today.to_csv(rst_dir+"/szzs_today.csv", encoding='UTF-8', index=False)
-    print("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
-    print("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
+    df_9_13.to_csv(rst_dir+"/szzz_9_13.csv", encoding='UTF-8', index=False)
 
-def TD_debug(rst_dir,pre_n_day,consec_day):
-    # df=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv')[-300:]
-    df=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_qfq/SH601918.csv')[-300:]
-    df = df[df['date'] > '20211107'].reset_index().drop('index', axis=1)
+    df_setup_d2u.to_csv(rst_dir+"/szzz_d2u.csv", encoding='UTF-8', index=False)
+    df_setup_u2d.to_csv(rst_dir+"/szzz_u2d.csv", encoding='UTF-8', index=False)
 
-    df_9_13, df_op, df_setup_d2u, df_setup_u2d, df_today = td_indicator(df,pre_n_day,consec_day)
-    df_9_13.to_csv(rst_dir+"/debug_mt_9_13.csv", encoding='UTF-8', index=False)
-    df_op.to_csv(rst_dir+"/debug_mt_op.csv", encoding='UTF-8', index=False)
-    print("debug 9_13: \n"+finlib.Finlib().pprint(df_9_13))
-    print("debug Operation: \n"+finlib.Finlib().pprint(df_op))
+    df_op.to_csv(rst_dir+"/szzz_op.csv", encoding='UTF-8', index=False)
+    df_today.to_csv(rst_dir+"/szzz_today.csv", encoding='UTF-8', index=False)
+
+
+    logging.info("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
+    logging.info("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
+    logging.info("SZZS INDEX d2u: \n"+finlib.Finlib().pprint(df_setup_d2u))
+    logging.info("SZZS INDEX u2d: \n"+finlib.Finlib().pprint(df_setup_u2d))
+
 
 def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     rtn_9_13 = pd.DataFrame()
@@ -1456,14 +1477,16 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
         rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
         rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
         rtn_today.to_csv(td_csv_today, encoding='UTF-8', index=False)
+        rtn_setup_d2u.to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
+        rtn_setup_u2d.to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
 
     finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
     finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
     finlib.Finlib().add_stock_name_to_df(df=rtn_today).to_csv(td_csv_today, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_d2u).to_csv(td_csv_today, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_today, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_d2u).to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
 
-    print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}")
+    print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
 
 def TD_indicator_main():
     rst_dir="/home/ryan/DATA/result/TD_Indicator"
@@ -1473,8 +1496,8 @@ def TD_indicator_main():
     pre_n_day = 4
     consec_day = 9
 
-    TD_debug(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
-    TD_szsz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    # TD_debug(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
     TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
     TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
 
