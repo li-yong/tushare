@@ -1436,7 +1436,7 @@ def TD_szzz_index(rst_dir,pre_n_day,consec_day):
     logging.info("SZZS INDEX u2d: \n"+finlib.Finlib().pprint(df_setup_u2d))
 
 
-def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
+def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
     rtn_9_13 = pd.DataFrame()
     rtn_op = pd.DataFrame()
     rtn_today = pd.DataFrame()
@@ -1463,8 +1463,11 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None):
     if stock_global is not None:
         df = pd.merge(left=df, right=df_hold[['code']], on='code',how='inner').reset_index().drop('index', axis=1)
 
+    if no_garbage:
+        df = finlib.Finlib()._remove_garbage_must(df)
+
     for code in df['code'].unique():
-        logging.info(f"code {code}")
+        # logging.info(f"code {code}")
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
         df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
 
@@ -1496,10 +1499,9 @@ def TD_indicator_main():
     pre_n_day = 4
     consec_day = 9
 
-    # TD_debug(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
-    TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
-    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
-    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    # TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
+    # TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
+    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
 
     return()
 
@@ -1735,18 +1737,76 @@ def stock_holder_check():
     print(finlib.Finlib().pprint(a.head(50)))
 
 
+def new_share_profit():
+    csv_o = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share_profit.csv"
+    csv_i="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share.csv"
+    df=pd.read_csv(csv_i, converters={'ipo_date': str,'issue_date': str})
+
+    df_today = finlib.Finlib().get_today_stock_basic()
+
+    df = pd.merge(left=df,right=df_today, on='code', how='inner',suffixes=['_ipo','_now'])
+    df['pct_chg'] = round((df['close'] - df['price'])/df['price']*100,1)
+    df['pe_pct_chg'] = round((df['pe_now'] - df['pe_ipo'])/df['pe_ipo']*100,1)
+
+    df_show = df[df['issue_date'] != None]
+    day_1year=(datetime.datetime.today() - datetime.timedelta(days=180)).strftime('%Y%m%d')
+    df_show = df_show[df_show['issue_date'] > day_1year]
+
+    df_show = df_show[['code', 'name_now', 'issue_date',  'amount',
+                  'market_amount',  'price', 'close', 'pct_chg','pe_ipo' ,'pe_now','pe_pct_chg', 'ballot',
+                  'area', 'industry',
+                  ]]
+
+    show_cols=['issue_date','code','name_now','pe_ipo','ballot','price','close','pct_chg']
+    # df_show = df_show.sort_values(by=['pct_chg'], ascending=False)[show_cols].head(10) ##the most increase
+    df_show = df_show.sort_values(by=['pct_chg'], ascending=True)[show_cols] ##the most decrease
+
+    logging.info("The most dropped 10 new shares")
+    logging.info(finlib.Finlib().pprint(df_show.head(10)))
+    df_show.to_csv(csv_o, encoding="UTF-8", index=False)
+    logging.info("new share profit saved to " + csv_o+" len "+str(df_show.__len__()))
+
 #### MAIN #####
 
-# import matplotlib.pyplot as plt
+def _apply_func(df):
+    logging.info(df.iloc[0]['name'])
+    df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df,short=20, middle=100, long=300)
+    df1 = df1[['code', 'name', 'date', 'close','close_100_sma','close_300_sma']]
+    df1 = df1.iloc[-1]
 
+    # df1['c_20wk_diff']=round((df1['close'] - df1['close_100_sma'])/df1['close']*100,1)
+    # df1['c_60wk_diff']=round((df1['close'] - df1['close_300_sma'])/df1['close']*100,1)
+    # #
+    # df1 = df1[df1['c_60wk_diff']>0]
+    # df1 = df1[df1['c_20wk_diff']>0]
+    #
+    # df1 = df1[df1['c_60wk_diff']<5]
+    return (df1)
+
+
+
+df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=600)
+df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+df = df[:3000]
+dfg = df.groupby(by='code').apply(lambda _d: _apply_func(df=_d))
+
+
+for c in df['code'].unique():
+    df1 = df[df['code']==c].reset_index().drop('index',axis=1)
+
+
+print(1)
 # cmp_with_idx_inc()
 # exit()
 
+new_share_profit()
+exit()
 
 # jie_tao()
 # exit()
 
-a = TD_indicator_main()
+TD_indicator_main()
 exit()
 
 

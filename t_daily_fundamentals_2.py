@@ -1019,9 +1019,32 @@ def fetch_new_share():
     df = pro.new_share()
     # df = df[df['issue_date']>='20200801']
     df = df.sort_values(by=["ipo_date", "issue_date"], ascending=False).reset_index().drop("index", axis=1)
+    df = finlib.Finlib().ts_code_to_code(df=df)
+    df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+    df_today = finlib.Finlib().get_today_stock_basic()
+
+    df = pd.merge(left=df,right=df_today, on='code', how='inner',suffixes=['_ipo','_now'])
+    df['pct_chg'] = round((df['close'] - df['price'])/df['price']*100,1)
+    df['pe_pct_chg'] = round((df['pe_now'] - df['pe_ipo'])/df['pe_ipo']*100,1)
+
     f = fund_base_source + "/new_share.csv"
     df.to_csv(f, encoding="UTF-8", index=False)
     logging.info("new share saved to " + f)
+
+
+    df_show = df[df['issue_date'] != None]
+    day_1year=(datetime.datetime.today() - datetime.timedelta(days=180)).strftime('%Y%m%d')
+    df_show = df_show[df_show['issue_date'] > day_1year]
+
+    df_show = df_show[['code', 'name_now', 'issue_date',  'amount',
+                  'market_amount',  'price', 'close', 'pct_chg','pe_ipo' ,'pe_now','pe_pct_chg', 'ballot',
+                  'area', 'industry',
+                  ]]
+
+
+
+    logging.info(finlib.Finlib().pprint(df_show))
 
 
 def _fetch_change_name():
