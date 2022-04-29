@@ -1767,29 +1767,33 @@ def new_share_profit():
     logging.info("new share profit saved to " + csv_o+" len "+str(df_show.__len__()))
 
 #### MAIN #####
-
-def _apply_func(df):
-    logging.info(df.iloc[0]['name'])
-    df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df,short=20, middle=100, long=300)
+import copy
+def _apply_func(tmp_df):
+    logging.info(tmp_df.iloc[0]['name'])
+    df1=copy.copy(tmp_df)
+    df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df1,short=20, middle=100, long=300)
     df1 = df1[['code', 'name', 'date', 'close','close_100_sma','close_300_sma']]
     df1 = df1.iloc[-1]
 
-    # df1['c_20wk_diff']=round((df1['close'] - df1['close_100_sma'])/df1['close']*100,1)
-    # df1['c_60wk_diff']=round((df1['close'] - df1['close_300_sma'])/df1['close']*100,1)
-    # #
-    # df1 = df1[df1['c_60wk_diff']>0]
-    # df1 = df1[df1['c_20wk_diff']>0]
-    #
-    # df1 = df1[df1['c_60wk_diff']<5]
-    return (df1)
+    return(df1)
+    # return()
 
 
 
-df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=600)
+
+# df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=600)
+df = finlib.Finlib().read_all_ag_qfq_data(days=300)
 df = finlib.Finlib().add_stock_name_to_df(df=df)
 
-df = df[:3000]
-dfg = df.groupby(by='code').apply(lambda _d: _apply_func(df=_d))
+# df = df[df['code'].isin(['SZ000001','SH600519'])]
+dfg = df.groupby(by='code').apply(lambda _d: _apply_func(_d))
+
+dfg['c_20wk_diff']=round((dfg['close'] - dfg['close_100_sma'])/dfg['close']*100,1)
+dfg['c_60wk_diff']=round((dfg['close'] - dfg['close_300_sma'])/dfg['close']*100,1)
+dfg = dfg[dfg['c_60wk_diff']>0]
+dfg = dfg[dfg['c_20wk_diff']>0]
+
+dfg = dfg[dfg['c_60wk_diff']<5]
 
 
 for c in df['code'].unique():
