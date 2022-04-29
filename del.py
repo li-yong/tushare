@@ -1784,12 +1784,18 @@ def _apply_func(tmp_df):
 # df = finlib.Finlib().get_last_n_days_stocks_amount(ndays=600)
 df = finlib.Finlib().read_all_ag_qfq_data(days=300)
 df = finlib.Finlib().add_stock_name_to_df(df=df)
+csv_o = "/home/ryan/DATA/result/price_ma.csv"
+
 
 # df = df[df['code'].isin(['SZ000001','SH600519'])]
 dfg = df.groupby(by='code').apply(lambda _d: _apply_func(_d))
 
+
 dfg['c_20wk_diff']=round((dfg['close'] - dfg['close_100_sma'])/dfg['close']*100,1)
 dfg['c_60wk_diff']=round((dfg['close'] - dfg['close_300_sma'])/dfg['close']*100,1)
+dfg.to_csv(csv_o, encoding="UTF-8", index=False)
+logging.info(__file__ + " " + "saved price mv " + csv_o + " len " + str(dfg.__len__()))
+
 dfg = dfg[dfg['c_60wk_diff']>0]
 dfg = dfg[dfg['c_20wk_diff']>0]
 
