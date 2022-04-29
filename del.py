@@ -1766,60 +1766,58 @@ def new_share_profit():
     df_show.to_csv(csv_o, encoding="UTF-8", index=False)
     logging.info("new share profit saved to " + csv_o+" len "+str(df_show.__len__()))
 
+def lemon_766():
+    def _apply_func(tmp_df):
+        logging.info(tmp_df.iloc[0]['name'])
+        df1=copy.copy(tmp_df)
+        df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df1,short=20, middle=100, long=300)
+        df1 = df1[['code', 'name', 'date', 'close','close_100_sma','close_300_sma']]
+        df1 = df1.iloc[-1]
+
+        return(df1)
+
+
+    csv_o = "/home/ryan/DATA/result/price_ma.csv"
+
+    if finlib.Finlib().is_cached(csv_o,day=1):
+        dfg = pd.read_csv(csv_o)
+        logging.info(__file__ + " " + "loaded price mv from" + csv_o + " len " + str(dfg.__len__()))
+    else:
+        df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+        df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+        # df = df[df['code'].isin(['SZ000001','SH600519'])]
+        dfg = df.groupby(by='code').apply(lambda _d: _apply_func(_d))
+
+
+        dfg['c_20wk_diff']=round(100*(dfg['close'] - dfg['close_100_sma'])/dfg['close'],1)
+        dfg['c_60wk_diff']=round(100*(dfg['close'] - dfg['close_300_sma'])/dfg['close'],1)
+        dfg.to_csv(csv_o, encoding="UTF-8", index=False)
+        logging.info(__file__ + " " + "saved price mv " + csv_o + " len " + str(dfg.__len__()))
+
+
+    dfg = finlib.Finlib().add_stock_increase(df=dfg)
+
+    dfg = dfg[dfg['c_60wk_diff']>0]
+    dfg = dfg[dfg['c_20wk_diff']>0]
+    dfg = dfg[dfg['c_60wk_diff']<5]
+    dfg = dfg[dfg['inc360']<-5]
+
+    logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
+
+
 #### MAIN #####
 import copy
-def _apply_func(tmp_df):
-    logging.info(tmp_df.iloc[0]['name'])
-    df1=copy.copy(tmp_df)
-    df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df1,short=20, middle=100, long=300)
-    df1 = df1[['code', 'name', 'date', 'close','close_100_sma','close_300_sma']]
-    df1 = df1.iloc[-1]
-
-    return(df1)
-    # return()
 
 
+lemon_766()
+exit()
 
-
-csv_o = "/home/ryan/DATA/result/price_ma.csv"
-
-if finlib.Finlib().is_cached(csv_o,day=1):
-    dfg = pd.read_csv(csv_o)
-    logging.info(__file__ + " " + "loaded price mv from" + csv_o + " len " + str(dfg.__len__()))
-else:
-    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
-    df = finlib.Finlib().add_stock_name_to_df(df=df)
-
-    # df = df[df['code'].isin(['SZ000001','SH600519'])]
-    dfg = df.groupby(by='code').apply(lambda _d: _apply_func(_d))
-
-
-    dfg['c_20wk_diff']=round(100*(dfg['close'] - dfg['close_100_sma'])/dfg['close'],1)
-    dfg['c_60wk_diff']=round(100*(dfg['close'] - dfg['close_300_sma'])/dfg['close'],1)
-    dfg.to_csv(csv_o, encoding="UTF-8", index=False)
-    logging.info(__file__ + " " + "saved price mv " + csv_o + " len " + str(dfg.__len__()))
-
-
-dfg = finlib.Finlib().add_stock_increase(df=dfg)
-
-dfg = dfg[dfg['c_60wk_diff']>0]
-dfg = dfg[dfg['c_20wk_diff']>0]
-dfg = dfg[dfg['c_60wk_diff']<5]
-dfg = dfg[dfg['inc360']<-5]
-
-logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
-
-
-for c in df['code'].unique():
-    df1 = df[df['code']==c].reset_index().drop('index',axis=1)
-
-
-print(1)
 # cmp_with_idx_inc()
 # exit()
 
-new_share_profit()
-exit()
+# new_share_profit()
+# exit()
 
 # jie_tao()
 # exit()
