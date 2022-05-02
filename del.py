@@ -21,6 +21,7 @@ import math
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 
 import akshare as ak
 import glob
@@ -1458,6 +1459,11 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
     td_csv_setup_d2u=rst_dir+"/"+"setup_d2u.csv"
     td_csv_setup_u2d=rst_dir+"/"+"setup_u2d.csv"
 
+    if finlib.Finlib().is_cached(td_csv_9_13):
+        logging.info("result csv has been updated in 1 days. "+td_csv_9_13)
+        df_rtn = pd.read_csv(td_csv_9_13)
+        return(df_rtn)
+
     df = finlib.Finlib().read_all_ag_qfq_data(days=300)
 
     if stock_global is not None:
@@ -1501,9 +1507,9 @@ def TD_indicator_main():
 
     # TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
     # TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
-    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
+    df_rtn = TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
 
-    return()
+    return(df_rtn)
 
 
 def not_work_da_v_zhui_zhang():
@@ -1741,6 +1747,7 @@ def new_share_profit():
     csv_o = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share_profit.csv"
     csv_i="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share.csv"
     df=pd.read_csv(csv_i, converters={'ipo_date': str,'issue_date': str})
+    df = finlib.Finlib().ts_code_to_code(df=df)
 
     df_today = finlib.Finlib().get_today_stock_basic()
 
@@ -1806,12 +1813,63 @@ def lemon_766():
     logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
 
 
+def big_v():
+    def _apply_func(tmp_df):
+        logging.info(tmp_df.iloc[0]['name'])
+        df=copy.copy(tmp_df)
+
+        #positive
+        df['all'] = round(abs(df['high'] - df['low']),2)
+        df['body'] = round(abs(df['close'] - df['open']),2)
+
+        df.at[df['close'] >= df['open'],'head'] = round(df['high']-df['close'],2)
+        df.at[df['close'] < df['open'],'head'] = round(df['high']-df['open'],2)
+        df['tail'] = round(df['all']-df['head']-df['body'],2)
+
+
+        # logging.info(finlib.Finlib().pprint(df[['all','head','body','tail']].head(2)))
+
+        df_big_v_yin=df[
+            (df['close']<df['pre_close'])
+            & (df['close']<df['open'])
+            &  (df['tail']>1.1*df['body'])
+            & (df['body']>1.1*df['head'])
+            & (df['high']>df['high'].shift(-1))
+            & (df['low']<df['low'].shift(-1))
+        ]
+
+        logging.info(finlib.Finlib().pprint(df_big_v_yin[['code','name','date','high','low']].tail(1)))
+
+        return(df_big_v_yin)
+
+
+
+    csv_o = "/home/ryan/DATA/result/big_v.csv"
+
+    if finlib.Finlib().is_cached(csv_o,day=1):
+        dfg = pd.read_csv(csv_o)
+        logging.info(__file__ + " " + "loaded big v from" + csv_o + " len " + str(dfg.__len__()))
+    else:
+        df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+        df = finlib.Finlib().add_stock_name_to_df(df=df)
+
+        # df = df[df['code'].isin(['SZ000001','SH600519'])]
+        dfg = df.groupby(by='code').apply(lambda _d: _apply_func(_d))
+
+        dfg.to_csv(csv_o, encoding="UTF-8", index=False)
+        logging.info(__file__ + " " + "saved big v to " + csv_o + " len " + str(dfg.__len__()))
+
+
+    # dfg = finlib.Finlib().add_stock_increase(df=dfg)
+    logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close']]))
+    return(dfg)
+
+
 #### MAIN #####
-import copy
 
 
-lemon_766()
-exit()
+# lemon_766()
+# exit()
 
 # cmp_with_idx_inc()
 # exit()
@@ -1822,9 +1880,22 @@ exit()
 # jie_tao()
 # exit()
 
-TD_indicator_main()
+df_td = TD_indicator_main()
+# exit()
+
+
+df_big_v = big_v()
 exit()
 
+day_since = (datetime.datetime.today() - datetime.timedelta(20)).strftime("%Y%m%d")
+day_since = int(day_since)
+df_td = df_td[df_td['date']>day_since]
+df_big_v = df_big_v[df_big_v['date']>day_since]
+df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
+
+logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
+
+print(1)
 
 # a = daily_UD_tongji()
 # exit()
@@ -1851,8 +1922,8 @@ exit()
 # df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
 # exit()
 
-# bayes_start()
-# exit()
+bayes_start()
+exit()
 
 
 # check_stop_loss_based_on_ma_across()
