@@ -703,7 +703,15 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
             logging.warning("file not exist or empty " + mkt_dict[k]["file"])
             continue
 
+
+        if not (os.path.isfile(mkt_dict[k]["file"]) and os.path.getsize(mkt_dict[k]["file"]) > 5):
+            logging.info("empty file, "+mkt_dict[k]["file"]+" file size in byte "+str(os.path.getsize(mkt_dict[k]["file"])))
+            continue
+
+
+
         df = pd.read_csv(mkt_dict[k]["file"])
+
         # df = finlib.Finlib().remove_garbage_macd_ma(df)
 
         _column = mkt_dict[k]["column"]

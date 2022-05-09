@@ -2275,7 +2275,7 @@ class Finlib_indicator:
     # general function to return jincha sicha on TWO columns.
     def slow_fast_across(self, df, fast_col_name, slow_col_name):
 
-        df['tmp_col_fast_minor_slow'] = df[fast_col_name] - df[slow_col_name]
+        df['tmp_col_fast_minor_slow'] = round(df[fast_col_name] - df[slow_col_name],1)
 
         df['b1_tmp_col_fast_minor_slow'] = df['tmp_col_fast_minor_slow'].shift(1)
 

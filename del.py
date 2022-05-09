@@ -289,15 +289,20 @@ def ag_industry_selected():
     return (df_rtn)
 
 
-def bayes_start():
-    df = finlib.Finlib().get_A_stock_instrment()
-    # df = finlib.Finlib().remove_garbage(df)
-    # df = finlib.Finlib().get_stock_configuration(select=False, stock_global='AG')
-    sc = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
+def bayes_start(csv_o):
+    if finlib.Finlib().is_cached(csv_o):
+        logging.info("Load from "+csv_o)
+        return(pd.read_csv(csv_o))
 
-    stock_list = sc['stock_list']
-    csv_dir = sc['csv_dir']
-    out_dir = sc['out_dir']
+    # df = finlib.Finlib().get_A_stock_instrment()
+    # df = finlib.Finlib().remove_garbage(df)
+    df = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG',remove_garbage=False)
+    # df = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
+    df_rtn = pd.DataFrame()
+
+    stock_list = df['stock_list']
+    csv_dir = df['csv_dir']
+    out_dir = df['out_dir']
 
     for index, row in stock_list.iterrows():
 
@@ -306,15 +311,19 @@ def bayes_start():
 
         print(code+", "+name)
 
-        _bayes_a_stock(code=code, name=name, csv_f=csv_dir+"/"+code+".csv")
+        _df = _bayes_a_stock(code=code, name=name, csv_f=csv_dir+"/"+code+".csv")
+        df_rtn = df_rtn.append(_df)
 
+    df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
+    logging.info("bayes result saved to "+csv_o+" ,len "+str(df_rtn.__len__()))
 
-    print(1)
 
 def _bayes_a_stock(code,name,csv_f):
     # f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
     # csv_f = "/home/ryan/DATA/DAY_Global/AG/SH603288.csv"
     df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f).tail(1000)
+
+    df_rtn = pd.DataFrame()
 
     # code = "SH000001"
     # code = "SH603288"
@@ -346,22 +355,38 @@ def _bayes_a_stock(code,name,csv_f):
     #yunxian
     df_yunxian = df[(df['open'] < df['close']) & (df['open_b1'] > df['close_b1']) & (df['open_b1'] > df['close']) & (df['close_b1'] < df['open'])  ]
 
-    _print_bayes_possibility(code=code,name=name, condition='jincha', df_all=df, df_up=df_up,df_con=df_jincha )
-    _print_bayes_possibility(code=code,name=name, condition='yunxian', df_all=df, df_up=df_up,df_con=df_yunxian )
+    _df = _print_bayes_possibility(code=code,name=name, condition='jincha', df_all=df, df_up=df_up,df_con=df_jincha )
+    df_rtn = df_rtn.append(_df)
 
-    return()
+    _df = _print_bayes_possibility(code=code,name=name, condition='yunxian', df_all=df, df_up=df_up,df_con=df_yunxian )
+    df_rtn = df_rtn.append(_df)
+
+
+    return(df_rtn)
 
 
 
 def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
     #P(condition | up) : N(up & condition) / N(up)
+
+    df_rtn = pd.DataFrame()
+
     df_con_up =  pd.merge(df_con,df_up,on=['date'],how='inner',suffixes=('','_x'))
+
+    if df_up.__len__() == 0:
+        return (df_rtn)
+
+    if df_all.__len__() == 0:
+        return (df_rtn)
 
     p_con_up = df_con_up.__len__()/df_up.__len__()
     p_con = df_con.__len__() / df_all.__len__()
     p_up = df_up.__len__() / df_all.__len__()
 
     #P(up|condition)
+    if p_con == 0:
+        return(df_rtn)
+
     P_bayes = round((p_con_up*p_up)/p_con,2)  # it is actually equal df_con_up.__len__()/df_con.__len__()
 
     
@@ -371,6 +396,18 @@ def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
                  +" up: "+str(df_up.__len__() )
                  +" all: "+str(df_all.__len__() )
                  )
+
+    df_rtn = pd.DataFrame.from_dict({
+        'code':[code],
+        'name':[name],
+        'condition':[condition],
+        'P_bayes':[P_bayes],
+        'con':[df_con.__len__()],
+        'up':[df_up.__len__()],
+        'all':[df_all.__len__()],
+    })
+
+    return(df_rtn)
 
 
 def result_effort_ratio():
@@ -564,8 +601,13 @@ def stock_vs_index_perf_amount():
     logging.info("hhh")
 
 
-def xiao_hu_xian(debug=False):
+def xiao_hu_xian(csv_out,debug=False):
     logging.info("start of func xiao_hu_xian")
+
+    if finlib.Finlib().is_cached(csv_out,day=1):
+        logging.info("loading from "+csv_out)
+        return(pd.read_csv(csv_out))
+
 
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
@@ -680,6 +722,9 @@ def xiao_hu_xian(debug=False):
         df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
         logging.info(finlib.Finlib().pprint(df_rtn))
+
+        df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+        logging.info("xiao hu xian result saved to "+csv_out)
 
     logging.info("end of the func xiao_hu_xian")
     sys.exit(0)
@@ -941,30 +986,38 @@ def fetch_holder():
     return(df_holder)
 
 
-def daily_UD_tongji():
+def daily_UD_tongji(out_csv,ndays=1):
     df_rtn = pd.DataFrame()
 
-    out_csv = "/home/ryan/DATA/result/daily_ZD_tongji.csv"
-
-    if finlib.Finlib().is_cached(out_csv, day=5):
+    if finlib.Finlib().is_cached(out_csv, day=ndays):
         logging.info("loading from " + out_csv)
         df_rtn = pd.read_csv(out_csv)
-    #
+        return(df_rtn)
+
+
+    today =  finlib.Finlib().get_last_trading_day()
+    today = datetime.datetime.strptime(today, '%Y%m%d')
+    theday = today - datetime.timedelta(days=ndays)
+    theday = int(theday.strftime('%Y%m%d'))
+    today = int(today.strftime('%Y%m%d'))
+
+
     pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b", timeout=3)
 
-    if df_rtn.__len__() < 100:
-        trade_date= finlib.Finlib().get_last_trading_day()
-        df_rtn = pro.limit_list(trade_date='20220419')
-        # df_rtn = pro.limit_list()
-        df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
+    # limit_list: 每日涨跌停统计
+    df_rtn = pro.limit_list(start_date=str(theday), end_date=str(today))
+    df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
+    df_rtn.to_csv(out_csv,encoding='UTF-8', index=False)
+    logging.info(f"UD_tongji result csv saved to {out_csv}")
 
-        df_D = df_rtn[df_rtn['limit']=='D']
-        df_U = df_rtn[df_rtn['limit']=='U']
+    df_D = df_rtn[df_rtn['limit']=='D']
+    df_U = df_rtn[df_rtn['limit']=='U']
 
-        logging.info("Down Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_D.sort_values(by='fl_ratio').tail(10)))
-        logging.info("UP Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio').tail(10)))
-        # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
-        logging.info("end of daily_UD_tongji\n\n")
+    # fl_ratio: 封单手数/流通股本
+    logging.info("Down Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_D.sort_values(by='fl_ratio').tail(10)))
+    logging.info("UP Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio').tail(10)))
+    # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
+    logging.info("end of daily_UD_tongji\n\n")
 
 def _td_setup_9_consecutive_close_4_day_lookup(adf,pre_n_day=4,consec_day=9):
     # https://oxfordstrat.com/indicators/td-sequential-3/
@@ -1638,8 +1691,11 @@ def _jie_tao(df, show_piv=False):
     return(rtn_dict)
 
 
+def cmp_with_idx_inc(of,debug=False):
+    if finlib.Finlib().is_cached(file_path=of,day=1):
+        logging.info("loading from " +of)
+        return(pd.read_csv(of))
 
-def cmp_with_idx_inc():
     f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     df = finlib.Finlib().regular_read_csv_to_stdard_df(f)
     # df = df.tail(35).head(30)
@@ -1654,14 +1710,19 @@ def cmp_with_idx_inc():
     compare_date='20220101'
     f='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     dfi = finlib.Finlib().regular_read_csv_to_stdard_df(f)
-    dfi = dfi[dfi['date']>=compare_date]
-    dfi['ac'] = dfi['pct_chg'].cumsum()
+    dfi = dfi[dfi['date']>=compare_date].reset_index().drop('index', axis=1)
+    dfi['ac'] = round(dfi['pct_chg'].cumsum(),1)
 
     dfa=finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df_rst_jin_cha=pd.DataFrame()
+
     for c in dfa['code'].unique():
+        if debug:
+            c = 'SZ301001' #ryan debug
+
         dfs = dfa[dfa['code']==c]
-        dfs = dfs[dfs['date']>=compare_date]
-        dfs['ac'] = dfs['pct_chg'].cumsum()
+        dfs = dfs[dfs['date']>=compare_date].reset_index().drop('index', axis=1)
+        dfs['ac'] = round(dfs['pct_chg'].cumsum(),1)
         dfs = pd.merge(left=dfs,right=dfi,on='date',suffixes=('','_idx'))
         dfs = dfs[['code','date','close','ac','ac_idx']]
         # dfs['ac'] = dfs['ac'].rolling(window=10).mean()
@@ -1678,6 +1739,8 @@ def cmp_with_idx_inc():
         #         logging.info(finlib.Finlib().pprint(df_si_cha))
 
         if df_jin_cha.__len__() > 0:
+            df_rst_jin_cha = df_rst_jin_cha.append(df_jin_cha)
+
             d = (datetime.datetime.today()  - datetime.datetime.strptime(df_jin_cha.iloc[-1]['date'], '%Y%m%d')).days
             if d < 7 and df_jin_cha.iloc[-1]['ac'] > -5:
                 logging.info("jincha, cross up index")
@@ -1685,15 +1748,19 @@ def cmp_with_idx_inc():
                 dfs.set_index(keys=['date'])[['ac', 'ac_idx']].plot()
                 print("")
 
+    df_rst_jin_cha.to_csv(of, encoding='UTF-8', index=False)
+    logging.info("jin cha result saved to "+of)
 
-def jie_tao():
+
+def jie_tao(of,debug=False):
+    if finlib.Finlib().is_cached(file_path=of,day=1):
+        logging.info("loading from " +of)
+        return(pd.read_csv(of))
+
     f = '/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_28_days.csv'
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
     df_rtn=pd.DataFrame()
     fo = "/home/ryan/DATA/result/che_bu.csv"
-
-    debug=True
-    # debug=False
 
     lst=df['code'].unique()
     if debug:
@@ -1743,16 +1810,20 @@ def stock_holder_check():
     print(finlib.Finlib().pprint(a.head(50)))
 
 
-def new_share_profit():
-    csv_o = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share_profit.csv"
+def new_share_profit(csv_o):
+    if finlib.Finlib().is_cached(csv_o):
+        logging.info("reading from "+csv_o)
+        return(pd.read_csv(csv_o))
+
     csv_i="/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/new_share.csv"
+
     df=pd.read_csv(csv_i, converters={'ipo_date': str,'issue_date': str})
-    df = finlib.Finlib().ts_code_to_code(df=df)
+    # df = finlib.Finlib().ts_code_to_code(df=df)
 
     df_today = finlib.Finlib().get_today_stock_basic()
 
     df = pd.merge(left=df,right=df_today, on='code', how='inner',suffixes=['_ipo','_now'])
-    df['pct_chg'] = round((df['close'] - df['price'])/df['price']*100,1)
+    df['pct_chg'] = round((df['close_now'] - df['price'])/df['price']*100,1)
     df['pe_pct_chg'] = round((df['pe_now'] - df['pe_ipo'])/df['pe_ipo']*100,1)
 
     df_show = df[df['issue_date'] != None]
@@ -1760,11 +1831,11 @@ def new_share_profit():
     df_show = df_show[df_show['issue_date'] > day_1year]
 
     df_show = df_show[['code', 'name_now', 'issue_date',  'amount',
-                  'market_amount',  'price', 'close', 'pct_chg','pe_ipo' ,'pe_now','pe_pct_chg', 'ballot',
-                  'area', 'industry',
+                  'market_amount',  'price', 'close_now', 'pct_chg','pe_ipo' ,'pe_now','pe_pct_chg', 'ballot',
+                  'area_now', 'industry_now',
                   ]]
 
-    show_cols=['issue_date','code','name_now','pe_ipo','ballot','price','close','pct_chg']
+    show_cols=['issue_date','code','name_now','pe_ipo','ballot','price','close_now','pct_chg']
     # df_show = df_show.sort_values(by=['pct_chg'], ascending=False)[show_cols].head(10) ##the most increase
     df_show = df_show.sort_values(by=['pct_chg'], ascending=True)[show_cols] ##the most decrease
 
@@ -1773,18 +1844,14 @@ def new_share_profit():
     df_show.to_csv(csv_o, encoding="UTF-8", index=False)
     logging.info("new share profit saved to " + csv_o+" len "+str(df_show.__len__()))
 
-def lemon_766():
+def lemon_766(csv_o):
     def _apply_func(tmp_df):
         logging.info(tmp_df.iloc[0]['name'])
         df1=copy.copy(tmp_df)
         df1 = finlib_indicator.Finlib_indicator().add_ma_ema(df=df1,short=20, middle=100, long=300)
         df1 = df1[['code', 'name', 'date', 'close','close_100_sma','close_300_sma']]
         df1 = df1.iloc[-1]
-
         return(df1)
-
-
-    csv_o = "/home/ryan/DATA/result/price_ma.csv"
 
     if finlib.Finlib().is_cached(csv_o,day=1):
         dfg = pd.read_csv(csv_o)
@@ -1803,15 +1870,15 @@ def lemon_766():
         logging.info(__file__ + " " + "saved price mv " + csv_o + " len " + str(dfg.__len__()))
 
 
-    dfg = finlib.Finlib().add_stock_increase(df=dfg)
+    dfg_show = finlib.Finlib().add_stock_increase(df=dfg)
 
-    dfg = dfg[dfg['c_60wk_diff']>0]
-    dfg = dfg[dfg['c_20wk_diff']>0]
-    dfg = dfg[dfg['c_60wk_diff']<5]
-    dfg = dfg[dfg['inc360']<-5]
+    dfg_show = dfg_show[dfg_show['c_60wk_diff']>0]
+    dfg_show = dfg_show[dfg_show['c_20wk_diff']>0]
+    dfg_show = dfg_show[dfg_show['c_60wk_diff']<5]
+    dfg_show = dfg_show[dfg_show['inc360']<-5]
 
-    logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
-
+    logging.info(finlib.Finlib().pprint(dfg_show[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
+    return(dfg)
 
 def big_v():
     def _apply_func(tmp_df):
@@ -1838,7 +1905,7 @@ def big_v():
             & (df['low']<df['low'].shift(-1))
         ]
 
-        logging.info(finlib.Finlib().pprint(df_big_v_yin[['code','name','date','high','low']].tail(1)))
+        # logging.info(finlib.Finlib().pprint(df_big_v_yin[['code','name','date','high','low']].tail(1)))
 
         return(df_big_v_yin)
 
@@ -1866,46 +1933,53 @@ def big_v():
 
 
 #### MAIN #####
+rst_dir= "/home/ryan/DATA/result"
 
 
-# lemon_766()
+df = lemon_766(csv_o = rst_dir+"/price_ma.csv")
 # exit()
 
-# cmp_with_idx_inc()
+# of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
+# df = cmp_with_idx_inc(of)
 # exit()
 
-# new_share_profit()
+
+df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
+
+
+# csv_o = rst_dir+"/new_share_profit.csv"
+# df = new_share_profit(csv_o)
 # exit()
 
-# jie_tao()
+# csv_o = rst_dir+"/jie_tao.csv"
+# df = jie_tao(csv_o)
 # exit()
 
 df_td = TD_indicator_main()
+df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
+
 # exit()
 
 
 df_big_v = big_v()
-exit()
+df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
+# exit()
 
-day_since = (datetime.datetime.today() - datetime.timedelta(20)).strftime("%Y%m%d")
-day_since = int(day_since)
-df_td = df_td[df_td['date']>day_since]
-df_big_v = df_big_v[df_big_v['date']>day_since]
 df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
-
+logging.info("Inner Merge of TD and Big_V")
 logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
-
 print(1)
 
-# a = daily_UD_tongji()
+# out_csv = rst_dir+"/daily_ZD_tongji.csv"
+# a = daily_UD_tongji(out_csv,ndays=5)
 # exit()
 
 
 # df_rtn = fudu_daily_check()
 # exit()
 
-
-# xiao_hu_xian()
+csv_out = rst_dir+"/xiao_hu_xian.csv"
+df = xiao_hu_xian(csv_out)
 # exit()
 
 # stock_holder_check()
@@ -1922,7 +1996,8 @@ print(1)
 # df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
 # exit()
 
-bayes_start()
+csv_o = rst_dir+"/bayes.csv"
+bayes_start(csv_o)
 exit()
 
 

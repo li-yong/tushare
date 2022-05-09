@@ -5919,6 +5919,30 @@ class Finlib:
 
         return(df_pp)
 
+    def filter_days(self,df, date_col='date', within_days=5):
+        if type(df) == type(None):
+            logging.warning("df is None")
+            return (df)
+
+        if df.__len__() == 0:
+            logging.warning("df is empty")
+            return (df)
+
+        if date_col not in df.columns:
+            logging.fatal(f"df no such column {date_col} ")
+            exit()
+
+        df['date'] = df['date'].apply(lambda _d: int(_d))
+
+        today = self.get_last_trading_day()
+        today = datetime.strptime(today, '%Y%m%d')
+        theday = today - timedelta(days=within_days)
+        theday = int(theday.strftime('%Y%m%d'))
+
+        df = df[df[date_col] >= theday].reset_index().drop('index', axis=1)
+
+        return (df)
+
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
     def w_shape_exam(self, df):
