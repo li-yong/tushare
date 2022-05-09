@@ -309,7 +309,7 @@ def bayes_start(csv_o):
         code = row['code']
         name = row['name']
 
-        print(code+", "+name)
+        # print(code+", "+name)
 
         _df = _bayes_a_stock(code=code, name=name, csv_f=csv_dir+"/"+code+".csv")
         df_rtn = df_rtn.append(_df)
@@ -319,8 +319,6 @@ def bayes_start(csv_o):
 
 
 def _bayes_a_stock(code,name,csv_f):
-    # f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
-    # csv_f = "/home/ryan/DATA/DAY_Global/AG/SH603288.csv"
 
     df_rtn = pd.DataFrame()
     df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f,exit_if_not_exist=False)
@@ -1947,20 +1945,20 @@ rst_dir= "/home/ryan/DATA/result"
 df = lemon_766(csv_o = rst_dir+"/price_ma.csv")
 # exit()
 
-# of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
-# df = cmp_with_idx_inc(of)
-# exit()
-
-
+of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
+df = cmp_with_idx_inc(of)
 df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
-
-
-# csv_o = rst_dir+"/new_share_profit.csv"
-# df = new_share_profit(csv_o)
 # exit()
 
-# csv_o = rst_dir+"/jie_tao.csv"
-# df = jie_tao(csv_o)
+
+
+
+csv_o = rst_dir+"/new_share_profit.csv"
+df = new_share_profit(csv_o)
+# exit()
+
+csv_o = rst_dir+"/jie_tao.csv"
+df = jie_tao(csv_o)
 # exit()
 
 df_td = TD_indicator_main()
@@ -1978,48 +1976,48 @@ logging.info("Inner Merge of TD and Big_V")
 logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
 print(1)
 
-# out_csv = rst_dir+"/daily_ZD_tongji.csv"
-# a = daily_UD_tongji(out_csv,ndays=5)
+out_csv = rst_dir+"/daily_ZD_tongji.csv"
+df = daily_UD_tongji(out_csv,ndays=5)
 # exit()
 
 
-# df_rtn = fudu_daily_check()
+df_rtn = fudu_daily_check()
 # exit()
 
 csv_out = rst_dir+"/xiao_hu_xian.csv"
 df = xiao_hu_xian(csv_out)
 # exit()
 
-# stock_holder_check()
+stock_holder_check()
 # exit()
 
-# a = stock_vs_index_perf_perc_chg()
+a = stock_vs_index_perf_perc_chg()
 # exit()
 
-# a = stock_vs_index_perf_amount()
+a = stock_vs_index_perf_amount()
 # exit()
 
 
  # startD and endD have to be trading day.
-# df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
+df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
 # exit()
 
 csv_o = rst_dir+"/bayes.csv"
-bayes_start(csv_o)
+df = bayes_start(csv_o)
 exit()
 
 
-# check_stop_loss_based_on_ma_across()
+check_stop_loss_based_on_ma_across()
 # exit()
 
 
-# result_effort_ratio()
+result_effort_ratio()
 # exit()
 
 # grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
 # exit()
 
-# df_industry = ag_industry_selected()
+df_industry = ag_industry_selected()
 # exit()
 
 df_intrinsic_value = graham_intrinsic_value()
