@@ -321,9 +321,17 @@ def bayes_start(csv_o):
 def _bayes_a_stock(code,name,csv_f):
     # f = "/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv"
     # csv_f = "/home/ryan/DATA/DAY_Global/AG/SH603288.csv"
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f).tail(1000)
 
     df_rtn = pd.DataFrame()
+    df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f,exit_if_not_exist=False)
+
+    if type(df)==type("FILE_NOT_EXIST"):
+        return(df_rtn)
+
+    if df.__len__() < 90:
+        return(df_rtn)
+
+    df = df.tail(1000)
 
     # code = "SH000001"
     # code = "SH603288"
