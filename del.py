@@ -1785,11 +1785,12 @@ def jie_tao(of,debug=False):
         # df_rtn.to_csv(fo,index=False)
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
-    df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,mktcap_unit="100M")
-    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
-    logging.info(finlib.Finlib().pprint(df_rtn))
+    # df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,mktcap_unit="100M")
+    # df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn)
+    # logging.info(finlib.Finlib().pprint(df_rtn.head(5)))
     df_rtn.to_csv(fo,index=False)
     logging.info(f"result saved to {fo}")
+    return(df_rtn)
 
 
 def stock_holder_check():
@@ -1883,6 +1884,7 @@ def lemon_766(csv_o):
     dfg_show = dfg_show[dfg_show['c_60wk_diff']<5]
     dfg_show = dfg_show[dfg_show['inc360']<-5]
 
+    logging.info(f"\n##### {sys._getframe().f_code.co_name} #####")
     logging.info(finlib.Finlib().pprint(dfg_show[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
     return(dfg)
 
@@ -1938,6 +1940,7 @@ def big_v():
     return(dfg)
 
 
+
 #### MAIN #####
 rst_dir= "/home/ryan/DATA/result"
 
@@ -1948,6 +1951,8 @@ df = lemon_766(csv_o = rst_dir+"/price_ma.csv")
 of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
 df = cmp_with_idx_inc(of)
 df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
+logging.info("\n##### cmp_with_idx_inc #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
 # exit()
 
 
@@ -1955,40 +1960,55 @@ df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
 
 csv_o = rst_dir+"/new_share_profit.csv"
 df = new_share_profit(csv_o)
+logging.info("\n##### new_share_profit #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
 # exit()
+
 
 csv_o = rst_dir+"/jie_tao.csv"
 df = jie_tao(csv_o)
+logging.info("\n##### jie_tao #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
+
 # exit()
 
 df_td = TD_indicator_main()
 df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
-
+logging.info("\n##### TD_indicator_main #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
 # exit()
 
 
 df_big_v = big_v()
 df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
+logging.info("\n##### big_v #####")
+logging.info(finlib.Finlib().pprint(df_big_v.head(5)))
 # exit()
 
 df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
-logging.info("Inner Merge of TD and Big_V")
+logging.info("\n##### Inner Merge of TD and Big_V #####")
 logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
 print(1)
 
 out_csv = rst_dir+"/daily_ZD_tongji.csv"
 df = daily_UD_tongji(out_csv,ndays=5)
+logging.info("\n##### daily_UD_tongji #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
 # exit()
 
 
-df_rtn = fudu_daily_check()
+df = fudu_daily_check()
+logging.info("\n##### futu_daily_check #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
 # exit()
 
 csv_out = rst_dir+"/xiao_hu_xian.csv"
 df = xiao_hu_xian(csv_out)
-# exit()
+logging.info("\n##### xiao_hu_xian #####")
+logging.info(finlib.Finlib().pprint(df.head(5)))
+exit()
 
-stock_holder_check()
+# stock_holder_check()
 # exit()
 
 a = stock_vs_index_perf_perc_chg()

@@ -136,8 +136,8 @@ def wei_pan_la_sheng(stock_market='AG'):
     result_csv_link = b+"/"+ stock_market + "_latest_result.csv"
 
 
-    # if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1) or True:
-    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
+    if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1) or True:
+    # if finlib.Finlib().is_cached(a_spot_csv_link_old, day=1):
         old_df = pd.read_csv(a_spot_csv_link_old, encoding="utf-8")
         old_df_small_change = old_df[old_df['changepercent'] < 1]  # changes smaller than 1%
         logging.info("number of small change df in old " + str(old_df_small_change.__len__()))
@@ -284,8 +284,12 @@ def main():
     parser.add_option("-f", "--fetch_after_market", action="store_true", dest="fetch_after_market", default=False, help="fetch market data after market closure.")
 
     parser.add_option("-i", "--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False, help="get stocks price roaring. Need run twice then get the comparing increase")
+    parser.add_option("-c", "--fetch_cb", action="store_true", dest="fetch_cb", default=False, help="get convertable bond")
 
     (options, args) = parser.parse_args()
+
+    # df = fetch_ak(api='bond_zh_hs_cov_spot', note='龙虎榜-机构席位追踪')
+
 
     #find the rapid up stocks in market. Comparing the increase percent with the number got in previous run.
     #set up crontabs, run at 2:00, and 2:45.  Check the output of 2.45 run.
@@ -293,6 +297,9 @@ def main():
         wei_pan_la_sheng()
     if options.fetch_after_market:
         fetch_after_market_close()
+    if options.fetch_cb:
+        df = ak.bond_zh_hs_cov_spot()
+        fetch_ak(api='bond_zh_hs_cov_spot', note='龙虎榜-机构席位追踪')
 
     logging.info('script completed')
     os._exit(0)

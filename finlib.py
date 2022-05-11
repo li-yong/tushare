@@ -5481,7 +5481,7 @@ class Finlib:
         a_spot_csv_link = b + "/" + stock_market + "_spot_link.csv"
         a_spot_csv_link_old = b + "/" + stock_market + "_spot_link_old.csv"
 
-        if self.is_cached(file_path=a_spot_csv_link, day=1 / 24 / 60 * allow_delay_min) and (not force_fetch):  # cached in 15 minutes
+        if self.is_cached(file_path=a_spot_csv_link, day=1 / 24 / 60 * allow_delay_min, use_last_trade_day=False) and (not force_fetch):  # cached in 15 minutes
             stock_spot_df = pd.read_csv(a_spot_csv_link, encoding="utf-8", converters={'code': str})
             logging.info("loading " + stock_market + " spot df from " + a_spot_csv_link)
             return(stock_spot_df)

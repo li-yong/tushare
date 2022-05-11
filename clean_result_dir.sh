@@ -22,9 +22,9 @@ rm -f average_daily_mktcap_sorted*
 rm -f average_daily_amount_sorted*
 rm -f latest_daily_basic_*
 
-rm -f wei_pan_la_sheng/*20210[1-9]*
-rm -f wei_pan_la_sheng/*202110*
-rm -f wei_pan_la_sheng/*202111*
+rm -f wei_pan_la_sheng/*2021*
+rm -f wei_pan_la_sheng/*2020*
+rm -f wei_pan_la_sheng/*20220[1-4]*
 rm -f today/*
 rm -f fib_plot/*
 
