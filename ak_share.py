@@ -35,7 +35,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', 
 #pd.set_option('display.width', 1000)
 
 
-def fetch_ak(api, note, parms):
+def fetch_ak(api, note, parms, cache_day=1, force_fetch=False):
 
     base_dir = "/home/ryan/DATA/pickle/Stock_Fundamental/akshare/source"
     if not os.path.exists(base_dir):
@@ -43,9 +43,9 @@ def fetch_ak(api, note, parms):
 
     csv_f = base_dir + "/" + api + "_" + note + ".csv"
 
-    if finlib.Finlib().is_cached(csv_f, day=2):
+    if finlib.Finlib().is_cached(csv_f, day=cache_day, use_last_trade_day=False) and (not force_fetch):
         logging.info("file updated in 2 days, not fetch again. " + csv_f)
-        return
+        return(pd.read_csv(csv_f))
 
     logging.info("\nfetching " + api + " " + note)
 
@@ -53,9 +53,10 @@ def fetch_ak(api, note, parms):
         cmd = "ak." + api + "(" + parms + ")"
         df = eval(cmd)
         if df is not None:
-            df.to_csv(csv_f, encoding='UTF-8')
+            df.to_csv(csv_f, encoding='UTF-8',index=False)
             logging.info("fetched " + api + " " + note + ", " + csv_f)
             logging.info(tabulate.tabulate(df.head(1), headers='keys', tablefmt='psql'))
+            return(df)
         else:
             logging.warning("df is None")
     except Exception as e:
@@ -298,8 +299,45 @@ def main():
     if options.fetch_after_market:
         fetch_after_market_close()
     if options.fetch_cb:
-        df = ak.bond_zh_hs_cov_spot()
-        fetch_ak(api='bond_zh_hs_cov_spot', note='龙虎榜-机构席位追踪')
+        df_cb = fetch_ak(api='bond_zh_hs_cov_spot',
+                         note='债券-沪深可转债-实时行情数据',
+                         parms='',
+                         # cache_day=1/24/4,
+                         cache_day=1,
+                         force_fetch=True)
+
+
+        df_cb = df_cb.rename(columns={"code": "cb_code"}, inplace=False)
+        df_cb = df_cb.rename(columns={"symbol": "symbol", "trade": "close" }, inplace=False)
+        df_cb['symbol'] = df_cb['symbol'].str.upper()
+
+
+        df_cb_cmp = fetch_ak(api='bond_cov_comparison',
+                             note='可转债比价表',
+                             parms='',
+                             # cache_day=1/24/4,
+                             cache_day=1,
+                             force_fetch=True)
+
+        df_cb_cmp = df_cb_cmp.rename(columns={
+            "转债代码": "cb_code", "转债名称": "cb_name","正股代码":"code","正股名称":"name",
+            "转债最新价": "cb_price", "转债涨跌幅": "cb_change","正股最新价":"s_price","正股涨跌幅":"s_change",
+            "转股价": "zhuan_gu_jia", "转股价值": "zhuan_gu_jia_zhi","转股溢价率":"zhuan_gu_yi_jia","纯债溢价率":"zhuan_zhai_yi_jia",
+
+        }, inplace=False)
+
+        df_cb_cmp = finlib.Finlib().add_market_to_code(df=df_cb_cmp)
+
+        df_cb = pd.merge(left=df_cb,right=df_cb_cmp,on='cb_code', how='inner',suffixes=('', '_cmp'))
+
+
+        df_stock = pd.read_csv("/home/ryan/DATA/result/wei_pan_la_sheng/AG_latest_result.csv")
+
+        df_rst = pd.merge(left=df_stock,right=df_cb, on='code',how='inner',suffixes=('_stock', '_cb'))
+
+
+
+        print(1)
 
     logging.info('script completed')
     os._exit(0)
