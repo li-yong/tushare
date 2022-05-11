@@ -44,7 +44,7 @@ def fetch_ak(api, note, parms, cache_day=1, force_fetch=False):
     csv_f = base_dir + "/" + api + "_" + note + ".csv"
 
     if finlib.Finlib().is_cached(csv_f, day=cache_day, use_last_trade_day=False) and (not force_fetch):
-        logging.info("file updated in 2 days, not fetch again. " + csv_f)
+        logging.info(f"file updated in {str(cache_day)} days, not fetch again. " + csv_f)
         return(pd.read_csv(csv_f))
 
     logging.info("\nfetching " + api + " " + note)
@@ -149,7 +149,7 @@ def wei_pan_la_sheng(stock_market='AG'):
         logging.info("number of large change df in new " + str(new_df_large_change.__len__()))
 
         merged_inner = pd.merge(left=old_df_small_change, right=new_df_large_change, how='inner', left_on='code', right_on='code', suffixes=('_o', '')).drop('name_o', axis=1)
-        merged_inner['increase_diff'] = merged_inner['changepercent'] - merged_inner['changepercent_o']
+        merged_inner['increase_diff'] = round(merged_inner['changepercent'] - merged_inner['changepercent_o'],1)
 
         tmp = merged_inner
 
@@ -161,14 +161,14 @@ def wei_pan_la_sheng(stock_market='AG'):
 
         merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','volume', 'amount', 'changepercent_o',  'changepercent']]
         # merged_inner_rst = tmp[['code', 'name', 'close', 'increase_diff','tr_pe','total_mv', 'volume', 'amount', 'changepercent_o',  'changepercent']]
-        merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff'], ascending=[False], inplace=False).reset_index().drop('index', axis=1)
+        merged_inner_rst = merged_inner_rst.sort_values(by=['increase_diff','changepercent'], ascending=[False,False], inplace=False).reset_index().drop('index', axis=1)
 
-        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(30)
+        merged_inner_rst = finlib.Finlib().add_market_to_code(merged_inner_rst).head(300)
         logging.info("The top10 Rapid Change Stock List:")
         finlib.Finlib().pprint(merged_inner_rst.head(10))
 
         merged_inner_rst.to_csv(result_csv, encoding='UTF-8', index=False)
-        logging.info("ag wei_pan_la_sheng output list saved to " + b + '/wei_pan_la_sheng_' + nowS + '.csv')
+        logging.info(f"ag wei_pan_la_sheng output list saved to {result_csv}, len {str(merged_inner_rst.__len__())}" )
 
         #update symbol link
         if os.path.lexists(result_csv_link):
@@ -304,11 +304,11 @@ def main():
                          parms='',
                          # cache_day=1/24/4,
                          cache_day=1,
-                         force_fetch=True)
+                         force_fetch=False)
 
 
         df_cb = df_cb.rename(columns={"code": "cb_code"}, inplace=False)
-        df_cb = df_cb.rename(columns={"symbol": "symbol", "trade": "close" }, inplace=False)
+        df_cb = df_cb.rename(columns={"symbol": "symbol", "trade": "cb_trade" }, inplace=False)
         df_cb['symbol'] = df_cb['symbol'].str.upper()
 
 
@@ -317,13 +317,12 @@ def main():
                              parms='',
                              # cache_day=1/24/4,
                              cache_day=1,
-                             force_fetch=True)
+                             force_fetch=False)
 
         df_cb_cmp = df_cb_cmp.rename(columns={
             "转债代码": "cb_code", "转债名称": "cb_name","正股代码":"code","正股名称":"name",
-            "转债最新价": "cb_price", "转债涨跌幅": "cb_change","正股最新价":"s_price","正股涨跌幅":"s_change",
+            "转债最新价": "cb_price", "转债涨跌幅": "cb_change","正股最新价":"stock_price","正股涨跌幅":"stock_change",
             "转股价": "zhuan_gu_jia", "转股价值": "zhuan_gu_jia_zhi","转股溢价率":"zhuan_gu_yi_jia","纯债溢价率":"zhuan_zhai_yi_jia",
-
         }, inplace=False)
 
         df_cb_cmp = finlib.Finlib().add_market_to_code(df=df_cb_cmp)
@@ -335,7 +334,11 @@ def main():
 
         df_rst = pd.merge(left=df_stock,right=df_cb, on='code',how='inner',suffixes=('_stock', '_cb'))
 
+        df_rst_show = df_rst[['code','name_stock','stock_price',
+                         'changepercent_stock','stock_change',
+                         'cb_code','cb_name','cb_price','cb_change']]
 
+        print(finlib.Finlib().pprint(df_rst_show))
 
         print(1)
 
