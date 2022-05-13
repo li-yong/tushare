@@ -890,6 +890,9 @@ def generate_result_csv(full_combination=False, select=True, operation="B", debu
 
             if comb_df_name in dict_df.keys():
                 tmp = dict_df[comb_df_name]
+
+                if tmp.__len__()==0:
+                    continue
                 # logging.info(("reuse saved combined df " + comb_df_name))
             else:
                 # logging.info(__file__+" "+"combination no instance, " + comb_df_name)
