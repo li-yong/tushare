@@ -587,7 +587,7 @@ def zigzag_divation(debug=False):
     df_kdj = pd.DataFrame()
     df_rsi = pd.DataFrame()
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=200)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     # df = finlib.Finlib().remove_garbage(df=df)
@@ -655,7 +655,7 @@ def zigzag_plot(debug=False):
     df_kdj = pd.DataFrame()
     df_rsi = pd.DataFrame()
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=200)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     # df = finlib.Finlib().remove_garbage(df=df)

@@ -5683,40 +5683,7 @@ class Finlib:
         return (df_rtn)
 
 
-
-
-
-
-    def load_price_n_days(self, ndays=7):
-
-        basic_dir = '/home/ryan/DATA/pickle/daily_update_source'
-
-        dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
-        dayE = datetime.today().strftime("%Y%m%d")
-
-        out_csv = "/home/ryan/DATA/result/daily_price_"+dayS+"_"+dayE+".csv"
-
-        df_rtn = pd.DataFrame()
-        j = 0
-        for i in range(ndays):
-            j += 1
-            date = (datetime.strptime(dayS, "%Y%m%d") + timedelta(days=i)).strftime("%Y%m%d")
-            input_csv = basic_dir + "/ag_daily_" + date + ".csv"
-
-            if self.is_cached(input_csv, day=1000):
-                df_sub = pd.read_csv(input_csv)
-
-                df_rtn = df_rtn.append(df_sub)
-                logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
-            else:
-                logging.warning("no such file "+input_csv)
-
-        #####################
-        df_rtn = df_rtn.reset_index().drop('index', axis=1)
-
-        return(df_rtn)
-
-    def read_all_ag_qfq_data(self,days=30):
+    def load_all_ag_qfq_data(self,days=300):
         ######### For TRIN, Advance/Decline LINE #######\
         dir = "/home/ryan/DATA/DAY_Global/AG_qfq"
         csv = dir + "/ag_all_"+str(days)+"_days.csv"

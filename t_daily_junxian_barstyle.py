@@ -371,7 +371,7 @@ def main():
         os.mkdir(out_dir)
 
    ###  Start of verify every stocks
-    df_all = finlib.Finlib().read_all_ag_qfq_data(days=600)
+    df_all = finlib.Finlib().load_all_ag_qfq_data(days=600)
     df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
     # df = finlib.Finlib().remove_garbage(df=df)
 

@@ -480,7 +480,7 @@ def stock_vs_index_perf_perc_chg():
     csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index)
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
     # df = finlib.Finlib().remove_garbage(df=df)
 
@@ -527,7 +527,7 @@ def stock_vs_index_perf_amount():
     csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
     df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index)
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
     # df = finlib.Finlib().remove_garbage(df=df)
 
@@ -622,7 +622,7 @@ def xiao_hu_xian(csv_out,debug=False):
 
     ZT_P= 8 #ag_all_300_days.csv
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=200)
     # csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_200_days.csv"
     # df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
 
@@ -823,7 +823,7 @@ def fudu_get_base_data(base_windows=5, slide_window=3):
 
     df_rtn = pd.DataFrame()
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=base_windows)
     csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
 
@@ -900,7 +900,7 @@ def fudu_get_today_data(base_windows=5,slide_window=3):
 
     df_rtn = pd.DataFrame()
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=base_windows)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=base_windows)
     csv_f = "/home/ryan/DATA/DAY_Global/AG_qfq/ag_all_"+str(base_windows)+"_days.csv"
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv_f)
     df = finlib.Finlib()._remove_garbage_on_market_days(df=df,on_market_days=90)
@@ -1523,7 +1523,7 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
         df_rtn = pd.read_csv(td_csv_9_13)
         return(df_rtn)
 
-    df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
 
     if stock_global is not None:
         df = pd.merge(left=df, right=df_hold[['code']], on='code',how='inner').reset_index().drop('index', axis=1)
@@ -1719,7 +1719,7 @@ def cmp_with_idx_inc(of,debug=False):
     dfi = dfi[dfi['date']>=compare_date].reset_index().drop('index', axis=1)
     dfi['ac'] = round(dfi['pct_chg'].cumsum(),1)
 
-    dfa=finlib.Finlib().read_all_ag_qfq_data(days=200)
+    dfa=finlib.Finlib().load_all_ag_qfq_data(days=200)
     df_rst_jin_cha=pd.DataFrame()
 
     for c in dfa['code'].unique():
@@ -1864,7 +1864,7 @@ def lemon_766(csv_o):
         dfg = pd.read_csv(csv_o)
         logging.info(__file__ + " " + "loaded price mv from" + csv_o + " len " + str(dfg.__len__()))
     else:
-        df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+        df = finlib.Finlib().load_all_ag_qfq_data(days=300)
         df = finlib.Finlib().add_stock_name_to_df(df=df)
 
         # df = df[df['code'].isin(['SZ000001','SH600519'])]
@@ -1925,7 +1925,7 @@ def big_v():
         dfg = pd.read_csv(csv_o)
         logging.info(__file__ + " " + "loaded big v from" + csv_o + " len " + str(dfg.__len__()))
     else:
-        df = finlib.Finlib().read_all_ag_qfq_data(days=300)
+        df = finlib.Finlib().load_all_ag_qfq_data(days=300)
         df = finlib.Finlib().add_stock_name_to_df(df=df)
 
         # df = df[df['code'].isin(['SZ000001','SH600519'])]
@@ -1940,8 +1940,29 @@ def big_v():
     return(dfg)
 
 
+def list_a_day_market_performance():
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+    d = df[df['date'].isin(['20220119', '20220120'])]
+
+    d1 = d[d['pct_chg'] > 9]
+
+    d1 = finlib.Finlib().add_stock_name_to_df(df=d1)
+    d1 = finlib.Finlib().add_industry_to_df(df=d1)
+
+    # print(finlib.Finlib().pprint(df=d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]))
+
+    d2 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
+
+    s1 = d2.groupby('industry_name_L1_L2_L3').size()
+    print(s1.sort_values().tail(20))
+
 
 #### MAIN #####
+
+# list_a_day_market_performance()
+# exit()
+
+
 rst_dir= "/home/ryan/DATA/result"
 
 

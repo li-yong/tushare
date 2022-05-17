@@ -256,7 +256,7 @@ def show_result(type, csv_out,root_dir,show_plot=False):
 
 
 def check_amount_x_individual(days):
-    df = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     df = finlib.Finlib().remove_garbage(df=df)
@@ -325,7 +325,7 @@ def check_amount_x_individual(days):
     pass
 
 def check_adr_individual(days, debug=False):
-    df = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=days*2)
     df = finlib.Finlib().add_stock_name_to_df(df=df)
 
     # df = finlib.Finlib().remove_garbage(df=df)
@@ -480,7 +480,7 @@ def main():
     csv_out_mkt = root_dir+'/ag_mkt_adl_trin_'+str(days)+'d.csv'
 
     if not finlib.Finlib().is_cached(csv_out_mkt,1):
-        df_in = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
+        df_in = finlib.Finlib().load_all_ag_qfq_data(days=days*2)
         df_out = pd.DataFrame( columns=['date','code','net_adv_perc','ADL','ADL_perc','vol_perc', 'amt_perc','net_amt','TRIN'])
 
         df_out = market_adl_trin(df_in=df_in, df_out=df_out, days=days)
@@ -496,7 +496,7 @@ def main():
     csv_out_individual = root_dir+'/ag_ind_adl_trin_'+str(days)+'d.csv'
 
     if not finlib.Finlib().is_cached(csv_out_individual, 1):
-        df_in = finlib.Finlib().read_all_ag_qfq_data(days=days*2)
+        df_in = finlib.Finlib().load_all_ag_qfq_data(days=days*2)
         df_out = pd.DataFrame(
             columns=['date', 'code', 'net_adv_perc', 'ADL', 'ADL_perc', 'vol_perc', 'amt_perc', 'net_amt', 'TRIN'])
         df_out = individual_adl_trin(df_in = df_in, df_out=df_out, days=days) #comment the line if don't need run on each invididual stocks
