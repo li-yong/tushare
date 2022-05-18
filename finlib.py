@@ -3153,7 +3153,7 @@ class Finlib:
 
 
 
-    def add_industry_to_df(self,df,source='all'):
+    def add_industry_to_df(self,df,source='wg'):
         if "_".join(df.columns.to_list()).__contains__("industry_name"):
             logging.info("df already has column named industry_name, skip adding industry to df. df columns: "+",".join(df.columns.to_list()))
             return(df)
@@ -3181,6 +3181,7 @@ class Finlib:
         if source =='all':
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']+"_" + df_industry['industry_name_ts']
         elif  source =='wg':
+            df_industry = df_industry[['code', 'name', 'industry_name_wg']].drop_duplicates().reset_index().drop('index', axis=1)
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_wg']
         elif  source =='ts':
             df_industry['industry_name_L1_L2_L3'] = df_industry['industry_name_ts']
@@ -5682,6 +5683,26 @@ class Finlib:
         df_rtn = self.ts_code_to_code(df=df_rtn)
         return (df_rtn)
 
+    def add_concept_to_df(self, df, debug=False):
+        f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_concept.csv"
+        df_concept = pd.read_csv(f)
+        df_concept = self.ts_code_to_code(df=df_concept)
+
+        # add concept
+        if debug:
+            df = df[df['code'] == 'SH600519']
+
+        df_rtn = pd.merge(left=df_concept, right=df, on='code', how='inner',suffixes=["_cpt",""])
+
+        return (df_rtn)
+
+
+    def get_a_concept(self,concept):
+        f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_concept.csv"
+        df_concept = pd.read_csv(f)
+        # df_rtn = df_concept[df_concept['cat_name'].str.contains("光伏概念")]
+        df_rtn = df_concept[df_concept['cat_name'].str.contains(concept)]
+        return(df_rtn)
 
     def load_all_ag_qfq_data(self,days=300):
         ######### For TRIN, Advance/Decline LINE #######\
@@ -5909,6 +5930,93 @@ class Finlib:
         df = df[df[date_col] >= theday].reset_index().drop('index', axis=1)
 
         return (df)
+
+    def list_stock_performance_in_a_concept(self, date_list, concept, df_i=None):
+        df = self.load_all_ag_qfq_data(days=300)
+        d = df[df['date'].isin(date_list)]
+        d = d[d['pct_chg'] < 30]  # rule out the new stock
+
+        if type(df_i) == type(pd.DataFrame()):
+            d = pd.merge(left=df_i, right=d, on='code', how='inner', suffixes=["", "_x"])
+
+        d1 = d
+
+        d1 = self.add_stock_name_to_df(df=d1)
+        d1 = self.add_concept_to_df(df=d1)
+        d1 = d1[d1['cat_name'] == concept]
+        d1 = d1[d1['cat_name'].str.contains(concept)]
+
+        d1 = d1[['code', 'name', 'date', 'pct_chg', 'cat_name']]
+
+        top = d1.groupby(by=['code']).mean().reset_index()
+        top = self.add_stock_name_to_df(df=top)
+        top['pct_chg']= round(top['pct_chg'],1)
+
+
+        logging.info(f"\n==== {concept} The most increased stocks during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(top.sort_values(by='pct_chg').tail(10)[['code', 'name', 'pct_chg']]))
+        logging.info(f"\n==== {concept} The most decreased stocks during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(top.sort_values(by='pct_chg').head(10)[['code', 'name', 'pct_chg']]))
+        return(top)
+
+    def list_industry_performance(self, date_list, df_i=None):
+        df = self.load_all_ag_qfq_data(days=300)
+
+        d = df[df['date'].isin(date_list)]
+
+        d = d[d['pct_chg'] < 30]  # rule out the new stock
+
+        if type(df_i) == type(pd.DataFrame()):
+            d = pd.merge(left=df_i, right=d, on='code', how='inner')
+
+        d1 = d
+        d1 = self.add_stock_name_to_df(df=d1)
+        d1 = self.add_industry_to_df(df=d1)
+        d1 = d1[d1['industry_name_L1_L2_L3'] != 'UNKNOWN']
+
+        d1 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
+
+        df_sec = d1.groupby(by='industry_name_L1_L2_L3')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
+        df_sec['pct_chg']= round(df_sec['pct_chg'],1)
+        logging.info("\n==== The most increased INDUSTRY during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.tail(10)))
+
+        logging.info("\n==== The most decreased INDUSTRY during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.head(10)))
+
+        return (df_sec)
+
+    def list_concept_performance(self, date_list, df_i=None):
+        df = self.load_all_ag_qfq_data(days=300)
+
+        d = df[df['date'].isin(date_list)]
+        d = d[d['pct_chg'] < 30]  # rule out the new stock
+
+        if type(df_i) == type(pd.DataFrame()):
+            d = pd.merge(left=df_i, right=d, on='code', how='inner', suffixes=["", "_x"])
+
+        d1 = d
+        d1 = self.add_stock_name_to_df(df=d1)
+        d1 = self.add_concept_to_df(df=d1)
+
+        d1 = d1[['code', 'name', 'date', 'pct_chg', 'cat_name']]
+
+        df_sec = d1.groupby(by='cat_name')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
+        df_sec['pct_chg']= round(df_sec['pct_chg'],1)
+        logging.info("\n==== The most increased CONCEPT during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.tail(10)))
+
+        logging.info("\n==== The most decreased CONCEPT during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.head(10)))
+        
+        return(df_sec)
+    
+
+    #input: df [open,high, low, close]
+    #output: {hit:[T|F], high:value, low:value, }
+    def w_shape_exam(self, df):
+        pass
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

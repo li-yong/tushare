@@ -1940,27 +1940,17 @@ def big_v():
     return(dfg)
 
 
-def list_a_day_market_performance():
-    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
-    d = df[df['date'].isin(['20220119', '20220120'])]
-
-    d1 = d[d['pct_chg'] > 9]
-
-    d1 = finlib.Finlib().add_stock_name_to_df(df=d1)
-    d1 = finlib.Finlib().add_industry_to_df(df=d1)
-
-    # print(finlib.Finlib().pprint(df=d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]))
-
-    d2 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
-
-    s1 = d2.groupby('industry_name_L1_L2_L3').size()
-    print(s1.sort_values().tail(20))
-
 
 #### MAIN #####
 
-# list_a_day_market_performance()
-# exit()
+
+
+d1 = finlib.Finlib().list_industry_performance(date_list=['20220119', '20220120'])
+
+d2 = finlib.Finlib().list_concept_performance(date_list=['20220120'])
+
+d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=['20220516','20220517'], concept="光伏概念")
+exit()
 
 
 rst_dir= "/home/ryan/DATA/result"
