@@ -1950,7 +1950,7 @@ d1 = finlib.Finlib().list_industry_performance(date_list=['20220119', '20220120'
 d2 = finlib.Finlib().list_concept_performance(date_list=['20220120'])
 
 d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=['20220516','20220517'], concept="光伏概念")
-exit()
+
 
 
 rst_dir= "/home/ryan/DATA/result"
