@@ -1942,8 +1942,7 @@ def big_v():
 
 
 #### MAIN #####
-
-
+df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
 
 d1 = finlib.Finlib().list_industry_performance(date_list=['20220119', '20220120'])
 

@@ -6010,7 +6010,111 @@ class Finlib:
         logging.info(self.pprint(df_sec.head(10)))
         
         return(df_sec)
-    
+
+    def _get_a_stock_significant(self,df_a,perc=90,last_n_days=300):
+        date = df_a.iloc[-1]['date']
+        close = df_a.iloc[-1]['close']
+        code = df_a.iloc[-1]['code']
+
+        selected = False
+
+        df_a['vib'] = round(100 * (df_a['high'] - df_a['low']) / df_a['open'], 1)
+        df_a['body'] = abs(round(100 * (df_a['close'] - df_a['open']) / df_a['open'], 1))
+
+        df_a_significant_vib = df_a[df_a['vib'] >= stats.scoreatpercentile(df_a['vib'], perc)]
+        df_a_significant_amount = df_a[df_a['amount'] >= stats.scoreatpercentile(df_a['amount'], perc)]
+        df_a_significant_body = df_a[df_a['body'] >= stats.scoreatpercentile(df_a['body'], perc)]
+
+        _df = pd.merge(left=df_a_significant_vib, right=df_a_significant_amount[['date']], on='date', how='inner',
+                       suffixes=["", '_amt'])
+        _df = pd.merge(left=_df, right=df_a_significant_body[['date']], on='date', how='inner', suffixes=["", '_b'])
+
+        df_pressure_support_all = _df[['code', 'date', 'close', 'vib','body','amount']]
+        # logging.info(f"code {code} significant {str(perc)} perc")
+        # logging.info(self.pprint(df_pressure_support_all.tail(10)))
+
+        df_tmp = df_pressure_support_all.sort_values(by='close').reset_index().drop('index', axis=1)
+        df_pressure = df_tmp[df_tmp['close']>close].head(1)
+        df_support = df_tmp[df_tmp['close']<close].tail(1)
+
+        pressure = 0
+        support = 0
+        p_date='2000-01-01'
+        s_date='2000-01-01'
+        up_space_perc = 0
+        dn_space_perc = 0
+
+        if df_pressure.__len__() > 0 and df_support.__len__() > 0 and close != 0:
+            pressure = df_pressure.iloc[0]['close']
+            p_date = df_pressure.iloc[0]['date']
+
+            support = df_support.iloc[0]['close']
+            s_date = df_support.iloc[0]['date']
+
+            up_space_perc = round(100*( pressure - close)/close,2)
+            dn_space_perc = round(100*( support - close)/close,2)
+
+
+        df_pressure_support = pd.DataFrame.from_dict(
+            { 'code': [code], 'date': [date],
+             'pressure': [pressure],
+             'p_date': [p_date],
+             'support': [support],
+             's_date': [s_date],
+             'up_space_perc': [up_space_perc],
+             'dn_space_perc': [dn_space_perc]},
+        )
+
+
+        if abs(dn_space_perc) < 2 and up_space_perc > 10:
+            selected = True
+            logging.info(f"Selected code {code} Pressure-Support distance, based on significant {str(perc)} perc in last {last_n_days} days")
+            logging.info(self.pprint(df_pressure_support))
+
+        return(df_pressure_support_all,df_pressure_support,selected)
+
+
+    def get_a_stock_significant(self, perc=90,last_n_days=300):
+        df = self.load_all_ag_qfq_data(days=last_n_days)
+        dir = '/home/ryan/DATA/result/'
+        csv_o_ps = dir+"/pressure_support.csv"
+        csv_o_ps_now = dir+"/pressure_support_now.csv"
+        csv_o_ps_select = dir+"/pressure_support_select.csv"
+
+        if self.is_cached(csv_o_ps,day=1) and self.is_cached(csv_o_ps_now, day=1) and self.is_cached(csv_o_ps_select, day=1):
+            df_ps = pd.read_csv(csv_o_ps)
+            df_ps_now = pd.read_csv(csv_o_ps_now)
+            df_ps_select = pd.read_csv(csv_o_ps_select)
+            return(df_ps, df_ps_now, df_ps_select)
+
+        df_ps = pd.DataFrame()
+        df_ps_now = pd.DataFrame()
+        df_ps_select = pd.DataFrame()
+
+        for c in df['code'].unique():
+            df_a = df[df['code'] == c].reset_index().drop('index', axis=1)
+            df_pressure_support_all, df_pressure_support, selected = self._get_a_stock_significant(df_a,perc=perc,last_n_days=last_n_days)
+
+            df_ps = df_ps.append(df_pressure_support_all)
+            df_ps_now = df_ps_now.append(df_pressure_support)
+
+            if selected:
+                df_ps_select = df_ps_select.append(df_pressure_support)
+
+        df_ps.to_csv(csv_o_ps, encoding='UTF-8', index=False)
+        # logging.info(__file__ + ": " + "saved " + csv_o_ps + " . len " + str(df_ps.__len__()))
+
+        df_ps_now.to_csv(csv_o_ps_now, encoding='UTF-8', index=False)
+        # logging.info(__file__ + ": " + "saved " + csv_o_ps_now + " . len " + str(df_ps_now.__len__()))
+
+        df_ps_select.to_csv(csv_o_ps_select, encoding='UTF-8', index=False)
+        # logging.info(__file__ + ": " + "saved " + csv_o_ps_select + " . len " + str(df_ps_select.__len__()))
+
+
+        return(df_ps,df_ps_now, df_ps_select)
+
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
