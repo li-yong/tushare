@@ -6015,6 +6015,7 @@ class Finlib:
         date = df_a.iloc[-1]['date']
         close = df_a.iloc[-1]['close']
         code = df_a.iloc[-1]['code']
+        name = df_a.iloc[-1]['name']
 
         selected = False
 
@@ -6056,7 +6057,7 @@ class Finlib:
 
 
         df_pressure_support = pd.DataFrame.from_dict(
-            { 'code': [code], 'date': [date],
+            { 'code': [code], 'date': [date],'name':[name],
              'pressure': [pressure],
              'p_date': [p_date],
              'support': [support],
@@ -6094,7 +6095,12 @@ class Finlib:
         df = self.load_all_ag_qfq_data(days=last_n_days)
         df = self.add_stock_name_to_df(df=df)
 
-        for c in df['code'].unique():
+        i=0
+        stock_list =df['code'].unique()
+
+        for c in stock_list:
+            i+=1
+            logging.info(f"{str(i)} of {str(stock_list.__len__())} ")
             df_a = df[df['code'] == c].reset_index().drop('index', axis=1)
             df_pressure_support_all, df_pressure_support, selected = self._get_a_stock_significant(df_a,perc=perc,last_n_days=last_n_days)
 
