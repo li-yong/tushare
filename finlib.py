@@ -6075,7 +6075,6 @@ class Finlib:
 
 
     def get_a_stock_significant(self, perc=90,last_n_days=300):
-        df = self.load_all_ag_qfq_data(days=last_n_days)
         dir = '/home/ryan/DATA/result/'
         csv_o_ps = dir+"/pressure_support.csv"
         csv_o_ps_now = dir+"/pressure_support_now.csv"
@@ -6087,9 +6086,13 @@ class Finlib:
             df_ps_select = pd.read_csv(csv_o_ps_select)
             return(df_ps, df_ps_now, df_ps_select)
 
+
         df_ps = pd.DataFrame()
         df_ps_now = pd.DataFrame()
         df_ps_select = pd.DataFrame()
+
+        df = self.load_all_ag_qfq_data(days=last_n_days)
+        df = self.add_stock_name_to_df(df=df)
 
         for c in df['code'].unique():
             df_a = df[df['code'] == c].reset_index().drop('index', axis=1)
