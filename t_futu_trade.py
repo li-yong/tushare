@@ -1407,14 +1407,18 @@ def _set_common_ag_price_reminder(df,quote_ctx):
             logging.info("not a stock, skip. " + str(code))
             continue
 
-        logging.info("setting reminder common " + str(code))
 
         sell = False
         sell_reason_cn = ''
 
         f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
         df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
+        df_p = finlib.Finlib().add_stock_name_to_df(df_p)
         df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
+
+        name = df_p['name'].iloc[0]
+        logging.info(f"setting reminder common {str(code)} {name} ")
+
 
         # Cond #2
         p = round(0.5 * df_p[-60:]['close'].max(), 2)
@@ -1522,18 +1526,25 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
 
 
 def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, debug=False):
-    if clear_all:
+    # if clear_all:
+    if False:
         clear_price_reminder(quote_ctx,market=Market.SH)
         clear_price_reminder(quote_ctx,market=Market.SZ)
 
 
-    # How to get 00.csv
+    # How to get .csv
     # export from ZhaoShangZhengquan --> ZiJinGuFeng.
-    # In open excel, change format of ZhenQuanDaiMa to text
-    # Save excel to UFT-8 formatted CSV (00.csv)
-    f = '/home/ryan/ag_account.csv'
-    df = pd.read_csv(f, converters={'证券代码': str})
-    # df = pd.read_csv(f,converters={'code':str},names=['code', 'name', 'date', 'o', 'h', 'l', 'c', 'vol', 'amt', 'tnv'])
+    # Copy xls files from Windows to HAHA_BRAIN
+    # libreoffice open xls encoding GB18030, save to CSV (933.csv, 059.csv, 653.csv)
+
+
+    df1 = pd.read_csv('/home/ryan/933.csv', converters={'证券代码': str}, encoding="GB18030")
+    df2 = pd.read_csv('/home/ryan/059.csv', converters={'证券代码': str}, encoding="GB18030")
+    df3 = pd.read_csv('/home/ryan/653.csv', converters={'证券代码': str}, encoding="GB18030")
+
+    df = df1.append(df2)
+    df = df.append(df3)
+
     df = df[['证券代码', '证券名称', '证券数量', '可卖数量', '当前价', '成本价',
              '今日盈亏', '今日盈亏比例(%)', '持仓盈亏', '持仓盈亏比例(%)',
              '最新市值', '成本金额','股东代码']]
@@ -1558,7 +1569,9 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
     df = finlib.Finlib().add_market_to_code(df=df,dot_f=True)
 
     if debug:
-        df = df[df['code']=="SZ.000895"]
+        # df = df[df['code']=="SZ.000895"]
+        df = df[df['code']=="SZ.300146"]
+        # df = df[df['code']=="SZ.300006"]
     _set_common_ag_price_reminder(df, quote_ctx)
     _set_act_related_ag_price_reminder(df, quote_ctx)
 

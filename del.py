@@ -1944,11 +1944,11 @@ def big_v():
 #### MAIN #####
 df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
 
-d1 = finlib.Finlib().list_industry_performance(date_list=['20220119', '20220120'])
+d1 = finlib.Finlib().list_industry_performance(date_list=['20220519', '20220520'])
 
-d2 = finlib.Finlib().list_concept_performance(date_list=['20220120'])
+d2 = finlib.Finlib().list_concept_performance(date_list=['20220520'])
 
-d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=['20220516','20220517'], concept="光伏概念")
+d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=['20220516','20220520'], concept="光伏概念")
 
 
 
