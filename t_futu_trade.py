@@ -1616,8 +1616,8 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
     # _set_common_ag_price_reminder(df_cb, quote_ctx, type='bond')
     # _set_act_related_ag_price_reminder(df_cb, quote_ctx, type='bond')
 
-    # _set_common_ag_price_reminder(df_etf, quote_ctx, type='etf')
-    # _set_act_related_ag_price_reminder(df_etf, quote_ctx, type='etf')
+    _set_common_ag_price_reminder(df_etf, quote_ctx, type='etf')
+    _set_act_related_ag_price_reminder(df_etf, quote_ctx, type='etf')
 
     _set_common_ag_price_reminder(df_stock, quote_ctx, type='stock')
     _set_act_related_ag_price_reminder(df_stock, quote_ctx, type='stock')
