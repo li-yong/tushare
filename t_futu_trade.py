@@ -1398,26 +1398,54 @@ def get_price_reminder(host='127.0.0.1',port=11111):
         print('error:', data)
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
 
-def _set_common_ag_price_reminder(df,quote_ctx):
+def _set_common_ag_price_reminder(df,quote_ctx, type='stock'):
     #################################################################
     # reminder that not related to cost_price(cheng ben). so no duplicate rule for one same stock in diff accounts.
     #################################################################
     for code in df['code'].unique():
-        if (not re.match("^SH", code)) and (not re.match("^SZ", code)):
-            logging.info("not a stock, skip. " + str(code))
-            continue
 
+        if type=='stock' and (not re.match("^SH", code)) and (not re.match("^SZ", code)):
+            logging.info("unrecognized stock, skip. " + str(code))
+            continue
 
         sell = False
         sell_reason_cn = ''
 
-        f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
-        df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
-        df_p = finlib.Finlib().add_stock_name_to_df(df_p)
+        p_support = 0
+        p_pressure = 0
+
+        c_df = df[df['code']==code]
+
+        if 'support' in df.columns:
+            p_support = c_df['support'].mean()
+
+        if 'pressure' in df.columns:
+            p_pressure = c_df['pressure'].mean()
+
+
+        if type=='stock':
+            f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
+            df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
+            df_p = finlib.Finlib().add_stock_name_to_df(df_p)
+
+
+        if type=='etf':
+            df_p = finlib.Finlib().get_etf_price(etf_code=code)
+            code="SH."+code
+
+
         df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
 
         name = df_p['name'].iloc[0]
         logging.info(f"setting reminder common {str(code)} {name} ")
+
+        #pressure/Support
+        if p_pressure != 0:
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_pressure, reason_cn="突破压力;"+str(round(p_pressure,2)),
+                           reminder_type=PriceReminderType.PRICE_UP)
+        if p_support != 0:
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_support, reason_cn="跌破支撑;"+str(round(p_support,2)),
+                           reminder_type=PriceReminderType.PRICE_DOWN)
 
 
         # Cond #2
@@ -1463,18 +1491,29 @@ def _set_common_ag_price_reminder(df,quote_ctx):
                                reminder_type=PriceReminderType.PRICE_DOWN)
 
 
-def _set_act_related_ag_price_reminder(df,quote_ctx):
+def _set_act_related_ag_price_reminder(df,quote_ctx,type='stock'):
     #################################################################
     # Reminder related to account (cost_price , position_profit_ratio etc)
     #################################################################
     for index, row in df.iterrows():
         code, name = row['code'], row['name']
 
-        if (not re.match("^SH", code)) and (not re.match("^SZ", code)):
-            logging.info("not a stock, skip. " + str(code) + " " + name)
+        if type == 'stock' and (not re.match("^SH", code)) and (not re.match("^SZ", code)):
+            logging.info("unrecognized stock, skip. " + str(code) + " " + name)
             continue
 
-        hold_state = "[本" + str(round(row['cost_price'], 1)) + "仓" + str(round(row['number_can_sale'],1)) \
+        if type=='etf':
+            df_p = finlib.Finlib().get_etf_price(etf_code=code)
+            code = "SH." + code
+
+        if type=='stock':
+            f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
+            df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
+            df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
+
+
+
+        hold_state = "[本" + str(round(row['cost_price'], 1)) + "仓" + str(round(int(row['number_can_sale']),1)) \
                      + "盈" + str(round(row['position_profit_ratio'],1))\
                      + "户" + str(row['account'])[:4]\
                      + "]"
@@ -1506,9 +1545,6 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
 
         logging.info("checking sell condition, " + str(code) + " " + name)
 
-        f_p = "/home/ryan/DATA/DAY_Global/AG_qfq" + "/" + code.replace(".", "") + ".csv"
-        df_p = finlib.Finlib().regular_read_csv_to_stdard_df(f_p)
-        df_p = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_p, short=4, middle=27, long=60)
 
         sell = False
         sell_reason_cn = ''
@@ -1526,8 +1562,8 @@ def _set_act_related_ag_price_reminder(df,quote_ctx):
 
 
 def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, debug=False):
-    # if clear_all:
-    if False:
+    if clear_all:
+    # if False: #ryan debug
         clear_price_reminder(quote_ctx,market=Market.SH)
         clear_price_reminder(quote_ctx,market=Market.SZ)
 
@@ -1538,9 +1574,9 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
     # libreoffice open xls encoding GB18030, save to CSV (933.csv, 059.csv, 653.csv)
 
 
-    df1 = pd.read_csv('/home/ryan/933.csv', converters={'证券代码': str}, encoding="GB18030")
-    df2 = pd.read_csv('/home/ryan/059.csv', converters={'证券代码': str}, encoding="GB18030")
-    df3 = pd.read_csv('/home/ryan/653.csv', converters={'证券代码': str}, encoding="GB18030")
+    df1 = pd.read_csv('/home/ryan/933.csv', converters={'证券代码': str,}, encoding="GB18030")
+    df2 = pd.read_csv('/home/ryan/059.csv', converters={'证券代码': str,}, encoding="GB18030")
+    df3 = pd.read_csv('/home/ryan/653.csv', converters={'证券代码': str,}, encoding="GB18030")
 
     df = df1.append(df2)
     df = df.append(df3)
@@ -1565,15 +1601,26 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
         "股东代码": "account",
     })
 
-    #FUTU code in format SH.600519, SZ.000001, HK.0700
-    df = finlib.Finlib().add_market_to_code(df=df,dot_f=True)
+    # if debug:
+    #     df = df[df['code'].str.startswith('600519')]
 
-    if debug:
-        # df = df[df['code']=="SZ.000895"]
-        df = df[df['code']=="SZ.300146"]
-        # df = df[df['code']=="SZ.300006"]
-    _set_common_ag_price_reminder(df, quote_ctx)
-    _set_act_related_ag_price_reminder(df, quote_ctx)
+    #FUTU code in format SH.600519, SZ.000001, HK.0700
+    df_cb = df[df['code'].str.startswith('1')]
+    df_etf = df[df['code'].str.startswith('5')]
+    df_stock = df[~(df['code'].str.startswith('5') | df['code'].str.startswith('1'))]
+    df_stock = finlib.Finlib().add_market_to_code(df=df_stock,dot_f=True)
+    df_stock_ps = pd.read_csv("/home/ryan/DATA/result/pressure_support_now.csv")
+    df_stock = pd.merge(left=df_stock, right=df_stock_ps, on='name', how="inner",suffixes=["",'_x'])
+
+    # bond : 债券，可转债．　　etf: 基金　
+    # _set_common_ag_price_reminder(df_cb, quote_ctx, type='bond')
+    # _set_act_related_ag_price_reminder(df_cb, quote_ctx, type='bond')
+
+    # _set_common_ag_price_reminder(df_etf, quote_ctx, type='etf')
+    # _set_act_related_ag_price_reminder(df_etf, quote_ctx, type='etf')
+
+    _set_common_ag_price_reminder(df_stock, quote_ctx, type='stock')
+    _set_act_related_ag_price_reminder(df_stock, quote_ctx, type='stock')
 
     logging.info("reminder set done")
 

@@ -942,6 +942,7 @@ class Finlib:
             logging.warning("df is empty, in func finlib().add_market_to_code()")
             return(df)
 
+        df = df.reset_index().drop('index',axis=1)
         df.code = df.code.astype(str)
 
         if re.match('^SH',  df.code.iloc[0]) or re.match('^SZ',  df.code.iloc[0]) or re.match('^BJ',  df.code.iloc[0]) :
@@ -6065,7 +6066,13 @@ class Finlib:
              'up_space_perc': [up_space_perc],
              'dn_space_perc': [dn_space_perc]},
         )
-
+        # import futu as ft
+        # if set_reminder:
+        #     quote_ctx = ft.OpenQuoteContext(host="127.0.0.1", port=111111)
+        #
+        #     quote_ctx.set_price_reminder(quote_ctx=quote_ctx, code=code, price=p,
+        #                                  reason_cn="2帕损;" + hold_state,
+        #                                  reminder_type=ft.PriceReminderType.PRICE_DOWN)
 
         if abs(dn_space_perc) < 2 and up_space_perc > 10:
             selected = True
@@ -6122,6 +6129,67 @@ class Finlib:
 
         return(df_ps,df_ps_now, df_ps_select)
 
+
+    def get_etf_list(self):
+        csv_o = "/home/ryan/DATA/DAY_Global/AG_INDEX/etf_code_name.csv"
+
+        if self.is_cached(csv_o, day=7):
+            logging.info("loading df etf from "+csv_o)
+            df_etf = pd.read_csv(csv_o, converters={'code': str})
+            return(df_etf)
+
+        df_etf = ak.fund_name_em()
+
+        df_etf = df_etf.rename(columns={
+            "基金代码": "code",
+            "拼音缩写": "pinyin_abbr",
+            "基金简称": "name",
+            "基金类型": "type",
+            "拼音全称": "pinyin",
+        })
+
+        df_etf.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info(f"etf code name saved to {csv_o}, len {str(df_etf.__len__())}")
+        return(df_etf)
+
+
+    # BOnd : 债券　　ETF:基金
+    def get_etf_price(self, etf_code):
+        csv_o = f"/home/ryan/DATA/DAY_Global/AG_INDEX/{etf_code}.csv"
+
+        if self.is_cached(csv_o, day=1):
+            logging.info("loading etf price from " + csv_o)
+            df_etf = pd.read_csv(csv_o)
+            return(df_etf)
+        
+
+        bond_name = ''
+
+        df_code_name = self.get_etf_list()
+        df_name = df_code_name[df_code_name['code'] == etf_code]
+        if df_name.__len__() > 0:
+            etf_name = df_name['name'].iloc[0]
+
+        logging.info("getting etf price "+etf_code)
+        df_etf = ak.fund_etf_fund_info_em(fund=etf_code, start_date="20200101", end_date="20500101")
+
+        df_etf = df_etf.rename(columns={
+            "净值日期": "date",
+            "单位净值": "close",
+            "累计净值": "lei_ji_jin_zhi",
+            "日增长率": "pct_chg",
+            "申购状态": "buyable",
+            "赎回状态": "sellable",
+        })
+
+        df_etf['code'] = etf_code
+        df_etf['name'] = etf_name
+        
+        df_etf = df_etf.iloc[::-1]
+
+        df_etf.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info(f"etf {etf_code} {etf_name} saved to {csv_o}, len {str(df_etf.__len__())}")
+        return(df_etf)
 
 
 
