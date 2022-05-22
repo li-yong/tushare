@@ -1418,9 +1418,11 @@ def _set_common_ag_price_reminder(df,quote_ctx, type='stock'):
 
         if 'support' in df.columns:
             p_support = c_df['support'].mean()
+            d_support = c_df['s_date'].iloc[0]
 
         if 'pressure' in df.columns:
             p_pressure = c_df['pressure'].mean()
+            d_pressure = c_df['p_date'].iloc[0]
 
 
         if type=='stock':
@@ -1441,11 +1443,13 @@ def _set_common_ag_price_reminder(df,quote_ctx, type='stock'):
 
         #pressure/Support
         if p_pressure != 0:
-            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_pressure, reason_cn="突破压力;"+str(round(p_pressure,2)),
-                           reminder_type=PriceReminderType.PRICE_UP)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_pressure,
+                               reason_cn="突破压力;"+str(round(p_pressure,2))+f" at {d_pressure}",
+                               reminder_type=PriceReminderType.PRICE_UP)
         if p_support != 0:
-            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_support, reason_cn="跌破支撑;"+str(round(p_support,2)),
-                           reminder_type=PriceReminderType.PRICE_DOWN)
+            set_price_reminder(quote_ctx=quote_ctx, code=code, price=p_support,
+                               reason_cn="跌破支撑;"+str(round(p_support,2))+f" at {d_support}",
+                               reminder_type=PriceReminderType.PRICE_DOWN)
 
 
         # Cond #2
