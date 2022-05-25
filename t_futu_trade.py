@@ -9,6 +9,7 @@ import re
 import pandas as pd
 # import time
 import tabulate
+import os
 
 import constant
 import finlib
@@ -1926,7 +1927,9 @@ if __name__ == '__main__':
             logging.info(traceback.format_exc())
             if exception_cnt >= 10:
                 logging.fatal("exception more than 10 times, exit")
-                exit(0)
+                # sys.exit(-1) #program hung on exit
+                os._exit(0)
+                # exit(0) #program hung on exit
             else:
                 logging.info("caught exception, restart main(). exception_cnt "+str(exception_cnt))
                 time.sleep(1)
