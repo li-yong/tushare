@@ -1936,19 +1936,27 @@ def big_v():
 
 
     # dfg = finlib.Finlib().add_stock_increase(df=dfg)
-    logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close']]))
+    logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close']].head(5)))
     return(dfg)
 
 
 
 #### MAIN #####
+s = [1,2,3,4,5,6,7,8,9]
+n = 3
+
+zip(*[iter(s)]*n)
+
+
+
 df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
 
-d1 = finlib.Finlib().list_industry_performance(date_list=['20220519', '20220520'])
+period=['20220524', '20220525']
+d1 = finlib.Finlib().list_industry_performance(date_list=period)
 
-d2 = finlib.Finlib().list_concept_performance(date_list=['20220520'])
+d2 = finlib.Finlib().list_concept_performance(date_list=period)
 
-d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=['20220516','20220520'], concept="光伏概念")
+d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=period, concept="光伏概念")
 
 
 
@@ -1992,7 +2000,7 @@ logging.info(finlib.Finlib().pprint(df.head(5)))
 df_big_v = big_v()
 df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
 logging.info("\n##### big_v #####")
-logging.info(finlib.Finlib().pprint(df_big_v.head(5)))
+logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
 # exit()
 
 df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])

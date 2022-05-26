@@ -17,6 +17,10 @@ awk '{split($0,a,","); print a[1]}' china_latest.csv
 grep -Eni "Cap|^300450" /home/ryan/DATA/pickle/Stock_Fundamental/TradingView/china_latest.csv
 
 
+# show highest openning volume of a FUTU stock 
+grep -E "09:30|code" ~/DATA/DAY_Global/FUTU_HK/HK.00136_1m.csv | column -t -s, | awk -F" " '{print $1,$2,$9,$10}' | column -t -s" " | sort -k4 -h -r | grep 2022-| head -5
+
+
 
 
 t_summary_new_dev.py
