@@ -5933,7 +5933,7 @@ class Finlib:
         return (df)
 
     def list_stock_performance_in_a_concept(self, date_list, concept, df_i=None):
-        df = self.load_all_ag_qfq_data(days=300)
+        df = self.load_all_ag_qfq_data(days=400)
         d = df[df['date'].isin(date_list)]
         d = d[d['pct_chg'] < 30]  # rule out the new stock
 
@@ -5961,7 +5961,7 @@ class Finlib:
         return(top)
 
     def list_industry_performance(self, date_list, df_i=None):
-        df = self.load_all_ag_qfq_data(days=300)
+        df = self.load_all_ag_qfq_data(days=400)
 
         d = df[df['date'].isin(date_list)]
 
@@ -5978,6 +5978,8 @@ class Finlib:
         d1 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
 
         df_sec = d1.groupby(by='industry_name_L1_L2_L3')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
+        df_sec = df_sec.reset_index().drop('index', axis=1)
+
         df_sec['pct_chg']= round(df_sec['pct_chg'],1)
         logging.info("\n==== The most increased INDUSTRY during " + ",".join(date_list) + "\n")
         logging.info(self.pprint(df_sec.tail(10)))
@@ -5988,7 +5990,7 @@ class Finlib:
         return (df_sec)
 
     def list_concept_performance(self, date_list, df_i=None):
-        df = self.load_all_ag_qfq_data(days=300)
+        df = self.load_all_ag_qfq_data(days=400)
 
         d = df[df['date'].isin(date_list)]
         d = d[d['pct_chg'] < 30]  # rule out the new stock
@@ -6004,6 +6006,8 @@ class Finlib:
 
         df_sec = d1.groupby(by='cat_name')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
         df_sec['pct_chg']= round(df_sec['pct_chg'],1)
+        df_sec = df_sec.reset_index().drop('index', axis=1)
+
         logging.info("\n==== The most increased CONCEPT during " + ",".join(date_list) + "\n")
         logging.info(self.pprint(df_sec.tail(10)))
 

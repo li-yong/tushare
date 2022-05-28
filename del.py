@@ -505,7 +505,7 @@ def stock_vs_index_perf_perc_chg():
         if df_jin_cha.__len__()>0 and df_si_cha.__len__()>0:
             df_profit_details = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
             df_profit_details = finlib.Finlib().add_stock_name_to_df(df=df_profit_details)
-            logging.info(finlib.Finlib().pprint(df_profit_details))
+            # logging.info(finlib.Finlib().pprint(df_profit_details))
             df_profit_report  = df_profit_report.append(df_profit_details)
 
         continue
@@ -608,8 +608,6 @@ def stock_vs_index_perf_amount():
 
 
 def xiao_hu_xian(csv_out,debug=False):
-    logging.info("start of func xiao_hu_xian")
-
     if finlib.Finlib().is_cached(csv_out,day=1):
         logging.info("loading from "+csv_out)
         return(pd.read_csv(csv_out))
@@ -720,20 +718,19 @@ def xiao_hu_xian(csv_out,debug=False):
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
     if df_rtn.empty:
-        logging.info("no hit")
+        logging.info("xiao hu xian, no hit")
     else:
         df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
         df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn, mktcap_unit='100M')
         df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
         df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
-        logging.info(finlib.Finlib().pprint(df_rtn))
+    logging.info(finlib.Finlib().pprint(df_rtn))
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("xiao hu xian result saved to "+csv_out)
 
-        df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
-        logging.info("xiao hu xian result saved to "+csv_out)
+    return(df_rtn)
 
-    logging.info("end of the func xiao_hu_xian")
-    sys.exit(0)
 
 def fudu_daily_check():
     df_base = fudu_get_base_data(base_windows=5,slide_window=3)
@@ -1942,123 +1939,136 @@ def big_v():
 
 
 #### MAIN #####
-s = [1,2,3,4,5,6,7,8,9]
-n = 3
-
-zip(*[iter(s)]*n)
-
-
-
-df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
-
-period=['20220524', '20220525']
-d1 = finlib.Finlib().list_industry_performance(date_list=period)
-
-d2 = finlib.Finlib().list_concept_performance(date_list=period)
-
-d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=period, concept="光伏概念")
+# s = [1,2,3,4,5,6,7,8,9]
+# n = 3
+#
+# zip(*[iter(s)]*n)
 
 
+
+
+# df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
+start_d = '20210601'
+days=15
+period = []
+for i in range(days):
+    d = (datetime.datetime.strptime(start_d, "%Y%m%d") + datetime.timedelta(i) ).strftime("%Y%m%d")
+    period.append(d)
+
+
+# d1 = finlib.Finlib().list_industry_performance(date_list=period)
+# d2 = finlib.Finlib().list_concept_performance(date_list=period)
+# d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=period, concept="光伏概念")
+# d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=period, concept="建筑节能")
+# d3 = finlib.Finlib().list_stock_performance_in_a_concept(date_list=period, concept="家用电器")
+# exit()
 
 rst_dir= "/home/ryan/DATA/result"
 
+if input("Run lemon766? [N]")=="Y":
+    df_lemon766 = lemon_766(csv_o = rst_dir+"/price_ma.csv")
+    # exit()
 
-df = lemon_766(csv_o = rst_dir+"/price_ma.csv")
-# exit()
+if input("Run Comparing Index Increase? [N]")=="Y":
+    of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
+    df = cmp_with_idx_inc(of)
+    df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
+    logging.info("\n##### cmp_with_idx_inc #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    exit()
 
-of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
-df = cmp_with_idx_inc(of)
-df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
-logging.info("\n##### cmp_with_idx_inc #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-# exit()
+if input("Run New Share Profit? [N]")=="Y":
+    csv_o = rst_dir+"/new_share_profit.csv"
+    df = new_share_profit(csv_o)
+    logging.info("\n##### new_share_profit #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    # exit()
 
+if input("Run Jie Tao? [N]")=="Y":
+    csv_o = rst_dir+"/jie_tao.csv"
+    df = jie_tao(csv_o)
+    logging.info("\n##### jie_tao #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    # exit()
 
+if input("Run TD_indicator? [Y]")!="N":
+    df_td = TD_indicator_main()
+    df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
+    logging.info("\n##### TD_indicator_main #####")
+    logging.info(finlib.Finlib().pprint(df_td.head(5)))
+    # exit()
 
+if input("Run Big V? [Y]")!="N":
+    df_big_v = big_v()
+    df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
+    logging.info("\n##### big_v #####")
+    logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
+    # exit()
 
-csv_o = rst_dir+"/new_share_profit.csv"
-df = new_share_profit(csv_o)
-logging.info("\n##### new_share_profit #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-# exit()
+if input("Run Inner Merge TD_BigV? [Y]") != "N":
+    df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
+    logging.info("\n##### Inner Merge of TD and Big_V #####")
+    logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
+    # exit()
 
+if input("Run ZD Tongji? [Y]") != "N":
+    out_csv = rst_dir+"/daily_ZD_tongji.csv"
+    df = daily_UD_tongji(out_csv,ndays=5)
+    logging.info("\n##### daily_UD_tongji #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    # exit()
 
-csv_o = rst_dir+"/jie_tao.csv"
-df = jie_tao(csv_o)
-logging.info("\n##### jie_tao #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
+if input("Run fudu_daily_check? [N]")=="Y":
+    df = fudu_daily_check()
+    logging.info("\n##### futu_daily_check #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    # exit()
 
-# exit()
+if input("Run xiaohuxian? [Y]") != "N":
+    csv_out = rst_dir+"/xiao_hu_xian.csv"
+    df = xiao_hu_xian(csv_out)
+    logging.info("\n##### xiao_hu_xian #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
 
-df_td = TD_indicator_main()
-df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
-logging.info("\n##### TD_indicator_main #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-# exit()
-
-
-df_big_v = big_v()
-df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
-logging.info("\n##### big_v #####")
-logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
-# exit()
-
-df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
-logging.info("\n##### Inner Merge of TD and Big_V #####")
-logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
-print(1)
-
-out_csv = rst_dir+"/daily_ZD_tongji.csv"
-df = daily_UD_tongji(out_csv,ndays=5)
-logging.info("\n##### daily_UD_tongji #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-# exit()
-
-
-df = fudu_daily_check()
-logging.info("\n##### futu_daily_check #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-# exit()
-
-csv_out = rst_dir+"/xiao_hu_xian.csv"
-df = xiao_hu_xian(csv_out)
-logging.info("\n##### xiao_hu_xian #####")
-logging.info(finlib.Finlib().pprint(df.head(5)))
-exit()
 
 # stock_holder_check()
 # exit()
+if input("Run stock_vs_index_perf_perc_chg? [Y]") != "N":
+    a = stock_vs_index_perf_perc_chg()
+    # exit()
 
-a = stock_vs_index_perf_perc_chg()
-# exit()
+if input("Run stock_vs_index_perf_amount? [Y]") != "N":
+    a = stock_vs_index_perf_amount()
+    # exit()
 
-a = stock_vs_index_perf_amount()
-# exit()
+if input("Run price_amount_increase? [Y]") != "N":
+     # startD and endD have to be trading day.
+    df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
+    # exit()
 
+if input("Run bayes_start? [Y]") != "N":
+    csv_o = rst_dir+"/bayes.csv"
+    df = bayes_start(csv_o)
+    # exit()
 
- # startD and endD have to be trading day.
-df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
-# exit()
+if input("Run check_stop_loss_based_on_ma_across? [Y]") != "N":
+    check_stop_loss_based_on_ma_across()
+    # exit()
 
-csv_o = rst_dir+"/bayes.csv"
-df = bayes_start(csv_o)
-exit()
+if input("Run result_effort_ratio ? [Y]") != "N":
+    result_effort_ratio()
+    # exit()
 
+if input("Run grep_garbage ? [Y]") != "N":
+    grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
+    # exit()
 
-check_stop_loss_based_on_ma_across()
-# exit()
+if input("Run ag_industry_selected? [Y]") != "N":
+    df_industry = ag_industry_selected()
+    # exit()
 
-
-result_effort_ratio()
-# exit()
-
-# grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
-# exit()
-
-df_industry = ag_industry_selected()
-# exit()
-
-df_intrinsic_value = graham_intrinsic_value()
+if input("Run graham_instinsic_value? [Y]") != "N":
+    df_intrinsic_value = graham_intrinsic_value()
 
 
 # pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b")
