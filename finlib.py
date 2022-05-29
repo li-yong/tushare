@@ -3382,10 +3382,12 @@ class Finlib:
 
 
         csv = '/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/changed_name_stocks.csv'
-        df_gar = pd.read_csv(csv, converters={'start_date': str})
+        # df_gar = pd.read_csv(csv, converters={'start_date': str})
+        df_gar = pd.read_csv(csv, converters={'end_date': str})
 
 
-        df_gar = df_gar[df_gar['start_date'] > (datetime.today() - timedelta(days=n_year * 365)).strftime("%Y%m%d")]
+        # df_gar = df_gar[df_gar['start_date'] > (datetime.today() - timedelta(days=n_year * 365)).strftime("%Y%m%d")]
+        df_gar = df_gar[df_gar['end_date'] >= (datetime.today() - timedelta(days=n_year * 365)).strftime("%Y%m%d")]
 
         #some 改名 stocks grow well.
         ##当第三年，公司的经营未有改善，依旧处于亏损状态，股票名称前除“ST”外还会加上“*”，意为退市风险。
@@ -5921,7 +5923,7 @@ class Finlib:
             logging.fatal(f"df no such column {date_col} ")
             exit()
 
-        df['date'] = df['date'].apply(lambda _d: int(_d))
+        df[date_col] = df[date_col].apply(lambda _d: int(_d))
 
         today = self.get_last_trading_day()
         today = datetime.strptime(today, '%Y%m%d')
