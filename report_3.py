@@ -948,33 +948,59 @@ def big_v(csv_o):
 
 
 #### MAIN #####
+
 rst_dir= "/home/ryan/DATA/result"
 
-if input("Run lemon766? [N]")=="Y":
+from optparse import OptionParser
+parser = OptionParser()
+
+parser.add_option("-n", "--no_question", action="store_true", default=False, dest="no_question", help="run all without question.")
+
+(options, args) = parser.parse_args()
+no_question = options.no_question
+
+
+if no_question or input("Run lemon766? [N]")=="Y":
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
     # exit()
 
 
-if input("Run TD_indicator? [Y]")!="N":
+if no_question or input("Run TD_indicator? [Y]")!="N":
     df_td = TD_indicator_main()
     logging.info("\n##### TD_indicator_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
     # exit()
 
-if input("Run Big V? [Y]")!="N":
+if no_question or input("Run Big V? [Y]")!="N":
     csv_o = "/home/ryan/DATA/result/big_v.csv"
     df_big_v = big_v(csv_o=csv_o)
     logging.info("\n##### big_v #####")
     logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
     # exit()
 
-if input("Run Inner Merge TD_BigV? [N]") != "Y":
+if no_question or input("Run Inner Merge TD_BigV? [N]") != "Y":
     df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
     logging.info("\n##### Inner Merge of TD and Big_V #####")
     logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
     # exit()
 
-if input("Run ZD Tongji? [Y]") != "N":
+
+if no_question or input("Run xiaohuxian? [N]") == "Y":
+    csv_out = rst_dir+"/xiao_hu_xian.csv"
+    df_xhx = xiao_hu_xian(csv_out)
+    logging.info("\n##### xiao_hu_xian #####")
+    logging.info(finlib.Finlib().pprint(df_xhx.head(5)))
+
+
+if no_question or input("Run result_effort_ratio ? [Y]") != "N":
+    csv_o = rst_dir+"/result_effort_ratio.csv"
+    df_result_effort = result_effort_ratio(csv_o=csv_o)
+
+    logging.info(f"\n##### df_result_effort #####")
+    logging.info(finlib.Finlib().pprint(df_result_effort.tail(5)[['code','name','date','close','date_1','result_effort_ratio']]))
+
+
+if no_question or input("Run ZD Tongji? [Y]") != "N":
     out_csv = rst_dir+"/daily_ZD_tongji.csv"
     df_zd = daily_UD_tongji(out_csv,ndays=5)
     logging.info("\n##### daily_UD_tongji #####")
@@ -982,26 +1008,12 @@ if input("Run ZD Tongji? [Y]") != "N":
     # exit()
 
 
-if input("Run xiaohuxian? [N]") == "Y":
-    csv_out = rst_dir+"/xiao_hu_xian.csv"
-    df_xhx = xiao_hu_xian(csv_out)
-    logging.info("\n##### xiao_hu_xian #####")
-    logging.info(finlib.Finlib().pprint(df_xhx.head(5)))
 
-
-
-if input("Run price_amount_increase? [N]") == "Y":
+if no_question or input("Run price_amount_increase? [N]") == "Y":
      # startD and endD have to be trading day.
     df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
     # exit()
 
-
-if input("Run result_effort_ratio ? [Y]") != "N":
-    csv_o = rst_dir+"/result_effort_ratio.csv"
-    df_result_effort = result_effort_ratio(csv_o=csv_o)
-
-    logging.info(f"\n##### df_result_effort #####")
-    logging.info(finlib.Finlib().pprint(df_result_effort.tail(5)[['code','name','date','close','date_1','result_effort_ratio']]))
 
     # exit()
 
