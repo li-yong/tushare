@@ -188,6 +188,13 @@ def define_global(stock_global):
             "df_industry_top_mainbz_profit_100": {"op": "B", "file": result + "/industry_top_mainbz_profit_100.csv", "column": "", "kw": "", "term": "LONG TERM", "price": "NA"},
             "df_industry_top_mv_eps_100": {"op": "B", "file": result + "/industry_top_mv_eps_100.csv", "column": "", "kw": "", "term": "LONG TERM", "price": "NA"},
 
+            "df_td_9_13": {"op": "B", "file": result + "/TD_Indicator/9_13.csv", "column": "", "kw": "", "term": "LONG TERM", "price": "NA"},
+            "df_lemon_766": {"op": "B", "file": result + "/lemon_766.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_big_v": {"op": "B", "file": result + "/big_v.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_zd_tongji": {"op": "B", "file": result + "/daily_ZD_tongji.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_xiaohuxian": {"op": "B", "file": result + "/xiao_hu_xian.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_result_effort": {"op": "B", "file": result + "/result_effort_ratio.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG
         "US": {

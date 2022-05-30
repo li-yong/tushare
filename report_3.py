@@ -57,7 +57,7 @@ def coefficient_variation_price_amount():
 
 
 
-def result_effort_ratio():
+def result_effort_ratio(csv_o):
 
     def _apply_func(tmp_df):
         logging.info(tmp_df.iloc[0]['name'])
@@ -85,7 +85,7 @@ def result_effort_ratio():
         # print(finlib.Finlib().pprint(df.tail(5)))
         return(df.tail(3))
 
-    csv_o = "/home/ryan/DATA/result/result_effort_ratio.csv"
+
 
     if finlib.Finlib().is_cached(csv_o,day=1):
         dfg = pd.read_csv(csv_o)
@@ -99,8 +99,9 @@ def result_effort_ratio():
         dfg = dfg[dfg['result_effort_ratio']!=-np.inf]
         dfg = dfg[dfg['result_effort_ratio']!= np.inf]
 
-        dfg = dfg.sort_values(by="result_effort_ratio")
+        dfg = finlib.Finlib().filter_days(df=dfg, date_col='date', within_days=5)
 
+        dfg = dfg.sort_values(by="result_effort_ratio")
         dfg.to_csv(csv_o, encoding="UTF-8", index=False)
         logging.info(__file__ + " " + "saved " + csv_o + " len " + str(dfg.__len__()))
 
@@ -257,6 +258,7 @@ def daily_UD_tongji(out_csv,ndays=1):
     # limit_list: 每日涨跌停统计
     df_rtn = pro.limit_list(start_date=str(theday), end_date=str(today))
     df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
+    df_rtn = finlib.Finlib().filter_days(df=df_rtn, date_col='trade_date', within_days=5)
     df_rtn.to_csv(out_csv,encoding='UTF-8', index=False)
     logging.info(f"UD_tongji result csv saved to {out_csv}")
 
@@ -781,16 +783,18 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
         df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
 
         rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
+
         rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
         rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
         rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
         rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
 
-        rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
-        rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
-        rtn_today.to_csv(td_csv_today, encoding='UTF-8', index=False)
-        rtn_setup_d2u.to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
-        rtn_setup_u2d.to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
+    rtn_9_13 = finlib.Finlib().filter_days(df=rtn_9_13, date_col='date', within_days=5)
+    rtn_op = finlib.Finlib().filter_days(df=rtn_op, date_col='date', within_days=5)
+    rtn_today = finlib.Finlib().filter_days(df=rtn_today, date_col='date', within_days=5)
+    rtn_setup_d2u = finlib.Finlib().filter_days(df=rtn_setup_d2u, date_col='date', within_days=5)
+    rtn_setup_u2d = finlib.Finlib().filter_days(df=rtn_setup_u2d, date_col='date', within_days=5)
+
 
     finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
     finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
@@ -811,7 +815,6 @@ def TD_indicator_main():
     # TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
     # TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
     df_rtn = TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
-
     return(df_rtn)
 
 
@@ -893,7 +896,7 @@ def lemon_766(csv_o):
     logging.info(finlib.Finlib().pprint(dfg_show[['code','name','date','close','c_20wk_diff','c_60wk_diff', 'inc360']]))
     return(dfg)
 
-def big_v():
+def big_v(csv_o):
     def _apply_func(tmp_df):
         # logging.info(tmp_df.iloc[0]['name'])
         df=copy.copy(tmp_df)
@@ -923,8 +926,6 @@ def big_v():
 
 
 
-    csv_o = "/home/ryan/DATA/result/big_v.csv"
-
     if finlib.Finlib().is_cached(csv_o,day=1):
         dfg = pd.read_csv(csv_o)
         logging.info(__file__ + " " + "loaded big v from" + csv_o + " len " + str(dfg.__len__()))
@@ -940,6 +941,7 @@ def big_v():
 
 
     # dfg = finlib.Finlib().add_stock_increase(df=dfg)
+    dfg = finlib.Finlib().filter_days(df=dfg, date_col='date', within_days=5)
     logging.info(finlib.Finlib().pprint(dfg[['code','name','date','close']].head(5)))
     return(dfg)
 
@@ -949,20 +951,19 @@ def big_v():
 rst_dir= "/home/ryan/DATA/result"
 
 if input("Run lemon766? [N]")=="Y":
-    df_lemon766 = lemon_766(csv_o = rst_dir+"/price_ma.csv")
+    df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
     # exit()
 
 
 if input("Run TD_indicator? [Y]")!="N":
     df_td = TD_indicator_main()
-    df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
     logging.info("\n##### TD_indicator_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
     # exit()
 
 if input("Run Big V? [Y]")!="N":
-    df_big_v = big_v()
-    df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
+    csv_o = "/home/ryan/DATA/result/big_v.csv"
+    df_big_v = big_v(csv_o=csv_o)
     logging.info("\n##### big_v #####")
     logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
     # exit()
@@ -976,7 +977,6 @@ if input("Run Inner Merge TD_BigV? [N]") != "Y":
 if input("Run ZD Tongji? [Y]") != "N":
     out_csv = rst_dir+"/daily_ZD_tongji.csv"
     df_zd = daily_UD_tongji(out_csv,ndays=5)
-    df_zd = finlib.Finlib().filter_days(df=df_zd, date_col='trade_date', within_days=5)
     logging.info("\n##### daily_UD_tongji #####")
     logging.info(finlib.Finlib().pprint(df_zd.tail(5)))
     # exit()
@@ -997,8 +997,8 @@ if input("Run price_amount_increase? [N]") == "Y":
 
 
 if input("Run result_effort_ratio ? [Y]") != "N":
-    df_result_effort = result_effort_ratio()
-    df_result_effort = finlib.Finlib().filter_days(df=df_result_effort, date_col='date', within_days=5)
+    csv_o = rst_dir+"/result_effort_ratio.csv"
+    df_result_effort = result_effort_ratio(csv_o=csv_o)
 
     logging.info(f"\n##### df_result_effort #####")
     logging.info(finlib.Finlib().pprint(df_result_effort.tail(5)[['code','name','date','close','date_1','result_effort_ratio']]))

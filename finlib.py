@@ -5748,6 +5748,12 @@ class Finlib:
         csv_f = "/home/ryan/DATA/result/stock_increase.csv"
         df_inc = pd.DataFrame()
 
+        if "code" == df.index.name:
+            if "code" in df.columns:
+                df = df.drop('code', axis=1)
+            df = df.reset_index()
+
+
         if self.is_cached(file_path=csv_f,day=1):
             logging.info("loading stock increase from "+csv_f)
             df_inc = pd.read_csv(csv_f)
@@ -5930,7 +5936,9 @@ class Finlib:
         theday = today - timedelta(days=within_days)
         theday = int(theday.strftime('%Y%m%d'))
 
-        df = df[df[date_col] >= theday].reset_index().drop('index', axis=1)
+        df = df[df[date_col] >= theday].reset_index(drop=True)
+        if 'index' in df.columns:
+            df = df.drop('index', axis=1)
 
         return (df)
 
