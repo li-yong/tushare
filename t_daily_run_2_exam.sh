@@ -868,14 +868,14 @@ python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
 #######
 # commit garbage to github
 ######
-cd /home/ryan/DATA/result/garbage
-for i in `ls latest_*`; do cat $i > /home/ryan/DATA/result/garbage_$i;  done
+#cd /home/ryan/DATA/result/garbage
+#for i in `ls latest_*`; do cat $i > /home/ryan/DATA/result/garbage_$i;  done
 
-cd /home/ryan/DATA/result
-git add report_latest*.txt
-git add garbage_latest_*.csv
-git commit -a -m'1'; git push;
-echo "garbage_latest and report_latest were commited to github"
+#cd /home/ryan/DATA/result
+#git add report_latest*.txt
+#git add garbage_latest_*.csv
+#git commit -a -m'1'; git push;
+#echo "garbage_latest and report_latest were commited to github"
 
 
 #Possible good candidates:
