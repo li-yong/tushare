@@ -270,6 +270,7 @@ def daily_UD_tongji(out_csv,ndays=1):
     logging.info("UP Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio').tail(10)))
     # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
     logging.info("end of daily_UD_tongji\n\n")
+    return(df_rtn)
 
 def _td_setup_9_consecutive_close_4_day_lookup(adf,pre_n_day=4,consec_day=9):
     # https://oxfordstrat.com/indicators/td-sequential-3/
@@ -803,6 +804,7 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
     finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
 
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
+    return(rtn_9_13)
 
 def TD_indicator_main():
     rst_dir="/home/ryan/DATA/result/TD_Indicator"
