@@ -96,19 +96,19 @@ def main():
         ts_code = '000905.SH'  #中证500
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
-        ts_code = '399001.SH'  #深圳成指
+        ts_code = '399001.SZ'  #深圳成指
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
-        ts_code = '399005.SH'  #中小板指
+        ts_code = '399005.SZ'  #中小板指
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
-        ts_code = '399006.SH'  #创业板指
+        ts_code = '399006.SZ'  #创业板指
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
-        ts_code = '399016.SH'  #深圳创新
+        ts_code = '399016.SZ'  #深圳创新
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
-        ts_code = '399300.SH'  #沪深300
+        ts_code = '399300.SZ'  #沪深300
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
     if options.verify_weekly_buy_sel_strategy_f:

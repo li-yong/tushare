@@ -6003,6 +6003,35 @@ class Finlib:
 
         return (df_sec)
 
+    def list_index_performance(self, date_list, df_i=None):
+        df = self.load_all_ag_qfq_data(days=400)
+
+        d = df[df['date'].isin(date_list)]
+
+        d = d[d['pct_chg'] < 30]  # rule out the new stock
+
+        if type(df_i) == type(pd.DataFrame()):
+            d = pd.merge(left=df_i, right=d, on='code', how='inner')
+
+        d1 = d
+        d1 = self.add_stock_name_to_df(df=d1)
+        d1 = self.add_industry_to_df(df=d1)
+        d1 = d1[d1['industry_name_L1_L2_L3'] != 'UNKNOWN']
+
+        d1 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
+
+        df_sec = d1.groupby(by='industry_name_L1_L2_L3')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
+        df_sec = df_sec.reset_index().drop('index', axis=1)
+
+        df_sec['pct_chg']= round(df_sec['pct_chg'],1)
+        logging.info("\n==== The most increased INDUSTRY during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.tail(10)))
+
+        logging.info("\n==== The most decreased INDUSTRY during " + ",".join(date_list) + "\n")
+        logging.info(self.pprint(df_sec.head(10)))
+
+        return (df_sec)
+
     def list_concept_performance(self, date_list, df_i=None):
         df = self.load_all_ag_qfq_data(days=400)
 
