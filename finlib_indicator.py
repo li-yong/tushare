@@ -67,8 +67,9 @@ from selenium.webdriver import ActionChains
 import zigzag
 # from pandas_datareader import get_data_yahoo
 
-import matplotlib.pyplot as plt
 logging.getLogger('matplotlib.font_manager').disabled = True
+import matplotlib.pyplot as plt
+
 plt.rcParams['font.family'] = ['WenQuanYi Micro Hei']
 
 import numpy

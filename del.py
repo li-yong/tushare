@@ -1739,11 +1739,11 @@ def big_v():
 #
 # zip(*[iter(s)]*n)
 
-logging.getLogger().handlers
-
-date_list= finlib.Finlib().get_nong_li_date()
+date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20211231')
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)
+exit()
+
 df_ind = finlib.Finlib().list_industry_performance(date_list=date_list)
 df_cnp = finlib.Finlib().list_concept_performance(date_list=date_list)
 print(1)

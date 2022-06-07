@@ -4,10 +4,8 @@ import sys
 #20220607, logging to console not work after upgrade tushare.
 # have to move logging before import tushare to workaround.
 import logging
-logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-
-logging.getLogger('matplotlib.font_manager').disabled = True
 
 
 import tushare as ts
@@ -24,6 +22,8 @@ from decimal import Decimal
 import numpy as np
 import tabulate
 import akshare as ak
+
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 # import matplotlib.pyplot as plt
 # from pandas.plotting import register_matplotlib_converters
