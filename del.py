@@ -1944,6 +1944,11 @@ def big_v():
 #
 # zip(*[iter(s)]*n)
 
+date_list= finlib.Finlib().get_nong_li_date()
+
+df_ind = finlib.Finlib().list_industry_performance(date_list=date_list)
+df_cnp = finlib.Finlib().list_concept_performance(date_list=date_list)
+print(1)
 
 
 

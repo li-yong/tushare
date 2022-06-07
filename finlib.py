@@ -41,6 +41,10 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 import warnings
 import constant
 
+import pytz
+from skyfield import almanac, api,almanac_east_asia
+
+
 from collections import deque
 from io import StringIO
 
@@ -6206,6 +6210,33 @@ class Finlib:
         return(df_etf)
 
 
+    def get_nong_li_date(self, start='20220101', end='20221231'):
+
+        ts = api.load.timescale()
+        eph = api.load('/home/ryan/DATA/pickle/nong_li_de430_1850-2150.bsp')
+
+
+        utc8 = pytz.timezone('Asia/Shanghai')
+
+        t0 = datetime.strptime(start, '%Y%m%d')
+        t1 = datetime.strptime(end, '%Y%m%d')
+
+        t0 = ts.from_datetime(utc8.localize(t0))
+        t1 = ts.from_datetime(utc8.localize(t1))
+
+        t, tm = almanac.find_discrete(t0, t1, almanac_east_asia.solar_terms(eph))
+
+        date_list = []
+
+        for tmi, ti in zip(tm, t):
+
+            ti = ti.astimezone(utc8)
+            logging.info(f"{almanac_east_asia.SOLAR_TERMS_ZHS[tmi]} {ti.astimezone(utc8).strftime('%Y%m%d')}")
+
+            _d = self.get_last_trading_day(date=ti.strftime('%Y%m%d'))
+            date_list.append(_d)
+
+        return (date_list)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
