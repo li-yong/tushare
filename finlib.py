@@ -6004,9 +6004,17 @@ class Finlib:
         return (df_sec)
 
     def list_index_performance(self, date_list, df_i=None):
-        df = self.load_all_ag_qfq_data(days=400)
 
-        d = df[df['date'].isin(date_list)]
+        dir = '/home/ryan/DATA/DAY_Global/AG_INDEX'
+        df_idx_sh = self.regular_read_csv_to_stdard_df(data_csv=dir+"/000001.SH.csv")
+        df_idx_sz = self.regular_read_csv_to_stdard_df(data_csv=dir+"/399001.SZ.csv")
+        df_idx_cy = self.regular_read_csv_to_stdard_df(data_csv=dir+"/399006.SZ.csv")
+        df_idx_kc = self.regular_read_csv_to_stdard_df(data_csv=dir+"/000688.SH.csv")
+
+        df_idx_sh = df_idx_sh[df_idx_sh['date'].isin(date_list)]
+        df_idx_sz = df_idx_sz[df_idx_sz['date'].isin(date_list)]
+        df_idx_cy = df_idx_cy[df_idx_cy['date'].isin(date_list)]
+        df_idx_kc = df_idx_kc[df_idx_kc['date'].isin(date_list)]
 
         d = d[d['pct_chg'] < 30]  # rule out the new stock
 

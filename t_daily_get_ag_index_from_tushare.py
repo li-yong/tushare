@@ -111,6 +111,9 @@ def main():
         ts_code = '399300.SZ'  #沪深300
         fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
 
+        ts_code = '000688.SH'  #科创50
+        fetch_index(myToken, ts_code=ts_code, csv_file=csv_dir + "/" + ts_code + ".csv")
+
     if options.verify_weekly_buy_sel_strategy_f:
 
         df = pd.read_csv(csv_file, skiprows=1, header=None, names=['code', 'date', 'close', 'open', 'high', 'low', 'pre_close', 'change', 'pct_chg', 'vol', 'amount'], converters={'code': str})
