@@ -1,4 +1,14 @@
 # coding: utf-8
+import sys
+
+#20220607, logging to console not work after upgrade tushare.
+# have to move logging before import tushare to workaround.
+import logging
+logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 
 import tushare as ts
 import tushare.util.conns as ts_cs
@@ -26,17 +36,12 @@ import re
 import math
 from datetime import datetime, timedelta
 from scipy import stats
-import sys
 import traceback
 from jaqs.data.dataapi import DataApi
 import glob
 
-import logging
 import yaml
-logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-logging.getLogger('matplotlib.font_manager').disabled = True
 
 import warnings
 import constant
@@ -6011,34 +6016,27 @@ class Finlib:
         df_idx_cy = self.regular_read_csv_to_stdard_df(data_csv=dir+"/399006.SZ.csv")
         df_idx_kc = self.regular_read_csv_to_stdard_df(data_csv=dir+"/000688.SH.csv")
 
-        df_idx_sh = df_idx_sh[df_idx_sh['date'].isin(date_list)]
-        df_idx_sz = df_idx_sz[df_idx_sz['date'].isin(date_list)]
-        df_idx_cy = df_idx_cy[df_idx_cy['date'].isin(date_list)]
-        df_idx_kc = df_idx_kc[df_idx_kc['date'].isin(date_list)]
+        sh_mean = round(df_idx_sh['pct_chg'].mean(),2)
+        sz_mean = round(df_idx_sz['pct_chg'].mean(),2)
+        cy_mean = round(df_idx_cy['pct_chg'].mean(),2)
+        kc_mean = round(df_idx_kc['pct_chg'].mean(),2)
 
-        d = d[d['pct_chg'] < 30]  # rule out the new stock
+        df_idx_sh_s = df_idx_sh[df_idx_sh['date'].isin(date_list)]
+        df_idx_sz_s = df_idx_sz[df_idx_sz['date'].isin(date_list)]
+        df_idx_cy_s = df_idx_cy[df_idx_cy['date'].isin(date_list)]
+        df_idx_kc_s = df_idx_kc[df_idx_kc['date'].isin(date_list)]
+        
 
-        if type(df_i) == type(pd.DataFrame()):
-            d = pd.merge(left=df_i, right=d, on='code', how='inner')
+        sh_mean_s = round(df_idx_sh_s['pct_chg'].mean(),2)
+        sz_mean_s = round(df_idx_sz_s['pct_chg'].mean(),2)
+        cy_mean_s = round(df_idx_cy_s['pct_chg'].mean(),2)
+        kc_mean_s = round(df_idx_kc_s['pct_chg'].mean(),2)
 
-        d1 = d
-        d1 = self.add_stock_name_to_df(df=d1)
-        d1 = self.add_industry_to_df(df=d1)
-        d1 = d1[d1['industry_name_L1_L2_L3'] != 'UNKNOWN']
-
-        d1 = d1[['code', 'name', 'date', 'pct_chg', 'industry_name_L1_L2_L3']]
-
-        df_sec = d1.groupby(by='industry_name_L1_L2_L3')['pct_chg'].mean().to_frame().reset_index().sort_values(by='pct_chg')
-        df_sec = df_sec.reset_index().drop('index', axis=1)
-
-        df_sec['pct_chg']= round(df_sec['pct_chg'],1)
-        logging.info("\n==== The most increased INDUSTRY during " + ",".join(date_list) + "\n")
-        logging.info(self.pprint(df_sec.tail(10)))
-
-        logging.info("\n==== The most decreased INDUSTRY during " + ",".join(date_list) + "\n")
-        logging.info(self.pprint(df_sec.head(10)))
-
-        return (df_sec)
+        logging.info(f"idx sh, pct_chg {str(sh_mean)}, nong li pct_chg {str(sh_mean_s)}")
+        logging.info(f"idx sz, pct_chg {str(sz_mean)}, nong li pct_chg {str(sz_mean_s)}")
+        logging.info(f"idx cy(chuang ye), pct_chg {str(cy_mean)}, nong li pct_chg {str(cy_mean_s)}")
+        logging.info(f"idx kc(ke chuang), pct_chg {str(kc_mean)}, nong li pct_chg {str(kc_mean_s)}")
+        return()
 
     def list_concept_performance(self, date_list, df_i=None):
         df = self.load_all_ag_qfq_data(days=400)

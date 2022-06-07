@@ -1,6 +1,8 @@
 # coding: utf-8
 # encoding= utf-8
 
+
+
 import pandas as pd
 from pandas import DataFrame
 
@@ -1360,213 +1362,6 @@ def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
     adf = adf[collist]
     return(adf)
 
-def _td_oper(adf):
-    # https://oxfordstrat.com/indicators/td-sequential-3/
-    consective_op_cnt=1
-
-    adf['anno_oper']=""
-
-    if 'close_b4' not in adf.columns:
-        adf['close_b4']=adf['close'].shift(periods=4)
-
-    LONG_COND = False
-    SHORT_COND = False
-
-    oper_cnt_long =0
-    oper_cnt_short =0
-    for index, row in adf.iterrows():
-        code = row['code']
-        date=row['date']
-        close=row['close']
-        close_b4=row['close_b4']
-        anno_stg2=row['anno_stg2']
-        anno_setup=row['anno_setup']
-
-
-        if anno_stg2.find("LONG CONDITION Meet")>-1 :
-            LONG_COND=True
-            SHORT_COND = False
-            oper_cnt_long = 0
-            # continue
-        if anno_stg2.find("SHORT CONDITION Meet")>-1 :
-            SHORT_COND=True
-            LONG_COND=False
-            oper_cnt_short = 0
-            # continue
-
-        if LONG_COND and close > close_b4 and oper_cnt_long < consective_op_cnt:
-            # pstr=f'OPER_LONG {code} at {str(close)} on {date}, anno_setup {anno_setup}, anno_stg2 {anno_stg2}'
-            pstr=f'OPER_LONG {code} at {str(close)} on {date}'
-            adf.at[index, 'anno_oper'] = pstr
-            print(pstr)
-            oper_cnt_long +=1
-            oper_cnt_short = 0
-
-
-        if SHORT_COND and close < close_b4 and oper_cnt_short < consective_op_cnt:
-            # pstr=f'OPER_SHORT {code} at {str(close)} on {date}, anno_setup {anno_setup}, anno_stg2 {anno_stg2}'
-            pstr=f'OPER_SHORT {code} at {str(close)} on {date}'
-            adf.at[index, 'anno_oper'] = pstr
-            print(pstr)
-            oper_cnt_short += 1
-            oper_cnt_long = 0
-
-    rtn_op_df = adf[(adf['anno_oper'].str.contains('OPER_LONG')) | (adf['anno_oper'].str.contains('OPER_SHORT')) ]
-    rtn_op_df = rtn_op_df[['code', 'date', 'close','anno_oper','anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end_date', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
-
-    rtn_9_13_df = adf[(adf['anno_stg2'].str.contains('SHORT CONDITION Meet')) | (adf['anno_stg2'].str.contains('LONG CONDITION Meet')) ]
-    rtn_9_13_df = rtn_9_13_df[['code', 'date', 'close', 'anno_oper', 'anno_stg2', 'anno_setup', 'last_completed_stg1_anno', 'last_completed_stg1_perfect', 'last_completed_stg1_end_date', 'last_completed_stg1_close', 'C_DN_DAYS_B4', 'C_UP_DAYS_B4', 'Stage2_DN_DAYS_13', 'Stage2_UP_DAYS_13']].reset_index().drop('index',axis=1)
-    return(rtn_9_13_df, rtn_op_df)
-
-
-def _td_setup_reverse(df_setup, debug=False):
-    df_setup_u2d=pd.DataFrame()
-    df_setup_d2u=pd.DataFrame()
-    #
-    # df_setup = df_setup[['code','name','date','close', 'anno_setup', 'last_completed_stg1_anno',
-    #                      'last_completed_stg1_high', 'last_completed_stg1_low']]
-
-    # UP to DOWN reverse
-    for index, row in df_setup[df_setup['anno_setup']=='UP_D9_of_9'].iterrows():
-        # if (row['last_completed_stg1_close']-row['last_completed_stg1_open'])/row['last_completed_stg1_open']<0.2:
-        #     continue
-
-        df_3_days = df_setup[index+1:index+4]
-        df_3_days = df_3_days[df_3_days['close'] *0.7 <= row['last_completed_stg1_low']]
-        df_3_days['bar_body'] = round(100 * (df_3_days['close'] - df_3_days['open']) / df_3_days['open'], 1)
-        df_3_days = df_3_days[df_3_days['bar_body'] < -5]
-
-        df_setup_u2d = df_setup_u2d.append(df_3_days)
-
-
-    if debug and df_setup_u2d.__len__()>0:
-        logging.info("TD setup up to down reverse:")
-        logging.info(finlib.Finlib().pprint(df_setup_u2d))
-
-    ### DOWN to UP reverse
-    for index, row in df_setup[df_setup['anno_setup']=='DN_D9_of_9'].iterrows():
-        # if (row['last_completed_stg1_close']-row['last_completed_stg1_open'])/row['last_completed_stg1_open']>-0.2:
-        #     continue
-
-        df_3_days = df_setup[index+1:index+4]
-        df_3_days = df_3_days[df_3_days['close'] >= 0.7 * row['last_completed_stg1_high']]
-
-        df_3_days['bar_body']= round(100*(df_3_days['close']-df_3_days['open'])/df_3_days['open'],1)
-        df_3_days = df_3_days[df_3_days['bar_body'] > 5]
-
-        df_setup_d2u = df_setup_d2u.append(df_3_days)
-
-    if debug and df_setup_d2u.__len__()>0:
-        logging.info("TD setup down to up reverse:")
-        logging.info(finlib.Finlib().pprint(df_setup_d2u))
-
-    return(df_setup_d2u, df_setup_u2d)
-
-
-def td_indicator(df,pre_n_day,consec_day):
-    df_setup = _td_setup_9_consecutive_close_4_day_lookup(df,pre_n_day,consec_day)
-    df_setup = finlib.Finlib().add_stock_name_to_df(df_setup)
-
-    df_setup_d2u, df_setup_u2d = _td_setup_reverse(df_setup)
-
-    df_countdown = _td_countdown_13_day_lookup(df_setup,cancle_countdown=True)
-    df_9_13, df_op = _td_oper(df_countdown)
-    return(df_9_13, df_op, df_setup_d2u, df_setup_u2d , df_countdown.tail(1))
-
-
-#shang zheng zong zhi
-def TD_szzz_index(rst_dir,pre_n_day,consec_day):
-    df_index=finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[-300:]
-    df_9_13, df_op, df_setup_d2u, df_setup_u2d,df_today = td_indicator(df_index,pre_n_day,consec_day)
-    df_9_13.to_csv(rst_dir+"/szzz_9_13.csv", encoding='UTF-8', index=False)
-
-    df_setup_d2u.to_csv(rst_dir+"/szzz_d2u.csv", encoding='UTF-8', index=False)
-    df_setup_u2d.to_csv(rst_dir+"/szzz_u2d.csv", encoding='UTF-8', index=False)
-
-    df_op.to_csv(rst_dir+"/szzz_op.csv", encoding='UTF-8', index=False)
-    df_today.to_csv(rst_dir+"/szzz_today.csv", encoding='UTF-8', index=False)
-
-
-    logging.info("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
-    logging.info("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
-    logging.info("SZZS INDEX d2u: \n"+finlib.Finlib().pprint(df_setup_d2u))
-    logging.info("SZZS INDEX u2d: \n"+finlib.Finlib().pprint(df_setup_u2d))
-
-
-def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
-    rtn_9_13 = pd.DataFrame()
-    rtn_op = pd.DataFrame()
-    rtn_today = pd.DataFrame()
-    rtn_setup_d2u = pd.DataFrame()
-    rtn_setup_u2d = pd.DataFrame()
-
-    if stock_global is not None:
-        rst_dir = rst_dir+"/"+str(stock_global)
-        if not os.path.isdir(rst_dir):
-            os.mkdir(rst_dir)
-
-        df_hold = finlib.Finlib().remove_market_from_tscode(
-            finlib.Finlib().get_stock_configuration(selected=True, stock_global=stock_global)['stock_list'])
-        df_hold = finlib.Finlib().add_market_to_code(df=df_hold)
-
-    td_csv_9_13 = rst_dir+"/"+"9_13.csv"
-    td_csv_op = rst_dir+"/"+"op.csv"
-    td_csv_today = rst_dir+"/"+"today.csv"
-    td_csv_setup_d2u=rst_dir+"/"+"setup_d2u.csv"
-    td_csv_setup_u2d=rst_dir+"/"+"setup_u2d.csv"
-
-    if finlib.Finlib().is_cached(td_csv_9_13):
-        logging.info("result csv has been updated in 1 days. "+td_csv_9_13)
-        df_rtn = pd.read_csv(td_csv_9_13)
-        return(df_rtn)
-
-    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
-
-    if stock_global is not None:
-        df = pd.merge(left=df, right=df_hold[['code']], on='code',how='inner').reset_index().drop('index', axis=1)
-
-    if no_garbage:
-        df = finlib.Finlib()._remove_garbage_must(df)
-
-    for code in df['code'].unique():
-        # logging.info(f"code {code}")
-        adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
-        df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
-
-        rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
-        rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
-        rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
-        rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
-        rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
-
-        rtn_9_13.to_csv(td_csv_9_13, encoding='UTF-8', index=False)
-        rtn_op.to_csv(td_csv_op, encoding='UTF-8', index=False)
-        rtn_today.to_csv(td_csv_today, encoding='UTF-8', index=False)
-        rtn_setup_d2u.to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
-        rtn_setup_u2d.to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
-
-    finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_today).to_csv(td_csv_today, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_d2u).to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
-    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
-
-    print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
-
-def TD_indicator_main():
-    rst_dir="/home/ryan/DATA/result/TD_Indicator"
-    if not os.path.isdir(rst_dir):
-        os.mkdir(rst_dir)
-
-    pre_n_day = 4
-    consec_day = 9
-
-    # TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
-    # TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
-    df_rtn = TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
-
-    return(df_rtn)
-
 
 def not_work_da_v_zhui_zhang():
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[
@@ -1943,6 +1738,8 @@ def big_v():
 # n = 3
 #
 # zip(*[iter(s)]*n)
+
+logging.getLogger().handlers
 
 date_list= finlib.Finlib().get_nong_li_date()
 
