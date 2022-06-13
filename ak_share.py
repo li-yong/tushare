@@ -295,6 +295,14 @@ def main():
     # df = fetch_ak(api='bond_zh_hs_cov_spot', note='龙虎榜-机构席位追踪')
 
 
+    df = fetch_ak(api='stock_zh_a_hist_min_em', note='000001_5_min',
+                  parms=f"symbol='000001',start_date='2022-06-10 09:30:00',end_date='2021-06-10 15:00:00',period='5',adjust=''"
+                  )
+
+    stock_zh_a_hist_min_em_df = ak.stock_zh_a_hist_min_em(symbol="000001", start_date="2022-06-10 09:32:00",
+                                                          end_date="2022-06-10 15:00:00", period='1', adjust='')
+
+
     #find the rapid up stocks in market. Comparing the increase percent with the number got in previous run.
     #set up crontabs, run at 2:00, and 2:45.  Check the output of 2.45 run.
     if options.wei_pan_la_sheng:

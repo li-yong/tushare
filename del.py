@@ -67,33 +67,6 @@ def roe_pe():
     print("haha")
 
 
-def coefficient_variation_price_amount():
-
-    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG_HOLD')
-    # a = finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')
-    a = finlib.Finlib().get_stock_configuration(selected=False, stock_global='AG')
-
-    df_stock_list = a['stock_list']
-    df_csv_dir = a['csv_dir']
-    df_out_dir = a['out_dir']
-    df_rtn = pd.DataFrame()
-
-    i=1
-    for index, row in df_stock_list.iterrows():
-        name, code = row['name'], row['code']
-        print(str(i)+" of "+str(df_stock_list.__len__())+" , "+str(code)+" "+name)
-        i+=1
-
-        csv = df_csv_dir + "/"+ code+".csv"
-        df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv).tail(100)
-        cv_close = round(variation(df['close']), 2)
-        cv_amount = round(variation(df['amount']), 2)
-        df_rtn = df_rtn.append(pd.DataFrame().from_dict({'name':[name],'code':[code],'cv_close':[cv_close], 'cv_amount':[cv_amount]}))
-
-    df_rtn = df_rtn.reset_index().drop('index',axis=1)
-    print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
-
-
 def grep_garbage():
     #output saved to /home/ryan/DATA/result/garbage/*.csv
     df = finlib.Finlib().get_A_stock_instrment()
@@ -418,22 +391,6 @@ def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
     return(df_rtn)
 
 
-def result_effort_ratio():
-    f = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=f)
-
-    df = df.tail(200)
-
-    # df['inc'] = round(100*(df['close']-df['close'].shift(1))/df['close'].shift(1), 2)
-
-    df['inc'] = round(100*(df['close']-df['open'])/df['open'], 2) #inday inc
-
-    df['inc_1'] = df['inc'].shift(1)
-    df['v_1'] = df['volume'].shift(1)
-
-    df['result_effort_ratio'] = round((df['inc']/df['inc_1'])/(df['volume']/df['v_1']),2)
-    print(finlib.Finlib().pprint(df.tail(10)))
-    print(1)
 
 def check_stop_loss_based_on_ma_across():
     file = "/home/ryan/DATA/result/price_let_mashort_equal_malong.csv"
@@ -866,419 +823,6 @@ def fetch_holder():
     return(df_holder)
 
 
-def daily_UD_tongji(out_csv,ndays=1):
-    df_rtn = pd.DataFrame()
-
-    if finlib.Finlib().is_cached(out_csv, day=ndays):
-        logging.info("loading from " + out_csv)
-        df_rtn = pd.read_csv(out_csv)
-        return(df_rtn)
-
-
-    today =  finlib.Finlib().get_last_trading_day()
-    today = datetime.datetime.strptime(today, '%Y%m%d')
-    theday = today - datetime.timedelta(days=ndays)
-    theday = int(theday.strftime('%Y%m%d'))
-    today = int(today.strftime('%Y%m%d'))
-
-
-    pro = ts.pro_api(token="4cc9a1cd78bf41e759dddf92c919cdede5664fa3f1204de572d8221b", timeout=3)
-
-    # limit_list: 每日涨跌停统计
-    df_rtn = pro.limit_list(start_date=str(theday), end_date=str(today))
-    df_rtn = finlib.Finlib().ts_code_to_code(df_rtn)
-    df_rtn.to_csv(out_csv,encoding='UTF-8', index=False)
-    logging.info(f"UD_tongji result csv saved to {out_csv}")
-
-    df_D = df_rtn[df_rtn['limit']=='D']
-    df_U = df_rtn[df_rtn['limit']=='U']
-
-    # fl_ratio: 封单手数/流通股本
-    logging.info("Down Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_D.sort_values(by='fl_ratio').tail(10)))
-    logging.info("UP Limit, by fl_ratio\n"+finlib.Finlib().pprint(df_U.sort_values(by='fl_ratio').tail(10)))
-    # logging.info(finlib.Finlib().pprint(df_rtn[['code','name','fc_ratio','fl_ratio','first_time','last_time']]))
-    logging.info("end of daily_UD_tongji\n\n")
-
-def _td_setup_9_consecutive_close_4_day_lookup(adf,pre_n_day=4,consec_day=9):
-    # https://oxfordstrat.com/indicators/td-sequential-3/
-    adf = adf.reset_index().drop('index', axis=1)
-    # pre_n_day=4
-    adf['anno_setup']=""
-    adf['last_completed_stg1_anno']=""
-    adf['last_completed_stg1_start_date']=""
-    adf['last_completed_stg1_end_date']=""
-    adf['last_completed_stg1_close']=""
-
-    adf['close_b4']=adf['close'].shift(periods=pre_n_day)
-    adf['close_gt_pre_4d'] = adf['close']-adf['close'].shift(periods=pre_n_day)>0
-    adf['close_gt_pre_4d_-1']=adf['close_gt_pre_4d'].shift(periods=1)
-
-    adf.loc[(adf['close_gt_pre_4d']==True) & (adf['close_gt_pre_4d_-1']==False),['anno_setup']]="UP_D1_of_"+str(consec_day)
-    adf.loc[(adf['close_gt_pre_4d']==False) & (adf['close_gt_pre_4d_-1']==True),['anno_setup']]="DN_D1_of_"+str(consec_day)
-
-    adf = adf.drop(columns=['close_gt_pre_4d','close_gt_pre_4d_-1'])
-
-
-
-    pre_anno_setup=''
-    dn_cnt = 0
-    up_cnt = 0
-    last_completed_stg1_anno = ''
-    last_completed_stg1_high=''
-    last_completed_stg1_low=''
-    last_completed_stg1_open =''
-    last_completed_stg1_close =''
-    last_completed_stg1_start_date =''
-    last_completed_stg1_end_date = ''
-    last_completed_stg1_perfect =''
-
-
-    adf['C_DN_DAYS_B4']=0
-    adf['C_UP_DAYS_B4']=0
-
-    adf['df_setup_index'] = -1
-    df_setup = pd.DataFrame(columns=[
-        'code','df_setup_index','completed_or_not','bar_length',
-        'start_date','dir_up_or_dn',
-        'end_date','high','open','low','close',
-        'bar_1','bar_2','bar_3','bar_4','bar_5',
-        'bar_6','bar_7','bar_8','bar_9','bar_10',
-        ])
-
-    df_setup_index = 0
-    setup_dir = 'NO'
-
-
-    for index, row in adf.iterrows():
-        date=row['date']
-        close=row['close']
-        close_b4=row['close_b4']
-        anno_setup=row['anno_setup']
-
-        if anno_setup=='DN_D1_of_'+str(consec_day):
-            setup_dir='DN'
-            dn_cnt = 1
-
-            adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
-
-            adf.at[index, 'last_completed_stg1_anno'] = last_completed_stg1_anno
-            adf.at[index, 'last_completed_stg1_high'] = last_completed_stg1_high
-            adf.at[index, 'last_completed_stg1_low'] = last_completed_stg1_low
-            adf.at[index, 'last_completed_stg1_open'] = last_completed_stg1_open
-            adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
-            adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
-            adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
-            adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
-
-            continue
-        elif anno_setup=='UP_D1_of_'+str(consec_day):
-            setup_dir='UP'
-            up_cnt = 1
-            adf.at[index, 'C_UP_DAYS_B4'] = up_cnt
-
-            adf.at[index, 'last_completed_stg1_anno'] = last_completed_stg1_anno
-            adf.at[index, 'last_completed_stg1_high'] = last_completed_stg1_high
-            adf.at[index, 'last_completed_stg1_low'] = last_completed_stg1_low
-            adf.at[index, 'last_completed_stg1_open'] = last_completed_stg1_open
-            adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
-            adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
-            adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
-            adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
-
-            continue
-
-        if setup_dir=='DN':
-            if close < close_b4:
-                dn_cnt+=1
-                adf.at[index,'anno_setup']='DN_D'+str(dn_cnt)+"_of_"+str(consec_day)
-                adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
-
-                if dn_cnt == consec_day:
-                    df_setup = adf.iloc[index-consec_day+1:index+1]
-                    last_completed_stg1_high = df_setup['high'].max()
-                    last_completed_stg1_low = df_setup['low'].min()
-                    last_completed_stg1_open = df_setup.head(1)['open'].values[0]
-                    last_completed_stg1_close = df_setup.tail(1)['close'].values[0]
-                    last_completed_stg1_start_date = df_setup.head(1)['date'].values[0]
-                    last_completed_stg1_end_date = df_setup.tail(1)['date'].values[0]
-                    last_completed_stg1_anno = df_setup.tail(1)['anno_setup'].values[0]
-
-                    last_completed_stg1_perfect = ''
-                    if adf.at[index-1,'low'] < adf.at[index-2,'low'] and adf.at[index-1,'low'] < adf.at[index-3,'low']:
-                        if adf.at[index,'low'] < adf.at[index-2,'low'] and adf.at[index,'low'] < adf.at[index-3,'low']:
-                            last_completed_stg1_perfect='True'
-
-
-            else:
-                # print("Down breaked")
-                adf.at[index,'anno_setup'] = 'DN_Break_At_'+str(dn_cnt)
-                pre_anno_setup=''
-                dn_cnt=0
-                adf.at[index, 'C_DN_DAYS_B4'] = dn_cnt
-                df_setup_index += 1
-
-
-        if setup_dir=='UP' :
-            if close > close_b4:
-                up_cnt+=1
-                adf.at[index, 'anno_setup']='UP_D'+str(up_cnt)+"_of_"+str(consec_day)
-                adf.at[index, 'C_UP_DAYS_B4']=up_cnt
-
-                # if up_cnt >=9:
-                if up_cnt ==consec_day:
-                    df_setup = adf.iloc[index-consec_day+1:index+1]
-                    last_completed_stg1_high = df_setup['high'].max()
-                    last_completed_stg1_low = df_setup['low'].min()
-                    last_completed_stg1_open = df_setup.head(1)['open'].values[0]
-                    last_completed_stg1_close = df_setup.tail(1)['close'].values[0]
-                    last_completed_stg1_start_date = df_setup.head(1)['date'].values[0]
-                    last_completed_stg1_end_date = df_setup.tail(1)['date'].values[0]
-                    last_completed_stg1_anno = df_setup.tail(1)['anno_setup'].values[0]
-
-                    last_completed_stg1_perfect = ''
-                    if adf.at[index - 1, 'high'] > adf.at[index - 2, 'high'] and adf.at[index - 1, 'high'] > adf.at[
-                        index - 3, 'high']:
-                        if adf.at[index, 'high'] > adf.at[index - 2, 'high'] and adf.at[index, 'high'] > adf.at[
-                            index - 3, 'high']:
-                            last_completed_stg1_perfect = 'True'
-
-            else:
-                # print("Up breaked")
-                adf.at[index, 'anno_setup'] = 'UP_Break_At_'+str(up_cnt)
-                pre_anno_setup=''
-                up_cnt=0
-                adf.at[index, 'C_UP_DAYS_B4'] = up_cnt
-                df_setup_index += 1
-
-        adf.at[index, 'last_completed_stg1_anno'] = last_completed_stg1_anno
-        adf.at[index, 'last_completed_stg1_high'] = last_completed_stg1_high
-        adf.at[index, 'last_completed_stg1_low'] = last_completed_stg1_low
-        adf.at[index, 'last_completed_stg1_open'] = last_completed_stg1_open
-        adf.at[index, 'last_completed_stg1_close'] = last_completed_stg1_close
-        adf.at[index, 'last_completed_stg1_start_date'] = last_completed_stg1_start_date
-        adf.at[index, 'last_completed_stg1_end_date'] = last_completed_stg1_end_date
-        adf.at[index, 'last_completed_stg1_perfect'] = last_completed_stg1_perfect
-
-    return(adf)
-
-def _td_countdown_13_day_lookup(adf,cancle_countdown = True):
-    # https://oxfordstrat.com/indicators/td-sequential-3/
-    pre_n_day=2
-    '''
-    Countdown Cancellation
-    Long Trades: Developing countdown is canceled when: (a)  The price action rallies and generates a sell setup
-    cancle_countdown:
-    
-    '''
-
-    adf['anno_stg2']=""
-    adf['anno_bar10']=""
-    adf['low_b2']=adf['low'].shift(periods=2)
-    adf['low_b1']=adf['low'].shift(periods=1)
-    adf['high_b1']=adf['high'].shift(periods=1)
-    adf['high_b2']=adf['high'].shift(periods=2)
-    adf['close_b1']=adf['close'].shift(periods=1)
-
-    pre_anno_setup=''
-    dn_cnt = 0
-    up_cnt = 0
-
-    adf['Stage2_DN_DAYS_13']=0
-    adf['Stage2_UP_DAYS_13']=0
-    adf['bars_after_setup']=0
-    setup_bar_index = 0
-    up_13_dict = {}
-    dn_13_dict = {}
-
-    for index, row in adf.iterrows():
-        code = row['code']
-        date=row['date']
-        close=row['close']
-        low_b2=row['low_b2']
-        low_b1=row['low_b1']
-        high_b1=row['high_b1']
-        high_b2=row['high_b2']
-        low=row['low']
-        high=row['high']
-        close_b1=row['close_b1']
-        anno_setup=row['anno_setup']
-
-        if row['C_DN_DAYS_B4']==9:
-            if pre_anno_setup == 'UP_D9_of_9':
-                adf.at[index,'anno_stg2'] = 'UP_cancelled_by_new_DN'
-            dn_cnt = 0
-            up_cnt = 0
-            up_13_dict = {}
-            dn_13_dict = {}
-            setup_bar_index = index
-            pre_anno_setup = 'DN_D9_of_9'
-            # continue
-
-        if row['C_UP_DAYS_B4']==9:
-            if pre_anno_setup == 'DN_D9_of_9':
-                adf.at[index,'anno_stg2'] = 'DN_cancelled_by_new_UP'
-            dn_cnt = 0
-            up_cnt = 0
-            up_13_dict = {}
-            dn_13_dict = {}
-            setup_bar_index = index
-            pre_anno_setup = 'UP_D9_of_9'
-            # continue
-
-        adf.at[index, 'setup_bar_index'] = setup_bar_index
-
-        bars_after_setup = index - setup_bar_index
-        adf.at[index, 'bars_after_setup'] = bars_after_setup
-
-        if setup_bar_index > 0 and bars_after_setup > 13*5 and pre_anno_setup !='':
-            pre_anno_setup = ''
-            # logging.info(f"code {code},{date} too far from setupbar, no trending present.{str(bars_after_setup)}  "
-            #              + f" ann_setup {anno_setup} pre_anno_setup {pre_anno_setup}")
-
-        if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='DN_D9_of_9':
-            if close < adf.at[setup_bar_index, 'close']:
-                anno_bar10 = f'Bar10_start_DN_13_CD'
-                # logging.info(f"{code} {date} {close} {anno_bar10}.")
-                adf.at[index, 'anno_bar10'] = anno_bar10
-            elif close > adf.at[setup_bar_index, 'close']:
-                anno_bar10 = f'Bar10_reverse_9_dn_to_up'
-                # logging.info(f"{code} {date} {close} {anno_bar10}.")
-                adf.at[index, 'anno_bar10'] = anno_bar10
-
-
-        if setup_bar_index > 0 and bars_after_setup == 4 and pre_anno_setup=='UP_D9_of_9':
-            if close < adf.at[setup_bar_index, 'close']:
-                anno_bar10 = f'Bar10_start_reverse_9_up_to_dn'
-                # logging.info(f"{code} {date} {close} {anno_bar10}.")
-                adf.at[index, 'anno_bar10'] = anno_bar10
-            elif close > adf.at[setup_bar_index, 'close']:
-                anno_bar10 = f'Bar10_start_UP_13_CD'
-                # logging.info(f"{code} {date} {close} {anno_bar10}.")
-                adf.at[index, 'anno_bar10'] = anno_bar10
-
-        if pre_anno_setup=='DN_D9_of_9':
-            if min(low,close_b1) > row['last_completed_stg1_high'] and cancle_countdown:
-                adf.at[index, 'anno_stg2'] = 'DN_cancelled_by_p_break_up_setup'
-                pre_anno_setup=''
-                dn_cnt=0
-                continue
-
-            if row['C_DN_DAYS_B4'] >= 18:
-                adf.at[index, 'anno_stg2'] = 'DN_cancelled_by_setup_exceed_18D'
-                pre_anno_setup = ''
-                dn_cnt = 0
-                continue
-
-            if close <= low_b2:
-                dn_cnt+=1
-                adf.at[index,'anno_stg2']='DN_D'+ str(dn_cnt)+"_of_13"
-                adf.at[index, 'Stage2_DN_DAYS_13'] = dn_cnt
-
-                dn_13_dict[dn_cnt] = row
-
-                if dn_cnt == 13:
-                    # same as dn_13_dict[8]['close']
-                    if low <= adf[adf['anno_stg2']=='DN_D8_of_13'].iloc[-1].close:
-                        p_str=f"LONG CONDITION Meet! bars_after_setup {str(bars_after_setup)}"
-                        adf.at[index, 'anno_stg2'] = p_str
-                        logging.info(p_str)
-                    else:
-                        adf.at[index, 'anno_stg2'] ="Bar 13 is deferred, low > DN_D8_of_13 close"
-            else:
-                adf.at[index,'anno_stg2'] = 'DN_D'+str(dn_cnt)+'_of_13_pass'
-                adf.at[index, 'Stage2_DN_DAYS_13'] = dn_cnt
-                #
-
-        if pre_anno_setup=='UP_D9_of_9' :
-            if  max(high, close_b1) <= row['last_completed_stg1_low'] and cancle_countdown:
-                adf.at[index, 'anno_stg2'] = 'UP_cancelled_by_p_break_dn_setup'
-                pre_anno_setup=''
-                up_cnt=0
-                continue
-
-            if row['C_UP_DAYS_B4'] >= 18:
-                adf.at[index, 'anno_stg2'] = 'UP_cancelled_by_setup_exceed_18D'
-                pre_anno_setup = ''
-                up_cnt = 0
-                continue
-
-            if close >= high_b2:
-                up_cnt+=1
-                adf.at[index, 'anno_stg2']='UP_D'+str(up_cnt)+"_of_13"
-                adf.at[index, 'Stage2_UP_DAYS_13']=up_cnt
-
-                up_13_dict[dn_cnt] = row
-
-                if up_cnt == 13:
-                    if high >= adf[adf['anno_stg2']=='UP_D8_of_13'].iloc[-1].close:
-                        p_str=f"SHORT CONDITION Meet! bars_after_setup {str(bars_after_setup)}"
-                        adf.at[index, 'anno_stg2'] = p_str
-                        logging.info(p_str)
-                    else:
-                        adf.at[index, 'anno_stg2'] ="Bar 13 short is deferred, high < DN_D8_of_13 close"
-
-
-            else:
-                adf.at[index, 'anno_stg2'] = 'UP_D'+str(dn_cnt)+'_of_13_pass'
-                adf.at[index, 'Stage2_UP_DAYS_13'] = up_cnt
-
-
-    # print(finlib.Finlib().pprint(adf))
-    # adf[adf['Stage2_DN_DAYS_13']>=13]
-    # adf[adf['Stage2_UP_DAYS_13']>=13]
-    collist=['code', 'date', 'close', 'anno_setup', 'anno_stg2','anno_bar10',
-            'last_completed_stg1_anno','last_completed_stg1_perfect', 'last_completed_stg1_end_date',
-            'last_completed_stg1_close',
-             'C_DN_DAYS_B4','C_UP_DAYS_B4',
-             'Stage2_DN_DAYS_13','Stage2_UP_DAYS_13'
-             ]
-
-    # adf = finlib.Finlib().adjust_column(df=adf, col_name_list=collist)
-    adf = adf[collist]
-    return(adf)
-
-
-def not_work_da_v_zhui_zhang():
-    df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[
-         -300:]
-
-    df['head'] = df['high'] - df['open']
-    df['body'] = df['close'] - df['open']
-    df['tail'] = df['close'] - df['low']
-
-    df1 = df[df['body'] < 0]
-    df1 = df1[df1['head'] < abs(df1['body'])]
-    df1 = df1[abs(df1['body']) < df1['tail']]
-
-    i = 0
-    for index, row in df1.iterrows():
-        # df_idx_1 = df1.iloc[i].name + 1
-        # df_idx_2 = index + 1
-        day1 = df.loc[index + 1]
-        day2 = df.loc[index + 2]
-        i += 1
-
-        day_c = day1
-
-        if day1['body'] < 0:
-            # print("skip body<0 "+str(day1['body'] ))
-            dayc = day2
-            if day2['body'] < 0:
-                continue
-
-        if day_c['body'] < day_c['tail']:
-            # print("skip body < tail " + str(day_c['tail']))
-            # continue
-            pass
-
-        if day_c['close'] < row['close']:
-            # print("skip close< lower than pre close " + str(row['close']))
-            continue
-
-        print(day_c['date'], day_c['close'])
-        print('')
-
-
 def _jie_tao(df, show_piv=False):
     # X = df['close']
     # pivots = zigzag.peak_valley_pivots(preprocessing.minmax_scale(X) + 0.1, 0.1, -0.1)
@@ -1519,14 +1063,174 @@ def new_share_profit(csv_o):
     logging.info("new share profit saved to " + csv_o+" len "+str(df_show.__len__()))
 
 
+def chen_ben_cufflinks():
+    import cufflinks as cf
+
+    import chart_studio
+    chart_studio.tools.set_credentials_file(username='li.yong', api_key='NEytWmfBUJs4TY3f5ASX')
+
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    cf.set_config_file(sharing='public', theme='pearl', world_readable=True, offline=True)
+    cf.go_online()
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+    for code in df['code'].unique():
+        # logging.info(f"code {code}")
+        code = 'SH600006'
+        adf = df[df['code'] == code]
+        adf['chen_ben_price'] = round(adf['amount'] * 10 / adf['volume'], 2)
+
+        adf['chen_ben_ma_5'] = round(adf['amount'].rolling(window=5).sum() * 10 / adf['volume'].rolling(window=5).sum(),
+                                     2)
+        # adf['amount'].rolling(window=5).sum()
+        # adf['volume'].rolling(window=5).sum()
+        a = adf.set_index('date')
+
+        # save image 1.png
+        a['chen_ben_ma_5'].iplot(title='t',
+                                 color=['red'],
+                                 online=False,
+                                 asImage=True,
+                                 display_image=True,
+                                 filename="/home/ryan/1")
+
+        # plot to https://chart-studio.plotly.com/~li.yong/7/#/
+        a['chen_ben_ma_5'].iplot(title='t',
+                                 color=['red'],
+                                 online=False,
+                                 asPlot=True,
+                                 display_image=True,
+                                 )
+
+        print(1)
+
+
+
+def chen_ben_matplot():
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+    for code in df['code'].unique():
+        # logging.info(f"code {code}")
+        code = 'SH600006'
+        adf = df[df['code'] == code]
+        adf['chen_ben_price'] = round(adf['amount'] * 10 / adf['volume'], 2)
+
+        adf['chen_ben_ma_1'] = round(adf['amount'].rolling(window=1).sum() * 10 / adf['volume'].rolling(window=1).sum(),2)
+        adf['chen_ben_ma_5'] = round(adf['amount'].rolling(window=5).sum() * 10 / adf['volume'].rolling(window=5).sum(),2)
+        adf['chen_ben_ma_4'] = round(adf['amount'].rolling(window=4).sum() * 10 / adf['volume'].rolling(window=4).sum(),2)
+        adf['chen_ben_ma_10'] = round(adf['amount'].rolling(window=10).sum() * 10 / adf['volume'].rolling(window=10).sum(),2)
+        adf['chen_ben_ma_20'] = round(adf['amount'].rolling(window=20).sum() * 10 / adf['volume'].rolling(window=20).sum(),2)
+        adf['chen_ben_ma_60'] = round(adf['amount'].rolling(window=60).sum() * 10 / adf['volume'].rolling(window=60).sum(),2)
+        adf['chen_ben_ma_27'] = round(adf['amount'].rolling(window=27).sum() * 10 / adf['volume'].rolling(window=27).sum(),2)
+        a = adf.set_index('date')
+
+        # save image 1.png
+        a[['chen_ben_ma_5', 'close']].plot()
+        a[['chen_ben_ma_4', 'close']].plot()
+        a[['chen_ben_ma_10', 'close']].plot()
+        a[['chen_ben_ma_20', 'close']].plot()
+        a[['chen_ben_ma_27','chen_ben_ma_4', 'chen_ben_ma_60']].plot()
+        a[['chen_ben_ma_10','chen_ben_ma_1']].plot()
+
+        a[['close_5_sma','chen_ben_ma_5']].plot()
+
+
+
+
+        print(1)
+
+
+#连续小涨
+def small_up():
+    out_csv =  '/home/ryan/DATA/result/small_up.csv'
+    rtn_df = pd.DataFrame()
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+    for code in df['code'].unique():
+        # logging.info(f"code {code}")
+        # code = 'SH600006'
+        adf = df[df['code'] == code]
+
+        low_60 = adf['close'][-60:].min()
+        low_120 = adf['close'][-120:].min()
+        high_60 = adf['close'][-60:].max()
+        high_120 = adf['close'][-120:].max()
+        close = adf['close'].iloc[-1]
+
+        dis_c_low60 = round((close-low_60)/low_60 *100,1)
+        dis_c_low120 = round((close-low_120)/low_120 *100,1)
+
+        dis_c_high60 = round((high_60-close)/high_60 *100,1)
+        dis_c_high120 = round((high_120-close)/high_120 *100,1)
+
+
+        # last_n_days=10
+        last_n_days=7
+        # 最近10个交易日，涨多跌少
+        # t = adf[-15:-3]  # 12 lines
+        t = adf[-1*last_n_days:]  # 12 lines
+
+        t_len = t.__len__()
+        up_len = t[t['pct_chg'] > 0].__len__()
+
+        up_ratio = 0
+        if t_len>0:
+            up_ratio = round(up_len/t_len,2)
+
+
+        # 涨的都不大
+        pct_chg_mean = t['pct_chg'].mean()
+        pct_chg_max = t['pct_chg'].max()
+
+        # optional　前一低点，保证目前还在低位
+        # optional volume_ratio, or amount_ratio
+        # optional, MA5 > MA20
+
+        rtn_df = rtn_df.append(pd.DataFrame({
+            'code':[code],
+            'days':[last_n_days],
+            'up_ratio':[up_ratio],
+            'pct_chg_mean':[pct_chg_mean],
+            'pct_chg_max':[pct_chg_max],
+
+            'dis_c_low60':[dis_c_low60],
+            'dis_c_low120':[dis_c_low120],
+
+            'dis_c_high60':[dis_c_high60],
+            'dis_c_high120':[dis_c_high120],
+        }))
+
+        # Report
+        # if up_ratio > 0.7 and pct_chg_mean < 5 and pct_chg_max < 8:
+        #     logging.info(f"code {code}, up_ratio {str(up_ratio)} ")
+
+    rtn_df = finlib.Finlib().add_stock_name_to_df(df=rtn_df)
+    rtn_df = rtn_df.sort_values(by=['up_ratio','pct_chg_mean'],ascending=[True,True]).reset_index().drop('index', axis=1)
+
+    rtn_df = rtn_df[(rtn_df['up_ratio']>0.6)
+                    & (rtn_df['pct_chg_mean']<0.6)
+                    & (0.2 < rtn_df['pct_chg_mean'])
+                    & (rtn_df['dis_c_low60']<10)
+    ]
+
+    logging.info(finlib.Finlib().pprint(rtn_df.tail(30)))
+
+    rtn_df.to_csv(out_csv, encoding='UTF-8', index=False)
+    logging.info(__file__ + ": " + "saved " + out_csv + " . len " + str(rtn_df.__len__()))
+
+    return(rtn_df)
+
+
 
 #### MAIN #####
-# s = [1,2,3,4,5,6,7,8,9]
-# n = 3
-#
-# zip(*[iter(s)]*n)
+# chen_ben_matplot()
+df = small_up()
+exit()
 
-date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20211231')
+date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
+# date_list= finlib.Finlib().get_nong_li_date(start='20220101',end='20221231')
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)
 exit()
@@ -1555,10 +1259,6 @@ for i in range(days):
 
 rst_dir= "/home/ryan/DATA/result"
 
-if input("Run lemon766? [N]")=="Y":
-    df_lemon766 = lemon_766(csv_o = rst_dir+"/price_ma.csv")
-    # exit()
-
 if input("Run Comparing Index Increase? [N]")=="Y":
     of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
     df = cmp_with_idx_inc(of)
@@ -1581,44 +1281,12 @@ if input("Run Jie Tao? [N]")=="Y":
     logging.info(finlib.Finlib().pprint(df.head(5)))
     # exit()
 
-if input("Run TD_indicator? [Y]")!="N":
-    df_td = TD_indicator_main()
-    df_td = finlib.Finlib().filter_days(df=df_td, date_col='date', within_days=5)
-    logging.info("\n##### TD_indicator_main #####")
-    logging.info(finlib.Finlib().pprint(df_td.head(5)))
-    # exit()
-
-if input("Run Big V? [Y]")!="N":
-    df_big_v = big_v()
-    df_big_v = finlib.Finlib().filter_days(df=df_big_v, date_col='date', within_days=5)
-    logging.info("\n##### big_v #####")
-    logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
-    # exit()
-
-if input("Run Inner Merge TD_BigV? [Y]") != "N":
-    df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
-    logging.info("\n##### Inner Merge of TD and Big_V #####")
-    logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
-    # exit()
-
-if input("Run ZD Tongji? [Y]") != "N":
-    out_csv = rst_dir+"/daily_ZD_tongji.csv"
-    df = daily_UD_tongji(out_csv,ndays=5)
-    logging.info("\n##### daily_UD_tongji #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
-    # exit()
 
 if input("Run fudu_daily_check? [N]")=="Y":
     df = fudu_daily_check()
     logging.info("\n##### futu_daily_check #####")
     logging.info(finlib.Finlib().pprint(df.head(5)))
     # exit()
-
-if input("Run xiaohuxian? [Y]") != "N":
-    csv_out = rst_dir+"/xiao_hu_xian.csv"
-    df = xiao_hu_xian(csv_out)
-    logging.info("\n##### xiao_hu_xian #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
 
 
 # stock_holder_check()
