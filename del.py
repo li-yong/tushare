@@ -1181,8 +1181,8 @@ def small_up():
 
 
         # 涨的都不大
-        pct_chg_mean = t['pct_chg'].mean()
-        pct_chg_max = t['pct_chg'].max()
+        pct_chg_mean = round(t['pct_chg'].mean(),2)
+        pct_chg_max = round(t['pct_chg'].max(),2)
 
         # optional　前一低点，保证目前还在低位
         # optional volume_ratio, or amount_ratio
@@ -1209,22 +1209,77 @@ def small_up():
     rtn_df = finlib.Finlib().add_stock_name_to_df(df=rtn_df)
     rtn_df = rtn_df.sort_values(by=['up_ratio','pct_chg_mean'],ascending=[True,True]).reset_index().drop('index', axis=1)
 
-    rtn_df = rtn_df[(rtn_df['up_ratio']>0.6)
+    rtn_df.to_csv(out_csv, encoding='UTF-8', index=False)
+    logging.info(__file__ + ": " + "saved " + out_csv + " . len " + str(rtn_df.__len__()))
+
+    sel_df = rtn_df[(rtn_df['up_ratio']>0.6)
                     & (rtn_df['pct_chg_mean']<0.6)
                     & (0.2 < rtn_df['pct_chg_mean'])
                     & (rtn_df['dis_c_low60']<10)
     ]
 
-    logging.info(finlib.Finlib().pprint(rtn_df.tail(30)))
+    logging.info(finlib.Finlib().pprint(sel_df.tail(30)))
+
+
+    return(rtn_df)
+
+def mkt_value_vs_amt():
+    out_csv = '/home/ryan/DATA/result/mkt_value_vs_amt_inc.csv'
+    rtn_df = pd.DataFrame()
+
+    df_all = finlib.Finlib().get_last_n_days_daily_basic(ndays=30, dayE=finlib.Finlib().get_last_trading_day())
+    df_all = finlib.Finlib().ts_code_to_code(df=df_all)
+    df_all = df_all.rename(columns={'trade_date':'date'})
+    df_all['date'] = df_all['date'].astype('str')
+
+    df_amt = finlib.Finlib().load_all_ag_qfq_data(days=300)
+
+    df_all = pd.merge(left=df_all, right=df_amt, on=['code', 'date'], how='inner', suffixes=['','_x'])
+
+    for code in df_all['code'].unique():
+        logging.info(f"code {code}")
+        # code = 'SH600006'
+        adf = df_all[df_all['code'] == code]
+        adf = adf.iloc[::-1].reset_index().drop('index', axis=1)
+
+        adf['amount_b'] = adf['amount'].shift()
+        adf['circ_mv_b'] = adf['circ_mv'].shift()
+
+        adf['mv_amt_inc_ratio'] = (adf['circ_mv'] - adf['circ_mv_b'])/(adf['amount'] - adf['amount_b'])
+
+        adf[['code','date','close','pct_chg','cost_vs_effect']]
+
+
+        rtn_df = rtn_df.append(pd.DataFrame({
+            'code':[code],
+            # 'mv_amt_inc_ratio':[mv_amt_inc_ratio],
+        }))
+
+        # Report
+        # if up_ratio > 0.7 and pct_chg_mean < 5 and pct_chg_max < 8:
+        #     logging.info(f"code {code}, up_ratio {str(up_ratio)} ")
+
+    rtn_df = finlib.Finlib().add_stock_name_to_df(df=rtn_df)
+    rtn_df = rtn_df.sort_values(by=['up_ratio','pct_chg_mean'],ascending=[True,True]).reset_index().drop('index', axis=1)
 
     rtn_df.to_csv(out_csv, encoding='UTF-8', index=False)
     logging.info(__file__ + ": " + "saved " + out_csv + " . len " + str(rtn_df.__len__()))
 
+    sel_df = rtn_df[(rtn_df['up_ratio']>0.6)
+                    & (rtn_df['pct_chg_mean']<0.6)
+                    & (0.2 < rtn_df['pct_chg_mean'])
+                    & (rtn_df['dis_c_low60']<10)
+    ]
+
+    logging.info(finlib.Finlib().pprint(sel_df.tail(30)))
     return(rtn_df)
 
 
-
 #### MAIN #####
+mkt_value_vs_amt()
+exit()
+
+
 # chen_ben_matplot()
 df = small_up()
 exit()
