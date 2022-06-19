@@ -29,32 +29,6 @@ import akshare as ak
 import glob
 from scipy.stats import variation
 
-
-
-
-
-
-
-ak.stock_board_concept_name_ths()
-
-
-'''
-'''
-ak.stock_board_concept_info_ths()
-
-
-ak.stock_board_concept_cons_ths(symbol="比亚迪概念")
-
-
-
-''' len 6
- 日期     开盘价     最高价     最低价     收盘价         成交量            成交额
-0  2022-06-09  997.06  997.06  968.74  976.34   492060170  7796987900.00
-1  2022-06-10  967.90 1038.13  967.63 1036.54  1229600310 16761662000.00
-'''
-ak.stock_board_concept_hist_ths(start_year='2021', symbol="比亚迪概念")
-
-
 ########################### graham instrinsic value
 def roe_pe():
     df_today = finlib.Finlib().get_today_stock_basic(date_exam_day='20210531')
@@ -1296,7 +1270,8 @@ def mkt_value_vs_amt():
 
 
 #### MAIN #####
-mkt_value_vs_amt()
+df = mkt_value_vs_amt()
+df = finlib.Finlib().add_concept_to_df(df=df)
 exit()
 
 
