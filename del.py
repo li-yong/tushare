@@ -1270,6 +1270,12 @@ def mkt_value_vs_amt():
 
 
 #### MAIN #####
+df = finlib.Finlib().get_A_stock_instrment()
+
+a = df[['code', 'name']].head(10)
+b = finlib.Finlib().add_concept_to_df(df=a)
+
+
 df = mkt_value_vs_amt()
 df = finlib.Finlib().add_concept_to_df(df=df)
 exit()

@@ -3162,7 +3162,6 @@ class Finlib:
 
 
 
-
     def add_industry_to_df(self,df,source='wg'):
         if "_".join(df.columns.to_list()).__contains__("industry_name"):
             logging.info("df already has column named industry_name, skip adding industry to df. df columns: "+",".join(df.columns.to_list()))
@@ -3211,7 +3210,6 @@ class Finlib:
 
 
     def add_concept_to_df(self,df):
-
         if "_".join(df.columns.to_list()).__contains__("concept"):
             logging.info("df already has column named concept, skip adding concept to df. df columns: "+",".join(df.columns.to_list()))
             return(df)
@@ -5716,7 +5714,7 @@ class Finlib:
         df_rtn = self.ts_code_to_code(df=df_rtn)
         return (df_rtn)
 
-    def add_concept_to_df(self, df, debug=False):
+    def add_pro_concept_to_df(self, df, debug=False):
         f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_concept.csv"
         df_concept = pd.read_csv(f)
         df_concept = self.ts_code_to_code(df=df_concept)
@@ -5983,7 +5981,7 @@ class Finlib:
         d1 = d
 
         d1 = self.add_stock_name_to_df(df=d1)
-        d1 = self.add_concept_to_df(df=d1)
+        d1 = self.add_pro_concept_to_df(df=d1)
         d1 = d1[d1['cat_name'] == concept]
         d1 = d1[d1['cat_name'].str.contains(concept)]
 
@@ -6070,7 +6068,7 @@ class Finlib:
 
         d1 = d
         d1 = self.add_stock_name_to_df(df=d1)
-        d1 = self.add_concept_to_df(df=d1)
+        d1 = self.add_pro_concept_to_df(df=d1)
 
         d1 = d1[['code', 'name', 'date', 'pct_chg', 'cat_name']]
 
