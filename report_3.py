@@ -820,6 +820,68 @@ def TD_indicator_main():
     return(df_rtn)
 
 
+def TD_stocks_bk(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
+    rtn_9_13 = pd.DataFrame()
+    rtn_op = pd.DataFrame()
+    rtn_today = pd.DataFrame()
+    rtn_setup_d2u = pd.DataFrame()
+    rtn_setup_u2d = pd.DataFrame()
+
+
+    td_csv_9_13 = rst_dir+"/"+"9_13.csv"
+    td_csv_op = rst_dir+"/"+"op.csv"
+    td_csv_today = rst_dir+"/"+"today.csv"
+    td_csv_setup_d2u=rst_dir+"/"+"setup_d2u.csv"
+    td_csv_setup_u2d=rst_dir+"/"+"setup_u2d.csv"
+
+    if finlib.Finlib().is_cached(td_csv_9_13):
+        logging.info("result csv has been updated in 1 days. "+td_csv_9_13)
+        df_rtn = pd.read_csv(td_csv_9_13)
+        return(df_rtn)
+
+    df = finlib.Finlib().load_all_bk_qfq_data(days=300)
+
+
+    for code in df['code'].unique():
+        # logging.info(f"code {code}")
+        adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
+        df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
+
+        rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
+
+        rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
+        rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
+        rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
+        rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
+
+    rtn_9_13 = finlib.Finlib().filter_days(df=rtn_9_13, date_col='date', within_days=5)
+    rtn_op = finlib.Finlib().filter_days(df=rtn_op, date_col='date', within_days=5)
+    rtn_today = finlib.Finlib().filter_days(df=rtn_today, date_col='date', within_days=5)
+    rtn_setup_d2u = finlib.Finlib().filter_days(df=rtn_setup_d2u, date_col='date', within_days=5)
+    rtn_setup_u2d = finlib.Finlib().filter_days(df=rtn_setup_u2d, date_col='date', within_days=5)
+
+
+    finlib.Finlib().add_stock_name_to_df(df=rtn_9_13).to_csv(td_csv_9_13, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_op).to_csv(td_csv_op, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_today).to_csv(td_csv_today, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_d2u).to_csv(td_csv_setup_d2u, encoding='UTF-8', index=False)
+    finlib.Finlib().add_stock_name_to_df(df=rtn_setup_u2d).to_csv(td_csv_setup_u2d, encoding='UTF-8', index=False)
+
+    print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
+    return(rtn_9_13)
+
+def TD_indicator_bk_main():
+    rst_dir="/home/ryan/DATA/result/TD_Indicator_bk"
+    if not os.path.isdir(rst_dir):
+        os.mkdir(rst_dir)
+
+    pre_n_day = 4
+    consec_day = 9
+
+    df_rtn = TD_stocks_bk(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
+    return(df_rtn)
+
+
 def not_work_da_v_zhui_zhang():
     df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv='/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv')[
          -300:]
@@ -974,6 +1036,12 @@ if no_question or input("Run lemon766? [N]")=="Y":
 if no_question or input("Run TD_indicator? [Y]")!="N":
     df_td = TD_indicator_main()
     logging.info("\n##### TD_indicator_main #####")
+    logging.info(finlib.Finlib().pprint(df_td.head(5)))
+    # exit()
+
+if no_question or input("Run TD_indicator_BK? [Y]")!="N":
+    df_td = TD_indicator_bk_main()
+    logging.info("\n##### TD_indicator_bk_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
     # exit()
 

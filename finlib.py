@@ -5772,6 +5772,52 @@ class Finlib:
         return (df)
 
 
+    def load_all_bk_qfq_data(self,days=300):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/AG_concept_bars"
+        dir_em = f"{dir}/EM"
+        dir_ths = f"{dir}/THS"
+
+        csv_em = dir + "/em_all_"+str(days)+"_days.csv"
+        csv_ths = dir + "/ths_all_"+str(days)+"_days.csv"
+
+        if not self.is_cached(file_path=csv_em, day=1):
+            logging.info("generating csv from source.")
+            cmd1 = "head -1 " + dir_em + "/白酒.csv > " + csv_em
+            cmd2 = "for i in `ls " + dir_em + "/*.csv`; do tail -" + str(days) + " $i |grep -vi concept >> " + csv_em +"; done"
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            os.system(cmd1)
+            os.system(cmd2)
+
+        if not self.is_cached(file_path=csv_ths, day=1):
+            logging.info("generating csv from source.")
+            cmd1 = "head -1 " + dir_ths + "/白酒概念.csv > " + csv_ths
+            cmd2 = "for i in `ls " + dir_ths + "/*.csv`; do tail -" + str(days) + " $i |grep -vi concept >> " + csv_ths +"; done"
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            os.system(cmd1)
+            os.system(cmd2)
+
+        #adding code to csv
+        df_em=pd.read_csv(csv_em)
+        df_em['code'] = df_em['concept'] +".em"
+
+        df_ths=pd.read_csv(csv_ths)
+        df_ths['code'] = df_ths['concept'] + ".ths"
+
+        df_rtn = df_em.append(df_ths)[['date','code','open','close','high','low','vol','amount']]
+
+        df_rtn['open'] = df_rtn['open'].astype(float,errors='raise')
+        df_rtn['close'] = df_rtn['close'].astype(float,errors='raise')
+        df_rtn['high'] = df_rtn['high'].astype(float,errors='raise')
+        df_rtn['low'] = df_rtn['low'].astype(float,errors='raise')
+        df_rtn['vol'] = df_rtn['vol'].astype(float,errors='raise')
+        df_rtn['amount'] = df_rtn['amount'].astype(float,errors='raise')
+
+        return(df_rtn)
+
+
     def add_stock_increase(self,df):
         csv_f = "/home/ryan/DATA/result/stock_increase.csv"
         df_inc = pd.DataFrame()
