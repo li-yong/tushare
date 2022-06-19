@@ -282,10 +282,230 @@ def fetch_after_market_close():
     fetch_ak(api='stock_sina_lhb_jgmx', note='龙虎榜-机构席位成交明细', parms='')
 
 
+
+def fetch_em_concept():
+    cache_days = 5
+    base_bar_dir = '/home/ryan/DATA/DAY_Global/AG_concept_bars'
+    base_concept_dir = '/home/ryan/DATA/DAY_Global/AG_concept'
+
+    concept_consist_csv = base_concept_dir+"/em_concept_consist.csv"
+    concept_consist_df = pd.DataFrame()
+
+    if not os.path.exists(base_bar_dir):
+        os.makedirs(base_bar_dir)
+    if not os.path.exists(base_concept_dir):
+        os.makedirs(base_concept_dir)
+
+    if not os.path.exists(base_bar_dir+"/EM"):
+        os.makedirs(base_bar_dir+"/EM")
+    if not os.path.exists(base_concept_dir+"/EM"):
+        os.makedirs(base_concept_dir+"/EM")
+
+    ''' len 373
+          排名    板块名称    板块代码     最新价    涨跌额   涨跌幅            总市值  换手率  上涨家数  下跌家数  领涨股票  领涨股票-涨跌幅
+    0      1    刀片电池  BK0951 3220.22 154.10  5.03  1261148896000 6.81     9     0  常铝股份      9.97
+    1      2     有机硅  BK0961 1876.91  74.00  4.10   541315328000 5.05    25     1  集泰股份     10.04
+    '''
+    concept_list_f = f"{base_concept_dir}/em_concept.csv"
+
+    if finlib.Finlib().is_cached(concept_list_f, day=cache_days, use_last_trade_day=False):
+        em_concepts = pd.read_csv(concept_list_f)
+        logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + concept_list_f)
+    else:
+        em_concepts = ak.stock_board_concept_name_em()
+        em_concepts.to_csv(concept_list_f, encoding='UTF-8', index=False)
+        logging.info(f"fetched {concept_list_f}, len {str(em_concepts.__len__())}")
+
+    # logging.info("")
+    # t = em_concepts.groupby(by="领涨股票")['领涨股票'].count().sort_values()
+
+    # em_concepts[em_concepts['板块名称'].str.contains('国')]
+    # a = em_concepts.head(100)
+    # b = em_concepts.sort_values(by='总市值', ascending=False).head(100).reset_index().drop('index', axis=1)
+    # print(finlib.Finlib().pprint(b))
+    # c = a.append(b).reset_index().drop('index', axis=1)
+
+    # for name in c['板块名称']:
+    for name in em_concepts['板块名称']:
+        name_path = name.replace("/", "_")
+        print(name)
+
+        '''
+        Fetch BARS
+        '''
+
+        ''' len 430
+                     日期      开盘      收盘      最高      最低   涨跌幅    涨跌额      成交量            成交额   振幅  换手率
+        0    2020-09-03  999.63  964.52 1001.50  960.74 -3.55 -35.48  1485636  5091721216.00 4.08 2.47
+        1    2020-09-04  934.28  963.54  964.92  927.42 -0.10  -0.98  1155607  3853309952.00 3.89 1.92
+        '''
+        csv_f = f"{base_bar_dir}/EM/{name_path}.csv"
+        if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
+            logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
+        else:
+            e = ak.stock_board_concept_hist_em(symbol=name, adjust="")
+            e['concept'] = name_path
+            e = e.rename(columns={'日期':'date', '开盘': 'open', '收盘':'close', '最高':'high','最低':'low',
+                                  '涨跌幅':'pct_change', '涨跌额': 'change', '成交量': 'vol', '成交额': 'amount',
+                                  '振幅': 'swing','换手率':'turnover_rate',
+                                  })
+
+            e.to_csv(csv_f, encoding='UTF-8', index=False)
+            logging.info(f"fetched bar of {csv_f}, len {str(e.__len__())}")
+
+        '''
+        Fetch Concept compositives
+        '''
+        ''' len 9
+        序号      代码    名称    最新价   涨跌幅  涨跌额      成交量           成交额    振幅     最高     最低     今开     昨收   换手率  市盈率-动态   市净率
+        0   1  002824  和胜股份  57.30 10.00 5.21   104467  575253744.00 13.30  57.30  50.37  51.50  52.09  8.02   52.48  9.56
+        1   2  002160  常铝股份   6.40  9.97 0.58  2067917 1286699120.00 13.57   6.40   5.61   5.68   5.82 27.17   53.56  1.60
+        '''
+        csv_f = f"{base_concept_dir}/EM/{name_path}.csv"
+        if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
+            logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
+            df = pd.read_csv(csv_f)
+            df['concept']=name_path
+            concept_consist_df = concept_consist_df.append(df)
+        else:
+            e = ak.stock_board_concept_cons_em(symbol=name)
+            e['concept'] = name_path
+            e = e.rename(columns={'序号':'rank', '代码': 'code', '名称':'name', '最新价':'close',
+                                  '涨跌幅':'pct_change','涨跌额':'change','成交量':'vol','成交额':'amount','振幅':'swing',
+                                  '最高':'high','最低':'low','今开':'open','昨收':'pre_close',
+                                  '换手率':'turnover_rate','市盈率-动态':'pe_ttm','市净率':'pb',
+                                  })
+            e['code'] = e['code'].astype('str')
+            e = finlib.Finlib().add_market_to_code(e)
+            e.to_csv(csv_f, encoding='UTF-8', index=False)
+
+            logging.info(f"fetched concept compsitives of {csv_f}, len {str(e.__len__())}")
+
+            concept_consist_df = concept_consist_df.append(e)
+
+
+    concept_consist_df.to_csv(concept_consist_csv, encoding='UTF-8', index=False)
+    logging.info(f"all EM concept consist {concept_consist_csv}, len {str(concept_consist_df.__len__())}")
+
+
+def fetch_ths_concept():
+    cache_days = 5
+
+    base_bar_dir = '/home/ryan/DATA/DAY_Global/AG_concept_bars'
+    base_concept_dir = '/home/ryan/DATA/DAY_Global/AG_concept'
+
+    concept_consist_csv = base_concept_dir+"/ths_concept_consist.csv"
+    concept_consist_df = pd.DataFrame()
+
+    if not os.path.exists(base_bar_dir):
+        os.makedirs(base_bar_dir)
+    if not os.path.exists(base_concept_dir):
+        os.makedirs(base_concept_dir)
+
+    if not os.path.exists(base_bar_dir+"/THS"):
+        os.makedirs(base_bar_dir+"/THS")
+    if not os.path.exists(base_concept_dir+"/THS"):
+        os.makedirs(base_concept_dir+"/THS")
+
+    ''' len 482
+    日期    概念名称 成分股数量                                             网址      代码
+    0    2022-06-13   F5G概念    21  http://q.10jqka.com.cn/gn/detail/code/308977/  308977
+    1    2022-06-08   比亚迪概念   216  http://q.10jqka.com.cn/gn/detail/code/308972/  308972
+    '''
+    concept_list_f = f"{base_concept_dir}/ths_concept.csv"
+
+    if finlib.Finlib().is_cached(concept_list_f, day=cache_days, use_last_trade_day=False):
+        ths_concepts = pd.read_csv(concept_list_f)
+        logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + concept_list_f)
+    else:
+        ths_concepts = ak.stock_board_concept_name_ths()
+        ths_concepts.to_csv(concept_list_f, encoding='UTF-8', index=False)
+        logging.info(f"fetched {concept_list_f}, len {str(ths_concepts.__len__())}")
+
+    # logging.info("")
+    # t = em_concepts.groupby(by="领涨股票")['领涨股票'].count().sort_values()
+
+    # em_concepts[em_concepts['板块名称'].str.contains('国')]
+    # a = em_concepts.head(100)
+    # b = em_concepts.sort_values(by='总市值', ascending=False).head(100).reset_index().drop('index', axis=1)
+    # print(finlib.Finlib().pprint(b))
+    # c = a.append(b).reset_index().drop('index', axis=1)
+
+    for name in ths_concepts['概念名称']:
+        name_path = name.replace("/", "_")
+        print(name)
+
+        '''
+        Fetch BARS
+        '''
+        '''
+        日期,开盘价,最高价,最低价,收盘价,成交量,成交额
+        2022-06-14,988.806,1005.655,969.054,1005.365,379512920,4411749300.0
+        '''
+        csv_f = f"{base_bar_dir}/THS/{name_path}.csv"
+        if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
+            logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
+        else:
+            try:
+                e = ak.stock_board_concept_hist_ths(symbol=name,start_year='2021')
+
+                e = e.rename(columns={'日期': 'date', '开盘价': 'open', '最高价': 'high',
+                                      '最低价': 'low', '收盘价': 'close',
+                                      '成交量': 'vol', '成交额': 'amount',
+                                      })
+
+                e['concept'] = name_path
+
+
+                e.to_csv(csv_f, encoding='UTF-8', index=False)
+                logging.info(f"fetched bar of {csv_f}, len {str(e.__len__())}")
+            except:
+                logging.fatal("exception stock_board_concept_hist_ths")
+
+        '''
+        Fetch Concept compositives
+        '''
+        '''
+          序号      代码    名称    现价   涨跌幅    涨跌    涨速    换手   量比    振幅     成交额     流通股      流通市值      市盈率
+        0      1  300916  朗特智能 54.92 14.75  7.06  0.37 18.57 3.58 19.75   1.70亿   0.17亿     9.54亿    43.90
+        '''
+
+        csv_f = f"{base_concept_dir}/THS/{name_path}.csv"
+        if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
+            df = pd.read_csv(csv_f)
+            df['concept'] = name_path
+            concept_consist_df = concept_consist_df.append(df)
+            logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
+        else:
+            try:
+                e = ak.stock_board_concept_cons_ths(symbol=name)
+                e['concept'] = name_path
+                e = e.rename(columns={'序号': 'rank', '代码': 'code', '名称': 'name', '现价': 'close',
+                                      '涨跌幅':'pct_change','涨跌':'change','振幅':'swing','换手':'turnover_rate','成交额':'amount',
+                                      '流通股':'float_share','市盈率':'pe','流通市值':'float_mv','涨速':'growth_rate','量比':'volume_ratio',
+                                      })
+
+                e['code'] = e['code'].astype('str')
+                e = finlib.Finlib().add_market_to_code(e)
+
+                e.to_csv(csv_f, encoding='UTF-8', index=False)
+                logging.info(f"fetched concept compsitives of {csv_f}, len {str(e.__len__())}")
+                concept_consist_df = concept_consist_df.append(e)
+            except:
+                logging.fatal("exception stock_board_concept_cons_ths")
+
+
+    concept_consist_df.to_csv(concept_consist_csv, encoding='UTF-8', index=False)
+    logging.info(f"all THS concept consist {concept_consist_csv}, len {str(concept_consist_df.__len__())}")
+
+
+
 def main():
     parser = OptionParser()
 
     parser.add_option("-f", "--fetch_after_market", action="store_true", dest="fetch_after_market", default=False, help="fetch market data after market closure.")
+    parser.add_option("--fetch_em_concept", action="store_true", dest="fetch_em_concept", default=False, help="fetch east money concept board daily price history and concept compositives.")
+    parser.add_option("--fetch_ths_concept", action="store_true", dest="fetch_ths_concept", default=False, help="fetch tong_hua_shun concept board daily price history and concept compositives.")
 
     parser.add_option("-i", "--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False, help="get stocks price roaring. Need run twice then get the comparing increase")
     parser.add_option("-c", "--fetch_cb", action="store_true", dest="fetch_cb", default=False, help="get convertable bond")
@@ -307,6 +527,13 @@ def main():
     #set up crontabs, run at 2:00, and 2:45.  Check the output of 2.45 run.
     if options.wei_pan_la_sheng:
         wei_pan_la_sheng()
+
+    if options.fetch_em_concept:
+        fetch_em_concept()
+
+    if options.fetch_ths_concept:
+        fetch_ths_concept()
+
     if options.fetch_after_market:
         fetch_after_market_close()
     if options.fetch_cb:

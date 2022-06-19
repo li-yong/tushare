@@ -410,10 +410,23 @@ python t_futu_trade.py --fetch_history_bar  --market HK
 
 
 ######################################
+#output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
+#output: /home/ryan/DATA/DAY_Global/AG_concept/EM/*.csv
+######################################
+python ak_share.py --fetch_em_concept
+
+
+######################################
+#output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
+#output: /home/ryan/DATA/DAY_Global/AG_concept/EM/*.csv
+######################################
+python ak_share.py --fetch_ths_concept
+
+
+######################################
 #
 ######################################
 #python ak_share.py  --fetch_after_market
-
 python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x HK_AK
 
 

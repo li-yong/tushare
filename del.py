@@ -29,6 +29,32 @@ import akshare as ak
 import glob
 from scipy.stats import variation
 
+
+
+
+
+
+
+ak.stock_board_concept_name_ths()
+
+
+'''
+'''
+ak.stock_board_concept_info_ths()
+
+
+ak.stock_board_concept_cons_ths(symbol="比亚迪概念")
+
+
+
+''' len 6
+ 日期     开盘价     最高价     最低价     收盘价         成交量            成交额
+0  2022-06-09  997.06  997.06  968.74  976.34   492060170  7796987900.00
+1  2022-06-10  967.90 1038.13  967.63 1036.54  1229600310 16761662000.00
+'''
+ak.stock_board_concept_hist_ths(start_year='2021', symbol="比亚迪概念")
+
+
 ########################### graham instrinsic value
 def roe_pe():
     df_today = finlib.Finlib().get_today_stock_basic(date_exam_day='20210531')
@@ -1227,6 +1253,12 @@ def mkt_value_vs_amt():
     out_csv = '/home/ryan/DATA/result/mkt_value_vs_amt_inc.csv'
     rtn_df = pd.DataFrame()
 
+    if finlib.Finlib().is_cached(out_csv,day=1):
+        logging.info("loading from "+out_csv)
+        rtn_df = pd.read_csv(out_csv)
+        print(1)
+
+
     df_all = finlib.Finlib().get_last_n_days_daily_basic(ndays=30, dayE=finlib.Finlib().get_last_trading_day())
     df_all = finlib.Finlib().ts_code_to_code(df=df_all)
     df_all = df_all.rename(columns={'trade_date':'date'})
@@ -1242,36 +1274,24 @@ def mkt_value_vs_amt():
         adf = df_all[df_all['code'] == code]
         adf = adf.iloc[::-1].reset_index().drop('index', axis=1)
 
-        adf['amount_b'] = adf['amount'].shift()
-        adf['circ_mv_b'] = adf['circ_mv'].shift()
+        adf['amount_inc'] = adf['amount'] - adf['amount'].shift()
+        adf['circ_mv_inc'] = adf['circ_mv'] - adf['circ_mv'].shift()
 
-        adf['mv_amt_inc_ratio'] = (adf['circ_mv'] - adf['circ_mv_b'])/(adf['amount'] - adf['amount_b'])
+        adf['mv_amt_inc_ratio'] = round(adf['circ_mv_inc']/adf['amount_inc'],2)
+        adf['mv_amt_ratio'] = round(adf['circ_mv_inc']/adf['amount'],2)
 
-        adf[['code','date','close','pct_chg','cost_vs_effect']]
+        rtn_df = rtn_df.append(adf[['code','date','close','pct_chg','mv_amt_ratio','mv_amt_inc_ratio','circ_mv_inc','amount_inc']])
 
-
-        rtn_df = rtn_df.append(pd.DataFrame({
-            'code':[code],
-            # 'mv_amt_inc_ratio':[mv_amt_inc_ratio],
-        }))
-
-        # Report
-        # if up_ratio > 0.7 and pct_chg_mean < 5 and pct_chg_max < 8:
-        #     logging.info(f"code {code}, up_ratio {str(up_ratio)} ")
 
     rtn_df = finlib.Finlib().add_stock_name_to_df(df=rtn_df)
-    rtn_df = rtn_df.sort_values(by=['up_ratio','pct_chg_mean'],ascending=[True,True]).reset_index().drop('index', axis=1)
-
     rtn_df.to_csv(out_csv, encoding='UTF-8', index=False)
     logging.info(__file__ + ": " + "saved " + out_csv + " . len " + str(rtn_df.__len__()))
 
-    sel_df = rtn_df[(rtn_df['up_ratio']>0.6)
-                    & (rtn_df['pct_chg_mean']<0.6)
-                    & (0.2 < rtn_df['pct_chg_mean'])
-                    & (rtn_df['dis_c_low60']<10)
-    ]
 
-    logging.info(finlib.Finlib().pprint(sel_df.tail(30)))
+    s_df = rtn_df[rtn_df['date'] == '20220616']
+    # s_df = s_df[s_df['pct_chg']<5]
+    s_df.sort_values(by='mv_amt_ratio').tail(10)
+
     return(rtn_df)
 
 
