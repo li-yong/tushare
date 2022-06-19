@@ -841,7 +841,7 @@ def TD_stocks_bk(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=Fals
 
     df = finlib.Finlib().load_all_bk_qfq_data(days=300)
 
-
+    # for code in df['code'].unique()[:2]:#debug
     for code in df['code'].unique():
         # logging.info(f"code {code}")
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
@@ -870,6 +870,36 @@ def TD_stocks_bk(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=Fals
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
     return(rtn_9_13)
 
+def ma_across_bk(csv_o_j, csv_o_s):
+    df_rtn_jincha = pd.DataFrame()
+    df_rtn_sicha = pd.DataFrame()
+
+    if finlib.Finlib().is_cached(csv_o_j) and  finlib.Finlib().is_cached(csv_o_s)  :
+        logging.info("result csv has been updated in 1 days. "+csv_o_j)
+        logging.info("result csv has been updated in 1 days. "+csv_o_s)
+        df_rtn_jincha = pd.read_csv(csv_o_j)
+        df_rtn_sicha = pd.read_csv(csv_o_s)
+        return(df_rtn_jincha,df_rtn_sicha)
+
+    df = finlib.Finlib().load_all_bk_qfq_data(days=300)
+
+    # for code in df['code'].unique()[:2]:#debug
+    for code in df['code'].unique():
+        logging.info(f"code {code}")
+        adf = df[df['code']==code][['code','date','close']]
+        adf = finlib_indicator.Finlib_indicator().add_ma_ema(df=adf,short=4,middle=27,long=60)
+        adf = adf[['code','date','close','close_4_sma','close_27_sma']]
+
+        adf, df_si_cha, df_jin_cha  = finlib_indicator.Finlib_indicator().slow_fast_across(df=adf,fast_col_name='close_4_sma',slow_col_name='close_27_sma')
+        df_rtn_sicha = df_rtn_sicha.append(df_si_cha)
+        df_rtn_jincha = df_rtn_jincha.append(df_jin_cha)
+
+
+    df_rtn_sicha.to_csv(csv_o_s, encoding='UTF-8', index=False)
+    df_rtn_jincha.to_csv(csv_o_j, encoding='UTF-8', index=False)
+    print(f"result saved to {csv_o_j}, {csv_o_s}")
+    return(df_rtn_jincha,df_rtn_sicha)
+
 def TD_indicator_bk_main():
     rst_dir="/home/ryan/DATA/result/TD_Indicator_bk"
     if not os.path.isdir(rst_dir):
@@ -880,6 +910,7 @@ def TD_indicator_bk_main():
 
     df_rtn = TD_stocks_bk(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
     return(df_rtn)
+
 
 
 def not_work_da_v_zhui_zhang():
@@ -1023,14 +1054,12 @@ parser.add_option("-n", "--no_question", action="store_true", default=False, des
 no_question = options.no_question
 
 
-
-
-
-
-
 if no_question or input("Run lemon766? [N]")=="Y":
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
     # exit()
+
+if no_question or input("Run BK ma_across? [N]")=="Y":
+    df_ma_across = ma_across_bk(csv_o_j = rst_dir+"/bk_ma_cross_over.csv", csv_o_s = rst_dir+"/bk_ma_cross_down.csv")
 
 
 if no_question or input("Run TD_indicator? [Y]")!="N":

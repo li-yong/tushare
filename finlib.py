@@ -5814,6 +5814,7 @@ class Finlib:
         df_rtn['low'] = df_rtn['low'].astype(float,errors='raise')
         df_rtn['vol'] = df_rtn['vol'].astype(float,errors='raise')
         df_rtn['amount'] = df_rtn['amount'].astype(float,errors='raise')
+        df_rtn['date'] = df_rtn['date'].apply(lambda x: x.replace("-",'')).astype(int)
 
         return(df_rtn)
 
