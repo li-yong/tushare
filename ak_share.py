@@ -500,12 +500,62 @@ def fetch_ths_concept():
 
 
 
+def generate_stock_concept():
+    csv_f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv'
+    f_em='/home/ryan/DATA/DAY_Global/AG_concept/em_concept_consist.csv'
+    f_ths='/home/ryan/DATA/DAY_Global/AG_concept/ths_concept_consist.csv'
+
+    df_em = pd.read_csv(f_em)[['rank','code','name','concept']]
+    df_em['concept']=df_em['concept']+".em"
+    df_em_map = df_em.groupby( by=['code'], as_index=False).agg( {'concept': ','.join})
+
+    df_ths = pd.read_csv(f_ths)[['rank','code','name','concept']]
+    df_ths['concept'] = df_ths['concept'] + ".ths"
+    df_ths_map = df_ths.groupby( by=['code'], as_index=False).agg( {'concept': ','.join})
+
+
+    '''
+    in 招商证券，　齿轮，　数据导出，　板块导出，　ｗｉｎｄｏｗ　用ｎｏｔｅｐａｄ打开，另存为ｕｔｆ－８．　保存到ｕｂｕｎｔｕ
+    '''
+    f1 = '/home/ryan/DATA/DAY_Global/AG_TDX_Tag/地区板块.txt'
+    f2 = '/home/ryan/DATA/DAY_Global/AG_TDX_Tag/风格板块.txt'
+    f3 = '/home/ryan/DATA/DAY_Global/AG_TDX_Tag/概念板块.txt'
+    f4 = '/home/ryan/DATA/DAY_Global/AG_TDX_Tag/指数板块.txt'
+    f5 = '/home/ryan/DATA/DAY_Global/AG_TDX_Tag/行业板块.txt'
+
+    df1 = pd.read_csv(f1, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
+    df2 = pd.read_csv(f2, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
+    df3 = pd.read_csv(f3, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
+    df4 = pd.read_csv(f4, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
+    df5 = pd.read_csv(f5, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
+
+    df_tdx = df1.append(df2).append(df3).append(df4).append(df5)
+    df_tdx['concept']=df_tdx['concept']+".tdx"
+    df_tdx_map = df_tdx.groupby( by=['code'], as_index=False).agg( {'concept': ','.join})
+
+    df_tdx_map = finlib.Finlib().add_market_to_code(df=df_tdx_map)
+
+    df_rtn = pd.merge(right=df_em_map, left=df_ths_map, on='code', how='inner',suffixes=['_em','_ths'])
+    df_rtn = pd.merge(right=df_rtn, left=df_tdx_map, on='code', how='inner',suffixes=['','_tdx'])
+    df_rtn['concept'] = df_rtn['concept'] +","+df_rtn['concept_em']+","+df_rtn['concept_ths']
+    df_rtn = df_rtn.drop('concept_ths', axis=1)
+    df_rtn = df_rtn.drop('concept_em', axis=1)
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
+
+    df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
+    logging.info(f"THX,THS,EM concept stock concept map saved.  {csv_f}, len {str(df_rtn.__len__())}")
+
+
+
+
+
 def main():
     parser = OptionParser()
 
     parser.add_option("-f", "--fetch_after_market", action="store_true", dest="fetch_after_market", default=False, help="fetch market data after market closure.")
     parser.add_option("--fetch_em_concept", action="store_true", dest="fetch_em_concept", default=False, help="fetch east money concept board daily price history and concept compositives.")
     parser.add_option("--fetch_ths_concept", action="store_true", dest="fetch_ths_concept", default=False, help="fetch tong_hua_shun concept board daily price history and concept compositives.")
+    parser.add_option("--generate_stock_concept", action="store_true", dest="generate_stock_concept", default=False, help="generate_stock_concept")
 
     parser.add_option("-i", "--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False, help="get stocks price roaring. Need run twice then get the comparing increase")
     parser.add_option("-c", "--fetch_cb", action="store_true", dest="fetch_cb", default=False, help="get convertable bond")
@@ -533,6 +583,9 @@ def main():
 
     if options.fetch_ths_concept:
         fetch_ths_concept()
+
+    if options.generate_stock_concept:
+        generate_stock_concept()
 
     if options.fetch_after_market:
         fetch_after_market_close()

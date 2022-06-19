@@ -3209,6 +3209,27 @@ class Finlib:
 
         return(df_rtn)
 
+
+    def add_concept_to_df(self,df):
+
+        if "_".join(df.columns.to_list()).__contains__("concept"):
+            logging.info("df already has column named concept, skip adding concept to df. df columns: "+",".join(df.columns.to_list()))
+            return(df)
+
+        f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv'
+
+        df_concept = pd.read_csv(f)
+
+        df_rtn = pd.merge(left=df, right=df_concept[['code', 'concept']], on='code', how='left',
+                          suffixes=("", "_x"))
+
+        if df_rtn['concept'].hasnans:
+            # logging.info("following stock has nan concept")
+            # logging.info(self.pprint(df_rtn[df_rtn['concept'].isna()]))
+            df_rtn['concept']=df_rtn['concept'].fillna(value='UNKNOWN')
+
+        return(df_rtn)
+
     def evaluate_by_ps_pe_pb(self):
         df_exam_all = self.get_common_fund_df()
         df_exam_all['evaluated_by'] = None

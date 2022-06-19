@@ -162,6 +162,22 @@ if [ $full_or_daily == "DAILY" ]; then
 fi
 
 
+##### Concept ###
+# input:
+#/home/ryan/DATA/DAY_Global/AG_concept/em_concept_consist.csv
+#/home/ryan/DATA/DAY_Global/AG_concept/ths_concept_consist.csv
+#/home/ryan/DATA/DAY_Global/AG_TDX_Tag/地区板块.txt
+#/home/ryan/DATA/DAY_Global/AG_TDX_Tag/风格板块.txt
+#/home/ryan/DATA/DAY_Global/AG_TDX_Tag/概念板块.txt
+#/home/ryan/DATA/DAY_Global/AG_TDX_Tag/指数板块.txt
+#/home/ryan/DATA/DAY_Global/AG_TDX_Tag/行业板块.txt
+
+# output:/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv
+####
+if [ $full_or_daily == "DAILY" ]; then
+  python ak_share.py --generate_stock_concept
+fi
+
 ######################### merge_local
 #input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/yyyymmdd/*.csv  <<< updated. 20190218. This file have dup records if tushare source has.
 #output : /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv [fina_mainbz_sum.csv,balancesheet.csv,dividend.csv,fina_audit.csv,fina_mainbz.csv,forecast.csv]
