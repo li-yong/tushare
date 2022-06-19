@@ -284,7 +284,7 @@ def fetch_after_market_close():
 
 
 def fetch_em_concept():
-    cache_days = 5
+    cache_days = 1
     base_bar_dir = '/home/ryan/DATA/DAY_Global/AG_concept_bars'
     base_concept_dir = '/home/ryan/DATA/DAY_Global/AG_concept'
 
@@ -390,7 +390,7 @@ def fetch_em_concept():
 
 
 def fetch_ths_concept():
-    cache_days = 5
+    cache_days = 1
 
     base_bar_dir = '/home/ryan/DATA/DAY_Global/AG_concept_bars'
     base_concept_dir = '/home/ryan/DATA/DAY_Global/AG_concept'
