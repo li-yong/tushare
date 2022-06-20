@@ -328,7 +328,7 @@ def fetch_em_concept():
     # for name in c['板块名称']:
     for name in em_concepts['板块名称']:
         name_path = name.replace("/", "_")
-        name_path = name.replace(" ", "_")
+        name_path = name_path.replace(" ", "_")
         print(name)
 
         '''
@@ -434,7 +434,7 @@ def fetch_ths_concept():
 
     for name in ths_concepts['概念名称']:
         name_path = name.replace("/", "_")
-        name_path = name.replace(" ", "_")
+        name_path = name_path.replace(" ", "_")
         print(name)
 
         '''
