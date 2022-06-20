@@ -29,6 +29,97 @@ import akshare as ak
 import glob
 from scipy.stats import variation
 
+# -*- coding: utf-8 -*-
+import time
+import akshare as ak
+from snownlp import SnowNLP
+
+
+def s1():
+    # 使用snownlp
+    stock_code = '600519'
+    date = time.strftime("%Y%m%d", time.localtime())
+    stock_news_em_df = ak.stock_news_em(stock=stock_code)
+
+    for i in stock_news_em_df.values[:, 1]:
+        text = str(i)
+        # text = u'中国人是好人'
+        s = SnowNLP(text)
+        for sentence in s.sentences:
+            print(sentence, SnowNLP(sentence).sentences)
+        print(s.sentiments)
+        print(s.keywords(3))
+        print(s.summary(3))
+        # 小于0.4的为消极，否则为积极
+        if s.sentiments < 0.4:
+            print('##########消极', i)
+        elif s.sentiments >= 0.4:
+            print('##########积极', i)
+
+def s2():
+    # 使用nltk
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer as sia
+    import nltk
+    import time
+    import akshare as ak
+    import jieba as jb
+
+    nltk.download('vader_lexicon')
+
+    # nltk.set_proxy('SYSTEM PROXY')
+    # nltk.download('vader_lexicon')
+
+    stock_code='600519'
+    date=time.strftime("%Y%m%d", time.localtime())
+    # sentences = ['This is the worst lunch I ever had!',
+    #              'This is the best lunch I have ever had!!',
+    #              'I don\'t like this lunch.',
+    #              'I eat food for lunch.',
+    #              'Red is a color.',
+    #              'A really bad, horrible book, the plot was .']
+    # '''每日快讯'''
+    # stock_zh_a_alerts_cls_df = ak.stock_zh_a_alerts_cls()
+    # '''当日最近 4 小时内的新闻资讯数据'''
+    # js_news_df = ak.js_news(timestamp=date + "11:27:18")
+    '''个股当日最近 20 条新闻资讯数据'''
+    stock_news_em_df = ak.stock_news_em(stock=stock_code)
+    sentences=[]
+    for i in stock_news_em_df.values[:,1]:
+        seg_list = jb.cut_for_search(i)
+        print(", ".join(seg_list))
+        sentences.append(", ".join(seg_list))
+    hal = sia()
+    for sentence in sentences:
+        print(sentence)
+        ps = hal.polarity_scores(sentence)
+        for k in sorted(ps):
+            print('\t{}: {:>1.4}'.format(k, ps[k]), end='  ')
+        print()
+
+s2()
+exit()
+
+
+def s3():
+    from flair.models import TextClassifier
+    from flair.data import Sentence
+
+    sia = TextClassifier.load('en-sentiment')
+
+    def flair_prediction(x):
+        sentence = Sentence(x)
+        sia.predict(sentence)
+        score = sentence.labels[0]
+        if "POSITIVE" in str(score):
+            return "pos"
+        elif "NEGATIVE" in str(score):
+            return "neg"
+        else:
+            return "neu"
+
+    flair_prediction('hahahahah')
+    
+
 ########################### graham instrinsic value
 def roe_pe():
     df_today = finlib.Finlib().get_today_stock_basic(date_exam_day='20210531')

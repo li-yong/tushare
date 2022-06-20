@@ -901,6 +901,13 @@ def bk_ma_across(csv_o_j, csv_o_s):
     return(df_rtn_jincha,df_rtn_sicha)
 
 def bk_increase(csv_o,start=None,ndays=3):
+    if start != None and ndays != None:
+        csv_o = f"{csv_o}_{str(start)}_{str(ndays)}.csv"
+
+    if start == None and ndays != None:
+        csv_o = f"{csv_o}_last_{str(ndays)}.csv"
+
+
     df_rtn = pd.DataFrame()
 
     if finlib.Finlib().is_cached(csv_o) :
@@ -1111,7 +1118,8 @@ if no_question or input("Run lemon766? [N]")=="Y":
 
 if no_question or input("Run bk_increase? [N]")=="Y":
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",start=20220427,ndays=3)
-    df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
+    df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",start=20220101,ndays=200)
+    # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
     # exit()
 
 if no_question or input("Run BK ma_across? [N]")=="Y":
