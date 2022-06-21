@@ -50,6 +50,8 @@ rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/akshare/  /h
 #
 ######################################
 
+rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/  /home/ryan/DATA/DAY_Global/
+
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/AG/  /home/ryan/DATA/DAY_Global/AG/
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/AG_qfq/  /home/ryan/DATA/DAY_Global/AG_qfq/
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/AG_INDEX/  /home/ryan/DATA/DAY_Global/AG_INDEX/
@@ -62,6 +64,8 @@ rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/FUTU_* /home/ryan/DATA/D
 
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/akshare/HK/  /home/ryan/DATA/DAY_Global/akshare/HK/
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/akshare/US/  /home/ryan/DATA/DAY_Global/stooq/US/
+
+
 
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/stooq/US/  /home/ryan/DATA/DAY_Global/stooq/US/
 rsync -avzt   ${source_host}:/home/ryan/DATA/DAY_Global/stooq/US_INDEX/  /home/ryan/DATA/DAY_Global/stooq/US_INDEX/
