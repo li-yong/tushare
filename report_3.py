@@ -237,6 +237,82 @@ def xiao_hu_xian(csv_out,debug=False):
     return(df_rtn)
 
 
+def bar_support_resist_strategy(csv_out,debug=False):
+    if finlib.Finlib().is_cached(csv_out,day=1):
+        logging.info("loading from "+csv_out)
+        return(pd.read_csv(csv_out))
+
+
+    df_rtn = pd.DataFrame()
+
+    bar_up= 0
+    bar_dn = 0
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+
+    for c in df.code.append(df.code).unique():
+        c='SH600519'
+        dfs=df[df['code']==c].reset_index().drop('index',axis=1)
+
+        if dfs.__len__()<90:
+            continue
+
+        df_m = finlib.Finlib().daily_to_monthly_bar(df_daily=dfs)['df_monthly']
+        df_w = finlib.Finlib().daily_to_monthly_bar(df_daily=dfs)['df_weekly']
+
+        df_m['bar_mid'] = df_m['open']+(df_m['close']-df_m['open'])*0.5
+
+        df_m = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_m,short=5,middle=10,long=20) #close_10_sma
+        df_w = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_w,short=5,middle=10,long=20) #close_5_sma
+
+        #Weekly Bar Checks
+        df_w1=df_w[['date','code','close','pre_close','close_5_sma']]
+        _, df_c_cross_dn_maw5, df_c_cross_up_maw5  = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_w1,fast_col_name='close',slow_col_name='close_5_sma')
+
+
+        ## start
+        bar_up = 0; bar_dn=0; pct_gain = 0; pct_lost = 0;
+        l_spt =0; l_spt_mid=0; l_rst=0;
+
+        for index,row in df_w.tail(26).iterrows():
+            print(row['date'])
+
+            if row['pct_chg']>0 and row['open']<row['close']:
+                l_spt = row['open']
+
+                if bar_up == 0:
+                    bar_up += 1 
+
+                if bar_up > 0:
+                    bar_up +=1
+
+                if bar_dn >0: #revert. dn to up
+                    bar_dn =0
+                    bar_up +=1
+
+            if row['pct_chg']<0 and row['open']>row['close']:
+                bar_dn +=1
+                l_rst= row['open']
+
+
+
+
+
+
+        df_rtn = df_rtn.append({
+            "code": c,
+        }, ignore_index=True)
+
+
+    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
+
+    logging.info(finlib.Finlib().pprint(df_rtn))
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("bar support resist stratgy result saved to "+csv_out)
+
+    return(df_rtn)
+
+
 def daily_UD_tongji(out_csv,ndays=1):
     df_rtn = pd.DataFrame()
 
@@ -737,10 +813,10 @@ def TD_szzz_index(rst_dir,pre_n_day,consec_day):
     df_today.to_csv(rst_dir+"/szzz_today.csv", encoding='UTF-8', index=False)
 
 
-    logging.info("SZZS INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
-    logging.info("SZZS INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
-    logging.info("SZZS INDEX d2u: \n"+finlib.Finlib().pprint(df_setup_d2u))
-    logging.info("SZZS INDEX u2d: \n"+finlib.Finlib().pprint(df_setup_u2d))
+    logging.info("SH000001 INDEX 9_13: \n"+finlib.Finlib().pprint(df_9_13))
+    logging.info("SH000001 INDEX Operation: \n"+finlib.Finlib().pprint(df_op))
+    logging.info("SH000001 INDEX d2u: \n"+finlib.Finlib().pprint(df_setup_d2u))
+    logging.info("SH000001 INDEX u2d: \n"+finlib.Finlib().pprint(df_setup_u2d))
 
 
 def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
@@ -813,9 +889,13 @@ def TD_indicator_start():
 
     pre_n_day = 4
     consec_day = 9
+    logging.info(f"\n========== TD SZZS SZZZ SH000001 INDEX=============\n")
+    TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
 
-    # TD_szzz_index(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day)
-    # TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
+    logging.info(f"\n========== TD AG_HOLD=============\n")
+    TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day, stock_global='AG_HOLD')
+
+    logging.info(f"\n========== TD Stocks=============\n")
     df_rtn = TD_stocks(rst_dir=rst_dir,pre_n_day=pre_n_day,consec_day=consec_day,no_garbage=False)
     return(df_rtn)
 
@@ -870,15 +950,21 @@ def bk_TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=Fals
     print(f"result saved to \n{td_csv_today}\n{td_csv_op}\n{td_csv_9_13}\n{td_csv_setup_d2u}\n{td_csv_setup_u2d}")
     return(rtn_9_13)
 
-def bk_ma_across(csv_o_j, csv_o_s):
+def bk_ma_across(csv_o_b, csv_o_s):
     df_rtn_jincha = pd.DataFrame()
     df_rtn_sicha = pd.DataFrame()
 
-    if finlib.Finlib().is_cached(csv_o_j) and  finlib.Finlib().is_cached(csv_o_s)  :
-        logging.info("result csv has been updated in 1 days. "+csv_o_j)
+    if finlib.Finlib().is_cached(csv_o_b) and  finlib.Finlib().is_cached(csv_o_s)  :
+        logging.info("result csv has been updated in 1 days. "+csv_o_b)
         logging.info("result csv has been updated in 1 days. "+csv_o_s)
-        df_rtn_jincha = pd.read_csv(csv_o_j)
+        df_rtn_jincha = pd.read_csv(csv_o_b)
         df_rtn_sicha = pd.read_csv(csv_o_s)
+
+        df_rtn_jincha = finlib.Finlib().filter_days(df_rtn_jincha, date_col='date', within_days=5)
+        df_rtn_sicha = finlib.Finlib().filter_days(df_rtn_sicha, date_col='date', within_days=5)
+
+        logging.info("=== BK JinCha ===\n"+finlib.Finlib().pprint(df_rtn_jincha.head(5)))
+        logging.info("=== BK SiCha ===\n"+finlib.Finlib().pprint(df_rtn_sicha.head(5)))
         return(df_rtn_jincha,df_rtn_sicha)
 
     df = finlib.Finlib().load_all_bk_qfq_data(days=300)
@@ -896,16 +982,20 @@ def bk_ma_across(csv_o_j, csv_o_s):
 
 
     df_rtn_sicha.to_csv(csv_o_s, encoding='UTF-8', index=False)
-    df_rtn_jincha.to_csv(csv_o_j, encoding='UTF-8', index=False)
-    print(f"result saved to {csv_o_j}, {csv_o_s}")
+    df_rtn_jincha.to_csv(csv_o_b, encoding='UTF-8', index=False)
+    print(f"result saved to {csv_o_b}, {csv_o_s}")
     return(df_rtn_jincha,df_rtn_sicha)
 
-def bk_increase(csv_o,start=None,ndays=3):
-    if start != None and ndays != None:
-        csv_o = f"{csv_o}_{str(start)}_{str(ndays)}.csv"
+def bk_increase(csv_o,ndays=3,dayS=None, dayE=None):
+    dayS, dayE, ndays = finlib.Finlib().get_dayS_dayE_ndays(ndays=ndays, dayS=dayS, dayE=dayE)
 
-    if start == None and ndays != None:
-        csv_o = f"{csv_o}_last_{str(ndays)}.csv"
+    # if start != None and ndays != None:
+    #     csv_o = f"{csv_o}_{str(start)}_{str(ndays)}.csv"
+    #
+    # if start == None and ndays != None:
+    #     csv_o = f"{csv_o}_last_{str(ndays)}.csv"
+
+    csv_o = f"{csv_o}_{str(dayS)}_{str(dayE)}_{str(ndays)}.csv"
 
 
     df_rtn = pd.DataFrame()
@@ -913,6 +1003,18 @@ def bk_increase(csv_o,start=None,ndays=3):
     if finlib.Finlib().is_cached(csv_o) :
         logging.info("result csv has been updated in 1 days. "+csv_o)
         df_rtn = pd.read_csv(csv_o)
+
+        most_decrease_df = df_rtn.sort_values(by='pct_change').head(10)
+        most_increase_df = df_rtn.sort_values(by='pct_change').tail(10)
+        most_amount_df = df_rtn.sort_values(by='amount').tail(30)
+        most_vol_df = df_rtn.sort_values(by='vol').tail(10)
+        most_swing_df = df_rtn.sort_values(by='swing').tail(10)
+
+        logging.info("=== BK Most Decrease ===\n"+finlib.Finlib().pprint(most_decrease_df))
+        logging.info("=== BK Most Increase ===\n"+finlib.Finlib().pprint(most_increase_df))
+        logging.info("=== BK Most Amount ===\n"+finlib.Finlib().pprint(most_amount_df))
+        logging.info("=== BK Most Vol ===\n"+finlib.Finlib().pprint(most_vol_df))
+        logging.info("=== BK Most Swing ===\n"+finlib.Finlib().pprint(most_swing_df))
         return(df_rtn)
 
 
@@ -925,11 +1027,12 @@ def bk_increase(csv_o,start=None,ndays=3):
         logging.info(f"code {code}")
         adf = df[df['code']==code][['code','date','close','open','high','low','vol','amount']]
 
-        if start != None and ndays != None:
-            adf = adf[adf['date'] >= start].head(ndays)
+        adf = adf[adf['date'] >= int(dayS)]
+        adf = adf[adf['date'] <= int(dayE)]
 
-        if start == None and ndays != None:
-            adf = adf.tail(ndays)
+        if adf.__len__()==0:
+            logging.info(f"empty df, code {code}, {dayS}, {dayE}")
+            continue
 
         s=adf.iloc[0]
         e=adf.iloc[-1]
@@ -949,13 +1052,7 @@ def bk_increase(csv_o,start=None,ndays=3):
 
 
     df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
-    logging.info(f"result saved to {csv_o}")
-
-    most_decrease_df = df_rtn.sort_values(by='pct_change').head(10)
-    most_increase_df = df_rtn.sort_values(by='pct_change').tail(10)
-    most_amount_df = df_rtn.sort_values(by='amount').tail(30)
-    most_vol_df = df_rtn.sort_values(by='vol').tail(10)
-    most_swing_df = df_rtn.sort_values(by='swing').tail(10)
+    logging.info(f"result saved to {csv_o}, len {str(df_rtn.__len__())}")
     return(df_rtn)
 
 def bk_TD_indicator_start():
@@ -1112,18 +1209,23 @@ parser.add_option("-n", "--no_question", action="store_true", default=False, des
 no_question = options.no_question
 
 
+if True or no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
+    df_strategy = bar_support_resist_strategy(csv_out = rst_dir+"/bar_support_resist_strategy.csv")
+    # exit()
 if no_question or input("Run lemon766? [N]")=="Y":
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
     # exit()
 
 if no_question or input("Run bk_increase? [N]")=="Y":
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",start=20220427,ndays=3)
-    df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",start=20220101,ndays=200)
-    # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
+    # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",start=20220101,ndays=200)
+    # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",dayS=20210715,ndays=30)
+
+    df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
     # exit()
 
 if no_question or input("Run BK ma_across? [N]")=="Y":
-    df_ma_across = bk_ma_across(csv_o_j = rst_dir+"/bk_ma_cross_over.csv", csv_o_s = rst_dir+"/bk_ma_cross_down.csv")
+    df_ma_across = bk_ma_across(csv_o_b = rst_dir+"/bk_ma_cross_over.csv", csv_o_s = rst_dir+"/bk_ma_cross_down.csv")
 
 
 if no_question or input("Run TD_indicator? [Y]")!="N":
@@ -1131,6 +1233,8 @@ if no_question or input("Run TD_indicator? [Y]")!="N":
     logging.info("\n##### TD_indicator_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
     # exit()
+
+
 
 if no_question or input("Run TD_indicator_BK? [Y]")!="N":
     df_td = bk_TD_indicator_start()

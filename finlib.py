@@ -3844,11 +3844,19 @@ class Finlib:
         df_weekly.date = df_weekly.date + pd.tseries.frequencies.to_offset(timedelta(days=-2))
 
         df_weekly['code'] = code
+        df_weekly['pre_close'] = df_weekly['close'].shift()
+        df_weekly['change'] = df_weekly['close'] - df_weekly['pre_close']
+        df_weekly['pct_chg'] = round((df_weekly['close'] - df_weekly['pre_close']) * 100 / df_weekly['pre_close'],2)
         df_weekly  = self.change_df_columns_order(df=df_weekly, col_list_to_head=['code'])
 
         #ignore to last day of the month. 2020-11-30
         df_monthly = df_daily.resample('M', on='date').apply(logic).reset_index()
         df_monthly['code'] = code
+
+        df_monthly['pre_close'] = df_monthly['close'].shift()
+        df_monthly['change'] = df_monthly['close'] - df_monthly['pre_close']
+        df_monthly['pct_chg'] = round((df_monthly['close'] - df_monthly['pre_close']) * 100 / df_monthly['pre_close'],2)
+
         df_monthly  = self.change_df_columns_order(df=df_monthly, col_list_to_head=['code'])
 
         # print("\n\n df_monthly")
@@ -5077,27 +5085,72 @@ class Finlib:
 
         return(df)
 
-    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,short_period=False,debug=False, force_run=False):
-    # def get_last_n_days_stocks_amount(self,ndays=365):
+    def rename_df_cols(self, df, name_map=None):
+        if name_map is None:
+            name_map = {
+                '证券名称': 'name',
+                '成交金额': 'amount_cj',
+                '成交价格': 'price_cj',
+                '证券代码': 'code',
+                '成交日期': 'date_cj',
+                '当前价': 'close',
+                "证券数量": "number_securities",
+                "可卖数量": "number_can_sale",
+                "当前价": "current_price",
+                "成本价": "cost_price",
+                "今日盈亏": "today_profit",
+                "今日盈亏比例(%)": "today_profit_ratio",
+                "持仓盈亏比例(%)": "position_profit_ratio",
+                "持仓盈亏": "position_profit",
+                "最新市值": "latest_market_value",
+                "成本金额": "cost_amount",
+                "股东代码": "account",
+            }
 
-    #logic for dayS and dayE:
-        if (dayS is not None ) and (dayE is not None):
-            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days+1
-            logging.info("get_last_n_days_stocks_amount, using specifed dayS and dayE, ingore ndays. Use calculated ndays "+str(ndays))
+        cols = df.columns
+
+        for k, v in name_map.items():
+            if k in cols:
+                df.rename(columns={k: v}, inplace=True)
+        return (df)
+
+    def get_dayS_dayE_ndays(self,ndays=365, dayS=None, dayE=None):
+        if dayS is not None:
+            dayS = str(dayS)
+
+        if dayE is not None:
+            dayE = str(dayE)
+
+        # logic for dayS and dayE:
+        if (dayS is not None) and (dayE is not None):
+            ndays = (datetime.strptime(dayE, "%Y%m%d") - datetime.strptime(dayS, "%Y%m%d")).days + 1
+            logging.info(
+                "get_last_n_days_stocks_amount, using specifed dayS and dayE, ingore ndays. Use calculated ndays " + str(
+                    ndays))
         elif (dayE is not None) and (ndays is not None):
             # dayS = (datetime.today() - timedelta(365)).strftime("%Y%m%d")
             # dayS = (datetime.strptime(self.get_last_trading_day(), "%Y%m%d") - timedelta(365)).strftime("%Y%m%d")
             dayS = (datetime.strptime(dayE, "%Y%m%d") - timedelta(ndays)).strftime("%Y%m%d")
             dayS = self.get_last_trading_day(date=dayS.strftime("%Y%m%d"))
         elif (dayS is None) and (dayE is None) and (ndays is not None):
-            # dayS = (datetime.today() - timedelta(ndays)).strftime("%Y%m%d")
+            # dayS = (datetime.today() - tmedelta(ndays)).strftime("%Y%m%d")
             # dayE = datetime.today().strftime("%Y%m%d")
             dayE = self.get_last_trading_day()
             dayS = (datetime.strptime(dayE, "%Y%m%d") - timedelta(ndays)).strftime("%Y%m%d")
             dayS = self.get_last_trading_day(date=dayS)
+        elif (dayS is not None) and (dayE is None) and (ndays is not None):
+            dayE = (datetime.strptime(dayS, "%Y%m%d") + timedelta(ndays)).strftime("%Y%m%d")
+            dayE = self.get_last_trading_day(date=dayE)
+
         else:
             logging.fatal("unsupported input parameter. exit")
             sys.exit(1)
+
+        return(dayS,dayE,ndays)
+
+    def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,short_period=False,debug=False, force_run=False):
+
+        dayS, dayE, ndays = self.get_dayS_dayE_ndays(ndays=ndays, dayS=dayS, dayE=dayE)
 
         if daily_update:
             sl_out_csv = "/home/ryan/DATA/result/stocks_amount_" + str(ndays) + "_days.csv" #symbol link

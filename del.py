@@ -96,29 +96,7 @@ def s2():
             print('\t{}: {:>1.4}'.format(k, ps[k]), end='  ')
         print()
 
-s2()
-exit()
 
-
-def s3():
-    from flair.models import TextClassifier
-    from flair.data import Sentence
-
-    sia = TextClassifier.load('en-sentiment')
-
-    def flair_prediction(x):
-        sentence = Sentence(x)
-        sia.predict(sentence)
-        score = sentence.labels[0]
-        if "POSITIVE" in str(score):
-            return "pos"
-        elif "NEGATIVE" in str(score):
-            return "neg"
-        else:
-            return "neu"
-
-    flair_prediction('hahahahah')
-    
 
 ########################### graham instrinsic value
 def roe_pe():
@@ -1360,8 +1338,46 @@ def mkt_value_vs_amt():
     return(rtn_df)
 
 
+
+def zszq_act_profit():
+    f_h = "/home/ryan/zijin_653.csv"
+    f_b = "/home/ryan/653buy.csv"
+    f_s = "/home/ryan/653sell.csv"
+
+    df_hold = pd.read_csv(f_h, converters={'证券代码': str, })
+    df_buy = pd.read_csv(f_b, converters={'证券代码': str, })
+    df_sell = pd.read_csv(f_s, converters={'证券代码': str, })
+
+    df_hold = finlib.Finlib().rename_df_cols(df=df_hold)
+    df_buy = finlib.Finlib().rename_df_cols(df=df_buy)
+    df_sell = finlib.Finlib().rename_df_cols(df=df_sell)
+
+    db = df_buy[['code', 'name', 'amount_cj']]
+    ds = df_sell[['code', 'name', 'amount_cj']]
+
+    db1 = db.groupby('code').sum()  # for 成交金额 only.  don't trust '成交价格 etc.
+    ds1 = ds.groupby('code').sum()  # for 成交金额 only.  don't trust '成交价格 etc.
+
+    dfp = pd.merge(left=db1, right=ds1, on='code', how='outer', suffixes=['_b', '_s'])
+
+    dfp = dfp.reset_index()
+    dfh = df_hold[['code', 'name', 'latest_market_value']]
+    dfg = pd.merge(left=dfp, right=dfh, on='code', how='inner')
+    dfg['amount_cj_s'] = dfg['amount_cj_s'].fillna(0)
+    dfg['profit'] = dfg['amount_cj_s'] - dfg['amount_cj_b'] + dfg['latest_market_value']
+
+    dfg = finlib.Finlib().change_df_columns_order(df=dfg,
+                                                  col_list_to_head=['code', 'name', 'profit', 'latest_market_value'])
+    dfg = dfg.sort_values(by='profit', ascending=False)
+
+    logging.info(finlib.Finlib().pprint(dfg))
+    return(dfg)
+
+
 #### MAIN #####
-a = finlib.Finlib().load_all_bk_qfq_data()
+
+df = zszq_act_profit()
+exit()
 
 df = mkt_value_vs_amt()
 exit()
