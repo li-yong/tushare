@@ -237,8 +237,182 @@ def xiao_hu_xian(csv_out,debug=False):
     return(df_rtn)
 
 
-def bar_support_resist_strategy(csv_out,debug=False):
-    if finlib.Finlib().is_cached(csv_out,day=1):
+def _bar_get_support_resist(df):
+    ## start
+    bar_up = 0;
+    bar_dn = 0;
+    pct_gain = 0;
+    pct_lost = 0;
+    l_spt = 0;
+    l_spt_mid = 0;
+    l_rst = 0;
+    pre_row = None;
+    rvt_to_dn = False;
+    rvt_to_up = False;
+    rtn_df_bar_bs_line = pd.DataFrame()
+    rtn_df_bar_opt = pd.DataFrame()
+
+    code = df['code'].iloc[0]
+
+    df.at[df['open'] > df['close'], 'bar_mid'] = df['open'] - (round((df['open'] - df['close']) / 2, 2))
+    df.at[df['open'] <= df['close'], 'bar_mid'] = df['open'] + (round((df['close'] - df['open']) / 2, 2))
+
+    for index, row in df.tail(35).reset_index().drop('index', axis=1).iterrows():
+        # print(row['date'])
+
+        # logging.info(
+        #     f"idx {str(index)} {str(row['date'])}, bar_up {bar_up}, p_to_sell {str(l_spt)}. "
+        #     f"bar_dn {str(bar_dn)},  p_to_buy {str(l_rst)}")
+
+        rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(pd.DataFrame().from_dict({
+            'code': [code],
+            'date': [row['date']],
+            'bar_up': [bar_up],
+            'p_to_sell': [l_spt],
+            'bar_dn': [bar_dn],
+            'p_to_buy': [l_rst],
+        }))
+
+        # if index==12:
+        #     logging.info("debug stop")
+
+        if bar_dn > 0 and row['pct_chg'] > 0 and row['close'] > l_rst:
+            # logging.info(f"buy point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_rst)}")
+            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['buy'],
+                'close': [row['close']],
+                'p_to_buy': [l_rst],
+            }))
+
+            bar_dn = 0;
+            l_rst = 0;
+            bar_up += 1
+            rvt_to_up = True
+            rvt_to_dn = False
+
+        if bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
+            # logging.info(f"sell point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_spt)}")
+
+            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['sell'],
+                'close': [row['close']],
+                'p_to_sell': [l_spt],
+            }))
+
+            bar_up = 0;
+            l_spt = 0;
+            bar_dn += 1
+            rvt_to_dn = True
+            rvt_to_up = False
+
+        if index == 0:
+            pre_row = row
+            continue
+
+        if row['pct_chg'] > 0 and row['open'] < row['close']:
+            if bar_dn > 0:
+                # logging.info("ignore none-break upbar in down trend")
+                continue  # ignore upbar in down trend, the bar not break the down trend.
+
+            if not rvt_to_up:
+                bar_up += 1
+            else:
+                rvt_to_up = False
+
+            l_spt = row['open']  # move l_spt up
+            l_spt_mid = row['bar_mid']  # move l_spt up
+
+        if row['pct_chg'] < 0 and row['open'] > row['close']:
+            if bar_up > 0:
+                # logging.info("ignore none-break dnbar in up trend")
+                continue
+
+            if not rvt_to_dn:
+                bar_dn += 1
+            else:
+                rvt_to_dn = False
+
+            l_rst = row['open']  # move l_rst lower
+
+        pre_row = row
+        # end of for
+
+    return(rtn_df_bar_opt,rtn_df_bar_bs_line)
+
+
+def _bar_get_status(df_daily):
+
+    rtn_df_bar_status = pd.DataFrame()
+    code = df_daily['code'].iloc[0]
+
+    df_m = finlib.Finlib().daily_to_monthly_bar(df_daily=df_daily)['df_monthly']
+    df_w = finlib.Finlib().daily_to_monthly_bar(df_daily=df_daily)['df_weekly']
+
+
+    df_m = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_m, short=5, middle=10, long=20)  # close_10_sma
+    df_w = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_w, short=5, middle=10, long=20)  # close_5_sma
+
+    _, df_c_cross_dn_maw5, df_c_cross_up_maw5 = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_w,
+                                                                                                     fast_col_name='close',
+                                                                                                     slow_col_name='close_5_sma')
+    _, df_c_cross_dn_mam10, df_c_cross_up_mam10 = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_m,
+                                                                                                       fast_col_name='close',
+                                                                                                       slow_col_name='close_10_sma')
+
+    maw5_dn_date = df_c_cross_dn_maw5.iloc[-1]['date'] if df_c_cross_dn_maw5.__len__()>0 else 'None'
+    maw5_up_date = df_c_cross_up_maw5.iloc[-1]['date'] if df_c_cross_up_maw5.__len__()>0 else 'None'
+
+    mam10_dn_date = df_c_cross_dn_mam10.iloc[-1]['date'] if df_c_cross_dn_mam10.__len__()>0 else 'None'
+    mam10_up_date = df_c_cross_up_mam10.iloc[-1]['date'] if df_c_cross_up_mam10.__len__()>0 else 'None'
+
+
+    df_m['bar_ptn'] = ''
+    df_w['bar_ptn'] = ''
+
+    df_m.at[df_m['close'] > df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "above_10M_MA,"
+    df_m.at[df_m['close'] < df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "below_10M_MA,"
+    df_m.at[df_m['close'] == df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "equal_10M_MA,"
+    df_m['pre_bar_ptn'] = df_m['bar_ptn'].shift(1)
+
+    df_w.at[df_w['close'] > df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "above_5W_MA,"
+    df_w.at[df_w['close'] < df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "below_5W_MA,"
+    df_w.at[df_w['close'] == df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "equal_5W_MA,"
+    df_w['pre_bar_ptn'] = df_w['bar_ptn'].shift(1)
+
+    df_m.rename(columns={'close': 'close_m', 'close_10_sma': 'close_10m_sma'}, inplace=True)
+    df_w.rename(columns={'close': 'close_w', 'close_5_sma': 'close_5w_sma'}, inplace=True)
+    df_m1 = df_m[['date', 'code', 'close_m', 'close_10m_sma', 'bar_ptn', 'pre_bar_ptn']].tail(1)
+    df_w1 = df_w[['date', 'code', 'close_w', 'close_5w_sma', 'bar_ptn', 'pre_bar_ptn']].tail(1)
+
+    # maw5_dn_date = df_c_cross_dn_maw5.iloc[-1]['date'] if df_c_cross_dn_maw5.__len__()>0 else 'None'
+    # maw5_up_date = df_c_cross_up_maw5.iloc[-1]['date'] if df_c_cross_up_maw5.__len__()>0 else 'None'
+    #
+    # mam10_dn_date = df_c_cross_dn_mam10.iloc[-1]['date'] if df_c_cross_dn_mam10.__len__()>0 else 'None'
+    # mam10_up_date = df_c_cross_up_mam10.iloc[-1]['date'] if df_c_cross_up_mam10.__len__()>0 else 'None'
+    #
+
+    rtn_df_bar_status = rtn_df_bar_status.append(pd.DataFrame.from_dict({
+        'code': [code],
+        '10m_ma': [df_m1['close_10m_sma'].iloc[0]],
+        '5w_ma': [df_w1['close_5w_sma'].iloc[0]],
+        'bar_ptn': [df_m1['bar_ptn'].iloc[0] + df_w1['bar_ptn'].iloc[0]],
+        'pre_bar_ptn': [df_m1['pre_bar_ptn'].iloc[0] + df_w1['pre_bar_ptn'].iloc[0]],
+
+        'last_cross_up_5w_ma': [maw5_up_date],
+        'last_cross_up_10m_ma': [mam10_up_date],
+        'last_cross_dn_5w_ma': [maw5_dn_date],
+        'last_cross_dn_10m_ma': [mam10_dn_date],
+    }))
+
+    return(rtn_df_bar_status)
+
+
+def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=False):
+    if finlib.Finlib().is_cached(csv_out_status,day=1):
         logging.info("loading from "+csv_out)
         return(pd.read_csv(csv_out))
 
@@ -250,9 +424,22 @@ def bar_support_resist_strategy(csv_out,debug=False):
 
     df = finlib.Finlib().load_all_ag_qfq_data(days=300)
 
+    # i_debug = 0
+
+    rtn_df_bar_opt = pd.DataFrame()
+    rtn_df_bar_bs_line = pd.DataFrame()
+    rtn_df_bar_status = pd.DataFrame()
+
+    # for c in df.code.append(df.code).unique()[:2]:
     for c in df.code.append(df.code).unique():
-        c='SH600519'
+        # if i_debug >=1:
+        #     exit()
+        #
+        # i_debug+=1
+        # c='SH600519'
+
         dfs=df[df['code']==c].reset_index().drop('index',axis=1)
+
 
         if dfs.__len__()<90:
             continue
@@ -260,55 +447,37 @@ def bar_support_resist_strategy(csv_out,debug=False):
         df_m = finlib.Finlib().daily_to_monthly_bar(df_daily=dfs)['df_monthly']
         df_w = finlib.Finlib().daily_to_monthly_bar(df_daily=dfs)['df_weekly']
 
-        df_m['bar_mid'] = df_m['open']+(df_m['close']-df_m['open'])*0.5
-
-        df_m = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_m,short=5,middle=10,long=20) #close_10_sma
-        df_w = finlib_indicator.Finlib_indicator().add_ma_ema(df=df_w,short=5,middle=10,long=20) #close_5_sma
-
-        #Weekly Bar Checks
-        df_w1=df_w[['date','code','close','pre_close','close_5_sma']]
-        _, df_c_cross_dn_maw5, df_c_cross_up_maw5  = finlib_indicator.Finlib_indicator().slow_fast_across(df=df_w1,fast_col_name='close',slow_col_name='close_5_sma')
+        ###########################################
+        # rtn_df_bar_status: if a bar above/below week_ma_5, month_ma_10
+        _rtn_df_bar_status = _bar_get_status(df_daily=dfs)
+        rtn_df_bar_status = rtn_df_bar_status.append(_rtn_df_bar_status)
 
 
-        ## start
-        bar_up = 0; bar_dn=0; pct_gain = 0; pct_lost = 0;
-        l_spt =0; l_spt_mid=0; l_rst=0;
+        ###########################################
+        # bar_opt: buy/sell operation.
+        # bar_bs_line: buy/sell line.
+        _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist(df=dfs)
+        # _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist(df=df_w)
 
-        for index,row in df_w.tail(26).iterrows():
-            print(row['date'])
+        rtn_df_bar_opt = rtn_df_bar_opt.append(_rtn_df_bar_opt, ignore_index=True)
+        rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(_rtn_df_bar_bs_line, ignore_index=True)
+        print("\n======")
+        print(rtn_df_bar_opt.tail(3))
+        print(rtn_df_bar_status.tail(1))
+        print(rtn_df_bar_bs_line.tail(1))
 
-            if row['pct_chg']>0 and row['open']<row['close']:
-                l_spt = row['open']
+        # end of for c in df.code
 
-                if bar_up == 0:
-                    bar_up += 1 
+    # print(rtn_df_bar_status)
+    # print(rtn_df_bar_bs_line)
+    # print(rtn_df_bar_opt)
 
-                if bar_up > 0:
-                    bar_up +=1
-
-                if bar_dn >0: #revert. dn to up
-                    bar_dn =0
-                    bar_up +=1
-
-            if row['pct_chg']<0 and row['open']>row['close']:
-                bar_dn +=1
-                l_rst= row['open']
-
-
-
-
-
-
-        df_rtn = df_rtn.append({
-            "code": c,
-        }, ignore_index=True)
-
-
-    df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
-
-    logging.info(finlib.Finlib().pprint(df_rtn))
-    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
-    logging.info("bar support resist stratgy result saved to "+csv_out)
+    rtn_df_bar_status.to_csv(csv_out_status, encoding='UTF-8', index=False)
+    rtn_df_bar_bs_line.to_csv(csv_out_bsline, encoding='UTF-8', index=False)
+    rtn_df_bar_opt.to_csv(csv_out_opt, encoding='UTF-8', index=False)
+    logging.info("bar MA status saved to "+csv_out_status)
+    logging.info("bar buy sell line saved to "+csv_out_bsline)
+    logging.info("bar operation saved to "+csv_out_opt)
 
     return(df_rtn)
 
@@ -1210,7 +1379,11 @@ no_question = options.no_question
 
 
 if True or no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
-    df_strategy = bar_support_resist_strategy(csv_out = rst_dir+"/bar_support_resist_strategy.csv")
+    df_strategy = bar_support_resist_strategy(
+        csv_out_status = rst_dir+"/bar_ma_status.csv",
+        csv_out_bsline = rst_dir+"/bar_bs_line.csv",
+        csv_out_opt = rst_dir+"/bar_bs_operate.csv",
+        )
     # exit()
 if no_question or input("Run lemon766? [N]")=="Y":
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")

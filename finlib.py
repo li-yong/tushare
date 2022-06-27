@@ -3819,7 +3819,7 @@ class Finlib:
         #     logging.info("found pct_chg in columns, suppose this is AG_INDEX. ")
         elif (re.match(r'S[H|Z]\d{6}',code)) or (re.match(r'BJ\d{6}',code)):
             logic = logic_ag
-            logging.info("detected AG Indivial stocks, code "+code)
+            # logging.info("detected AG individual stocks, code "+code)
 
         #(base) ryan@hahabrain2:~/tushare_ryan$ head -2 /home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv
         # ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount
