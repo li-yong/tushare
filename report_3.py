@@ -414,7 +414,17 @@ def _bar_get_status(df_daily):
 def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=False):
     if finlib.Finlib().is_cached(csv_out_status,day=1):
         logging.info("loading from "+csv_out_status)
-        # return(pd.read_csv(csv_out_status))
+        rtn_df_bar_status = pd.read_csv(csv_out_status)
+        rtn_df_bar_bs_line = pd.read_csv(csv_out_bsline)
+        rtn_df_bar_opt = pd.read_csv(csv_out_opt)
+
+        c='SZ300671'
+        print(rtn_df_bar_status[rtn_df_bar_status['code']==c])
+        print(rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==c].tail(3))
+        print(rtn_df_bar_opt[rtn_df_bar_opt['code']==c])
+
+        return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
+
 
 
     df_rtn = pd.DataFrame()
@@ -426,9 +436,10 @@ def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=
 
     # i_debug = 0
 
-    rtn_df_bar_opt = pd.DataFrame()
-    rtn_df_bar_bs_line = pd.DataFrame()
     rtn_df_bar_status = pd.DataFrame()
+    rtn_df_bar_bs_line = pd.DataFrame()
+    rtn_df_bar_opt = pd.DataFrame()
+
 
     # for c in df.code.append(df.code).unique()[:2]:
     for c in df.code.append(df.code).unique():
@@ -479,7 +490,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=
     logging.info("bar buy sell line saved to "+csv_out_bsline)
     logging.info("bar operation saved to "+csv_out_opt)
 
-    return(df_rtn)
+    return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
 
 
 def daily_UD_tongji(out_csv,ndays=1):
@@ -1379,7 +1390,7 @@ no_question = options.no_question
 
 
 if True or no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
-    df_strategy = bar_support_resist_strategy(
+    df_bar_status,df_bar_bs_line,df_bar_opt = bar_support_resist_strategy(
         csv_out_status = rst_dir+"/bar_ma_status.csv",
         csv_out_bsline = rst_dir+"/bar_bs_line.csv",
         csv_out_opt = rst_dir+"/bar_bs_operate.csv",

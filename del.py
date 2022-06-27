@@ -1376,22 +1376,22 @@ def zszq_act_profit():
 
 #### MAIN #####
 
-df = zszq_act_profit()
-exit()
+# df = zszq_act_profit()
+# exit()
 
-df = mkt_value_vs_amt()
-exit()
+# df = mkt_value_vs_amt()
+# exit()
 
 
 # chen_ben_matplot()
-df = small_up()
-exit()
+# df = small_up()
+# exit()
 
-date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
-# date_list= finlib.Finlib().get_nong_li_date(start='20220101',end='20221231')
+# date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
+date_list= finlib.Finlib().get_nong_li_date(start='20220101',end='20221231')
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)
-exit()
+# exit()
 
 df_ind = finlib.Finlib().list_industry_performance(date_list=date_list)
 df_cnp = finlib.Finlib().list_concept_performance(date_list=date_list)
@@ -1471,9 +1471,6 @@ if input("Run check_stop_loss_based_on_ma_across? [Y]") != "N":
     check_stop_loss_based_on_ma_across()
     # exit()
 
-if input("Run result_effort_ratio ? [Y]") != "N":
-    result_effort_ratio()
-    # exit()
 
 if input("Run grep_garbage ? [Y]") != "N":
     grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
