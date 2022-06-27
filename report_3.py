@@ -413,8 +413,8 @@ def _bar_get_status(df_daily):
 
 def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=False):
     if finlib.Finlib().is_cached(csv_out_status,day=1):
-        logging.info("loading from "+csv_out)
-        return(pd.read_csv(csv_out))
+        logging.info("loading from "+csv_out_status)
+        # return(pd.read_csv(csv_out_status))
 
 
     df_rtn = pd.DataFrame()
