@@ -411,11 +411,11 @@ def _bar_get_status(df_daily):
     return(rtn_df_bar_status)
 
 
-def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=False):
+def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,debug=False):
     if finlib.Finlib().is_cached(csv_out_status,day=1):
         logging.info("loading from "+csv_out_status)
         rtn_df_bar_status = pd.read_csv(csv_out_status)
-        rtn_df_bar_bs_line = pd.read_csv(csv_out_bsline)
+        rtn_df_bar_bs_line = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_bar_opt = pd.read_csv(csv_out_opt)
 
         c='SZ300671'
@@ -484,13 +484,119 @@ def bar_support_resist_strategy(csv_out_status,csv_out_bsline,csv_out_opt,debug=
     # print(rtn_df_bar_opt)
 
     rtn_df_bar_status.to_csv(csv_out_status, encoding='UTF-8', index=False)
-    rtn_df_bar_bs_line.to_csv(csv_out_bsline, encoding='UTF-8', index=False)
+    rtn_df_bar_bs_line.to_csv(csv_out_lian_ban_bk, encoding='UTF-8', index=False)
     rtn_df_bar_opt.to_csv(csv_out_opt, encoding='UTF-8', index=False)
     logging.info("bar MA status saved to "+csv_out_status)
-    logging.info("bar buy sell line saved to "+csv_out_bsline)
+    logging.info("bar buy sell line saved to "+csv_out_lian_ban_bk)
     logging.info("bar operation saved to "+csv_out_opt)
 
     return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
+
+
+def lianban_tongji(csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
+    if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
+        logging.info("loading from "+csv_out_lian_ban_gg)
+        rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
+        rtn_df_ind = pd.read_csv(csv_out_lian_ban_ind)
+        rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
+        rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
+
+        return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
+
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=20)
+
+    rtn_df_gg = pd.DataFrame()
+    rtn_df_bk = pd.DataFrame()
+    rtn_df_opt = pd.DataFrame()
+
+    threshold_up = 5
+    threshold_dn = -5
+
+    # for code in df.code.append(df.code).unique()[:20]:
+    for code in df.code.append(df.code).unique():
+        # code='SH600519'
+        dfs=df[df['code']==code].reset_index().drop('index',axis=1)
+
+        if dfs.__len__()<10:
+            continue
+
+        dfs = dfs.tail(20).reset_index().drop('index',axis=1)
+        _df_up = dfs[dfs['pct_chg']>=threshold_up]
+        _df_dn = dfs[dfs['pct_chg']<=threshold_dn]
+
+        _open = dfs['open'].iloc[0]
+        _close = dfs['close'].iloc[-1]
+        _low = dfs['close'].min()
+        _high = dfs['close'].max()
+
+        ###########################################
+        #
+        rtn_df_gg = rtn_df_gg.append(pd.DataFrame.from_dict({
+            'code': [code],
+            'threshold_up_cnt': [_df_up.__len__()],
+            'threshold_dn_cnt': [_df_dn.__len__()],
+            'open_cur_zhang_fu': [round( 100*(_close-_open)/_open ,2)],
+            'min_cur_zhang_fu': [round( 100*(_close-_low)/_low ,2)],
+        }))
+        print("\n======")
+        print(rtn_df_gg.tail(1))
+
+    rtn_df_gg = finlib.Finlib().add_stock_name_to_df(df=rtn_df_gg)
+    rtn_df_gg = finlib.Finlib().add_industry_to_df(df=rtn_df_gg)
+    rtn_df_gg = finlib.Finlib().add_concept_to_df(df=rtn_df_gg)
+    rtn_df_gg = finlib.Finlib().add_stock_increase(df=rtn_df_gg)
+
+    #prepare industry
+    ind_dict={}
+    for index,row in rtn_df_gg.iterrows():
+        ind = row['industry_name_L1_L2_L3']
+        if ind in ind_dict.keys():
+            ind_up_cnt = ind_dict[ind]['up']+row['threshold_up_cnt']
+            ind_dn_cnt = ind_dict[ind]['dn']+row['threshold_dn_cnt']
+        else:
+            ind_dict[ind]={}
+            ind_up_cnt = row['threshold_up_cnt']
+            ind_dn_cnt = row['threshold_dn_cnt']
+
+        ind_dict[ind]['up'] = ind_up_cnt
+        ind_dict[ind]['dn'] = ind_dn_cnt
+    df_industry_stat = pd.DataFrame().from_dict(ind_dict).T
+
+    #prepare concept
+    cpts_dict = {}
+    for index,row in rtn_df_gg.iterrows():
+        cpts = row['concept']
+        for cpt in cpts.split(","):
+            if cpt in cpts_dict.keys():
+                cpt_up_cnt = cpts_dict[cpt]['up'] + row['threshold_up_cnt']
+                cpt_dn_cnt = cpts_dict[cpt]['dn'] + row['threshold_dn_cnt']
+            else:
+                cpts_dict[cpt]={}
+                cpt_up_cnt = row['threshold_up_cnt']
+                cpt_dn_cnt = row['threshold_dn_cnt']
+
+            cpts_dict[cpt]['up']=cpt_up_cnt
+            cpts_dict[cpt]['dn']=cpt_dn_cnt
+    df_concept_stat = pd.DataFrame().from_dict(cpts_dict).T
+
+    ## switch df row column
+    rtn_df_ind = df_industry_stat.sort_values(by='up').reset_index().rename(columns={'index':'industry'})
+    rtn_df_bk = df_concept_stat.sort_values(by='up').reset_index().rename(columns={'index':'concept'})
+
+    rtn_df_opt = rtn_df_ind.rename(columns={'industry':'concept'}).tail(15)
+    rtn_df_opt = rtn_df_opt.append(rtn_df_bk.tail(30))
+
+    rtn_df_gg.to_csv(csv_out_lian_ban_gg, encoding='UTF-8', index=False)
+    rtn_df_ind.to_csv(csv_out_lian_ban_ind, encoding='UTF-8', index=False)
+    rtn_df_bk.to_csv(csv_out_lian_ban_bk, encoding='UTF-8', index=False)
+    rtn_df_opt.to_csv(csv_out_lian_ban_opt, encoding='UTF-8', index=False)
+    logging.info("lian ban ge gu saved to "+csv_out_lian_ban_gg)
+    logging.info("lian ban industry saved to "+csv_out_lian_ban_ind)
+    logging.info("lian ban ban kuai saved to "+csv_out_lian_ban_bk)
+    logging.info("lian ban operation saved to "+csv_out_lian_ban_opt)
+
+    return(rtn_df_gg,rtn_df_bk,rtn_df_opt)
 
 
 def daily_UD_tongji(out_csv,ndays=1):
@@ -1389,12 +1495,22 @@ parser.add_option("-n", "--no_question", action="store_true", default=False, des
 no_question = options.no_question
 
 
-if True or no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
+if True or no_question or input("Run lian ban tongji? [N]")=="Y":
+    df_bar_status,df_bar_bs_line,df_bar_opt = lianban_tongji(
+        csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
+        csv_out_lian_ban_ind = rst_dir+"/lianban_ind.csv",
+        csv_out_lian_ban_bk = rst_dir+"/lianban_bk.csv",
+        csv_out_lian_ban_opt = rst_dir+"lianban_operate.csv",
+        )
+
+if no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
     df_bar_status,df_bar_bs_line,df_bar_opt = bar_support_resist_strategy(
         csv_out_status = rst_dir+"/bar_ma_status.csv",
-        csv_out_bsline = rst_dir+"/bar_bs_line.csv",
+        csv_out_lian_ban_bk = rst_dir+"/bar_bs_line.csv",
         csv_out_opt = rst_dir+"/bar_bs_operate.csv",
         )
+
+
     # exit()
 if no_question or input("Run lemon766? [N]")=="Y":
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
