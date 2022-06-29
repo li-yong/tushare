@@ -493,7 +493,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
     return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
 
 
-def lianban_tongji(csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
+def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
     if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
         logging.info("loading from "+csv_out_lian_ban_gg)
         rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
@@ -501,29 +501,28 @@ def lianban_tongji(csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,
         rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
 
+        logging.info(finlib.Finlib().pprint(rtn_df_opt))
+
         return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
 
 
-    df = finlib.Finlib().load_all_ag_qfq_data(days=20)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
 
     rtn_df_gg = pd.DataFrame()
     rtn_df_bk = pd.DataFrame()
     rtn_df_opt = pd.DataFrame()
-
-    threshold_up = 5
-    threshold_dn = -5
 
     # for code in df.code.append(df.code).unique()[:20]:
     for code in df.code.append(df.code).unique():
         # code='SH600519'
         dfs=df[df['code']==code].reset_index().drop('index',axis=1)
 
-        if dfs.__len__()<10:
+        if dfs.__len__()<n_days:
             continue
 
-        dfs = dfs.tail(20).reset_index().drop('index',axis=1)
-        _df_up = dfs[dfs['pct_chg']>=threshold_up]
-        _df_dn = dfs[dfs['pct_chg']<=threshold_dn]
+        dfs = dfs.tail(n_days).reset_index().drop('index',axis=1)
+        _df_up = dfs[dfs['pct_chg']>=up_threshold]
+        _df_dn = dfs[dfs['pct_chg']<=dn_threshold]
 
         _open = dfs['open'].iloc[0]
         _close = dfs['close'].iloc[-1]
@@ -539,8 +538,8 @@ def lianban_tongji(csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,
             'open_cur_zhang_fu': [round( 100*(_close-_open)/_open ,2)],
             'min_cur_zhang_fu': [round( 100*(_close-_low)/_low ,2)],
         }))
-        print("\n======")
-        print(rtn_df_gg.tail(1))
+        # print("\n======")
+        # print(rtn_df_gg.tail(1))
 
     rtn_df_gg = finlib.Finlib().add_stock_name_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_industry_to_df(df=rtn_df_gg)
@@ -596,7 +595,7 @@ def lianban_tongji(csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,
     logging.info("lian ban ban kuai saved to "+csv_out_lian_ban_bk)
     logging.info("lian ban operation saved to "+csv_out_lian_ban_opt)
 
-    return(rtn_df_gg,rtn_df_bk,rtn_df_opt)
+    return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
 
 
 def daily_UD_tongji(out_csv,ndays=1):
@@ -1496,7 +1495,8 @@ no_question = options.no_question
 
 
 if True or no_question or input("Run lian ban tongji? [N]")=="Y":
-    df_bar_status,df_bar_bs_line,df_bar_opt = lianban_tongji(
+    df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
+        n_days=5, up_threshold=5, dn_threshold=-5,
         csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
         csv_out_lian_ban_ind = rst_dir+"/lianban_ind.csv",
         csv_out_lian_ban_bk = rst_dir+"/lianban_bk.csv",
