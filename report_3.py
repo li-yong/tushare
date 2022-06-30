@@ -492,7 +492,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
 
     return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
 
-def _lianban_industry_concept_tongji(df_gg):
+def _lianban_industry_concept_tongji(df_gg,n_days):
     cpt_stk_map = pd.read_csv('/home/ryan/DATA/DAY_Global/AG_concept/concept_to_stock_map.csv')
     #prepare industry
     ind_dict={}
@@ -527,13 +527,15 @@ def _lianban_industry_concept_tongji(df_gg):
             cpts_dict[cpt]['dn']=cpt_dn_cnt
 
     df_concept_stat = pd.DataFrame().from_dict(cpts_dict).T
-    df_concept_stat['up_pct_per_day'] = round(100*df_concept_stat['up'] / df_concept_stat['count'] / n_days,2)
+
     ## switch df row column
     rtn_df_ind = df_industry_stat.sort_values(by='up').reset_index().rename(columns={'index':'industry'})
     rtn_df_bk = df_concept_stat.sort_values(by='up').reset_index().rename(columns={'index':'concept'})
 
     rtn_df_bk = pd.merge(left=rtn_df_bk, right=cpt_stk_map, on='concept', how='inner')
-
+    rtn_df_bk['up_pct_per_day'] = round(100 * rtn_df_bk['up'] / rtn_df_bk['code_cnt_of_cpt'] / n_days, 2)
+    rtn_df_bk = finlib.Finlib().adjust_column(df=rtn_df_bk, col_name_list=['concept','up_pct_per_day','up','dn','code_cnt_of_cpt'])
+    rtn_df_bk = rtn_df_bk.sort_values(by='up_pct_per_day').reset_index().drop('index',axis=1)
     return(rtn_df_ind, rtn_df_bk)
 
 def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_threshold=-7):
@@ -610,7 +612,7 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
     df_gg_net_up_cnt_top_20 = rtn_df_gg.sort_values(by='net_up_cnt').tail(20)
 
 
-    rtn_df_ind, rtn_df_bk = _lianban_industry_concept_tongji(df_gg=rtn_df_gg)
+    rtn_df_ind, rtn_df_bk = _lianban_industry_concept_tongji(df_gg=rtn_df_gg, n_days=n_days)
 
 
     rtn_df_opt = rtn_df_ind.rename(columns={'industry':'concept'}).tail(15)

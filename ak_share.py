@@ -503,7 +503,7 @@ def fetch_ths_concept():
 
 
 def generate_stock_concept():
-    csv_f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv'
+    csv_f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_to_concept_map.csv'
     csv_f_concept_to_stock = '/home/ryan/DATA/DAY_Global/AG_concept/concept_to_stock_map.csv'
 
     f_em='/home/ryan/DATA/DAY_Global/AG_concept/em_concept_consist.csv'
