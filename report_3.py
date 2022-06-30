@@ -492,25 +492,60 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
 
     return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
 
+def _lianban_industry_concept_tongji(df_gg):
+    cpt_stk_map = pd.read_csv('/home/ryan/DATA/DAY_Global/AG_concept/concept_to_stock_map.csv')
+    #prepare industry
+    ind_dict={}
+    for index,row in df_gg.iterrows(): #df_gg: df_ge_gu
+        ind = row['industry_name_L1_L2_L3']
+        if ind in ind_dict.keys():
+            ind_up_cnt = ind_dict[ind]['up']+row['threshold_up_cnt']
+            ind_dn_cnt = ind_dict[ind]['dn']+row['threshold_dn_cnt']
+        else:
+            ind_dict[ind]={}
+            ind_up_cnt = row['threshold_up_cnt']
+            ind_dn_cnt = row['threshold_dn_cnt']
 
-def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
+        ind_dict[ind]['up'] = ind_up_cnt
+        ind_dict[ind]['dn'] = ind_dn_cnt
+    df_industry_stat = pd.DataFrame().from_dict(ind_dict).T
+
+    #prepare concept
+    cpts_dict = {}
+    for index,row in df_gg.iterrows():
+        cpts = row['concept']
+        for cpt in cpts.split(","):
+            if cpt in cpts_dict.keys():
+                cpt_up_cnt = cpts_dict[cpt]['up'] + row['threshold_up_cnt']
+                cpt_dn_cnt = cpts_dict[cpt]['dn'] + row['threshold_dn_cnt']
+            else:
+                cpts_dict[cpt]={}
+                cpt_up_cnt = row['threshold_up_cnt']
+                cpt_dn_cnt = row['threshold_dn_cnt']
+
+            cpts_dict[cpt]['up']=cpt_up_cnt
+            cpts_dict[cpt]['dn']=cpt_dn_cnt
+
+    df_concept_stat = pd.DataFrame().from_dict(cpts_dict).T
+    df_concept_stat['up_pct_per_day'] = round(100*df_concept_stat['up'] / df_concept_stat['count'] / n_days,2)
+    ## switch df row column
+    rtn_df_ind = df_industry_stat.sort_values(by='up').reset_index().rename(columns={'index':'industry'})
+    rtn_df_bk = df_concept_stat.sort_values(by='up').reset_index().rename(columns={'index':'concept'})
+
+    rtn_df_bk = pd.merge(left=rtn_df_bk, right=cpt_stk_map, on='concept', how='inner')
+
+    return(rtn_df_ind, rtn_df_bk)
+
+def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_threshold=-7):
     if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
         logging.info("loading from "+csv_out_lian_ban_gg)
         rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
-        rtn_df_ind = pd.read_csv(csv_out_lian_ban_ind)
-        rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
-        rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
-
-        logging.info(finlib.Finlib().pprint(rtn_df_opt))
-
-        return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
-
+        return(rtn_df_gg)
 
     df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
 
     rtn_df_gg = pd.DataFrame()
-    rtn_df_bk = pd.DataFrame()
-    rtn_df_opt = pd.DataFrame()
+
 
     # for code in df.code.append(df.code).unique()[:20]:
     for code in df.code.append(df.code).unique():
@@ -541,56 +576,49 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         # print("\n======")
         # print(rtn_df_gg.tail(1))
 
+    rtn_df_gg['net_up_cnt'] = rtn_df_gg['threshold_up_cnt'] - rtn_df_gg['threshold_dn_cnt']
+
     rtn_df_gg = finlib.Finlib().add_stock_name_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_industry_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_concept_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_stock_increase(df=rtn_df_gg)
 
-    #prepare industry
-    ind_dict={}
-    for index,row in rtn_df_gg.iterrows():
-        ind = row['industry_name_L1_L2_L3']
-        if ind in ind_dict.keys():
-            ind_up_cnt = ind_dict[ind]['up']+row['threshold_up_cnt']
-            ind_dn_cnt = ind_dict[ind]['dn']+row['threshold_dn_cnt']
-        else:
-            ind_dict[ind]={}
-            ind_up_cnt = row['threshold_up_cnt']
-            ind_dn_cnt = row['threshold_dn_cnt']
 
-        ind_dict[ind]['up'] = ind_up_cnt
-        ind_dict[ind]['dn'] = ind_dn_cnt
-    df_industry_stat = pd.DataFrame().from_dict(ind_dict).T
+    rtn_df_gg.to_csv(csv_out_lian_ban_gg, encoding='UTF-8', index=False)
+    logging.info("lian ban ge gu saved to "+csv_out_lian_ban_gg)
 
-    #prepare concept
-    cpts_dict = {}
-    for index,row in rtn_df_gg.iterrows():
-        cpts = row['concept']
-        for cpt in cpts.split(","):
-            if cpt in cpts_dict.keys():
-                cpt_up_cnt = cpts_dict[cpt]['up'] + row['threshold_up_cnt']
-                cpt_dn_cnt = cpts_dict[cpt]['dn'] + row['threshold_dn_cnt']
-            else:
-                cpts_dict[cpt]={}
-                cpt_up_cnt = row['threshold_up_cnt']
-                cpt_dn_cnt = row['threshold_dn_cnt']
+    return(rtn_df_gg)
 
-            cpts_dict[cpt]['up']=cpt_up_cnt
-            cpts_dict[cpt]['dn']=cpt_dn_cnt
-    df_concept_stat = pd.DataFrame().from_dict(cpts_dict).T
+def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
+    # if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
+    #     logging.info("loading from "+csv_out_lian_ban_gg)
+    #     rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
+    #     rtn_df_ind = pd.read_csv(csv_out_lian_ban_ind)
+    #     rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
+    #     rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
+    #
+    #     logging.info(finlib.Finlib().pprint(rtn_df_opt))
+    #
+    #     return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
 
-    ## switch df row column
-    rtn_df_ind = df_industry_stat.sort_values(by='up').reset_index().rename(columns={'index':'industry'})
-    rtn_df_bk = df_concept_stat.sort_values(by='up').reset_index().rename(columns={'index':'concept'})
+    rtn_df_gg = _lianban_gegu_tongji(
+        csv_out_lian_ban_gg=csv_out_lian_ban_gg,
+        n_days=n_days,up_threshold=up_threshold,dn_threshold=dn_threshold)
+
+    df_gg_up_cnt_top_20 = rtn_df_gg.sort_values(by='threshold_up_cnt').tail(20)
+    df_gg_dn_cnt_top_20 = rtn_df_gg.sort_values(by='threshold_dn_cnt').tail(20)
+    df_gg_net_up_cnt_top_20 = rtn_df_gg.sort_values(by='net_up_cnt').tail(20)
+
+
+    rtn_df_ind, rtn_df_bk = _lianban_industry_concept_tongji(df_gg=rtn_df_gg)
+
 
     rtn_df_opt = rtn_df_ind.rename(columns={'industry':'concept'}).tail(15)
     rtn_df_opt = rtn_df_opt.append(rtn_df_bk.tail(30))
 
-    rtn_df_gg.to_csv(csv_out_lian_ban_gg, encoding='UTF-8', index=False)
     rtn_df_ind.to_csv(csv_out_lian_ban_ind, encoding='UTF-8', index=False)
     rtn_df_bk.to_csv(csv_out_lian_ban_bk, encoding='UTF-8', index=False)
     rtn_df_opt.to_csv(csv_out_lian_ban_opt, encoding='UTF-8', index=False)
-    logging.info("lian ban ge gu saved to "+csv_out_lian_ban_gg)
     logging.info("lian ban industry saved to "+csv_out_lian_ban_ind)
     logging.info("lian ban ban kuai saved to "+csv_out_lian_ban_bk)
     logging.info("lian ban operation saved to "+csv_out_lian_ban_opt)
@@ -1496,7 +1524,7 @@ no_question = options.no_question
 
 if True or no_question or input("Run lian ban tongji? [N]")=="Y":
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
-        n_days=5, up_threshold=5, dn_threshold=-5,
+        n_days=20, up_threshold=5, dn_threshold=-5,
         csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
         csv_out_lian_ban_ind = rst_dir+"/lianban_ind.csv",
         csv_out_lian_ban_bk = rst_dir+"/lianban_bk.csv",

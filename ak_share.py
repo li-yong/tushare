@@ -504,6 +504,8 @@ def fetch_ths_concept():
 
 def generate_stock_concept():
     csv_f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv'
+    csv_f_concept_to_stock = '/home/ryan/DATA/DAY_Global/AG_concept/concept_to_stock_map.csv'
+
     f_em='/home/ryan/DATA/DAY_Global/AG_concept/em_concept_consist.csv'
     f_ths='/home/ryan/DATA/DAY_Global/AG_concept/ths_concept_consist.csv'
 
@@ -533,22 +535,46 @@ def generate_stock_concept():
 
     df_tdx = df1.append(df2).append(df3).append(df4).append(df5)
     df_tdx['concept']=df_tdx['concept']+".tdx"
-    df_tdx_map = df_tdx.groupby( by=['code'], as_index=False).agg( {'concept': ','.join})
+    df_tdx = finlib.Finlib().add_market_to_code(df=df_tdx)
+    # df_tdx.rename(columns={'concept':'concept_tdx'},inplace=True)
 
-    df_tdx_map = finlib.Finlib().add_market_to_code(df=df_tdx_map)
+    '''len 99608
+               code   name   concept
+    0      SZ301098   金埔园林  新型城镇化.em
+    '''
+    df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
 
-    df_rtn = pd.merge(right=df_em_map, left=df_ths_map, on='code', how='inner',suffixes=['_em','_ths'])
-    df_rtn = pd.merge(right=df_rtn, left=df_tdx_map, on='code', how='inner',suffixes=['','_tdx'])
-    df_rtn['concept'] = df_rtn['concept'] +","+df_rtn['concept_em']+","+df_rtn['concept_ths']
-    df_rtn = df_rtn.drop('concept_ths', axis=1)
-    df_rtn = df_rtn.drop('concept_em', axis=1)
-    df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
 
+    ''' len 9609
+         code  cpt_cnt_of_code
+    0  SZ000001               20
+    '''
+    df_cnt  = df_cpt_stk_lst.groupby( by=['code'], as_index=False)['concept'].count().rename(columns={'concept':'cpt_cnt_of_code'})
+
+    ''' len 9609
+             code                                            concept
+    0  SZ000001  深圳板块.tdx,破净资产.tdx,大盘股.tdx,低市盈率.tdx,低市净率.tdx,保险...
+    '''
+    df_cpt  = df_cpt_stk_lst.groupby( by=['code'], as_index=False).agg({'concept': ','.join})
+    df_rtn = pd.merge(left=df_cnt, right=df_cpt, on='code', how='outer')
+
+    ''' len 4895
+              code  cpt_cnt_of_code                                            concept
+    4892  SZ301289                6  创业板综.em,次新股.em,注册制次新股.em,新股与次新股.ths,上海板块.tdx,综...
+    '''
     df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
-    logging.info(f"THX,THS,EM concept stock concept map saved.  {csv_f}, len {str(df_rtn.__len__())}")
+    logging.info(f"THX,THS,EM Stock_to_Concept map saved.  {csv_f}, len {str(df_rtn.__len__())}")
 
 
+    ######### Concept to Stock Map #####
+    # df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
 
+    df_cpt_stk = df_cpt_stk_lst.groupby( by=['concept'], as_index=False).agg( {'name': ','.join})
+    df_cnt  = df_cpt_stk_lst.groupby( by=['concept'], as_index=False)['name'].count().rename(columns={'name':'code_cnt_of_cpt'})
+    df_rtn = pd.merge(left=df_cnt, right=df_cpt_stk, on='concept', how='inner')
+
+    df_rtn.to_csv(csv_f_concept_to_stock, encoding='UTF-8', index=False)
+    logging.info(f"THX,THS,EM Concept_to_Stock map saved.  {csv_f_concept_to_stock}, len {str(df_rtn.__len__())}")
 
 
 def main():
@@ -566,13 +592,13 @@ def main():
 
     # df = fetch_ak(api='bond_zh_hs_cov_spot', note='龙虎榜-机构席位追踪')
 
-
-    df = fetch_ak(api='stock_zh_a_hist_min_em', note='000001_5_min',
-                  parms=f"symbol='000001',start_date='2022-06-10 09:30:00',end_date='2021-06-10 15:00:00',period='5',adjust=''"
-                  )
-
-    stock_zh_a_hist_min_em_df = ak.stock_zh_a_hist_min_em(symbol="000001", start_date="2022-06-10 09:32:00",
-                                                          end_date="2022-06-10 15:00:00", period='1', adjust='')
+    #
+    # df = fetch_ak(api='stock_zh_a_hist_min_em', note='000001_5_min',
+    #               parms=f"symbol='000001',start_date='2022-06-10 09:30:00',end_date='2021-06-10 15:00:00',period='5',adjust=''"
+    #               )
+    #
+    # stock_zh_a_hist_min_em_df = ak.stock_zh_a_hist_min_em(symbol="000001", start_date="2022-06-10 09:32:00",
+    #                                                       end_date="2022-06-10 15:00:00", period='1', adjust='')
 
 
     #find the rapid up stocks in market. Comparing the increase percent with the number got in previous run.
