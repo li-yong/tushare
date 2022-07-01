@@ -287,6 +287,7 @@ def _bar_get_support_resist(df):
                 'opt': ['buy'],
                 'close': [row['close']],
                 'p_to_buy': [l_rst],
+                'p_to_sell': [l_spt],
                 'pct_gain':[pct_gain]
             }))
 
@@ -296,12 +297,13 @@ def _bar_get_support_resist(df):
             rvt_to_up = True
             rvt_to_dn = False
 
-        if bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
+        elif bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
             # logging.info(f"sell point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_spt)}")
+            _df_buy = rtn_df_bar_opt[rtn_df_bar_opt['opt']=='buy']
 
-            if rtn_df_bar_opt.__len__()>0:
-                last_pct_gain = rtn_df_bar_opt.iloc[-1]['pct_gain']
-                last_buy_close = rtn_df_bar_opt.iloc[-1]['close']
+            if _df_buy.__len__()>0:
+                last_pct_gain = _df_buy.iloc[-1]['pct_gain']
+                last_buy_close = _df_buy.iloc[-1]['close']
                 pct_gain = last_pct_gain + 100*(row['close']-last_buy_close)/last_buy_close
                 pct_gain = round(pct_gain,1)
 
@@ -319,6 +321,16 @@ def _bar_get_support_resist(df):
             bar_dn += 1
             rvt_to_dn = True
             rvt_to_up = False
+        else:
+            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['keep'],
+                'close': [row['close']],
+                'p_to_buy': [l_rst],
+                'p_to_sell': [l_spt],
+                'pct_gain': [pct_gain]
+            }))
 
         if index == 0:
             pre_row = row
@@ -454,11 +466,8 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
 
     # for c in df.code.append(df.code).unique()[:20]:
     for c in df.code.append(df.code).unique():
-        # if i_debug >=1:
-        #     exit()
-        #
-        # i_debug+=1
-        # c='SH600519'
+
+        # c='SH600077'
 
         dfs=df[df['code']==c].reset_index().drop('index',axis=1)
 
