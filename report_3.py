@@ -257,12 +257,15 @@ def _bar_get_support_resist(df):
     df.at[df['open'] > df['close'], 'bar_mid'] = df['open'] - (round((df['open'] - df['close']) / 2, 2))
     df.at[df['open'] <= df['close'], 'bar_mid'] = df['open'] + (round((df['close'] - df['open']) / 2, 2))
 
-    for index, row in df.tail(35).reset_index().drop('index', axis=1).iterrows():
-        # print(row['date'])
+    pct_gain = 0
 
-        # logging.info(
-        #     f"idx {str(index)} {str(row['date'])}, bar_up {bar_up}, p_to_sell {str(l_spt)}. "
-        #     f"bar_dn {str(bar_dn)},  p_to_buy {str(l_rst)}")
+    for index, row in df.tail(35).reset_index().drop('index', axis=1).iterrows():
+        # if index > 30:
+        #     print('debug stop')
+        #     print(row['date'])
+            # logging.info(
+            #     f"idx {str(index)} {str(row['date'])}, bar_up {bar_up}, p_to_sell {str(l_spt)}. "
+            #     f"bar_dn {str(bar_dn)},  p_to_buy {str(l_rst)}")
 
         rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(pd.DataFrame().from_dict({
             'code': [code],
@@ -284,6 +287,7 @@ def _bar_get_support_resist(df):
                 'opt': ['buy'],
                 'close': [row['close']],
                 'p_to_buy': [l_rst],
+                'pct_gain':[pct_gain]
             }))
 
             bar_dn = 0;
@@ -295,12 +299,19 @@ def _bar_get_support_resist(df):
         if bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
             # logging.info(f"sell point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_spt)}")
 
+            if rtn_df_bar_opt.__len__()>0:
+                last_pct_gain = rtn_df_bar_opt.iloc[-1]['pct_gain']
+                last_buy_close = rtn_df_bar_opt.iloc[-1]['close']
+                pct_gain = last_pct_gain + 100*(row['close']-last_buy_close)/last_buy_close
+                pct_gain = round(pct_gain,1)
+
             rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
                 'code': [code],
                 'date': [row['date']],
                 'opt': ['sell'],
                 'close': [row['close']],
                 'p_to_sell': [l_spt],
+                'pct_gain':[pct_gain]
             }))
 
             bar_up = 0;
@@ -441,7 +452,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
     rtn_df_bar_opt = pd.DataFrame()
 
 
-    # for c in df.code.append(df.code).unique()[:2]:
+    # for c in df.code.append(df.code).unique()[:20]:
     for c in df.code.append(df.code).unique():
         # if i_debug >=1:
         #     exit()
@@ -592,24 +603,41 @@ def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_thresho
     return(rtn_df_gg)
 
 def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
-    # if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
-    #     logging.info("loading from "+csv_out_lian_ban_gg)
-    #     rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
-    #     rtn_df_ind = pd.read_csv(csv_out_lian_ban_ind)
-    #     rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
-    #     rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
-    #
-    #     logging.info(finlib.Finlib().pprint(rtn_df_opt))
-    #
-    #     return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
+    if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
+        logging.info("loading from "+csv_out_lian_ban_gg)
+        rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
+        rtn_df_ind = pd.read_csv(csv_out_lian_ban_ind)
+        rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
+        rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
+
+        #### Print GG
+        df_gg_up_cnt_top = rtn_df_gg.sort_values(by='threshold_up_cnt').tail(5).reset_index().drop('index',axis=1)
+        df_gg_dn_cnt_top = rtn_df_gg.sort_values(by='threshold_dn_cnt').tail(5).reset_index().drop('index',axis=1)
+        df_gg_net_up_cnt_top = rtn_df_gg.sort_values(by='net_up_cnt').tail(5).reset_index().drop('index',axis=1)
+
+        logging.info("GG UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_up_cnt_top))
+        logging.info("GG DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_dn_cnt_top))
+        logging.info("GG NET_UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_net_up_cnt_top))
+
+        #### Print IND
+        #### Print BK
+        df_bk_up_cnt_top = rtn_df_bk.sort_values(by='up').tail(5).reset_index().drop('index',axis=1)
+        df_bk_dn_cnt_top = rtn_df_bk.sort_values(by='dn').tail(5).reset_index().drop('index',axis=1)
+        df_bk_up_pct_per_day = rtn_df_bk.sort_values(by='up_pct_per_day').tail(5).reset_index().drop('index',axis=1)
+
+        logging.info("BK UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_cnt_top))
+        logging.info("BK DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_dn_cnt_top))
+        logging.info("BK UP_PCT_PER_DAY TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_pct_per_day))
+
+
+        #### Print OPT
+        logging.info(finlib.Finlib().pprint(rtn_df_opt))
+
+        return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
 
     rtn_df_gg = _lianban_gegu_tongji(
         csv_out_lian_ban_gg=csv_out_lian_ban_gg,
         n_days=n_days,up_threshold=up_threshold,dn_threshold=dn_threshold)
-
-    df_gg_up_cnt_top_20 = rtn_df_gg.sort_values(by='threshold_up_cnt').tail(20)
-    df_gg_dn_cnt_top_20 = rtn_df_gg.sort_values(by='threshold_dn_cnt').tail(20)
-    df_gg_net_up_cnt_top_20 = rtn_df_gg.sort_values(by='net_up_cnt').tail(20)
 
 
     rtn_df_ind, rtn_df_bk = _lianban_industry_concept_tongji(df_gg=rtn_df_gg, n_days=n_days)
@@ -622,7 +650,7 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
     rtn_df_bk.to_csv(csv_out_lian_ban_bk, encoding='UTF-8', index=False)
     rtn_df_opt.to_csv(csv_out_lian_ban_opt, encoding='UTF-8', index=False)
     logging.info("lian ban industry saved to "+csv_out_lian_ban_ind)
-    logging.info("lian ban ban kuai saved to "+csv_out_lian_ban_bk)
+    logging.info("lian ban BK saved to "+csv_out_lian_ban_bk)
     logging.info("lian ban operation saved to "+csv_out_lian_ban_opt)
 
     return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
@@ -1524,9 +1552,9 @@ parser.add_option("-n", "--no_question", action="store_true", default=False, des
 no_question = options.no_question
 
 
-if True or no_question or input("Run lian ban tongji? [N]")=="Y":
+if no_question or input("Run lian ban tongji? [N]")=="Y":
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
-        n_days=20, up_threshold=5, dn_threshold=-5,
+        n_days=3, up_threshold=5, dn_threshold=-5,
         csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
         csv_out_lian_ban_ind = rst_dir+"/lianban_ind.csv",
         csv_out_lian_ban_bk = rst_dir+"/lianban_bk.csv",
