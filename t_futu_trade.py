@@ -2,6 +2,8 @@
 #from futuquant import *
 #import futuquant as ft
 import time
+import finlib
+import finlib_indicator
 
 from futu import *
 import sys
@@ -12,8 +14,6 @@ import tabulate
 import os
 
 import constant
-import finlib
-import finlib_indicator
 import datetime
 import pytz
 import logging

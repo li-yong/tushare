@@ -1,3 +1,4 @@
+import finlib
 import tushare as ts
 import talib
 import pickle
@@ -15,7 +16,6 @@ import datetime
 import traceback
 import sys
 import tushare.util.conns as ts_cs
-import finlib
 
 from sklearn.cluster import KMeans
 from calendar import monthrange

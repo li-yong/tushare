@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import sys, traceback, threading
-import tushare as ts
 import talib
 import pickle
 import os.path
@@ -23,6 +22,7 @@ import signal
 import akshare as ak
 import tabulate
 import finlib
+import tushare as ts
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 

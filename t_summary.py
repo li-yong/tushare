@@ -3,6 +3,7 @@
 
 import sys
 
+import finlib
 #import imp #not compatible with python3
 #imp.reload(sys) #not compatible with python3
 #sys.setdefaultencoding('utf-8') #not compatible with python3
@@ -11,7 +12,6 @@ import pandas as pd
 import re
 import itertools
 import os
-import finlib
 import tushare as ts
 from sqlalchemy import create_engine
 import mysql.connector

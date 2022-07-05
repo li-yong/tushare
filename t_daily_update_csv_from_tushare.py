@@ -1,5 +1,5 @@
 # coding: utf-8
-
+import finlib
 import tushare as ts
 import talib
 import pickle
@@ -14,7 +14,7 @@ import pandas
 import re
 
 from datetime import datetime, timedelta
-import finlib
+
 
 from optparse import OptionParser
 import sys

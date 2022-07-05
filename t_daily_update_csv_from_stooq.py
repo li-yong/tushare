@@ -1,8 +1,8 @@
 # coding: utf-8
+import finlib
 import os.path
 import pandas as pd
 
-import finlib
 import logging
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
 

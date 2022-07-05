@@ -1,4 +1,5 @@
 # coding: utf-8
+import finlib
 import pandas as pd
 import re
 import itertools
@@ -10,7 +11,6 @@ import mysql.connector
 
 from datetime import datetime, timedelta
 
-import finlib
 from optparse import OptionParser
 
 from jaqs.data.dataapi import DataApi

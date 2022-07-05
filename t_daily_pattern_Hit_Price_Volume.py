@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import finlib
 import tushare as ts
 import talib
 import pickle
@@ -10,7 +11,6 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import pandas as pd
 import os
-import finlib
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 import re

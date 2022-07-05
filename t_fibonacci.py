@@ -1,12 +1,12 @@
 # coding: utf-8
 
+import finlib
 import os
 import tushare as ts
 import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np
-import finlib
 from optparse import OptionParser
 import logging
 

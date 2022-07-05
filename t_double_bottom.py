@@ -1,4 +1,5 @@
 # ___library_import_statements___
+import finlib
 import pandas as pd
 
 # for pandas_datareader, otherwise it might have issues, sometimes there is some version mismatch
@@ -9,7 +10,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
 import time
-import finlib
 import re
 import logging
 import tabulate

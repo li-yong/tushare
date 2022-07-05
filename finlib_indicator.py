@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import finlib
 import tushare as ts
 import tushare.util.conns as ts_cs
 import tushare.stock.trading as ts_stock_trading
@@ -36,7 +37,6 @@ import traceback
 import glob
 import stockstats
 
-import finlib
 import logging
 import yaml
 import warnings

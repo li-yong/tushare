@@ -1,10 +1,10 @@
 # coding: utf-8
 # encoding= utf-8
 
+import finlib
 import pandas as pd
 from pandas import DataFrame
 
-import finlib
 from scipy import stats
 import finlib_indicator
 
@@ -296,6 +296,7 @@ def _bar_get_support_resist(df):
             bar_up += 1
             rvt_to_up = True
             rvt_to_dn = False
+            continue
 
         elif bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
             # logging.info(f"sell point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_spt)}")
@@ -321,6 +322,7 @@ def _bar_get_support_resist(df):
             bar_dn += 1
             rvt_to_dn = True
             rvt_to_up = False
+            continue
         else:
             rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
                 'code': [code],
@@ -441,10 +443,45 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         rtn_df_bar_bs_line = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_bar_opt = pd.read_csv(csv_out_opt)
 
-        c='SZ300671'
-        print(rtn_df_bar_status[rtn_df_bar_status['code']==c])
-        print(rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==c].tail(3))
-        print(rtn_df_bar_opt[rtn_df_bar_opt['code']==c])
+        code='SH600519'
+        df_sample_bar_status = rtn_df_bar_status[rtn_df_bar_status['code']==code]
+        df_sample_bar_bs_line = rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==code]
+        df_sample_bar_opt = rtn_df_bar_opt[rtn_df_bar_opt['code']==code]
+
+        ################################################
+        ###           print df_sample_bar_status
+
+        ################################################
+        ###           print df_sample_bar_bs_line
+
+
+
+
+        ################################################
+        ###           print rtn_df_bar_opt
+        # print daily pct_gain
+        # same result as batch:
+        # cat /home/ryan/DATA/result/bar_bs_operate.csv | grep -E "2022-06-30" |awk -F, '{ sum += $7 } END { if (NR > 0) print sum /NR}'
+        for idxS, dateS in df_sample_bar_opt.date.tail(5).iteritems():
+            a = rtn_df_bar_opt[rtn_df_bar_opt['date'].str.contains(dateS)]
+            logging.info(f"Avg pct_gain on {dateS} " + str(round(a['pct_gain'].mean(), 1)))
+
+        # print pct_gain_min and pct_gain_max
+        first_day = df_sample_bar_opt.date.min()
+        last_day = df_sample_bar_opt.date.max()
+
+        a = rtn_df_bar_opt[rtn_df_bar_opt['date'].str.contains(last_day)] #the latest day's statistic.
+        a = finlib.Finlib().add_stock_name_to_df(a)
+        a = finlib.Finlib().add_industry_to_df(a)
+        a = finlib.Finlib().add_concept_to_df(a)
+        pct_gain_min = a.sort_values(by='pct_gain').head(5)
+        pct_gain_max = a.sort_values(by='pct_gain').tail(15)
+        logging.info(f"Min pct_gain stocks from {first_day} to {last_day}\n:"+finlib.Finlib().pprint(pct_gain_min))
+        logging.info(f"Max pct_gain stocks from {first_day} to {last_day}\n:"+finlib.Finlib().pprint(pct_gain_max))
+
+        # print overall pct_gain
+        bars = df_sample_bar_opt.__len__()
+        logging.info(f"Market overall pct_gain in {str(bars)} bars " + str(round(rtn_df_bar_opt['pct_gain'].mean(),1)))
 
         return(rtn_df_bar_status,rtn_df_bar_bs_line,rtn_df_bar_opt)
 

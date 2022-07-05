@@ -1,6 +1,14 @@
 # coding: utf-8
 # encoding= utf-8
 
+import logging
+import finlib
+import finlib_indicator
+import tushare as ts
+logging.info("HI TEST")
+
+
+exit
 
 
 import pandas as pd

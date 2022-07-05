@@ -1,5 +1,6 @@
 # coding: utf-8
 import pdb
+import finlib
 import tushare as ts
 import talib
 import pickle
@@ -12,7 +13,6 @@ import pandas
 import math
 import re
 from scipy import stats
-import finlib
 import datetime
 import traceback
 import sys

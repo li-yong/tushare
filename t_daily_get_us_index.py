@@ -9,13 +9,13 @@
 
 # In[1]:
 
+import finlib
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 # import urllib.request
 import logging
-import finlib
 
 output_csv_base = '/home/ryan/DATA/pickle/INDEX_US_HK'
 

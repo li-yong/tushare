@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import finlib
 import sys, traceback, threading
 import tushare as ts
 import talib
@@ -14,7 +15,6 @@ import pandas
 import math
 import re
 from scipy import stats
-import finlib
 import datetime
 from optparse import OptionParser
 import sys
@@ -587,7 +587,8 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             # try:
             logging.info(__file__ + " " + "fetching period " + str(p_cnt) + " of " + str(all_per_cnt) + " , stock " + str(stock_cnt) + " of " + total + ", Getting " + query + " " + ts_code + " " + period)
 
-            time.sleep(60.0 / 45)
+            #Exception: 抱歉，您每分钟最多访问该接口20次，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108
+            time.sleep(60.0 / 15)
 
             # signal.alarm(5)
             df_tmp = pd.DataFrame()

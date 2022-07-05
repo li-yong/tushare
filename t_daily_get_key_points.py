@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import finlib
 import tushare as ts
 import talib
 import pickle
@@ -17,7 +18,6 @@ import datetime
 import traceback
 import sys
 import tushare.util.conns as ts_cs
-import finlib
 import finlib_indicator
 
 # import matplotlib.pyplot as plt

@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import finlib
 import sys, traceback, threading
 import tushare as ts
 import talib
@@ -13,7 +14,6 @@ import pandas
 import math
 import re
 from scipy import stats
-import finlib
 import datetime
 from optparse import OptionParser
 import sys
