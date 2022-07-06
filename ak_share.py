@@ -569,7 +569,7 @@ def generate_stock_concept():
     ######### Concept to Stock Map #####
     # df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
 
-    df_cpt_stk = df_cpt_stk_lst.groupby( by=['concept'], as_index=False).agg( {'name': ','.join})
+    df_cpt_stk = df_cpt_stk_lst.groupby( by=['concept'], as_index=False).agg( {'code': ','.join, 'name': ','.join, })
     df_cnt  = df_cpt_stk_lst.groupby( by=['concept'], as_index=False)['name'].count().rename(columns={'name':'code_cnt_of_cpt'})
     df_rtn = pd.merge(left=df_cnt, right=df_cpt_stk, on='concept', how='inner')
 
