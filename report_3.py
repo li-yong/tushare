@@ -1623,7 +1623,7 @@ if no_question or input("Run lian ban tongji? [N]")=="Y":
         csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
         csv_out_lian_ban_ind = rst_dir+"/lianban_ind.csv",
         csv_out_lian_ban_bk = rst_dir+"/lianban_bk.csv",
-        csv_out_lian_ban_opt = rst_dir+"lianban_operate.csv",
+        csv_out_lian_ban_opt = rst_dir+"/lianban_operate.csv",
         )
 
 if no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
