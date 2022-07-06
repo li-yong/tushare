@@ -566,6 +566,8 @@ def _lianban_industry_concept_tongji(df_gg,n_days):
         ind_dict[ind]['up'] = ind_up_cnt
         ind_dict[ind]['dn'] = ind_dn_cnt
     df_industry_stat = pd.DataFrame().from_dict(ind_dict).T
+    df_industry_stat['net_up_pct'] = round(100 * df_industry_stat['up'] / (df_industry_stat['up'] + df_industry_stat['dn']), 2)
+    df_industry_stat['net_up_pct'] = df_industry_stat['net_up_pct'].fillna(0)
 
     #prepare concept
     cpts_dict = {}
@@ -590,6 +592,8 @@ def _lianban_industry_concept_tongji(df_gg,n_days):
     rtn_df_bk = df_concept_stat.sort_values(by='up').reset_index().rename(columns={'index':'concept'})
 
     rtn_df_bk = pd.merge(left=rtn_df_bk, right=cpt_stk_map, on='concept', how='inner')
+    rtn_df_bk = rtn_df_bk[rtn_df_bk['code_cnt_of_cpt'] < 500]  # 972 --> 951
+
     rtn_df_bk['up_pct_per_day'] = round(100 * rtn_df_bk['up'] / rtn_df_bk['code_cnt_of_cpt'] / n_days, 2)
     rtn_df_bk = finlib.Finlib().adjust_column(df=rtn_df_bk, col_name_list=['concept','up_pct_per_day','up','dn','code_cnt_of_cpt'])
     rtn_df_bk = rtn_df_bk.sort_values(by='up_pct_per_day').reset_index().drop('index',axis=1)
@@ -666,7 +670,22 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         logging.info("GG NET_UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_net_up_cnt_top))
 
         #### Print IND
+
+        df_ind_up_cnt_top = rtn_df_ind.sort_values(by='up').tail(5).reset_index().drop('index', axis=1)
+        df_ind_dn_cnt_top = rtn_df_ind.sort_values(by='dn').tail(5).reset_index().drop('index', axis=1)
+        # df_ind_net_up_pct_top = rtn_df_ind.sort_values(by='net_up_pct').tail(5).reset_index().drop('index', axis=1)
+        df_ind_net_up_pct_top = rtn_df_ind[rtn_df_ind['net_up_pct'] > 80].sort_values(by='up').tail(5).reset_index().drop('index', axis=1)
+        df_ind_net_dn_pct_top = rtn_df_ind[rtn_df_ind['net_up_pct'] < 40].sort_values(by='dn').tail(5).reset_index().drop('index', axis=1)
+
+        logging.info("Industry UP_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_up_cnt_top))
+        logging.info("Industry DN_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_dn_cnt_top))
+        # logging.info("Industry net_up_pct TOP 5:\n" + finlib.Finlib().pprint(df_ind_net_up_pct_top))
+        logging.info("Industry net_up_pct more than 80%:\n" + finlib.Finlib().pprint(df_ind_net_up_pct_top))
+        logging.info("Industry net_up_pct less than 40%:\n" + finlib.Finlib().pprint(df_ind_net_dn_pct_top))
+
         #### Print BK
+
+
         df_bk_up_cnt_top = rtn_df_bk.sort_values(by='up').tail(5).reset_index().drop('index',axis=1)
         df_bk_dn_cnt_top = rtn_df_bk.sort_values(by='dn').tail(5).reset_index().drop('index',axis=1)
         df_bk_up_pct_per_day = rtn_df_bk.sort_values(by='up_pct_per_day').tail(5).reset_index().drop('index',axis=1)
