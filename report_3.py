@@ -714,7 +714,6 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         for c in df_bk_up_pct_per_day['concept'].to_list():
             print(c)
             dfs= dfs.append(df[df['concept'].str.contains(c)])
-        print(1)
         dfs = dfs[['code','name','concept']].drop_duplicates().reset_index().drop('index',axis=1)
         dfs.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info(f"stocks in active BK saved to {csv_o}, len {str(dfs.__len__())}")

@@ -3214,7 +3214,7 @@ class Finlib:
             logging.info("df already has column named concept, skip adding concept to df. df columns: "+",".join(df.columns.to_list()))
             return(df)
 
-        f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv'
+        f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_to_concept_map.csv'
 
         df_concept = pd.read_csv(f)
 
