@@ -543,7 +543,7 @@ def generate_stock_concept():
     0      SZ301098   金埔园林  新型城镇化.em
     '''
     df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
-
+    df_cpt_stk_lst = finlib.Finlib().add_amount_mktcap(df=df_cpt_stk_lst)
 
     ''' len 9609
          code  cpt_cnt_of_code
@@ -562,6 +562,8 @@ def generate_stock_concept():
               code  cpt_cnt_of_code                                            concept
     4892  SZ301289                6  创业板综.em,次新股.em,注册制次新股.em,新股与次新股.ths,上海板块.tdx,综...
     '''
+    df_rtn = finlib.Finlib().add_stock_name_to_df(df_rtn)
+    df_rtn = finlib.Finlib().add_amount_mktcap(df_rtn)
     df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
     logging.info(f"THX,THS,EM Stock_to_Concept map saved.  {csv_f}, len {str(df_rtn.__len__())}")
 
@@ -569,7 +571,14 @@ def generate_stock_concept():
     ######### Concept to Stock Map #####
     # df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
 
-    df_cpt_stk = df_cpt_stk_lst.groupby( by=['concept'], as_index=False).agg( {'code': ','.join, 'name': ','.join, })
+    df_cpt_stk = df_cpt_stk_lst.groupby( by=['concept'], as_index=False).agg(
+        {
+            'code': ','.join,
+            'name': ','.join,
+            'amount': sum,
+            'total_mv': sum,
+            'circ_mv': sum
+         })
     df_cnt  = df_cpt_stk_lst.groupby( by=['concept'], as_index=False)['name'].count().rename(columns={'name':'code_cnt_of_cpt'})
     df_rtn = pd.merge(left=df_cnt, right=df_cpt_stk, on='concept', how='inner')
 

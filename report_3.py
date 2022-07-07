@@ -645,7 +645,7 @@ def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_thresho
     rtn_df_gg = finlib.Finlib().add_industry_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_concept_to_df(df=rtn_df_gg)
     rtn_df_gg = finlib.Finlib().add_stock_increase(df=rtn_df_gg)
-
+    rtn_df_gg = finlib.Finlib().add_amount_mktcap(df=rtn_df_gg)
 
     rtn_df_gg.to_csv(csv_out_lian_ban_gg, encoding='UTF-8', index=False)
     logging.info("lian ban ge gu saved to "+csv_out_lian_ban_gg)
@@ -653,6 +653,7 @@ def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_thresho
     return(rtn_df_gg)
 
 def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out_lian_ban_ind,csv_out_lian_ban_bk,csv_out_lian_ban_opt,debug=False):
+
     if finlib.Finlib().is_cached(csv_out_lian_ban_gg,day=1):
         logging.info("loading from "+csv_out_lian_ban_gg)
         rtn_df_gg = pd.read_csv(csv_out_lian_ban_gg)
@@ -660,14 +661,15 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         rtn_df_bk = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_opt = pd.read_csv(csv_out_lian_ban_opt)
 
+        note = f"last {str(n_days)} days, up_thres {str(up_threshold)}, dn_thres {str(dn_threshold)}"
         #### Print GG
-        df_gg_up_cnt_top = rtn_df_gg.sort_values(by='threshold_up_cnt').tail(5).reset_index().drop('index',axis=1)
-        df_gg_dn_cnt_top = rtn_df_gg.sort_values(by='threshold_dn_cnt').tail(5).reset_index().drop('index',axis=1)
-        df_gg_net_up_cnt_top = rtn_df_gg.sort_values(by='net_up_cnt').tail(5).reset_index().drop('index',axis=1)
+        df_gg_up_cnt_top = rtn_df_gg.sort_values(by='threshold_up_cnt').tail(5).sort_values(by='amount').reset_index().drop('index',axis=1)
+        df_gg_dn_cnt_top = rtn_df_gg.sort_values(by='threshold_dn_cnt').tail(5).sort_values(by='amount').reset_index().drop('index',axis=1)
+        df_gg_net_up_cnt_top = rtn_df_gg.sort_values(by='net_up_cnt').tail(5).sort_values(by='amount').reset_index().drop('index',axis=1)
 
-        logging.info("GG UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_up_cnt_top))
-        logging.info("GG DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_dn_cnt_top))
-        logging.info("GG NET_UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_net_up_cnt_top))
+        logging.info(note+", GG UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_up_cnt_top))
+        logging.info(note+", GG DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_dn_cnt_top))
+        logging.info(note+", GG NET_UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_gg_net_up_cnt_top))
 
         #### Print IND
 
@@ -677,26 +679,48 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         df_ind_net_up_pct_top = rtn_df_ind[rtn_df_ind['net_up_pct'] > 80].sort_values(by='up').tail(5).reset_index().drop('index', axis=1)
         df_ind_net_dn_pct_top = rtn_df_ind[rtn_df_ind['net_up_pct'] < 40].sort_values(by='dn').tail(5).reset_index().drop('index', axis=1)
 
-        logging.info("Industry UP_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_up_cnt_top))
-        logging.info("Industry DN_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_dn_cnt_top))
+        logging.info(note+", Industry UP_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_up_cnt_top))
+        logging.info(note+", Industry DN_CNT TOP 5:\n" + finlib.Finlib().pprint(df_ind_dn_cnt_top))
         # logging.info("Industry net_up_pct TOP 5:\n" + finlib.Finlib().pprint(df_ind_net_up_pct_top))
-        logging.info("Industry net_up_pct more than 80%:\n" + finlib.Finlib().pprint(df_ind_net_up_pct_top))
-        logging.info("Industry net_up_pct less than 40%:\n" + finlib.Finlib().pprint(df_ind_net_dn_pct_top))
+        logging.info(note+", Industry net_up_pct more than 80%:\n" + finlib.Finlib().pprint(df_ind_net_up_pct_top))
+        logging.info(note+", Industry net_up_pct less than 40%:\n" + finlib.Finlib().pprint(df_ind_net_dn_pct_top))
 
+        f = '/home/ryan/DATA/pickle/ag_stock_industry_wg.csv'
+        csv_o = '/home/ryan/DATA/result/active_industry.csv'
+        df = pd.read_csv(f)
+        dfs = pd.DataFrame()
+        for c in df_ind_net_up_pct_top['industry'].to_list():
+            print(c)
+            dfs = dfs.append(df[df['industry_name_wg'].str.contains(c)])
+        dfs = dfs[['code', 'name', 'industry_name_wg']].drop_duplicates().reset_index().drop('index', axis=1)
+        dfs.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info(f"stocks in active industry saved to {csv_o}, len {str(dfs.__len__())}")
         #### Print BK
 
 
-        df_bk_up_cnt_top = rtn_df_bk.sort_values(by='up').tail(5).reset_index().drop('index',axis=1)
-        df_bk_dn_cnt_top = rtn_df_bk.sort_values(by='dn').tail(5).reset_index().drop('index',axis=1)
-        df_bk_up_pct_per_day = rtn_df_bk.sort_values(by='up_pct_per_day').tail(5).reset_index().drop('index',axis=1)
+        df_bk_up_cnt_top = rtn_df_bk.sort_values(by='up').tail(10).sort_values(by='amount').reset_index().drop('index',axis=1)
+        df_bk_dn_cnt_top = rtn_df_bk.sort_values(by='dn').tail(10).sort_values(by='amount').reset_index().drop('index',axis=1)
+        df_bk_up_pct_per_day = rtn_df_bk.sort_values(by='up_pct_per_day').tail(10).sort_values(by='amount').reset_index().drop('index',axis=1)
 
-        logging.info("BK UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_cnt_top))
-        logging.info("BK DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_dn_cnt_top))
-        logging.info("BK UP_PCT_PER_DAY TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_pct_per_day))
+        logging.info(note+", BK UP_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_cnt_top[['concept','up_pct_per_day','up','dn','code_cnt_of_cpt','amount','total_mv']]))
+        logging.info(note+", BK DN_CNT TOP 5:\n"+finlib.Finlib().pprint(df_bk_dn_cnt_top[['concept','up_pct_per_day','up','dn','code_cnt_of_cpt','amount','total_mv']]))
+        logging.info(note+", BK UP_PCT_PER_DAY TOP 5:\n"+finlib.Finlib().pprint(df_bk_up_pct_per_day[['concept','up_pct_per_day','up','dn','code_cnt_of_cpt','amount','total_mv']]))
 
+
+        f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_to_concept_map.csv'
+        csv_o = '/home/ryan/DATA/result/active_bk.csv'
+        df = pd.read_csv(f)
+        dfs = pd.DataFrame()
+        for c in df_bk_up_pct_per_day['concept'].to_list():
+            print(c)
+            dfs= dfs.append(df[df['concept'].str.contains(c)])
+        print(1)
+        dfs = dfs[['code','name','concept']].drop_duplicates().reset_index().drop('index',axis=1)
+        dfs.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info(f"stocks in active BK saved to {csv_o}, len {str(dfs.__len__())}")
 
         #### Print OPT
-        logging.info(finlib.Finlib().pprint(rtn_df_opt))
+        # logging.info(finlib.Finlib().pprint(rtn_df_opt))
 
         return(rtn_df_gg,rtn_df_ind, rtn_df_bk,rtn_df_opt)
 

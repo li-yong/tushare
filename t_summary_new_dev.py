@@ -194,6 +194,8 @@ def define_global(stock_global):
             "df_zd_tongji": {"op": "B", "file": result + "/daily_ZD_tongji.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_xiaohuxian": {"op": "B", "file": result + "/xiao_hu_xian.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
             "df_result_effort": {"op": "B", "file": result + "/result_effort_ratio.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_active_industry": {"op": "B", "file": result + "/active_industry.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
+            "df_active_bk": {"op": "B", "file": result + "/active_bk.csv", "column": "", "kw": "", "term": "SHORT TERM", "price": "NA"},
 
             # 'xxxx':{'op':'B','file': result + '/xxxx.csv', 'column': '', 'kw': '', "term": "SHORT TERM", "price": "NA"},
         },  # end of AG

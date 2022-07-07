@@ -35,6 +35,11 @@ bash -x clean_result_dir.sh
 #python del.py
 python report_3.py --no_question
 
+#run twice to get output:
+#/home/ryan/DATA/result/active_industry.csv
+#/home/ryan/DATA/result/active_bk.csv
+python report_3.py --no_question
+
 ##########################
 #input:
 #    /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_20200826.csv
