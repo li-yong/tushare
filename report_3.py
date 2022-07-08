@@ -238,6 +238,8 @@ def xiao_hu_xian(csv_out,debug=False):
 
 
 def xiao_hu_xian_2(csv_out,debug=False):
+    # debug = True
+
     if (not debug) and finlib.Finlib().is_cached(csv_out,day=1):
         logging.info("loading from "+csv_out)
         return(pd.read_csv(csv_out))
@@ -262,17 +264,19 @@ def xiao_hu_xian_2(csv_out,debug=False):
     df_n1=df_n1[(df_n1['pct_chg']>ZT_P) & (df_n1['pct_chg']< 20)]
     df_n2=df_n2[(df_n2['pct_chg']>ZT_P) & (df_n2['pct_chg']< 20)]
 
-    for c in df_n1.code.append(df_n2.code).unique():
+    for code in df_n1.code.append(df_n2.code).unique():
 
         if debug:
-            c = 'SZ000957'
+            code = 'SZ000957'
 
-        df_s=df[df['code']==c]
+        df_s=df[df['code']==code]
+        df_s = finlib.Finlib().add_stock_name_to_df(df_s)
+        name = df_s.iloc[0]['name']
+        last_day = df_s.iloc[-1]['date']
 
         if debug:
             df_s = df_s[df_s['date'] <= '20220516']
 
-        df_s = finlib.Finlib().add_stock_name_to_df(df_s)
         df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
 
         if df_s.__len__()<90:
@@ -286,7 +290,7 @@ def xiao_hu_xian_2(csv_out,debug=False):
         df_tmp = df_s.sort_values(by='vol_ratio_N').tail(1)
         logging.info("large vol_ratio_N "+finlib.Finlib().pprint(df_tmp))
 
-        df_v_burst = df_s[df_s['vol_ratio_N'] >= 5]\
+        df_v_burst = df_s[ (df_s['vol_ratio_N'] >= 5) & (df_s['pct_chg']>0)]
 
         if df_v_burst.__len__() == 0:
             logging.info("no volume burst ")
@@ -296,6 +300,9 @@ def xiao_hu_xian_2(csv_out,debug=False):
         close_v_burst = df_v_burst.tail(1)['close'].iloc[0]
         open_v_burst = df_v_burst.tail(1)['open'].iloc[0]
         vol_ratio_N_v_burst = df_v_burst.tail(1)['vol_ratio_N'].iloc[0]
+
+
+
 
         df_p_burst = df_s[df_s['pct_chg']>ZT_P]
         df_p_burst = df_p_burst[df_p_burst['date'] > date_v_burst].head(1)
@@ -327,7 +334,12 @@ def xiao_hu_xian_2(csv_out,debug=False):
         max = df_tgt['high'].max()
 
         #from current price (close_p_burst), how many perc to the open_v_burst
-        to_v_burst_pct = round(100*(close_p_burst - open_v_burst)/close_p_burst,2)
+        p_burst_to_v_burst_pct = round(100*(close_p_burst - open_v_burst)/close_p_burst,2)
+        cur_p = df_s.iloc[-1]['close']
+        p_cur_to_v_burst_pct = round(100*(cur_p - open_v_burst)/cur_p,2)
+
+        if p_cur_to_v_burst_pct > 0 and (p_cur_to_v_burst_pct < 5 ):
+            logging.info(f"{last_day}, buy {code} {name} at cur_p {str(cur_p)}, stop lost {str(open_v_burst)}, stop pct {str(p_cur_to_v_burst_pct)}")
 
         # Days between two ZT not too large no too small.head(1)
         if cal_days > 60:
@@ -344,7 +356,7 @@ def xiao_hu_xian_2(csv_out,debug=False):
             logging.info("hit condition 0. ZT in last two 3 days, and previous ZT in [100,3] days. "+str(cal_days))
 
         ### Add Turn over
-        df_s_basic = pd.merge(left=df_tgt, right=df_basic[df_basic['code']==c], on=['code','date'],how='inner')
+        df_s_basic = pd.merge(left=df_tgt, right=df_basic[df_basic['code']==code], on=['code','date'],how='inner')
         df_s_basic = df_s_basic[['code','date','pct_chg','vol_ratio_N','turnover_rate','turnover_rate_f','volume_ratio']]
 
         sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate_f'].sum(),2) #换手率（自由流通股）
@@ -360,11 +372,13 @@ def xiao_hu_xian_2(csv_out,debug=False):
         sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
         sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
 
+        logging.info(f"{date_p_burst}, buy {code} {name} at {str(close_p_burst)}, stop lost {str(open_v_burst)}, stop pct {str(p_burst_to_v_burst_pct)}")
+
         df_rtn = df_rtn.append({
-            "code": c,
-            "name": df_tgt.iloc[0]['name'],
+            "code": code,
+            "name": name,
             "open_v_burst": open_v_burst,
-            "to_v_burst_pct": to_v_burst_pct,
+            "p_burst_to_v_burst_pct": p_burst_to_v_burst_pct,
             "dateS": date_v_burst,
             "dateE": date_p_burst,
             "close_v_burst": close_v_burst,
@@ -376,18 +390,15 @@ def xiao_hu_xian_2(csv_out,debug=False):
         }, ignore_index=True)
 
 
-        # from current price (close_p_burst), how many perc to the open_v_burst
-        to_v_burst_pct = round(100 * (close_p_burst - open_v_burst) / close_p_burst, 2)
-
-        logging.info(c+" "+df_tgt.iloc[0]['name']+", ZhangTing, "+str(df_v_burst)+" --> "+str(df_p_burst)+", "+ str(cal_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
+        logging.info(code+" "+name+", ZhangTing, "+str(df_v_burst)+" --> "+str(df_p_burst)+", "+ str(cal_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
     if df_rtn.empty:
         logging.info("xiao hu xian 2, no hit")
     else:
         df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
         df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn, mktcap_unit='100M')
-        df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
-        df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
+        # df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
+        # df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
 
     logging.info(finlib.Finlib().pprint(df_rtn))
     df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
