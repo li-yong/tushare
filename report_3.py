@@ -237,6 +237,156 @@ def xiao_hu_xian(csv_out,debug=False):
     return(df_rtn)
 
 
+def xiao_hu_xian_2(csv_out,debug=False):
+    if (not debug) and finlib.Finlib().is_cached(csv_out,day=1):
+        logging.info("loading from "+csv_out)
+        return(pd.read_csv(csv_out))
+
+
+    csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
+    df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
+
+    df_rtn = pd.DataFrame()
+
+    ZT_P= 8 #ag_all_300_days.csv
+
+    df = finlib.Finlib().load_all_ag_qfq_data(days=200)
+
+    day_n1 = df.date.iloc[-1]
+    day_n2 = df.date.iloc[-2]
+    # day_n3 = df.date.iloc[-3]
+
+    df_n1= df[df['date']==day_n1]
+    df_n2= df[df['date']==day_n2]
+
+    df_n1=df_n1[(df_n1['pct_chg']>ZT_P) & (df_n1['pct_chg']< 20)]
+    df_n2=df_n2[(df_n2['pct_chg']>ZT_P) & (df_n2['pct_chg']< 20)]
+
+    for c in df_n1.code.append(df_n2.code).unique():
+
+        if debug:
+            c = 'SZ000957'
+
+        df_s=df[df['code']==c]
+
+        if debug:
+            df_s = df_s[df_s['date'] <= '20220516']
+
+        df_s = finlib.Finlib().add_stock_name_to_df(df_s)
+        df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
+
+        if df_s.__len__()<90:
+            continue
+
+        # today's volume / avg(previous_3_days_volume)
+        vol_avg_window = 5
+        df_s['vol_ratio_N'] = round(df_s['volume']/df_s['volume'].rolling(window=vol_avg_window).mean().shift(1),2)
+        df_s = df_s[vol_avg_window:]
+
+        df_tmp = df_s.sort_values(by='vol_ratio_N').tail(1)
+        logging.info("large vol_ratio_N "+finlib.Finlib().pprint(df_tmp))
+
+        df_v_burst = df_s[df_s['vol_ratio_N'] >= 5]\
+
+        if df_v_burst.__len__() == 0:
+            logging.info("no volume burst ")
+            continue
+
+        date_v_burst = df_v_burst.tail(1)['date'].iloc[0]
+        close_v_burst = df_v_burst.tail(1)['close'].iloc[0]
+        open_v_burst = df_v_burst.tail(1)['open'].iloc[0]
+
+        df_p_burst = df_s[df_s['pct_chg']>ZT_P]
+        df_p_burst = df_p_burst[df_p_burst['date'] > date_v_burst].head(1)
+        if df_p_burst.__len__() == 0:
+            logging.info("no price burst after vol burst")
+            continue
+
+        date_p_burst = df_p_burst['date'].values[0]
+        close_p_burst = df_p_burst['close'].values[0]
+
+        df_tgt = df_s[(df_s['date'] > date_v_burst) & (df_s['date'] < date_p_burst)]
+
+
+        if df_tgt.__len__() < 3:
+            logging.info("insufficient bars between v_burst p_burst ")
+            continue
+
+        cal_days = (df_tgt.iloc[-1]['date_dt'] - df_tgt.iloc[0]['date_dt']).days
+        bars = df_tgt.__len__()
+        pct_chg_mean = round(df_tgt['pct_chg'].mean(),1)
+        min = df_tgt['low'].min()
+        max = df_tgt['high'].max()
+
+        #from current price (close_p_burst), how many perc to the open_v_burst
+        to_v_burst_pct = round(100*(close_p_burst - open_v_burst)/close_p_burst,2)
+
+        # Days between two ZT not too large no too small.head(1)
+        if cal_days > 60:
+            if debug:
+                logging.info("skip, vol_burst and p_burst events more than 60 days "+str(cal_days))
+            continue
+
+        if bars < 3:
+            if debug:
+                logging.info("skip, vol_burst and p_burst events less than 3 bars "+str(bars))
+            continue
+
+        if debug:
+            logging.info("hit condition 0. ZT in last two 3 days, and previous ZT in [100,3] days. "+str(cal_days))
+
+        ### Add Turn over
+        df_s_basic = pd.merge(left=df_tgt, right=df_basic[df_basic['code']==c], on=['code','date'],how='inner')
+        df_s_basic = df_s_basic[['code','date','pct_chg','vol_ratio_N','turnover_rate','turnover_rate_f','volume_ratio']]
+
+        sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate_f'].sum(),2) #换手率（自由流通股）
+
+        if sum_tv_4_days > 30:
+            logging.info(f"turnover too large, {str(sum_tv_4_days)}")
+            continue
+
+        if debug:
+            logging.info("hit condition 2. zt_day+following3days turnover <30. " + str(sum_tv_4_days))
+
+        sum_tv_90_days = round(df_s_basic.head(90)['turnover_rate'].sum(),2)
+        sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
+        sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
+
+        df_rtn = df_rtn.append({
+            "code": c,
+            "name": df_tgt.iloc[0]['name'],
+            "dateS": df_v_burst,
+            "dateE": df_p_burst,
+            "open_v_burst": open_v_burst,
+            "close_v_burst": close_v_burst,
+            "close_p_burst": close_p_burst,
+            "to_v_burst_pct": to_v_burst_pct,
+            "cal_days": cal_days,
+            "pct_chg_mean": pct_chg_mean,
+            "last4D_tv":sum_tv_4_days,
+        }, ignore_index=True)
+
+
+        # from current price (close_p_burst), how many perc to the open_v_burst
+        to_v_burst_pct = round(100 * (close_p_burst - open_v_burst) / close_p_burst, 2)
+
+        logging.info(c+" "+df_tgt.iloc[0]['name']+", ZhangTing, "+str(df_v_burst)+" --> "+str(df_p_burst)+", "+ str(cal_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
+
+    if df_rtn.empty:
+        logging.info("xiao hu xian 2, no hit")
+    else:
+        df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
+        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn, mktcap_unit='100M')
+        df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
+        df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
+
+    logging.info(finlib.Finlib().pprint(df_rtn))
+    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    logging.info("xiao hu xian result saved to "+csv_out)
+
+    return(df_rtn)
+
+
 def _bar_get_support_resist(df):
     ## start
     bar_up = 0;
@@ -1639,6 +1789,7 @@ parser.add_option("-n", "--no_question", action="store_true", default=False, des
 (options, args) = parser.parse_args()
 no_question = options.no_question
 
+df_xhx = xiao_hu_xian_2("del.csv",debug=False)
 
 if no_question or input("Run lian ban tongji? [N]")=="Y":
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(

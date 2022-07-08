@@ -1225,7 +1225,7 @@ def fetch_history_bar(host,port,market,debug):
                      )
 
 
-def check_high_volume(host,port,market,debug,ndays=3):
+def check_high_volume(market,debug,ndays=3):
     if market in ['AG','AG_HOLD','HK','HK_HOLD']:
         today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(),"%Y%m%d")
     elif market in ['US', 'US_HOLD']:
@@ -1259,7 +1259,7 @@ def check_high_volume(host,port,market,debug,ndays=3):
         df['price_vol']=df['close']*df['volume']
         stock = stockstats.StockDataFrame.retype(df)
 
-
+        # HK: 5.5 Hours/Day.  [9.30am, 10, 11, 12:00] 2.5Hour ---  [13:00, 14, 15,  15:59] 3 Hour
         sma_window = 60*4*10 # 10 days 1 minutes records
         col_name = 'price_vol_'+str(sma_window)+"_sma"
         stock[col_name]
@@ -1704,8 +1704,8 @@ def main():
     tri_abnormal_price = options.tri_abnormal_price
     tv_source = options.tv_source
 
-    if not is_port_open(host=host,port=port):
-        exit()
+    # if not is_port_open(host=host,port=port):
+    #     exit()
 
     if ma_period_short > ma_period_long:
         logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
@@ -1723,8 +1723,8 @@ def main():
         fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug)
         exit()
 
-    if options.check_high_volume  and is_port_open(host=host,port=port):
-        check_high_volume(host=host,port=port,market=options.market, debug=options.debug,ndays=5)
+    if options.check_high_volume:
+        check_high_volume(market=options.market, debug=options.debug,ndays=5)
         exit()
 
     if options.get_rt_ticker and  is_port_open(host=host,port=port):
