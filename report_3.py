@@ -295,6 +295,7 @@ def xiao_hu_xian_2(csv_out,debug=False):
         date_v_burst = df_v_burst.tail(1)['date'].iloc[0]
         close_v_burst = df_v_burst.tail(1)['close'].iloc[0]
         open_v_burst = df_v_burst.tail(1)['open'].iloc[0]
+        vol_ratio_N_v_burst = df_v_burst.tail(1)['vol_ratio_N'].iloc[0]
 
         df_p_burst = df_s[df_s['pct_chg']>ZT_P]
         df_p_burst = df_p_burst[df_p_burst['date'] > date_v_burst].head(1)
@@ -304,6 +305,13 @@ def xiao_hu_xian_2(csv_out,debug=False):
 
         date_p_burst = df_p_burst['date'].values[0]
         close_p_burst = df_p_burst['close'].values[0]
+
+        day_to_now = (datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") -
+         datetime.datetime.strptime(date_p_burst, "%Y%m%d")).days
+
+        if day_to_now > 15:
+            logging.info("event too old.")
+            continue
 
         df_tgt = df_s[(df_s['date'] > date_v_burst) & (df_s['date'] < date_p_burst)]
 
@@ -355,12 +363,13 @@ def xiao_hu_xian_2(csv_out,debug=False):
         df_rtn = df_rtn.append({
             "code": c,
             "name": df_tgt.iloc[0]['name'],
-            "dateS": df_v_burst,
-            "dateE": df_p_burst,
             "open_v_burst": open_v_burst,
+            "to_v_burst_pct": to_v_burst_pct,
+            "dateS": date_v_burst,
+            "dateE": date_p_burst,
             "close_v_burst": close_v_burst,
             "close_p_burst": close_p_burst,
-            "to_v_burst_pct": to_v_burst_pct,
+            "vol_ratio_burst": vol_ratio_N_v_burst,
             "cal_days": cal_days,
             "pct_chg_mean": pct_chg_mean,
             "last4D_tv":sum_tv_4_days,
