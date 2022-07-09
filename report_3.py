@@ -244,6 +244,12 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
         logging.info("loading from "+csv_out_opt)
 
         df_rtn_opt = pd.read_csv(csv_out_opt)
+
+        df_show = finlib.Finlib().filter_days(df=df_rtn_opt, date_col='buy_date', within_days=3)
+        logging.info("Xiao Hu Xian 2")
+        logging.info(finlib.Finlib().pprint(df_show))
+
+
         return(df_rtn_opt)
 
 
@@ -339,7 +345,7 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
 
             ### Add Turn over
             if row['pre_4day_turnover_rate_sum'] > 30:
-                logging.info(f"turnover too large, {str(row['pre_4day_turnover_rate_sum'])}")
+                logging.info(f"code {code}, {name} {row['date']} {str(row['close'])} turnover too large, {str(row['pre_4day_turnover_rate_sum'])}")
                 continue
 
             p_cur_to_v_burst_pct = round(100 * (row['close'] - open_v_burst) / row['close'], 2)
@@ -354,9 +360,9 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
                     "name": name,
                     "buy_date": row['date'],
                     "pct_chg":row['pct_chg'],
-                    "but_reason": reason,
+                    "buy_reason": reason,
                     "buy_price": row['close'],
-                    "stop_lost": open_v_burst,
+                    "stop_lost": round(open_v_burst,2),
                     "stop_lost_pct": p_cur_to_v_burst_pct,
                     "date_v_burst": date_v_burst,
                     "vol_ratio_v_burst": vol_ratio_N_v_burst,
@@ -366,6 +372,10 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
                     "last4D_tv":row['pre_4day_turnover_rate_sum'],
                 }, ignore_index=True)
 
+    col_list = ['code', 'name', 'date_v_burst', 'vol_ratio_v_burst', 'cal_days', 'buy_reason', 'buy_date', 'buy_price',
+                'cur_p',
+                'stop_lost', 'stop_lost_pct', 'last4D_tv', 'pct_chg', 'pct_chg_mean', 'industry_name_L1_L2_L3']
+    df_opt = finlib.Finlib().adjust_column(df=df_opt, col_name_list=col_list)
 
     if df_opt.empty:
         logging.info("xiao hu xian 2, no hit")
@@ -375,12 +385,9 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
         # df_opt = finlib.Finlib().add_tr_pe(df=df_opt, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
         # df_opt = finlib.Finlib().add_stock_increase(df=df_opt)
 
-    # logging.info(finlib.Finlib().pprint(df_rtn))
-    # df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
-    df_opt.to_csv(csv_out_opt, encoding='UTF-8', index=False)
-    # logging.info("xiao hu xian result saved to "+csv_out)
-    logging.info("xiao hu xian opt result saved to "+csv_out_opt)
 
+    df_opt.to_csv(csv_out_opt, encoding='UTF-8', index=False)
+    logging.info("xiao hu xian opt result saved to "+csv_out_opt)
 
     return(df_opt)
 

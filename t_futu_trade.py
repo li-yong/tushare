@@ -6,6 +6,8 @@ import finlib
 import finlib_indicator
 
 from futu import *
+# from futu.common.constant import *
+
 import sys
 import re
 import pandas as pd
@@ -579,6 +581,7 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
         raise Exception("Error on request_history_kline. " + ls)
 
     while page_req_key != None:  # 请求后面的所有结果
+        logging.info("fetching "+str(page_req_key))
         ret, data_n, page_req_key = quote_ctx.request_history_kline(code,
                                                                     ktype=ktype,
                                                                     start=start,
@@ -1034,21 +1037,21 @@ def get_chk_code_list(market,debug):
 
     # hold = "HOLD" in market
 
-    if 'US' in market:
-        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=False)
-    if 'HK' in market:
-        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=False)
-    if 'AG' in market:
-        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=False)
-        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=False)
 
     if 'US_HOLD' in market:
         rtn_list += _get_chk_code_list(market='US', debug=debug, hold=True)
-    if 'HK_HOLD' in market:
+    elif 'HK_HOLD' in market:
         rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=True)
-    if 'AG_HOLD' in market:
+    elif 'AG_HOLD' in market:
         rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=True)
         rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=True)
+    elif 'US' in market:
+        rtn_list += _get_chk_code_list(market='US', debug=debug, hold=False)
+    elif 'HK' in market:
+        rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=False)
+    elif 'AG' in market:
+        rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=False)
+        rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=False)
 
     rtn_list = list(set(rtn_list))
     return(rtn_list)
@@ -1197,7 +1200,7 @@ def fetch_history_bar(host,port,market,debug):
         else:
             df_exist = pd.DataFrame()
             if debug:
-                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
+                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=400)).strftime("%Y-%m-%d")
             else:
                 csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
             csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -1252,7 +1255,7 @@ def check_high_volume(market,debug,ndays=3):
 
         df = pd.read_csv(csv_f, converters={'volume': float, 'date':str, 'code': str, 'time_key': str})
 
-        if df.__len__()< 60*4*260:
+        if df.__len__()< 60*4*260 and (not debug):
             logging.info(code+" insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
             continue
 
@@ -1260,7 +1263,7 @@ def check_high_volume(market,debug,ndays=3):
         stock = stockstats.StockDataFrame.retype(df)
 
         # HK: 5.5 Hours/Day.  [9.30am, 10, 11, 12:00] 2.5Hour ---  [13:00, 14, 15,  15:59] 3 Hour
-        sma_window = 60*4*10 # 10 days 1 minutes records
+        sma_window = 60*4*3 # 10 days 1 minutes records
         col_name = 'price_vol_'+str(sma_window)+"_sma"
         stock[col_name]
         df[col_name] = df[col_name].apply(lambda _d: int(_d))

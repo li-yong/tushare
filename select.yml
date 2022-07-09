@@ -1,12 +1,7 @@
 US_HOLD:
     - FUTU: FUTU
-    - AAPL: APPLE
-    - NIO: NIO
-    - TSLA: TSLA
-    - BIDU: BIDU
-    - BILI: BILI
-    - TSM: TSM
-    - QCOM: QCOM
+    #- TSLA: TSLA
+    #- TSM: TSM
 HK_HOLD:
     - '03690': 美团点评
     - '00700': 腾讯控股

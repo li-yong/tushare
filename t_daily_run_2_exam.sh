@@ -852,6 +852,9 @@ python t_futu_trade.py --check_high_volume --market HK_HOLD
 python t_futu_trade.py --check_high_volume --market AG
 python t_futu_trade.py --check_high_volume --market HK
 
+##purchased nasdaq basic card. 20220709
+python t_futu_trade.py --check_high_volume --market US_HOLD
+
 # Set AG Price reminder at FuTu Client, based on the daily price. run after 3:00pm
 python t_futu_trade.py --set_ag_reminder
 

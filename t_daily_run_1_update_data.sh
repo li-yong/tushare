@@ -408,6 +408,10 @@ python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
 python t_futu_trade.py --fetch_history_bar  --market AG
 python t_futu_trade.py --fetch_history_bar  --market HK
 
+#purchased nasdaq basic card. 20220709
+python t_futu_trade.py --fetch_history_bar  --market US_HOLD
+
+
 
 ######################################
 #output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
