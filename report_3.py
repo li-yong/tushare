@@ -237,22 +237,25 @@ def xiao_hu_xian(csv_out,debug=False):
     return(df_rtn)
 
 
-def xiao_hu_xian_2(csv_out,debug=False):
+def xiao_hu_xian_2(csv_out_opt,debug=False):
     # debug = True
 
-    if (not debug) and finlib.Finlib().is_cached(csv_out,day=1):
-        logging.info("loading from "+csv_out)
-        return(pd.read_csv(csv_out))
+    if (not debug) and finlib.Finlib().is_cached(csv_out_opt,day=1):
+        logging.info("loading from "+csv_out_opt)
+
+        df_rtn_opt = pd.read_csv(csv_out_opt)
+        return(df_rtn_opt)
 
 
     csv_basic = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv"
     df_basic = finlib.Finlib().regular_read_csv_to_stdard_df(csv_basic)
 
     df_rtn = pd.DataFrame()
+    df_opt = pd.DataFrame()
 
     ZT_P= 8 #ag_all_300_days.csv
 
-    df = finlib.Finlib().load_all_ag_qfq_data(days=200)
+    df = finlib.Finlib().load_all_ag_qfq_data(days=60)
 
     day_n1 = df.date.iloc[-1]
     day_n2 = df.date.iloc[-2]
@@ -269,17 +272,28 @@ def xiao_hu_xian_2(csv_out,debug=False):
         if debug:
             code = 'SZ000957'
 
+        dfb = df_basic[df_basic['code'] == code]
+        dfb['pre_4day_turnover_rate_sum'] = round(dfb['turnover_rate_f'].rolling(window=4).sum().shift(1),2)
+        dfb = dfb[4:]
+        dfb = dfb[['code','date','turnover_rate','turnover_rate_f','pre_4day_turnover_rate_sum']]
+
+
         df_s=df[df['code']==code]
+        df_s = pd.merge(left=df_s, right=dfb, on=['code', 'date'], how='inner')
+
+
         df_s = finlib.Finlib().add_stock_name_to_df(df_s)
         name = df_s.iloc[0]['name']
-        last_day = df_s.iloc[-1]['date']
 
         if debug:
             df_s = df_s[df_s['date'] <= '20220516']
 
+        last_day = df_s.iloc[-1]['date']
+        cur_p = df_s.iloc[-1]['close']
+
         df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
 
-        if df_s.__len__()<90:
+        if df_s.__len__()<20:
             continue
 
         # today's volume / avg(previous_3_days_volume)
@@ -287,124 +301,88 @@ def xiao_hu_xian_2(csv_out,debug=False):
         df_s['vol_ratio_N'] = round(df_s['volume']/df_s['volume'].rolling(window=vol_avg_window).mean().shift(1),2)
         df_s = df_s[vol_avg_window:]
 
-        df_tmp = df_s.sort_values(by='vol_ratio_N').tail(1)
-        logging.info("large vol_ratio_N "+finlib.Finlib().pprint(df_tmp))
+        df_v_burst = df_s.sort_values(by='vol_ratio_N').tail(1)
+        logging.info("large vol_ratio_N "+finlib.Finlib().pprint(df_v_burst[['code','name','date','open','pct_chg','vol_ratio_N']]))
 
-        df_v_burst = df_s[ (df_s['vol_ratio_N'] >= 5) & (df_s['pct_chg']>0)]
+
+        # df_v_burst = df_s[ (df_s['vol_ratio_N'] >= 3) & (df_s['pct_chg']>0)]
 
         if df_v_burst.__len__() == 0:
             logging.info("no volume burst ")
             continue
 
+        if df_v_burst['pct_chg'].iloc[0] < 0:
+            logging.info("v_burst pct_chg < 0")
+            continue
+
+        if df_v_burst['vol_ratio_N'].iloc[0] < 3:
+            logging.info("v_burst vol_ratio_N < 3")
+            continue
+
         date_v_burst = df_v_burst.tail(1)['date'].iloc[0]
+        date_dt_v_burst = df_v_burst.tail(1)['date_dt'].iloc[0]
         close_v_burst = df_v_burst.tail(1)['close'].iloc[0]
         open_v_burst = df_v_burst.tail(1)['open'].iloc[0]
         vol_ratio_N_v_burst = df_v_burst.tail(1)['vol_ratio_N'].iloc[0]
 
 
+        for index, row in df_s[(df_s['date'] > date_v_burst)].iterrows():
+            df_tgt = df_s[(df_s['date'] > date_v_burst) & (df_s['date'] <= row['date'])]
+            bars = df_tgt.__len__()
+            cal_days = (row['date_dt'] - date_dt_v_burst).days
+            pct_chg_mean = round(df_tgt['pct_chg'].mean(), 1)
+
+            if bars < 3:
+                if debug:
+                    logging.info("skip, vol_burst and p_burst events less than 3 bars " + str(bars))
+                continue
+
+            ### Add Turn over
+            if row['pre_4day_turnover_rate_sum'] > 30:
+                logging.info(f"turnover too large, {str(row['pre_4day_turnover_rate_sum'])}")
+                continue
+
+            p_cur_to_v_burst_pct = round(100 * (row['close'] - open_v_burst) / row['close'], 2)
+
+            if (p_cur_to_v_burst_pct > 0) and (p_cur_to_v_burst_pct < 5):
+                reason = "current_price_near_open_v_burst"
+                logging.info(
+                    f"reason {reason},{row['date']}, buy {code} {name} at cur_p {str(row['close'])}, stop lost {str(open_v_burst)}, stop pct {str(p_cur_to_v_burst_pct)}")
+
+                df_opt = df_opt.append({
+                    "code": code,
+                    "name": name,
+                    "buy_date": row['date'],
+                    "pct_chg":row['pct_chg'],
+                    "but_reason": reason,
+                    "buy_price": row['close'],
+                    "stop_lost": open_v_burst,
+                    "stop_lost_pct": p_cur_to_v_burst_pct,
+                    "date_v_burst": date_v_burst,
+                    "vol_ratio_v_burst": vol_ratio_N_v_burst,
+                    "cur_p": cur_p,
+                    "cal_days": cal_days,
+                    "pct_chg_mean": pct_chg_mean,
+                    "last4D_tv":row['pre_4day_turnover_rate_sum'],
+                }, ignore_index=True)
 
 
-        df_p_burst = df_s[df_s['pct_chg']>ZT_P]
-        df_p_burst = df_p_burst[df_p_burst['date'] > date_v_burst].head(1)
-        if df_p_burst.__len__() == 0:
-            logging.info("no price burst after vol burst")
-            continue
-
-        date_p_burst = df_p_burst['date'].values[0]
-        close_p_burst = df_p_burst['close'].values[0]
-
-        day_to_now = (datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(), "%Y%m%d") -
-         datetime.datetime.strptime(date_p_burst, "%Y%m%d")).days
-
-        if day_to_now > 15:
-            logging.info("event too old.")
-            continue
-
-        df_tgt = df_s[(df_s['date'] > date_v_burst) & (df_s['date'] < date_p_burst)]
-
-
-        if df_tgt.__len__() < 3:
-            logging.info("insufficient bars between v_burst p_burst ")
-            continue
-
-        cal_days = (df_tgt.iloc[-1]['date_dt'] - df_tgt.iloc[0]['date_dt']).days
-        bars = df_tgt.__len__()
-        pct_chg_mean = round(df_tgt['pct_chg'].mean(),1)
-        min = df_tgt['low'].min()
-        max = df_tgt['high'].max()
-
-        #from current price (close_p_burst), how many perc to the open_v_burst
-        p_burst_to_v_burst_pct = round(100*(close_p_burst - open_v_burst)/close_p_burst,2)
-        cur_p = df_s.iloc[-1]['close']
-        p_cur_to_v_burst_pct = round(100*(cur_p - open_v_burst)/cur_p,2)
-
-        if p_cur_to_v_burst_pct > 0 and (p_cur_to_v_burst_pct < 5 ):
-            logging.info(f"{last_day}, buy {code} {name} at cur_p {str(cur_p)}, stop lost {str(open_v_burst)}, stop pct {str(p_cur_to_v_burst_pct)}")
-
-        # Days between two ZT not too large no too small.head(1)
-        if cal_days > 60:
-            if debug:
-                logging.info("skip, vol_burst and p_burst events more than 60 days "+str(cal_days))
-            continue
-
-        if bars < 3:
-            if debug:
-                logging.info("skip, vol_burst and p_burst events less than 3 bars "+str(bars))
-            continue
-
-        if debug:
-            logging.info("hit condition 0. ZT in last two 3 days, and previous ZT in [100,3] days. "+str(cal_days))
-
-        ### Add Turn over
-        df_s_basic = pd.merge(left=df_tgt, right=df_basic[df_basic['code']==code], on=['code','date'],how='inner')
-        df_s_basic = df_s_basic[['code','date','pct_chg','vol_ratio_N','turnover_rate','turnover_rate_f','volume_ratio']]
-
-        sum_tv_4_days = round(df_s_basic.head(4)['turnover_rate_f'].sum(),2) #换手率（自由流通股）
-
-        if sum_tv_4_days > 30:
-            logging.info(f"turnover too large, {str(sum_tv_4_days)}")
-            continue
-
-        if debug:
-            logging.info("hit condition 2. zt_day+following3days turnover <30. " + str(sum_tv_4_days))
-
-        sum_tv_90_days = round(df_s_basic.head(90)['turnover_rate'].sum(),2)
-        sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
-        sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
-
-        logging.info(f"{date_p_burst}, buy {code} {name} at {str(close_p_burst)}, stop lost {str(open_v_burst)}, stop pct {str(p_burst_to_v_burst_pct)}")
-
-        df_rtn = df_rtn.append({
-            "code": code,
-            "name": name,
-            "open_v_burst": open_v_burst,
-            "p_burst_to_v_burst_pct": p_burst_to_v_burst_pct,
-            "dateS": date_v_burst,
-            "dateE": date_p_burst,
-            "close_v_burst": close_v_burst,
-            "close_p_burst": close_p_burst,
-            "vol_ratio_burst": vol_ratio_N_v_burst,
-            "cal_days": cal_days,
-            "pct_chg_mean": pct_chg_mean,
-            "last4D_tv":sum_tv_4_days,
-        }, ignore_index=True)
-
-
-        logging.info(code+" "+name+", ZhangTing, "+str(df_v_burst)+" --> "+str(df_p_burst)+", "+ str(cal_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
-
-    if df_rtn.empty:
+    if df_opt.empty:
         logging.info("xiao hu xian 2, no hit")
     else:
-        df_rtn = finlib.Finlib().add_industry_to_df(df=df_rtn,source='wg')
-        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn, mktcap_unit='100M')
-        # df_rtn = finlib.Finlib().add_tr_pe(df=df_rtn, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
-        # df_rtn = finlib.Finlib().add_stock_increase(df=df_rtn)
+        df_opt = finlib.Finlib().add_industry_to_df(df=df_opt,source='wg')
+        df_opt = finlib.Finlib().add_amount_mktcap(df=df_opt, mktcap_unit='100M')
+        # df_opt = finlib.Finlib().add_tr_pe(df=df_opt, df_daily=finlib.Finlib().get_last_n_days_daily_basic(ndays=1, dayE=finlib.Finlib().get_last_trading_day()), df_ts_all=finlib.Finlib().add_ts_code_to_column(df=finlib.Finlib().load_fund_n_years()))
+        # df_opt = finlib.Finlib().add_stock_increase(df=df_opt)
 
-    logging.info(finlib.Finlib().pprint(df_rtn))
-    df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
-    logging.info("xiao hu xian result saved to "+csv_out)
+    # logging.info(finlib.Finlib().pprint(df_rtn))
+    # df_rtn.to_csv(csv_out, encoding='UTF-8', index=False)
+    df_opt.to_csv(csv_out_opt, encoding='UTF-8', index=False)
+    # logging.info("xiao hu xian result saved to "+csv_out)
+    logging.info("xiao hu xian opt result saved to "+csv_out_opt)
 
-    return(df_rtn)
+
+    return(df_opt)
 
 
 def _bar_get_support_resist(df):
@@ -1805,11 +1783,13 @@ from optparse import OptionParser
 parser = OptionParser()
 
 parser.add_option("-n", "--no_question", action="store_true", default=False, dest="no_question", help="run all without question.")
+parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug mode.")
 
 (options, args) = parser.parse_args()
 no_question = options.no_question
+debug = options.debug
 
-df_xhx = xiao_hu_xian_2("del.csv",debug=False)
+df_xhx2_opt = xiao_hu_xian_2("/home/ryan/del_opt.csv",debug=debug)
 
 if no_question or input("Run lian ban tongji? [N]")=="Y":
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
