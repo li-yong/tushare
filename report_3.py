@@ -790,6 +790,7 @@ def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_thresho
             'threshold_dn_cnt': [_df_dn.__len__()],
             'open_cur_zhang_fu': [round( 100*(_close-_open)/_open ,2)],
             'min_cur_zhang_fu': [round( 100*(_close-_low)/_low ,2)],
+            'ndays':[n_days],
         }))
         # print("\n======")
         # print(rtn_df_gg.tail(1))

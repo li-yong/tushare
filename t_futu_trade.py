@@ -22,6 +22,7 @@ import logging
 import traceback
 import math
 import stockstats
+import numpy as np
 
 from optparse import OptionParser
 
@@ -1037,8 +1038,9 @@ def get_chk_code_list(market,debug):
 
     # hold = "HOLD" in market
 
-
-    if 'US_HOLD' in market:
+    if market == 'NASDAQ100':
+        rtn_list = get_nasdaq100_list()['code'].to_list()
+    elif 'US_HOLD' in market:
         rtn_list += _get_chk_code_list(market='US', debug=debug, hold=True)
     elif 'HK_HOLD' in market:
         rtn_list += _get_chk_code_list(market='HK', debug=debug, hold=True)
@@ -1184,6 +1186,8 @@ def get_atr(code, df_tv_all):
     return(atr_14)
 
 def fetch_history_bar(host,port,market,debug):
+
+
     for code in get_chk_code_list(market=market, debug=debug):
         dir = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2]
         csv_f = dir + "/" + code + "_1m.csv"
@@ -1200,7 +1204,7 @@ def fetch_history_bar(host,port,market,debug):
         else:
             df_exist = pd.DataFrame()
             if debug:
-                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=400)).strftime("%Y-%m-%d")
+                csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=100)).strftime("%Y-%m-%d")
             else:
                 csv_min_date = start = (datetime.datetime.today() - datetime.timedelta(days=1000)).strftime("%Y-%m-%d")
             csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -1227,8 +1231,135 @@ def fetch_history_bar(host,port,market,debug):
                      + ". start " + csv_min_date + " end " + csv_max_date
                      )
 
+def get_nasdaq100_list():
+    f = '/home/ryan/DATA/pickle/INDEX_US_HK/nasdqa100.csv'
+    df_nas100 = pd.read_csv(f)
+    df_nas100['code'] = "US." + df_nas100['code']
+    return(df_nas100)
+
 
 def check_high_volume(market,debug,ndays=3):
+    df_rtn = pd.DataFrame()
+
+    if market in ['AG','AG_HOLD','HK','HK_HOLD']:
+        today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(),"%Y%m%d")
+    elif market in ['US', 'US_HOLD']:
+        today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day_us(),"%Y-%m-%d")
+
+    code_list = get_chk_code_list(market=market, debug=debug)
+
+    df_rtn = pd.DataFrame()
+    dir =  "/home/ryan/DATA/result/high_volumes"
+    csv =  dir+"/"+market+".csv"
+
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+
+    last_n_days = []
+    for i in range(ndays):
+        last_n_days.append((today - datetime.timedelta(i)).strftime("%Y%m%d")
+                           )
+    for code in code_list:
+        logging.info("checking "+code)
+        csv_f = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2] + "/" + code + "_1m.csv"
+
+        if not os.path.exists(csv_f):
+            logging.warning("No such file "+csv_f)
+            continue
+
+        df = pd.read_csv(csv_f, converters={'volume': float, 'date':str, 'code': str, 'time_key': str})
+
+        if df.__len__()< 60*4*260 and (not debug):
+            logging.info(code+" insufficient 1minute bars, expect more than 1 years, actual "+str(df.__len__()))
+            continue
+
+
+        ######################### Ryan debug start
+        df = df[df['time_key'].str.contains(pat="2022-0[67]", regex=True)]
+        if market in ['US','US_HOLD']:
+            a = df[~df['time_key'].str.contains(pat="20:00:00", regex=True)] #end of an pan
+            a = a[~a['time_key'].str.contains(pat="19:5.*:00", regex=True)] #end of an pan
+            a = a[~a['time_key'].str.contains(pat="16:0.*:00", regex=True)] #end of day
+            a = a[~a['time_key'].str.contains(pat="15:5.*:00", regex=True)] #end of day
+            a = a[~a['time_key'].str.contains(pat="09:3.*:00", regex=True)] #start of day
+            a = a[~a['time_key'].str.contains(pat="04:0.*:00", regex=True)] #start of an pan
+
+        a = a[a['volume']>0] #a is 1min bars of a code, all time
+
+        gs = 10 #group size, how many days to compare in a group
+        a['date'] = a['time_key'].apply(lambda _d: _d.split()[0])
+        t = a['date'].unique()
+        len = int(t.__len__()/gs) * gs
+        t = t[-len:] #ensure the latest day alway in the group after reshape
+        b = np.reshape(t, (-1, gs))  # 3 days per group
+
+
+        for r in b.__iter__():
+            # print(r[0])
+            ds = " ".join(r)
+            b1 = a[a['time_key'].str.contains(r[0])]
+            b2 = a[a['time_key'].str.contains(r[1])]
+            b3 = a[a['time_key'].str.contains(r[2])]
+            b = b1.append(b2).append(b3) # b is 1min bars of a code in 3 days window
+
+            b = b[['code','date', 'time_key', 'close', 'volume','change_rate']]
+            b['change_rate']=round(b['change_rate'],1)
+
+            # b['v2'] = b['volume'] - b['volume'].mean()
+            b['pv_power'] = round(b['volume'] / b['volume'].mean())
+            b['pv_power'] = b['pv_power'].fillna(0)
+
+            c = b.sort_values(by='pv_power').tail(1) #the highest 1min volume in 10 days
+            logging.info(f"High vol of {ds}\n"+finlib.Finlib().pprint(c))
+
+            df_rtn = df_rtn.append(c)
+
+            print("go")
+
+        # # aa = df[df['time_key'].str.contains(pat='2022-0[67]',regex=True)]
+        # aa = df[df['time_key'].str.contains(pat='2022-06-2[89]',regex=True)]
+        # aa1 = df[df['time_key'].str.contains(pat='2022-06-3[01]',regex=True)]
+        # aa = aa.append(aa1)
+        #
+        # vol_avg_window = 15
+        # a['vol_ratio_n'] = round(a['volume'] / a['volume'].rolling(window=vol_avg_window).mean().shift(1), 2)
+        # a = a[vol_avg_window:]
+        # a['vol_ratio_n'] = a['vol_ratio_n'].fillna(0)
+        # c = a.sort_values(by='vol_ratio_n').tail(10)
+
+
+
+        ######################### Ryan debug end
+        logging.info(f"end of {code}")
+
+    df_today_hit = df_rtn[df_rtn['date'].isin(last_n_days)]
+
+    if df_today_hit.__len__() > 0 and 'AG' in market:
+        df_today_hit = finlib.Finlib().add_stock_name_to_df(df=df_today_hit)
+
+    if df_today_hit.__len__() > 0 and 'HK' in market:
+        df_today_hit['code_ft'] = df_today_hit['code']
+        df_today_hit['code'] = df_today_hit['code'].apply(lambda _d: _d.split('.')[1])
+        df_today_hit = finlib.Finlib().add_stock_name_to_df_us_hk(df=df_today_hit, market='HK')
+
+    if df_today_hit.__len__() > 0 and 'US' in market:
+        df_today_hit['code_ft'] = df_today_hit['code']
+        df_today_hit['code'] = df_today_hit['code'].apply(lambda _d: _d.split('.')[1])
+        df_today_hit = finlib.Finlib().add_stock_name_to_df_us_hk(df=df_today_hit, market='US')
+
+    if df_today_hit.__len__() > 0:
+        df_today_hit = finlib.Finlib().df_format_column(df=df_today_hit, precision='%.1e')
+
+        logging.info(" hit an abnormal high value in past " + str(ndays) + " days.")
+
+    ##############
+    df_rtn = df_rtn.reset_index().drop('index', axis=1)
+    df_rtn.to_csv(csv, encoding='UTF-8', index=False)
+    print(finlib.Finlib().pprint(df=df_rtn))
+    logging.info("high volume stocks list save to "+csv+" len "+str(df_rtn.__len__()))
+    return(df_rtn)
+
+def check_high_volume_ori(market,debug,ndays=3):
     if market in ['AG','AG_HOLD','HK','HK_HOLD']:
         today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(),"%Y%m%d")
     elif market in ['US', 'US_HOLD']:
