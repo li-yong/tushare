@@ -1243,7 +1243,7 @@ def check_high_volume(market,debug,ndays=3):
 
     if market in ['AG','AG_HOLD','HK','HK_HOLD']:
         today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day(),"%Y%m%d")
-    elif market in ['US', 'US_HOLD']:
+    elif market in ['US', 'US_HOLD','NASDAQ100']:
         today=datetime.datetime.strptime(finlib.Finlib().get_last_trading_day_us(),"%Y-%m-%d")
 
     code_list = get_chk_code_list(market=market, debug=debug)
@@ -1276,7 +1276,7 @@ def check_high_volume(market,debug,ndays=3):
 
         ######################### Ryan debug start
         df = df[df['time_key'].str.contains(pat="2022-0[67]", regex=True)]
-        if market in ['US','US_HOLD']:
+        if market in ['US','US_HOLD','NASDAQ100']:
             a = df[~df['time_key'].str.contains(pat="20:00:00", regex=True)] #end of an pan
             a = a[~a['time_key'].str.contains(pat="19:5.*:00", regex=True)] #end of an pan
             a = a[~a['time_key'].str.contains(pat="16:0.*:00", regex=True)] #end of day

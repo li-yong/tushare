@@ -37,6 +37,16 @@ git pull
 if [ $full_or_daily == "HAHA_BRAIN" ]; then
   env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_wg
   env DISPLAY=:0  python t_daily_index_candidates.py --fetch_index_tv
+
+
+  ##############
+  # update
+  # input: none
+  # output: /home/ryan/DATA/pickle/INDEX_US_HK/*.csv
+  # dow.csv  nasdqa100.csv  sp400.csv  sp500.csv
+  # need VPN to access WikiPedia
+  python t_daily_get_us_index.py
+
   exit
 fi
 
@@ -98,14 +108,6 @@ fi
 #python t_daily_index_candidates.py --fetch_index_tv --index_name zz100
 #python t_daily_index_candidates.py --fetch_index_tv --index_name szcz
 #python t_daily_index_candidates.py --fetch_index_tv --index_name sz100
-
-##############
-# update
-# input: none
-# output: /home/ryan/DATA/pickle/INDEX_US_HK/*.csv
-# dow.csv  nasdqa100.csv  sp400.csv  sp500.csv
-# need VPN to access WikiPedia
-python t_daily_get_us_index.py
 
 
 
