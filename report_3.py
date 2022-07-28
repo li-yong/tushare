@@ -274,6 +274,7 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
     df_n2=df_n2[(df_n2['pct_chg']>ZT_P) & (df_n2['pct_chg']< 20)]
 
     for code in df_n1.code.append(df_n2.code).unique():
+        # logging.info(code)
 
         if debug:
             code = 'SZ000957'
@@ -285,10 +286,14 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
 
 
         df_s=df[df['code']==code]
-        df_s = pd.merge(left=df_s, right=dfb, on=['code', 'date'], how='inner')
 
+        df_s = pd.merge(left=df_s, right=dfb, on=['code', 'date'], how='inner')
+        if df_s.__len__() == 0:
+            continue
 
         df_s = finlib.Finlib().add_stock_name_to_df(df_s)
+
+
         name = df_s.iloc[0]['name']
 
         if debug:
@@ -1797,7 +1802,12 @@ parser.add_option("-d", "--debug", action="store_true", default=False, dest="deb
 no_question = options.no_question
 debug = options.debug
 
-df_xhx2_opt = xiao_hu_xian_2("/home/ryan/del_opt.csv",debug=debug)
+
+
+if no_question or input("Run xiao_hu_xian_2? [N]")=="Y":
+    df_xhx2_opt = xiao_hu_xian_2(f"{rst_dir}/xiao_hu_xian_2.csv", debug=debug)
+
+
 
 if no_question or input("Run lian ban tongji? [N]")=="Y":
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
