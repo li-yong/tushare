@@ -1866,8 +1866,12 @@ if no_question or input("Run Big V? [Y]")!="N":
 
 if no_question or input("Run Inner Merge TD_BigV? [N]") != "Y":
     df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
+
     logging.info("\n##### Inner Merge of TD and Big_V #####")
-    logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
+    if df_rst.__len__() == 0:
+        logging.info("EMPTY DF")
+    else:
+        logging.info(finlib.Finlib().pprint(df_rst[['code', 'name_td', 'date_td', 'date_bv']]))
     # exit()
 
 
