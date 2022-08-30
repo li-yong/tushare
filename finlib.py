@@ -6380,7 +6380,8 @@ class Finlib:
 
         t, tm = almanac.find_discrete(t0, t1, almanac_east_asia.solar_terms(eph))
 
-        date_list = []
+        # date_list = []
+        date_dict = {}
 
         for tmi, ti in zip(tm, t):
 
@@ -6388,9 +6389,82 @@ class Finlib:
             logging.info(f"{almanac_east_asia.SOLAR_TERMS_ZHS[tmi]} {ti.astimezone(utc8).strftime('%Y%m%d')}")
 
             _d = self.get_last_trading_day(date=ti.strftime('%Y%m%d'))
-            date_list.append(_d)
+            # date_list.append(_d)
+            date_dict[_d]=almanac_east_asia.SOLAR_TERMS_ZHS[tmi]
 
-        return (date_list)
+        return (date_dict)
+
+    def bk_increase(self, csv_o, ndays=3, dayS=None, dayE=None,dayS_name=None, dayE_name=None):
+        dayS, dayE, ndays = self.get_dayS_dayE_ndays(ndays=ndays, dayS=dayS, dayE=dayE)
+
+        # if start != None and ndays != None:
+        #     csv_o = f"{csv_o}_{str(start)}_{str(ndays)}.csv"
+        #
+        # if start == None and ndays != None:
+        #     csv_o = f"{csv_o}_last_{str(ndays)}.csv"
+
+        csv_o = f"{csv_o}_{str(dayS)}_{str(dayE)}_{str(ndays)}.csv"
+
+        df_rtn = pd.DataFrame()
+
+        if datetime.today().strftime('%Y%m%d') < dayS:
+            logging.info("start day is in future. ")
+            return(df_rtn)
+
+        if self.is_cached(csv_o):
+            logging.info("result csv has been updated in 1 days. " + csv_o)
+            df_rtn = pd.read_csv(csv_o)
+
+            most_decrease_df = df_rtn.sort_values(by='pct_change').head(10)
+            most_increase_df = df_rtn.sort_values(by='pct_change').tail(10)
+            most_amount_df = df_rtn.sort_values(by='amount').tail(30)
+            most_vol_df = df_rtn.sort_values(by='vol').tail(10)
+            most_swing_df = df_rtn.sort_values(by='swing').tail(10)
+
+            # logging.info("=== BK Most Decrease ===\n" + self.pprint(most_decrease_df))
+            logging.info("=== BK Most Increase ===\n" + self.pprint(most_increase_df))
+            # logging.info("=== BK Most Amount ===\n" + self.pprint(most_amount_df))
+            # logging.info("=== BK Most Vol ===\n" + self.pprint(most_vol_df))
+            # logging.info("=== BK Most Swing ===\n" + self.pprint(most_swing_df))
+            return (df_rtn)
+
+        df = self.load_all_bk_qfq_data(days=900)
+
+        # for code in df['code'].unique()[:2]:#debug
+        for code in df['code'].unique():
+            logging.info(f"code {code}")
+            adf = df[df['code'] == code][['code', 'date', 'close', 'open', 'high', 'low', 'vol', 'amount']]
+
+            adf = adf[adf['date'] >= int(dayS)]
+            adf = adf[adf['date'] <= int(dayE)]
+
+            if adf.__len__() == 0:
+                logging.info(f"empty df, code {code},{dayS},{dayS_name},{dayE},{dayE_name}")
+                continue
+
+            s = adf.iloc[0]
+            e = adf.iloc[-1]
+
+            a = pd.DataFrame({
+                'code': [code],
+                'data_s': [s['date']],
+                'data_sn': [dayS_name],
+
+                'data_e': [e['date']],
+                'data_en': [dayE_name],
+                
+                'ndays': [ndays],
+                'pct_change': [round(100 * (e['close'] - s['open']) / s['open'], 1)],
+                'swing': [round(100 * (adf['high'].max() - adf['low'].min()) / adf['low'].min(), 1)],
+                'vol': [adf['vol'].sum()],
+                'amount': [adf['amount'].sum()],
+            })
+
+            df_rtn = df_rtn.append(a)
+
+        df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info(f"result saved to {csv_o}, len {str(df_rtn.__len__())}")
+        return (df_rtn)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

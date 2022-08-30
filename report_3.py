@@ -430,14 +430,22 @@ def _bar_get_support_resist(df):
         rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(pd.DataFrame().from_dict({
             'code': [code],
             'date': [row['date']],
+
+            'open': [row['open']],
+            'close': [row['close']],
+            'pre_close': [row['pre_close']],
+            'pct_chg': [row['pct_chg']],
+
+
+
             'bar_up': [bar_up],
             'p_to_sell': [l_spt],
             'bar_dn': [bar_dn],
             'p_to_buy': [l_rst],
         }))
 
-        # if index==12:
-        #     logging.info("debug stop")
+        if index==12:
+            logging.info("debug stop")
 
         if bar_dn > 0 and row['pct_chg'] > 0 and row['close'] > l_rst:
             # logging.info(f"buy point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_rst)}")
@@ -603,7 +611,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         rtn_df_bar_bs_line = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_bar_opt = pd.read_csv(csv_out_opt)
 
-        code='SH600519'
+        code='SH600519' #ryan debug
         df_sample_bar_status = rtn_df_bar_status[rtn_df_bar_status['code']==code]
         df_sample_bar_bs_line = rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==code]
         df_sample_bar_opt = rtn_df_bar_opt[rtn_df_bar_opt['code']==code]
@@ -664,7 +672,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
     # for c in df.code.append(df.code).unique()[:20]:
     for c in df.code.append(df.code).unique():
 
-        # c='SH600077'
+        c='SH600519' #ryan debug
 
         dfs=df[df['code']==c].reset_index().drop('index',axis=1)
 
@@ -1578,75 +1586,6 @@ def bk_ma_across(csv_o_b, csv_o_s):
     print(f"result saved to {csv_o_b}, {csv_o_s}")
     return(df_rtn_jincha,df_rtn_sicha)
 
-def bk_increase(csv_o,ndays=3,dayS=None, dayE=None):
-    dayS, dayE, ndays = finlib.Finlib().get_dayS_dayE_ndays(ndays=ndays, dayS=dayS, dayE=dayE)
-
-    # if start != None and ndays != None:
-    #     csv_o = f"{csv_o}_{str(start)}_{str(ndays)}.csv"
-    #
-    # if start == None and ndays != None:
-    #     csv_o = f"{csv_o}_last_{str(ndays)}.csv"
-
-    csv_o = f"{csv_o}_{str(dayS)}_{str(dayE)}_{str(ndays)}.csv"
-
-
-    df_rtn = pd.DataFrame()
-
-    if finlib.Finlib().is_cached(csv_o) :
-        logging.info("result csv has been updated in 1 days. "+csv_o)
-        df_rtn = pd.read_csv(csv_o)
-
-        most_decrease_df = df_rtn.sort_values(by='pct_change').head(10)
-        most_increase_df = df_rtn.sort_values(by='pct_change').tail(10)
-        most_amount_df = df_rtn.sort_values(by='amount').tail(30)
-        most_vol_df = df_rtn.sort_values(by='vol').tail(10)
-        most_swing_df = df_rtn.sort_values(by='swing').tail(10)
-
-        logging.info("=== BK Most Decrease ===\n"+finlib.Finlib().pprint(most_decrease_df))
-        logging.info("=== BK Most Increase ===\n"+finlib.Finlib().pprint(most_increase_df))
-        logging.info("=== BK Most Amount ===\n"+finlib.Finlib().pprint(most_amount_df))
-        logging.info("=== BK Most Vol ===\n"+finlib.Finlib().pprint(most_vol_df))
-        logging.info("=== BK Most Swing ===\n"+finlib.Finlib().pprint(most_swing_df))
-        return(df_rtn)
-
-
-
-    df = finlib.Finlib().load_all_bk_qfq_data(days=300)
-
-
-    # for code in df['code'].unique()[:2]:#debug
-    for code in df['code'].unique():
-        logging.info(f"code {code}")
-        adf = df[df['code']==code][['code','date','close','open','high','low','vol','amount']]
-
-        adf = adf[adf['date'] >= int(dayS)]
-        adf = adf[adf['date'] <= int(dayE)]
-
-        if adf.__len__()==0:
-            logging.info(f"empty df, code {code}, {dayS}, {dayE}")
-            continue
-
-        s=adf.iloc[0]
-        e=adf.iloc[-1]
-
-        a = pd.DataFrame({
-            'code':[code],
-            'data_s':[s['date']],
-            'data_e':[e['date']],
-            'ndays':[ndays],
-            'pct_change':[round(100*(e['close']-s['open'])/s['open'],1)],
-            'swing':[round(100*(adf['high'].max()-adf['low'].min())/adf['low'].min(),1)],
-            'vol':[adf['vol'].sum()],
-            'amount':[adf['amount'].sum()],
-        })
-
-        df_rtn = df_rtn.append(a)
-
-
-    df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
-    logging.info(f"result saved to {csv_o}, len {str(df_rtn.__len__())}")
-    return(df_rtn)
-
 def bk_TD_indicator_start():
     rst_dir="/home/ryan/DATA/result/TD_Indicator_bk"
     if not os.path.isdir(rst_dir):
@@ -1836,7 +1775,7 @@ if no_question or input("Run bk_increase? [N]")=="Y":
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",start=20220101,ndays=200)
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",dayS=20210715,ndays=30)
 
-    df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
+    df_bk_increase = finlib.Finlib().bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
     # exit()
 
 if no_question or input("Run BK ma_across? [N]")=="Y":
@@ -1889,13 +1828,12 @@ if no_question or input("Run result_effort_ratio ? [Y]") != "N":
     logging.info(f"\n##### df_result_effort #####")
     logging.info(finlib.Finlib().pprint(df_result_effort.tail(5)[['code','name','date','close','date_1','result_effort_ratio']]))
 
-
-if no_question or input("Run ZD Tongji? [Y]") != "N":
-    out_csv = rst_dir+"/daily_ZD_tongji.csv"
-    df_zd = daily_UD_tongji(out_csv,ndays=5)
-    logging.info("\n##### daily_UD_tongji #####")
-    logging.info(finlib.Finlib().pprint(df_zd.tail(5)))
-    # exit()
+### Exception: 抱歉，您没有访问该接口的权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。
+# if no_question or input("Run ZD Tongji? [Y]") != "N":
+#     out_csv = rst_dir+"/daily_ZD_tongji.csv"
+#     df_zd = daily_UD_tongji(out_csv,ndays=5)
+#     logging.info("\n##### daily_UD_tongji #####")
+#     logging.info(finlib.Finlib().pprint(df_zd.tail(5)))
 
 
 

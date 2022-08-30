@@ -33,6 +33,13 @@ import akshare as ak
 from snownlp import SnowNLP
 
 
+#start
+#
+# f = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+
+
+#end
+
 def s1():
     # 使用snownlp
     stock_code = '600519'
@@ -456,6 +463,7 @@ def _print_bayes_possibility(code, name, condition, df_all, df_up, df_con):
     })
 
     return(df_rtn)
+
 
 
 
@@ -1371,6 +1379,87 @@ def zszq_act_profit():
     logging.info(finlib.Finlib().pprint(dfg))
     return(dfg)
 
+def nongli_bk_inc():
+    date_dict = finlib.Finlib().get_nong_li_date(start='20190101', end='20221231')
+
+    i = 0
+    start_date = ''
+    start_name = ''
+    end_date = ''
+    end_name = ''
+    df_rtn_nl_bk_inc = pd.DataFrame()
+
+    for k, v in date_dict.items():
+        # print(k, v)
+        i += 1
+        if i == 1:
+            end_date = k
+            end_name = v
+            continue
+        else:
+            start_date = end_date
+            start_name = end_name
+            end_date = k
+            end_name = v
+
+        csv_o = f"/home/ryan/DATA/result/bk_inc_{start_date}{start_name}_{end_date}{end_name}"
+        print(csv_o)
+
+        df_bk_increase = finlib.Finlib().bk_increase(
+            csv_o=f"/home/ryan/DATA/result/bk_inc_{start_date}{start_name}_{end_date}{end_name}",
+            dayS=start_date,
+            dayE=end_date,
+            dayS_name=start_name,
+            dayE_name=end_name,
+        )
+        df_rtn_nl_bk_inc = df_rtn_nl_bk_inc.append(df_bk_increase)
+
+        continue
+
+    # print(df_rtn_nl_bk_inc)
+
+
+    # df = df_rtn_nl_bk_inc[~df_rtn_nl_bk_inc['code'].str.contains('连板')]
+    # df = df[~df['code'].str.contains('涨停')]
+    # df = df[df['pct_change']>10]
+
+    df_rtn_nl_bk_inc['data_s'] = df_rtn_nl_bk_inc['data_s'].astype('str')
+
+    df_rtn = df_rtn_nl_bk_inc.groupby(by=["code",'data_sn','data_en'], as_index=False).agg(
+        {'data_s': ','.join, 'data_sn': 'last',
+         'data_e': 'last', 'data_en': 'last',
+         'pct_change': 'mean','swing': 'mean',
+         'vol': 'mean','amount': 'mean',
+         'ndays':'count',
+         })
+    df_rtn =  df_rtn.rename(columns={'ndays': 'cnt_of_inc'})
+
+    df_rtn['pct_change'] = round(df_rtn['pct_change'],1)
+    df_rtn['swing'] = round(df_rtn['swing'],1)
+    df_rtn['vol'] = round(df_rtn['vol'],0)
+    df_rtn['amount'] = round(df_rtn['amount'],0)
+
+
+    df_rtn = df_rtn[df_rtn['cnt_of_inc']>=2]
+    df_rtn = df_rtn[df_rtn['pct_change']>=10]
+    df_rtn = df_rtn[~df_rtn['code'].str.contains('连板')]
+    df_rtn = df_rtn[~df_rtn['code'].str.contains('涨停')]
+
+    df_rtn = df_rtn.sort_values(by="pct_change", ascending=False).reset_index().drop('index', axis=1)
+
+    logging.info(finlib.Finlib().pprint(df_rtn))
+
+    ### which nongli day has the most increase cnt
+    df_rtn_summary = df_rtn[['data_sn', 'data_en', 'cnt_of_inc']].groupby(by=['data_en'], as_index=False).agg(
+        {'data_sn': 'first', 'data_en': 'last', 'cnt_of_inc': 'sum'})
+    df_rtn_summary = df_rtn_summary.sort_values(by="cnt_of_inc", ascending=False).reset_index().drop('index', axis=1)
+
+
+    logging.info("\n" + finlib.Finlib().pprint(df_rtn_summary))
+
+
+    print(1)
+
 
 #### MAIN #####
 
@@ -1384,9 +1473,11 @@ def zszq_act_profit():
 # chen_ben_matplot()
 # df = small_up()
 # exit()
+nongli_bk_inc()
 
 # date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
-date_list= finlib.Finlib().get_nong_li_date(start='20220101',end='20221231')
+date_dict= finlib.Finlib().get_nong_li_date(start='20200101',end='20201231')
+date_list = date_dict.keys()
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)
 # exit()
