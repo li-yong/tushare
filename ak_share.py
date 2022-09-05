@@ -21,7 +21,7 @@ import logging
 import signal
 import akshare as ak
 import tabulate
-import finlib
+import finlib_indicator
 import tushare as ts
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
@@ -501,6 +501,144 @@ def fetch_ths_concept():
     logging.info(f"all THS concept consist {concept_consist_csv}, len {str(concept_consist_df.__len__())}")
 
 
+def fetch_etf():
+    cache_days = 1
+
+    base_dir = '/home/ryan/DATA/DAY_Global'
+    etf_list_csv = base_dir + "/etf_list.csv"
+
+    etf_data_dir = f'{base_dir}/AG_etf'
+
+    df_etf_list = pd.DataFrame()
+
+
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    if not os.path.exists(etf_data_dir):
+        os.makedirs(etf_data_dir)
+
+
+    if finlib.Finlib().is_cached(etf_list_csv, day=cache_days, use_last_trade_day=False):
+        df_etf_list = pd.read_csv(etf_list_csv)
+        logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + etf_list_csv)
+    else:
+        df_etf_list = ak.fund_etf_category_sina(symbol="ETF基金")
+
+        df_etf_list = df_etf_list.rename(columns={'代码': 'code', '名称': 'name', '最新价': 'close',
+                              '涨跌额': 'chg', '涨跌幅': 'chg_pct',
+                              '买入': 'buy', '卖出': 'sell',
+                              '昨收': 'pre_close', '今开': 'open',
+                              '最高': 'high', '最低': 'low',
+                              '成交量': 'vol', '成交额': 'amount',
+                              })
+
+        df_etf_list.to_csv(etf_list_csv, encoding='UTF-8', index=False)
+        logging.info(f"fetched {etf_list_csv}, len {str(etf_list_csv.__len__())}")
+
+    df_eft_all_data = pd.DataFrame()
+
+    for index,row in df_etf_list.iterrows():
+        code = row['code']
+        name = row['name']
+        print(f'fetching {code} {name}')
+
+        csv_f = f"{etf_data_dir}/{code}.csv"
+        if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
+            e = pd.read_csv(csv_f)
+            logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
+        else:
+            try:
+                e = ak.fund_etf_hist_sina(symbol=code)
+                e['date'] = e['date'].apply(lambda _d: _d.strftime("%Y%m%d")) #2020-01-01 ===> 20200101
+                e['code']=code
+                e['name']=name
+                e = finlib.Finlib().adjust_column(df=e,col_name_list=['code','name'])
+                e.to_csv(csv_f, encoding='UTF-8', index=False)
+                logging.info(f"fetched bar of {csv_f}, len {str(e.__len__())}")
+            except:
+                logging.fatal("exception fetch_etf")
+
+        # e['date'] = e['date'].apply(lambda _d: datetime.datetime.strptime(_d, '%Y-%m-%d').strftime("%Y%m%d"))
+
+        df_eft_all_data = df_eft_all_data.append(e)
+
+    # df_eft_all_data['date'] = df_eft_all_data['date'].apply(lambda _d: datetime.datetime.strptime(_d, '%Y-%m-%d').strftime("%Y%m%d"))
+
+    etf_all_data_csv = base_dir + "/etf_all_data.csv"
+    df_eft_all_data.to_csv(etf_all_data_csv, encoding='UTF-8', index=False)
+
+    logging.info(f"etf fetch completed. etf all data saved to {etf_all_data_csv}")
+
+def analyze_etf():
+    cache_days = 1
+
+    base_dir = '/home/ryan/DATA/DAY_Global'
+    etf_list_csv = base_dir + "/etf_list.csv"
+
+    etf_data_dir = f'{base_dir}/AG_etf'
+
+    df_etf_list = pd.read_csv(etf_list_csv)
+    logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + etf_list_csv)
+
+    df_inc = finlib.Finlib().get_stock_increase(increase_only=True, etf=True)
+
+    df_rtn = pd.merge(left=df_etf_list[['code','name','close']], right=df_inc[['code','inc2','inc5','inc30','inc90','inc180']], on=['code'], how='left')
+
+    #increase most
+    df_rtn.sort_values(by='inc180',ascending=False).head(10).reset_index().drop('index',axis=1)
+
+    #decrease most
+    df_rtn.sort_values(by='inc180',ascending=True).head(10).reset_index().drop('index',axis=1)
+
+    rtn_csv = '/home/ryan/DATA/result/etf.csv'
+    if finlib.Finlib().is_cached(rtn_csv):
+        df_rtn = pd.read_csv(rtn_csv)
+    else:
+        df_rtn = pd.DataFrame()
+        for index, row in df_etf_list.iterrows():
+            code= row['code']
+            name= row['name']
+            print(f'{code},{name}')
+
+            csv = f"/home/ryan/DATA/DAY_Global/AG_etf/{code}.csv"
+            df = pd.read_csv(csv).tail(100)
+            describe = df.tail(100)['close'].describe()
+
+            _df = finlib_indicator.Finlib_indicator().add_ma_ema(df,short=4,middle=27)[['date','code','name', 'close','close_4_sma','close_27_sma']].iloc[-1]
+            _df['std'] = round(100*describe['std'],2)
+            _df['zuida_huiche'] = round((describe['min'] - describe['max'])*100/describe['max'],2)
+
+            _df['max'] = round(describe['max'],2)
+            _df['min'] = round(describe['min'],2)
+            _df['mean'] = round(describe['mean'],2)
+            _df['date'] = _df['date'].astype('str')
+
+            df_rtn = df_rtn.append(_df)
+
+        df_rtn = finlib.Finlib().adjust_column(df=df_rtn,col_name_list=['code', 'name',  'date','std', 'zuida_huiche','close_4_sma', 'close_27_sma','max', 'mean', 'min', 'close'])
+        df_rtn.to_csv(rtn_csv, encoding='UTF-8', index=False)
+        logging.info(f"saved to {rtn_csv}, len {str(df_rtn.__len__())}")
+
+
+    #print sorted output
+    #most stable, smallest std
+    df_rtn.sort_values(by='std',ascending=True).head(10).reset_index().drop('index',axis=1)[['code','name','date','std']]
+
+    #smallest huiche
+    df_rtn.sort_values(by='zuida_huiche',ascending=False).head(10).reset_index().drop('index',axis=1)[['code','name','zuida_huiche']]
+
+    # largest std
+    df_rtn.sort_values(by='std',ascending=False).head(10).reset_index().drop('index',axis=1)[['code','name','std']]
+
+    #largest huiche
+    df_rtn.sort_values(by='zuida_huiche',ascending=True).head(10).reset_index().drop('index',axis=1)[['code','name','zuida_huiche']]
+
+
+
+    logging.info(f"etf analyze completed.")
+
+
+
 
 def generate_stock_concept():
     csv_f = '/home/ryan/DATA/DAY_Global/AG_concept/stock_to_concept_map.csv'
@@ -592,6 +730,8 @@ def main():
     parser.add_option("-f", "--fetch_after_market", action="store_true", dest="fetch_after_market", default=False, help="fetch market data after market closure.")
     parser.add_option("--fetch_em_concept", action="store_true", dest="fetch_em_concept", default=False, help="fetch east money concept board daily price history and concept compositives.")
     parser.add_option("--fetch_ths_concept", action="store_true", dest="fetch_ths_concept", default=False, help="fetch tong_hua_shun concept board daily price history and concept compositives.")
+    parser.add_option("--fetch_etf", action="store_true", dest="fetch_etf", default=False, help="fetch eft")
+    parser.add_option("--analyze_etf", action="store_true", dest="analyze_etf", default=False, help="analyze eft")
     parser.add_option("--generate_stock_concept", action="store_true", dest="generate_stock_concept", default=False, help="generate_stock_concept")
 
     parser.add_option("-i", "--wei_pan_la_sheng", action="store_true", dest="wei_pan_la_sheng", default=False, help="get stocks price roaring. Need run twice then get the comparing increase")
@@ -620,6 +760,13 @@ def main():
 
     if options.fetch_ths_concept:
         fetch_ths_concept()
+
+
+    if options.fetch_etf:
+        fetch_etf()
+
+    if options.analyze_etf:
+        analyze_etf()
 
     if options.generate_stock_concept:
         generate_stock_concept()

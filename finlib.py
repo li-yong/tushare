@@ -5897,9 +5897,13 @@ class Finlib:
 
 
 
-    def get_stock_increase(self,increase_only=False):
+    def get_stock_increase(self,increase_only=False, etf=False):
 
-        df_p = self.get_last_n_days_stocks_amount(debug=False)
+        if etf:
+            df_p = pd.read_csv("/home/ryan/DATA/DAY_Global/etf_all_data.csv")
+        else:
+            df_p = self.get_last_n_days_stocks_amount(debug=False)
+
         df_p['date'] = df_p['date'].apply(lambda _d: str(_d))
 
         today = df_p['date'].max()
@@ -6411,8 +6415,8 @@ class Finlib:
             logging.info("start day is in future. ")
             return(df_rtn)
 
-        if self.is_cached(csv_o):
-            logging.info("result csv has been updated in 1 days. " + csv_o)
+        if self.is_cached(csv_o, day=3):
+            logging.info("result csv has been updated in 3 days. " + csv_o)
             df_rtn = pd.read_csv(csv_o)
 
             most_decrease_df = df_rtn.sort_values(by='pct_change').head(10)
