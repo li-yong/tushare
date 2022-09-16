@@ -4,7 +4,6 @@
 
 
 cd /home/ryan/tushare_ryan
-git pull
 
 #
 #bash -x t_daily_selected_f_e.sh FETCH
