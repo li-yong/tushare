@@ -21,7 +21,6 @@ fi
 
 cd /home/ryan/tushare_ryan
 git pull
-
 #sleep 2
 
 ##
