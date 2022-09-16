@@ -321,7 +321,9 @@ def ag_industry_selected():
     for f in allFiles:
         df = pd.read_csv(f, names=['code'], converters={'code': str}, header=None)
         df['industry'] = f.split("/")[-1].split("_")[0]
-        df_rtn = df_rtn.append(df)
+        # df_rtn = df_rtn.append(df)
+        df_rtn = pd.concat([df_rtn,df])
+
         logging.info("loading "+f+" appended len "+str(df.__len__())+" , all line "+str(df_rtn.__len__()))
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
@@ -361,7 +363,8 @@ def bayes_start(csv_o):
         # print(code+", "+name)
 
         _df = _bayes_a_stock(code=code, name=name, csv_f=csv_dir+"/"+code+".csv")
-        df_rtn = df_rtn.append(_df)
+        # df_rtn = df_rtn.append(_df)
+        df_rtn = pd.concat([df_rtn,_df])
 
     df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
     logging.info("bayes result saved to "+csv_o+" ,len "+str(df_rtn.__len__()))
@@ -411,10 +414,12 @@ def _bayes_a_stock(code,name,csv_f):
     df_yunxian = df[(df['open'] < df['close']) & (df['open_b1'] > df['close_b1']) & (df['open_b1'] > df['close']) & (df['close_b1'] < df['open'])  ]
 
     _df = _print_bayes_possibility(code=code,name=name, condition='jincha', df_all=df, df_up=df_up,df_con=df_jincha )
-    df_rtn = df_rtn.append(_df)
+    # df_rtn = df_rtn.append(_df)
+    df_rtn = pd.concat([df_rtn,_df])
 
     _df = _print_bayes_possibility(code=code,name=name, condition='yunxian', df_all=df, df_up=df_up,df_con=df_yunxian )
-    df_rtn = df_rtn.append(_df)
+    # df_rtn = df_rtn.append(_df)
+    df_rtn = pd.concat([df_rtn,_df])
 
 
     return(df_rtn)
@@ -540,7 +545,8 @@ def stock_vs_index_perf_perc_chg():
             df_profit_details = finlib_indicator.Finlib_indicator()._calc_jin_cha_si_cha_profit(df_jin_cha=df_jin_cha, df_si_cha=df_si_cha)
             df_profit_details = finlib.Finlib().add_stock_name_to_df(df=df_profit_details)
             # logging.info(finlib.Finlib().pprint(df_profit_details))
-            df_profit_report  = df_profit_report.append(df_profit_details)
+            # df_profit_report  = df_profit_report.append(df_profit_details)
+            df_profit_report  = pd.concat([df_profit_report,df_profit_details])
 
         continue
 
@@ -621,7 +627,8 @@ def stock_vs_index_perf_amount():
             df_tmp['current_jin_cha']=bool_current_jin_cha
             df_tmp['last_si_cha_date']=last_si_cha_date
 
-            df_rtn  = df_rtn.append(df_tmp)
+            # df_rtn  = df_rtn.append(df_tmp)
+            df_rtn  = pd.concat([df_rtn,df_tmp])
 
         continue
 
@@ -785,7 +792,8 @@ def fudu_get_base_data(base_windows=5, slide_window=3):
         })
 
         # logging.info(finlib.Finlib().pprint(_df))
-        df_rtn = df_rtn.append(_df)
+        # df_rtn = df_rtn.append(_df)
+        df_rtn = pd.concat([df_rtn,_df])
 
     df_rtn['cnt_ratio'] = round((df_rtn['inc_cnt']+1) / (df_rtn['dec_cnt']+1), 2)
     df_rtn['inc_ratio'] = round((df_rtn['inc_cnt']+1) * df_rtn['inc_mean'] / (df_rtn['dec_cnt']+1) / abs(df_rtn['dec_min']), 2)
@@ -835,7 +843,8 @@ def fudu_get_today_data(base_windows=5,slide_window=3):
             'drop_from_max':[drop_from_max],
             'inc_from_min':[inc_from_min],
         })
-        df_rtn = df_rtn.append(_df)
+        # df_rtn = df_rtn.append(_df)
+        df_rtn = pd.concat([df_rtn,_df])
 
         # logging.info(_df)
 
@@ -889,7 +898,8 @@ def fetch_holder():
             time.sleep(1)
 
             # df_holder=df_holder.append(t.head(1))
-            df_holder = df_holder.append(t)
+            # df_holder = df_holder.append(t)
+            df_holder = pd.concat([df_holder,t])
             # print(str(df_holder.__len__()))
             df_holder.to_csv(out_csv, encoding='UTF-8', index=False)
 
@@ -1031,7 +1041,8 @@ def cmp_with_idx_inc(of,debug=False):
         #         logging.info(finlib.Finlib().pprint(df_si_cha))
 
         if df_jin_cha.__len__() > 0:
-            df_rst_jin_cha = df_rst_jin_cha.append(df_jin_cha)
+            # df_rst_jin_cha = df_rst_jin_cha.append(df_jin_cha)
+            df_rst_jin_cha = pd.concat([df_rst_jin_cha,df_jin_cha])
 
             d = (datetime.datetime.today()  - datetime.datetime.strptime(df_jin_cha.iloc[-1]['date'], '%Y%m%d')).days
             if d < 7 and df_jin_cha.iloc[-1]['ac'] > -5:
@@ -1067,7 +1078,8 @@ def jie_tao(of,debug=False):
         elif type(rtn)!=type(pd.DataFrame()):
             continue
 
-        df_rtn = df_rtn.append(rtn)
+        # df_rtn = df_rtn.append(rtn)
+        df_rtn = pd.concat([df_rtn,rtn])
         # df_rtn.to_csv(fo,index=False)
 
     df_rtn = finlib.Finlib().add_stock_name_to_df(df=df_rtn)
@@ -1263,7 +1275,7 @@ def small_up():
         # optional volume_ratio, or amount_ratio
         # optional, MA5 > MA20
 
-        rtn_df = rtn_df.append(pd.DataFrame({
+        rtn_df = pd.concat([rtn_df, pd.DataFrame({
             'code':[code],
             'days':[last_n_days],
             'up_ratio':[up_ratio],
@@ -1275,7 +1287,7 @@ def small_up():
 
             'dis_c_high60':[dis_c_high60],
             'dis_c_high120':[dis_c_high120],
-        }))
+        })])
 
         # Report
         # if up_ratio > 0.7 and pct_chg_mean < 5 and pct_chg_max < 8:
@@ -1329,7 +1341,7 @@ def mkt_value_vs_amt():
         adf['mv_amt_inc_ratio'] = round(adf['circ_mv_inc']/adf['amount_inc'],2)
         adf['mv_amt_ratio'] = round(adf['circ_mv_inc']/adf['amount'],2)
 
-        rtn_df = rtn_df.append(adf[['code','date','close','pct_chg','mv_amt_ratio','mv_amt_inc_ratio','circ_mv_inc','amount_inc']])
+        rtn_df = pd.concat([rtn_df, adf[['code','date','close','pct_chg','mv_amt_ratio','mv_amt_inc_ratio','circ_mv_inc','amount_inc']]])
 
 
     rtn_df = finlib.Finlib().add_stock_name_to_df(df=rtn_df)
@@ -1412,7 +1424,8 @@ def nongli_bk_inc():
             dayS_name=start_name,
             dayE_name=end_name,
         )
-        df_rtn_nl_bk_inc = df_rtn_nl_bk_inc.append(df_bk_increase)
+        # df_rtn_nl_bk_inc = df_rtn_nl_bk_inc.append(df_bk_increase)
+        df_rtn_nl_bk_inc = pd.concat([df_rtn_nl_bk_inc,df_bk_increase])
 
     print('Base df_rtn_nl_bk_inc completed')
     return(df_rtn_nl_bk_inc)
@@ -1431,7 +1444,8 @@ def nl_bk_inc_inspect_0(df_rtn_nl_bk_inc):
     for s in df['data_s'].unique():
         _df = df[df['data_s'] == s]
         _df = _df.sort_values(by='pct_change',ascending=False).head(10)
-        df_rtn=df_rtn.append(_df)
+        # df_rtn=df_rtn.append(_df)
+        df_rtn=pd.concat([df_rtn,_df])
 
 
 

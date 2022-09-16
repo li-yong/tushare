@@ -211,7 +211,8 @@ def update_today_ag_qfq_from_local():
             t_dict[c]=[row[c]]
 
         df_today = pd.DataFrame(t_dict,index=[df_old.__len__()])
-        df_old = df_old.append(df_today)
+        # df_old = df_old.append(df_today)
+        df_old = pd.concat([df_old,df_today])
         df_old.to_csv(csv, encoding='UTF-8', index=False)
         logging.info('saved csv')
 

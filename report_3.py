@@ -273,7 +273,7 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
     df_n1=df_n1[(df_n1['pct_chg']>ZT_P) & (df_n1['pct_chg']< 20)]
     df_n2=df_n2[(df_n2['pct_chg']>ZT_P) & (df_n2['pct_chg']< 20)]
 
-    for code in df_n1.code.append(df_n2.code).unique():
+    for code in pd.concat([df_n1,df_n2])['code'].unique():
         # logging.info(code)
 
         if debug:
@@ -414,8 +414,8 @@ def _bar_get_support_resist(df):
 
     code = df['code'].iloc[0]
 
-    df.at[df['open'] > df['close'], 'bar_mid'] = df['open'] - (round((df['open'] - df['close']) / 2, 2))
-    df.at[df['open'] <= df['close'], 'bar_mid'] = df['open'] + (round((df['close'] - df['open']) / 2, 2))
+    df.loc[df['open'] > df['close'], 'bar_mid'] = df['open'] - (round((df['open'] - df['close']) / 2, 2))
+    df.loc[df['open'] <= df['close'], 'bar_mid'] = df['open'] + (round((df['close'] - df['open']) / 2, 2))
 
     pct_gain = 0
 
@@ -427,7 +427,7 @@ def _bar_get_support_resist(df):
             #     f"idx {str(index)} {str(row['date'])}, bar_up {bar_up}, p_to_sell {str(l_spt)}. "
             #     f"bar_dn {str(bar_dn)},  p_to_buy {str(l_rst)}")
 
-        rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(pd.DataFrame().from_dict({
+        rtn_df_bar_bs_line = pd.concat([rtn_df_bar_bs_line, pd.DataFrame().from_dict({
             'code': [code],
             'date': [row['date']],
 
@@ -442,14 +442,14 @@ def _bar_get_support_resist(df):
             'p_to_sell': [l_spt],
             'bar_dn': [bar_dn],
             'p_to_buy': [l_rst],
-        }))
+        })])
 
         if index==12:
             logging.info("debug stop")
 
         if bar_dn > 0 and row['pct_chg'] > 0 and row['close'] > l_rst:
             # logging.info(f"buy point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_rst)}")
-            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt,pd.DataFrame().from_dict({
                 'code': [code],
                 'date': [row['date']],
                 'opt': ['buy'],
@@ -457,7 +457,7 @@ def _bar_get_support_resist(df):
                 'p_to_buy': [l_rst],
                 'p_to_sell': [l_spt],
                 'pct_gain':[pct_gain]
-            }))
+            })])
 
             bar_dn = 0;
             l_rst = 0;
@@ -476,14 +476,14 @@ def _bar_get_support_resist(df):
                 pct_gain = last_pct_gain + 100*(row['close']-last_buy_close)/last_buy_close
                 pct_gain = round(pct_gain,1)
 
-            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt, pd.DataFrame().from_dict({
                 'code': [code],
                 'date': [row['date']],
                 'opt': ['sell'],
                 'close': [row['close']],
                 'p_to_sell': [l_spt],
                 'pct_gain':[pct_gain]
-            }))
+            })])
 
             bar_up = 0;
             l_spt = 0;
@@ -492,7 +492,7 @@ def _bar_get_support_resist(df):
             rvt_to_up = False
             continue
         else:
-            rtn_df_bar_opt = rtn_df_bar_opt.append(pd.DataFrame().from_dict({
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt, pd.DataFrame().from_dict({
                 'code': [code],
                 'date': [row['date']],
                 'opt': ['keep'],
@@ -500,7 +500,7 @@ def _bar_get_support_resist(df):
                 'p_to_buy': [l_rst],
                 'p_to_sell': [l_spt],
                 'pct_gain': [pct_gain]
-            }))
+            })])
 
         if index == 0:
             pre_row = row
@@ -566,14 +566,14 @@ def _bar_get_status(df_daily):
     df_m['bar_ptn'] = ''
     df_w['bar_ptn'] = ''
 
-    df_m.at[df_m['close'] > df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "above_10M_MA,"
-    df_m.at[df_m['close'] < df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "below_10M_MA,"
-    df_m.at[df_m['close'] == df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "equal_10M_MA,"
+    df_m.loc[df_m['close'] > df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "above_10M_MA,"
+    df_m.loc[df_m['close'] < df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "below_10M_MA,"
+    df_m.loc[df_m['close'] == df_m['close_10_sma'], 'bar_ptn'] = df_m['bar_ptn'] + "equal_10M_MA,"
     df_m['pre_bar_ptn'] = df_m['bar_ptn'].shift(1)
 
-    df_w.at[df_w['close'] > df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "above_5W_MA,"
-    df_w.at[df_w['close'] < df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "below_5W_MA,"
-    df_w.at[df_w['close'] == df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "equal_5W_MA,"
+    df_w.loc[df_w['close'] > df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "above_5W_MA,"
+    df_w.loc[df_w['close'] < df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "below_5W_MA,"
+    df_w.loc[df_w['close'] == df_w['close_5_sma'], 'bar_ptn'] = df_w['bar_ptn'] + "equal_5W_MA,"
     df_w['pre_bar_ptn'] = df_w['bar_ptn'].shift(1)
 
     df_m.rename(columns={'close': 'close_m', 'close_10_sma': 'close_10m_sma'}, inplace=True)
@@ -588,7 +588,7 @@ def _bar_get_status(df_daily):
     # mam10_up_date = df_c_cross_up_mam10.iloc[-1]['date'] if df_c_cross_up_mam10.__len__()>0 else 'None'
     #
 
-    rtn_df_bar_status = rtn_df_bar_status.append(pd.DataFrame.from_dict({
+    rtn_df_bar_status = pd.concat([rtn_df_bar_status, pd.DataFrame.from_dict({
         'code': [code],
         '10m_ma': [df_m1['close_10m_sma'].iloc[0]],
         '5w_ma': [df_w1['close_5w_sma'].iloc[0]],
@@ -599,7 +599,7 @@ def _bar_get_status(df_daily):
         'last_cross_up_10m_ma': [mam10_up_date],
         'last_cross_dn_5w_ma': [maw5_dn_date],
         'last_cross_dn_10m_ma': [mam10_dn_date],
-    }))
+    })])
 
     return(rtn_df_bar_status)
 
@@ -670,7 +670,8 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
 
 
     # for c in df.code.append(df.code).unique()[:20]:
-    for c in df.code.append(df.code).unique():
+    # for c in df.code.append(df.code).unique():
+    for c in df['code'].unique():
 
         c='SH600519' #ryan debug
 
@@ -686,7 +687,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         ###########################################
         # rtn_df_bar_status: if a bar above/below week_ma_5, month_ma_10
         _rtn_df_bar_status = _bar_get_status(df_daily=dfs)
-        rtn_df_bar_status = rtn_df_bar_status.append(_rtn_df_bar_status)
+        rtn_df_bar_status = pd.concat([rtn_df_bar_status, _rtn_df_bar_status])
 
 
         ###########################################
@@ -695,8 +696,8 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist(df=dfs)
         # _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist(df=df_w)
 
-        rtn_df_bar_opt = rtn_df_bar_opt.append(_rtn_df_bar_opt, ignore_index=True)
-        rtn_df_bar_bs_line = rtn_df_bar_bs_line.append(_rtn_df_bar_bs_line, ignore_index=True)
+        rtn_df_bar_opt = pd.concat([rtn_df_bar_opt,_rtn_df_bar_opt], ignore_index=True)
+        rtn_df_bar_bs_line = pd.concat([rtn_df_bar_bs_line,_rtn_df_bar_bs_line], ignore_index=True)
         print("\n======")
         print(rtn_df_bar_opt.tail(3))
         print(rtn_df_bar_status.tail(1))
@@ -860,7 +861,7 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         dfs = pd.DataFrame()
         for c in df_ind_net_up_pct_top['industry'].to_list():
             print(c)
-            dfs = dfs.append(df[df['industry_name_wg'].str.contains(c)])
+            dfs = pd.concat([dfs, df[df['industry_name_wg'].str.contains(c)]])
         dfs = dfs[['code', 'name', 'industry_name_wg']].drop_duplicates().reset_index().drop('index', axis=1)
         dfs.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info(f"stocks in active industry saved to {csv_o}, len {str(dfs.__len__())}")
@@ -882,7 +883,7 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
         dfs = pd.DataFrame()
         for c in df_bk_up_pct_per_day['concept'].to_list():
             print(c)
-            dfs= dfs.append(df[df['concept'].str.contains(c)])
+            dfs= pd.concat([dfs,df[df['concept'].str.contains(c)]])
         dfs = dfs[['code','name','concept']].drop_duplicates().reset_index().drop('index',axis=1)
         dfs.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info(f"stocks in active BK saved to {csv_o}, len {str(dfs.__len__())}")

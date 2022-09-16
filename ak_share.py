@@ -367,7 +367,8 @@ def fetch_em_concept():
             logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
             df = pd.read_csv(csv_f)
             df['concept']=name_path
-            concept_consist_df = concept_consist_df.append(df)
+            # concept_consist_df = concept_consist_df.append(df)
+            concept_consist_df = pd.concat([concept_consist_df,df])
         else:
             e = ak.stock_board_concept_cons_em(symbol=name)
             e['concept'] = name_path
@@ -382,7 +383,8 @@ def fetch_em_concept():
 
             logging.info(f"fetched concept compsitives of {csv_f}, len {str(e.__len__())}")
 
-            concept_consist_df = concept_consist_df.append(e)
+            # concept_consist_df = concept_consist_df.append(e)
+            concept_consist_df = pd.concat([concept_consist_df,e])
 
 
     concept_consist_df.to_csv(concept_consist_csv, encoding='UTF-8', index=False)
@@ -476,7 +478,8 @@ def fetch_ths_concept():
         if finlib.Finlib().is_cached(csv_f, day=cache_days, use_last_trade_day=False):
             df = pd.read_csv(csv_f)
             df['concept'] = name_path
-            concept_consist_df = concept_consist_df.append(df)
+            # concept_consist_df = concept_consist_df.append(df)
+            concept_consist_df = pd.concat([concept_consist_df,df])
             logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + csv_f)
         else:
             try:
@@ -492,7 +495,8 @@ def fetch_ths_concept():
 
                 e.to_csv(csv_f, encoding='UTF-8', index=False)
                 logging.info(f"fetched concept compsitives of {csv_f}, len {str(e.__len__())}")
-                concept_consist_df = concept_consist_df.append(e)
+                # concept_consist_df = concept_consist_df.append(e)
+                concept_consist_df = pd.concat([concept_consist_df,e])
             except:
                 logging.fatal("exception stock_board_concept_cons_ths")
 
@@ -560,7 +564,8 @@ def fetch_etf():
 
         # e['date'] = e['date'].apply(lambda _d: datetime.datetime.strptime(_d, '%Y-%m-%d').strftime("%Y%m%d"))
 
-        df_eft_all_data = df_eft_all_data.append(e)
+        # df_eft_all_data = df_eft_all_data.append(e)
+        df_eft_all_data = pd.concat([df_eft_all_data,e])
 
     # df_eft_all_data['date'] = df_eft_all_data['date'].apply(lambda _d: datetime.datetime.strptime(_d, '%Y-%m-%d').strftime("%Y%m%d"))
 
@@ -612,7 +617,8 @@ def analyze_etf():
             _df['mean'] = round(describe['mean'],2)
             _df['date'] = _df['date'].astype('str')
 
-            df_etf_describe = df_etf_describe.append(_df)
+            # df_etf_describe = df_etf_describe.append(_df)
+            df_etf_describe = pd.concat([df_etf_describe,_df])
 
         df_rtn = pd.merge(left= df_etf_describe,
                         right=df_etf_inc[['code', 'inc2', 'inc5', 'inc30', 'inc90', 'inc180']], on=['code'],
@@ -677,7 +683,10 @@ def generate_stock_concept():
     df4 = pd.read_csv(f4, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
     df5 = pd.read_csv(f5, converters={'code': str}, header=None,  names=['id', 'concept', 'code', 'name'])
 
-    df_tdx = df1.append(df2).append(df3).append(df4).append(df5)
+    # df_tdx = df1.append(df2).append(df3).append(df4).append(df5)
+    df_tdx = pd.concat([df1,df2,df3,df4,df5])
+
+
     df_tdx['concept']=df_tdx['concept']+".tdx"
     df_tdx = finlib.Finlib().add_market_to_code(df=df_tdx)
     # df_tdx.rename(columns={'concept':'concept_tdx'},inplace=True)
@@ -686,7 +695,8 @@ def generate_stock_concept():
                code   name   concept
     0      SZ301098   金埔园林  新型城镇化.em
     '''
-    df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
+    # df_cpt_stk_lst = df_em.append(df_ths).append(df_tdx)[['code', 'name', 'concept']]
+    df_cpt_stk_lst = pd.concat([df_em,df_ths,df_tdx])[['code', 'name', 'concept']]
     df_cpt_stk_lst = finlib.Finlib().add_amount_mktcap(df=df_cpt_stk_lst)
 
     ''' len 9609
