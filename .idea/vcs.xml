@@ -2,20 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/DEL/China_stock_announcement.ori" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/S-and-P-500-400-constituents-components-companies" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/backtrader" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/easyhistory" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/easyquant" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/easyquotation" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/easytrader" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/oanda-api-v20" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/oandapyV20-examples" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/pyalgotrade" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/tmp/vnpy" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/tushare" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/urlwatch" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/v20-python-samples" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Oanda_v2/lib/yahoo-finance" vcs="Git" />
   </component>
 </project>
