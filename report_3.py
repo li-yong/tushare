@@ -50,7 +50,7 @@ def coefficient_variation_price_amount():
         df = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv=csv).tail(100)
         cv_close = round(variation(df['close']), 2)
         cv_amount = round(variation(df['amount']), 2)
-        df_rtn = df_rtn.append(pd.DataFrame().from_dict({'name':[name],'code':[code],'cv_close':[cv_close], 'cv_amount':[cv_amount]}))
+        df_rtn = pd.concat([df_rtn,pd.DataFrame().from_dict({'name':[name],'code':[code],'cv_close':[cv_close], 'cv_amount':[cv_amount]})])
 
     df_rtn = df_rtn.reset_index().drop('index',axis=1)
     print(finlib.Finlib().pprint(df_rtn.sort_values(by='cv_close',ascending=False)))
@@ -144,7 +144,7 @@ def xiao_hu_xian(csv_out,debug=False):
     # last_trading_day = finlib.Finlib().get_last_trading_day()
     # last_trading_day_dt = datetime.datetime.strptime(last_trading_day, "%Y%m%d")
 
-    for c in df_n1.code.append(df_n2.code).unique():
+    for c in pd.concat([df_n1,df_n2])['code'].unique():
         df_s=df[df['code']==c]
 
         if df_s.__len__()<90:
@@ -211,14 +211,14 @@ def xiao_hu_xian(csv_out,debug=False):
         sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
         sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
 
-        df_rtn = df_rtn.append({
+        df_rtn = pd.concat([df_rtn,{
             "code": c,
             "name": df_s_ZT.iloc[-2]['name'],
             "dateS": df_s_ZT.iloc[-2]['date'],
             "dateE": df_s_ZT.iloc[-1]['date'],
             "ndays": n_days,
             "last4D_tv":sum_tv_4_days,
-        }, ignore_index=True)
+        }], ignore_index=True)
 
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
@@ -360,7 +360,7 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
                 logging.info(
                     f"reason {reason},{row['date']}, buy {code} {name} at cur_p {str(row['close'])}, stop lost {str(open_v_burst)}, stop pct {str(p_cur_to_v_burst_pct)}")
 
-                df_opt = df_opt.append({
+                df_opt = pd.concat([df_opt, {
                     "code": code,
                     "name": name,
                     "buy_date": row['date'],
@@ -375,7 +375,7 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
                     "cal_days": cal_days,
                     "pct_chg_mean": pct_chg_mean,
                     "last4D_tv":row['pre_4day_turnover_rate_sum'],
-                }, ignore_index=True)
+                }], ignore_index=True)
 
     col_list = ['code', 'name', 'date_v_burst', 'vol_ratio_v_burst', 'cal_days', 'buy_reason', 'buy_date', 'buy_price',
                 'cur_p',
@@ -444,8 +444,8 @@ def _bar_get_support_resist(df):
             'p_to_buy': [l_rst],
         })])
 
-        if index==12:
-            logging.info("debug stop")
+        # if index==12:
+        #     logging.info("debug stop")
 
         if bar_dn > 0 and row['pct_chg'] > 0 and row['close'] > l_rst:
             # logging.info(f"buy point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_rst)}")
@@ -669,11 +669,9 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
     rtn_df_bar_opt = pd.DataFrame()
 
 
-    # for c in df.code.append(df.code).unique()[:20]:
-    # for c in df.code.append(df.code).unique():
     for c in df['code'].unique():
 
-        c='SH600519' #ryan debug
+        # c='SH600519' #ryan debug
 
         dfs=df[df['code']==c].reset_index().drop('index',axis=1)
 
@@ -779,8 +777,7 @@ def _lianban_gegu_tongji(csv_out_lian_ban_gg,n_days=20,up_threshold=7,dn_thresho
     rtn_df_gg = pd.DataFrame()
 
 
-    # for code in df.code.append(df.code).unique()[:20]:
-    for code in df.code.append(df.code).unique():
+    for code in df['code'].unique():
         # code='SH600519'
         dfs=df[df['code']==code].reset_index().drop('index',axis=1)
 
@@ -902,7 +899,7 @@ def lianban_tongji(n_days,up_threshold, dn_threshold,csv_out_lian_ban_gg,csv_out
 
 
     rtn_df_opt = rtn_df_ind.rename(columns={'industry':'concept'}).tail(15)
-    rtn_df_opt = rtn_df_opt.append(rtn_df_bk.tail(30))
+    rtn_df_opt = pd.concat([rtn_df_opt,rtn_df_bk.tail(30)])
 
     rtn_df_ind.to_csv(csv_out_lian_ban_ind, encoding='UTF-8', index=False)
     rtn_df_bk.to_csv(csv_out_lian_ban_bk, encoding='UTF-8', index=False)
@@ -1363,7 +1360,7 @@ def _td_setup_reverse(df_setup, debug=False):
         df_3_days['bar_body'] = round(100 * (df_3_days['close'] - df_3_days['open']) / df_3_days['open'], 1)
         df_3_days = df_3_days[df_3_days['bar_body'] < -5]
 
-        df_setup_u2d = df_setup_u2d.append(df_3_days)
+        df_setup_u2d = pd.concat([df_setup_u2d,df_3_days])
 
 
     if debug and df_setup_u2d.__len__()>0:
@@ -1381,7 +1378,7 @@ def _td_setup_reverse(df_setup, debug=False):
         df_3_days['bar_body']= round(100*(df_3_days['close']-df_3_days['open'])/df_3_days['open'],1)
         df_3_days = df_3_days[df_3_days['bar_body'] > 5]
 
-        df_setup_d2u = df_setup_d2u.append(df_3_days)
+        df_setup_d2u = pd.concat([df_setup_d2u,df_3_days])
 
     if debug and df_setup_d2u.__len__()>0:
         logging.info("TD setup down to up reverse:")
@@ -1460,12 +1457,12 @@ def TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=False):
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
         df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
 
-        rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
+        rtn_9_13 = pd.concat([rtn_9_13, df_9_13]).reset_index().drop('index',axis=1)
 
-        rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
-        rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
-        rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
-        rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
+        rtn_op = pd.concat([rtn_op,df_op]).reset_index().drop('index',axis=1)
+        rtn_today = pd.concat([rtn_today,df_today]).reset_index().drop('index',axis=1)
+        rtn_setup_d2u = pd.concat([rtn_setup_d2u,df_setup_d2u]).reset_index().drop('index',axis=1)
+        rtn_setup_u2d = pd.concat([rtn_setup_u2d,df_setup_u2d]).reset_index().drop('index',axis=1)
 
     rtn_9_13 = finlib.Finlib().filter_days(df=rtn_9_13, date_col='date', within_days=5)
     rtn_op = finlib.Finlib().filter_days(df=rtn_op, date_col='date', within_days=5)
@@ -1528,12 +1525,12 @@ def bk_TD_stocks(rst_dir,pre_n_day,consec_day,stock_global=None, no_garbage=Fals
         adf = df[df['code']==code][['code','date','close','high', 'open', 'low']]
         df_9_13, df_op,df_setup_d2u, df_setup_u2d, df_today = td_indicator(adf,pre_n_day,consec_day)
 
-        rtn_9_13 = rtn_9_13.append(df_9_13).reset_index().drop('index',axis=1)
+        rtn_9_13 = pd.concat([rtn_9_13,df_9_13]).reset_index().drop('index',axis=1)
 
-        rtn_op = rtn_op.append(df_op).reset_index().drop('index',axis=1)
-        rtn_today = rtn_today.append(df_today).reset_index().drop('index',axis=1)
-        rtn_setup_d2u = rtn_setup_d2u.append(df_setup_d2u).reset_index().drop('index',axis=1)
-        rtn_setup_u2d = rtn_setup_u2d.append(df_setup_u2d).reset_index().drop('index',axis=1)
+        rtn_op = pd.concat([rtn_op,df_op]).reset_index().drop('index',axis=1)
+        rtn_today = pd.concat([rtn_today,df_today]).reset_index().drop('index',axis=1)
+        rtn_setup_d2u = pd.concat([rtn_setup_d2u,df_setup_d2u]).reset_index().drop('index',axis=1)
+        rtn_setup_u2d = pd.concat([rtn_setup_u2d,df_setup_u2d]).reset_index().drop('index',axis=1)
 
     rtn_9_13 = finlib.Finlib().filter_days(df=rtn_9_13, date_col='date', within_days=5)
     rtn_op = finlib.Finlib().filter_days(df=rtn_op, date_col='date', within_days=5)
@@ -1578,8 +1575,8 @@ def bk_ma_across(csv_o_b, csv_o_s):
         adf = adf[['code','date','close','close_4_sma','close_27_sma']]
 
         adf, df_si_cha, df_jin_cha  = finlib_indicator.Finlib_indicator().slow_fast_across(df=adf,fast_col_name='close_4_sma',slow_col_name='close_27_sma')
-        df_rtn_sicha = df_rtn_sicha.append(df_si_cha)
-        df_rtn_jincha = df_rtn_jincha.append(df_jin_cha)
+        df_rtn_sicha = pd.concat([df_rtn_sicha,df_si_cha])
+        df_rtn_jincha = pd.concat([df_rtn_jincha,df_jin_cha])
 
 
     df_rtn_sicha.to_csv(csv_o_s, encoding='UTF-8', index=False)

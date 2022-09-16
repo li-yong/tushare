@@ -1048,7 +1048,7 @@ class Finlib:
             print("loading " + f)
             # df = pd.read_csv(f, converters={i: str for i in range(1000)} )
             df = pd.read_csv(f, converters={i: str for i in ['ts_code', 'trade_date']})
-            df_result = df_result.append(df)
+            df_result = pd.concat([df_result,df])
 
         return (df_result)
 
@@ -4267,7 +4267,7 @@ class Finlib:
 
             for code_name_dict in cfg[market]:
                 for code in code_name_dict.keys():
-                    rst[market] = rst[market].append({'code': code, 'name': code_name_dict[code]}, ignore_index=True)
+                    rst[market] = pd.concat([rst[market], pd.DataFrame({'code': [code], 'name': [code_name_dict[code]]})], ignore_index=True)
         return (rst)
 
     #convert YYYY-MM-DD to YYYYMMDD
@@ -4863,7 +4863,7 @@ class Finlib:
         _c = ts.pro_api().query(api, ts_code='600519.SH').columns.to_series().reset_index()['index']
         logging.info(api+" tushare default query fields count " + str(_c.__len__()))
 
-        _d = _a.append(_c).drop_duplicates()
+        _d = pd.concat([_a,_c]).drop_duplicates()
         logging.info(api+" finally field count " + str(_d.__len__()))
         rtn_fields = ','.join(list(_d))
         return (rtn_fields)
@@ -4920,7 +4920,7 @@ class Finlib:
 
             if self.is_cached(input_csv, day=1000):
                 df_sub = pd.read_csv(input_csv)
-                df = df.append(df_sub)
+                df = pd.concat([df,df_sub])
                 logging.info(str(j) + " of " + str(ndays)+" days, appended " + input_csv + ", +len " + str(df_sub.__len__()))
                 j += 1
             else:
@@ -5421,7 +5421,7 @@ class Finlib:
         _df_name_us['code'] = _df_name_us['code_ft'].apply(lambda _d: _d.split('.')[1])
         _df_name_us = self.add_stock_name_to_df_us_hk(df=_df_name_us, market='US')
 
-        _df_name = _df_name_hk.append(_df_name_ag).append(_df_name_us)
+        _df_name = pd.concat([_df_name_hk,_df_name_ag,_df_name_us])
 
         return(_df_name)
 
@@ -5743,7 +5743,7 @@ class Finlib:
                 continue
 
 
-            df_rtn = df_rtn.append(pd.read_csv(f, converters={'end_date': str}))
+            df_rtn = pd.concat([df_rtn, pd.read_csv(f, converters={'end_date': str})])
             # print(df_fund_n_years.__len__())
 
 
@@ -5763,7 +5763,7 @@ class Finlib:
 
         df_rtn = pd.DataFrame()
         for i in p:
-            df_rtn = df_rtn.append(_df[_df['end_date']==i])
+            df_rtn = pd.concat([df_rtn,_df[_df['end_date']==i]])
 
         df_rtn = df_rtn.reset_index().drop('index', axis=1)
         df_rtn = self.ts_code_to_code(df=df_rtn)
@@ -5861,7 +5861,7 @@ class Finlib:
         df_ths=pd.read_csv(csv_ths)
         df_ths['code'] = df_ths['concept'] + ".ths"
 
-        df_rtn = df_em.append(df_ths)[['date','code','open','close','high','low','vol','amount']]
+        df_rtn = pd.concat([df_em,df_ths])[['date','code','open','close','high','low','vol','amount']]
 
         df_rtn['open'] = df_rtn['open'].astype(float,errors='raise')
         df_rtn['close'] = df_rtn['close'].astype(float,errors='raise')
@@ -6289,11 +6289,11 @@ class Finlib:
             df_a = df[df['code'] == c].reset_index().drop('index', axis=1)
             df_pressure_support_all, df_pressure_support, selected = self._get_a_stock_significant(df_a,perc=perc,last_n_days=last_n_days)
 
-            df_ps = df_ps.append(df_pressure_support_all)
-            df_ps_now = df_ps_now.append(df_pressure_support)
+            df_ps = pd.concat([df_ps,df_pressure_support_all])
+            df_ps_now = pd.concat([df_ps_now,df_pressure_support])
 
             if selected:
-                df_ps_select = df_ps_select.append(df_pressure_support)
+                df_ps_select = pd.concat([df_ps_select,df_pressure_support])
 
         df_ps.to_csv(csv_o_ps, encoding='UTF-8', index=False)
         # logging.info(__file__ + ": " + "saved " + csv_o_ps + " . len " + str(df_ps.__len__()))
@@ -6466,7 +6466,7 @@ class Finlib:
                 'amount': [adf['amount'].sum()],
             })
 
-            df_rtn = df_rtn.append(a)
+            df_rtn = pd.concat([df_rtn,a])
 
         df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info(f"result saved to {csv_o}, len {str(df_rtn.__len__())}")
