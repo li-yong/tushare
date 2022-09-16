@@ -30,14 +30,14 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 # register_matplotlib_converters()
 
 import pandas
-import mysql.connector
-from sqlalchemy import create_engine
+# import mysql.connector
+# from sqlalchemy import create_engine
 import re
 import math
 from datetime import datetime, timedelta
 from scipy import stats
 import traceback
-from jaqs.data.dataapi import DataApi
+# from jaqs.data.dataapi import DataApi
 import glob
 
 import yaml
@@ -65,20 +65,20 @@ pd.set_option('display.width', 1000)
 pd.options.display.float_format = '{:.2f}'.format
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
-class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
-    """ A mysql.connector Converter that handles Numpy types """
-    def _float32_to_mysql(self, value):
-        return float(value)
-
-    def _float64_to_mysql(self, value):
-        return float(value)
-
-    def _int32_to_mysql(self, value):
-        return int(value)
-
-    def _int64_to_mysql(self, value):
-        return int(value)
-
+# class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
+#     """ A mysql.connector Converter that handles Numpy types """
+#     def _float32_to_mysql(self, value):
+#         return float(value)
+#
+#     def _float64_to_mysql(self, value):
+#         return float(value)
+#
+#     def _int32_to_mysql(self, value):
+#         return int(value)
+#
+#     def _int64_to_mysql(self, value):
+#         return int(value)
+#
 
 class Account:
     def __init__(self):
@@ -5206,7 +5206,9 @@ class Finlib:
                 df_sub = df_sub[(df_sub['date'] >= dayS) & (df_sub['date'] <= dayE)]
 
                 df_sub = finlib_indicator.Finlib_indicator().add_ma_ema(df_sub, short=5, middle=21, long=55)
-                df_amt = df_amt.append(df_sub)
+                # df_amt = df_amt.append(df_sub)
+                df_amt = pd.concat([df_amt,df_sub])
+
                 logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
 
             df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
