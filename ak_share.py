@@ -502,7 +502,7 @@ def fetch_ths_concept():
 
 
 def fetch_etf():
-    cache_days = 1
+    cache_days = 2
 
     base_dir = '/home/ryan/DATA/DAY_Global'
     etf_list_csv = base_dir + "/etf_list.csv"
@@ -533,7 +533,7 @@ def fetch_etf():
                               })
 
         df_etf_list.to_csv(etf_list_csv, encoding='UTF-8', index=False)
-        logging.info(f"fetched {etf_list_csv}, len {str(etf_list_csv.__len__())}")
+        logging.info(f"fetched {etf_list_csv} , len {str(etf_list_csv.__len__())}")
 
     df_eft_all_data = pd.DataFrame()
 
@@ -554,7 +554,7 @@ def fetch_etf():
                 e['name']=name
                 e = finlib.Finlib().adjust_column(df=e,col_name_list=['code','name'])
                 e.to_csv(csv_f, encoding='UTF-8', index=False)
-                logging.info(f"fetched bar of {csv_f}, len {str(e.__len__())}")
+                logging.info(f"fetched bar of {csv_f} , len {str(e.__len__())}")
             except:
                 logging.fatal("exception fetch_etf")
 
@@ -578,23 +578,22 @@ def analyze_etf():
     etf_data_dir = f'{base_dir}/AG_etf'
 
     df_etf_list = pd.read_csv(etf_list_csv)
-    logging.info(f"file updated in {str(cache_days)} days, not fetch again. " + etf_list_csv)
 
     df_inc = finlib.Finlib().get_stock_increase(increase_only=True, etf=True)
 
-    df_rtn = pd.merge(left=df_etf_list[['code','name','close']], right=df_inc[['code','inc2','inc5','inc30','inc90','inc180']], on=['code'], how='left')
+    df_etf_inc = pd.merge(left=df_etf_list[['code','name','close']], right=df_inc[['code','inc2','inc5','inc30','inc90','inc180']], on=['code'], how='left')
 
     #increase most
-    df_rtn.sort_values(by='inc180',ascending=False).head(10).reset_index().drop('index',axis=1)
+    df_etf_inc.sort_values(by='inc180',ascending=False).head(10).reset_index().drop('index',axis=1)
 
     #decrease most
-    df_rtn.sort_values(by='inc180',ascending=True).head(10).reset_index().drop('index',axis=1)
+    df_etf_inc.sort_values(by='inc180',ascending=True).head(10).reset_index().drop('index',axis=1)
 
     rtn_csv = '/home/ryan/DATA/result/etf.csv'
     if finlib.Finlib().is_cached(rtn_csv):
         df_rtn = pd.read_csv(rtn_csv)
     else:
-        df_rtn = pd.DataFrame()
+        df_etf_describe = pd.DataFrame()
         for index, row in df_etf_list.iterrows():
             code= row['code']
             name= row['name']
@@ -613,11 +612,18 @@ def analyze_etf():
             _df['mean'] = round(describe['mean'],2)
             _df['date'] = _df['date'].astype('str')
 
-            df_rtn = df_rtn.append(_df)
+            df_etf_describe = df_etf_describe.append(_df)
+
+        df_rtn = pd.merge(left= df_etf_describe,
+                        right=df_etf_inc[['code', 'inc2', 'inc5', 'inc30', 'inc90', 'inc180']], on=['code'],
+                        how='left')
+
 
         df_rtn = finlib.Finlib().adjust_column(df=df_rtn,col_name_list=['code', 'name',  'date','std', 'zuida_huiche','close_4_sma', 'close_27_sma','max', 'mean', 'min', 'close'])
+        df_rtn['ma4-27'] = round((df_rtn['close_4_sma']- df_rtn['close_27_sma'])*100/df_rtn['close_27_sma'],1)
+
         df_rtn.to_csv(rtn_csv, encoding='UTF-8', index=False)
-        logging.info(f"saved to {rtn_csv}, len {str(df_rtn.__len__())}")
+        logging.info(f"saved to {rtn_csv}  len {str(df_rtn.__len__())}")
 
 
     #print sorted output

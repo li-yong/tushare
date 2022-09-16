@@ -336,17 +336,21 @@ class Finlib_indicator:
 
         stock = stockstats.StockDataFrame.retype(df)
 
-        df['sma_short_' + str(short)] = stock['close_' + str(short) + '_sma']
-        df['sma_middle_' + str(middle)] = stock['close_' + str(middle) + '_sma']
-        df['sma_long_' + str(long)] = stock['close_' + str(long) + '_sma']
+        df['sma_short_' + str(short)] = round(stock['close_' + str(short) + '_sma'],2)
+        df['sma_middle_' + str(middle)] = round(stock['close_' + str(middle) + '_sma'],2)
+        df['sma_long_' + str(long)] = round(stock['close_' + str(long) + '_sma'],2)
+
+        df['close_' + str(short) + '_sma'] = round(df['close_' + str(short) + '_sma'],2)
+        df['close_' + str(middle) + '_sma'] = round(df['close_' + str(middle) + '_sma'],2)
+        df['close_' + str(long) + '_sma'] = round(df['close_' + str(long) + '_sma'],2)
 
         df['p_ma_dikou_' + str(short)] = df['close'].shift(short - 1)
         df['p_ma_dikou_' + str(middle)] = df['close'].shift(middle - 1)
         df['p_ma_dikou_' + str(long)] = df['close'].shift(long - 1)
 
-        df['ema_short_' + str(short)] = stock['close_' + str(short) + '_ema']
-        df['ema_middle_' + str(middle)] = stock['close_' + str(middle) + '_ema']
-        df['ema_long_' + str(long)] = stock['close_' + str(long) + '_ema']
+        df['ema_short_' + str(short)] = round(stock['close_' + str(short) + '_ema'],2)
+        df['ema_middle_' + str(middle)] = round(stock['close_' + str(middle) + '_ema'],2)
+        df['ema_long_' + str(long)] = round(stock['close_' + str(long) + '_ema'],2)
 
         # #standard deviation of (biao zhun fang cha) of close. 表示数据大致扩散到多远
         # df['std_close_short_' + str(short)] = df['close'].rolling(window=short).std()
