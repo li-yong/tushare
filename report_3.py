@@ -211,14 +211,14 @@ def xiao_hu_xian(csv_out,debug=False):
         sum_tv_all_days = round(df_s_basic['turnover_rate'].sum(),2)
         sum_tv_all_days_avg = round(df_s_basic['turnover_rate'].mean(),2)
 
-        df_rtn = pd.concat([df_rtn,{
-            "code": c,
-            "name": df_s_ZT.iloc[-2]['name'],
-            "dateS": df_s_ZT.iloc[-2]['date'],
-            "dateE": df_s_ZT.iloc[-1]['date'],
-            "ndays": n_days,
-            "last4D_tv":sum_tv_4_days,
-        }], ignore_index=True)
+        df_rtn = pd.concat([df_rtn,pd.DataFrame({
+            "code": [c],
+            "name": [df_s_ZT.iloc[-2]['name']],
+            "dateS": [df_s_ZT.iloc[-2]['date']],
+            "dateE": [df_s_ZT.iloc[-1]['date']],
+            "ndays": [n_days],
+            "last4D_tv":[sum_tv_4_days],
+        })], ignore_index=True)
 
         logging.info(c+" "+df_s_ZT.iloc[-2]['name']+", ZhangTing, "+df_s_ZT.iloc[-2]['date']+" --> "+df_s_ZT.iloc[-1]['date']+", "+ str(n_days)+" days, last 4Days turnover sum "+ str(sum_tv_4_days))
 
@@ -360,22 +360,22 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
                 logging.info(
                     f"reason {reason},{row['date']}, buy {code} {name} at cur_p {str(row['close'])}, stop lost {str(open_v_burst)}, stop pct {str(p_cur_to_v_burst_pct)}")
 
-                df_opt = pd.concat([df_opt, {
-                    "code": code,
-                    "name": name,
-                    "buy_date": row['date'],
-                    "pct_chg":row['pct_chg'],
-                    "buy_reason": reason,
-                    "buy_price": row['close'],
-                    "stop_lost": round(open_v_burst,2),
-                    "stop_lost_pct": p_cur_to_v_burst_pct,
-                    "date_v_burst": date_v_burst,
-                    "vol_ratio_v_burst": vol_ratio_N_v_burst,
-                    "cur_p": cur_p,
-                    "cal_days": cal_days,
-                    "pct_chg_mean": pct_chg_mean,
-                    "last4D_tv":row['pre_4day_turnover_rate_sum'],
-                }], ignore_index=True)
+                df_opt = pd.concat([df_opt, pd.DataFrame({
+                    "code": [code],
+                    "name": [name],
+                    "buy_date": [row['date']],
+                    "pct_chg":[row['pct_chg']],
+                    "buy_reason": [reason],
+                    "buy_price": [row['close']],
+                    "stop_lost": [round(open_v_burst,2)],
+                    "stop_lost_pct": [p_cur_to_v_burst_pct],
+                    "date_v_burst": [date_v_burst],
+                    "vol_ratio_v_burst": [vol_ratio_N_v_burst],
+                    "cur_p": [cur_p],
+                    "cal_days": [cal_days],
+                    "pct_chg_mean": [pct_chg_mean],
+                    "last4D_tv":[row['pre_4day_turnover_rate_sum']],
+                })], ignore_index=True)
 
     col_list = ['code', 'name', 'date_v_burst', 'vol_ratio_v_burst', 'cal_days', 'buy_reason', 'buy_date', 'buy_price',
                 'cur_p',
@@ -1684,8 +1684,8 @@ def big_v(csv_o):
         df['all'] = round(abs(df['high'] - df['low']),2)
         df['body'] = round(abs(df['close'] - df['open']),2)
 
-        df.at[df['close'] >= df['open'],'head'] = round(df['high']-df['close'],2)
-        df.at[df['close'] < df['open'],'head'] = round(df['high']-df['open'],2)
+        df.loc[df['close'] >= df['open'],'head'] = round(df['high']-df['close'],2)
+        df.loc[df['close'] < df['open'],'head'] = round(df['high']-df['open'],2)
         df['tail'] = round(df['all']-df['head']-df['body'],2)
 
 

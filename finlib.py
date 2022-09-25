@@ -30,8 +30,8 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 # register_matplotlib_converters()
 
 import pandas
-# import mysql.connector
-# from sqlalchemy import create_engine
+import mysql.connector
+from sqlalchemy import create_engine
 import re
 import math
 from datetime import datetime, timedelta
@@ -65,20 +65,20 @@ pd.set_option('display.width', 1000)
 pd.options.display.float_format = '{:.2f}'.format
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
-# class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
-#     """ A mysql.connector Converter that handles Numpy types """
-#     def _float32_to_mysql(self, value):
-#         return float(value)
-#
-#     def _float64_to_mysql(self, value):
-#         return float(value)
-#
-#     def _int32_to_mysql(self, value):
-#         return int(value)
-#
-#     def _int64_to_mysql(self, value):
-#         return int(value)
-#
+class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
+    """ A mysql.connector Converter that handles Numpy types """
+    def _float32_to_mysql(self, value):
+        return float(value)
+
+    def _float64_to_mysql(self, value):
+        return float(value)
+
+    def _int32_to_mysql(self, value):
+        return int(value)
+
+    def _int64_to_mysql(self, value):
+        return int(value)
+
 
 class Account:
     def __init__(self):

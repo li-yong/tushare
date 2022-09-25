@@ -437,7 +437,7 @@ def fetch_pro_fund(fast_fetch=False):
     else:
         stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
         stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # code:SH603999
-        fetch_period_list = time_series["full_period_list"][0:3] + time_series["full_period_list_yearly"]
+        fetch_period_list = time_series["full_period_list"][0:1] + time_series["full_period_list_yearly"]
         fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
         fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
 
@@ -835,6 +835,7 @@ def fetch_basic_daily(fast_fetch=False):
     todayS = datetime.datetime.today().strftime("%Y%m%d")
 
     trading_days = trade_days[(trade_days.cal_date <= int(todayS)) & (trade_days.is_open == 1)]
+    trading_days = trading_days[-30:]
     # trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)  #don't sort, we need create the latest_ symbol link.
 
     if fast_fetch:  # run on daily, fetch the most recent 5 day only.

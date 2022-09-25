@@ -606,7 +606,8 @@ class Finlib_indicator:
     #########################################################
     def price_counter(self, df, accuracy=0):
         rtn_dict = {}
-        ser_price = df['close'].append(df['open']).append(df['high']).append(df['low'])
+        # ser_price = df['close'].append(df['open']).append(df['high']).append(df['low'])
+        ser_price = pd.concat([df['close'],df['open'],df['high'],df['low']])
         ser_price = ser_price[ser_price > 0]
 
         #round determin the precision.
@@ -1112,7 +1113,7 @@ class Finlib_indicator:
 
         support = pd.Series(p_list).sort_values().reset_index().drop('index', axis=1).T
         delta_perc = round((support - last_price) * 100 / last_price, 2)
-        s = support.append(delta_perc).reset_index().drop('index', axis=1)
+        s = pd.concat([support,delta_perc]).reset_index().drop('index', axis=1)
 
         spt2 = support.T
         last_price_rank = spt2[spt2[0] < last_price].__len__()
@@ -1231,7 +1232,7 @@ class Finlib_indicator:
                 'low': [a_live_df.low.values[0]],
                 'close': [a_live_df.close.values[0]],
             })
-            df = df.append(df_today).reset_index().drop('index', axis=1)
+            df = pd.concat([df,df_today]).reset_index().drop('index', axis=1)
             df['name'] = a_live_df.iloc[0]['name']  # add name column. AK returns name in df.
 
             rtn = self.my_ma_koudi(df=df)
@@ -1999,7 +2000,7 @@ class Finlib_indicator:
                 trend = "bear"
                 action = "buy"
 
-            df_rtn = df_rtn.append(pd.DataFrame().from_dict({
+            df_rtn = pd.concat([df_rtn, pd.DataFrame().from_dict({
                 'code': [code],
                 'date': [da1],
                 'close': [d1],
@@ -2010,7 +2011,7 @@ class Finlib_indicator:
                 'p_make_ma_across': [d0],
                 'delta': [delta],
                 'delta_perc': [delta_perc],
-            }))
+            })])
 
             logging.info(str(code) + ", day " + str(da1) + " close " + str(d1) + " , price to get mashort" + str(ma_short) + " equal malong" + str(ma_middle) + " " + str(d0) + " delta " + str(delta) + " delta_perc " + str(delta_perc) + " trend " + str(trend))
 
@@ -2059,19 +2060,19 @@ class Finlib_indicator:
             return
 
         # calculate HS300
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhenChenZhi", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"), df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close, df_amount=df_amount))
-        df_rtn = df_rtn.append(self._get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close, df_amount=df_amount))
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="HS300", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000300.csv"), df_close=df_close, df_amount=df_amount)])
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="ZhongZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000903.csv"), df_close=df_close, df_amount=df_amount)])
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="ZhongZhen500", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SH000905.csv"), df_close=df_close, df_amount=df_amount)])
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="ShenZhenChenZhi", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399001.csv"), df_close=df_close, df_amount=df_amount)])
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="ShenZhen100", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/SZ399330.csv"), df_close=df_close, df_amount=df_amount)])
+        df_rtn = pd.concat([df_rtn,self._get_avg_chg_of_code_list(list_name="KeJiLongTou", df_code_column_only=pd.read_csv("/home/ryan/DATA/pickle/Stock_Fundamental/WuGuiLiangHua/CSI931087.csv"), df_close=df_close, df_amount=df_amount)])
 
         # calculate garbage stocks close/amount increase
         df_rtn_garb = pd.DataFrame()
         for csv in glob.glob("/home/ryan/DATA/result/garbage/latest_*.csv"):
             # logging.info("reading "+csv)
             df = pd.read_csv(csv)
-            df_rtn_garb = df_rtn_garb.append(self._get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount))
+            df_rtn_garb = pd.concat([df_rtn_garb,self._get_avg_chg_of_code_list(list_name=csv.split(sep='/')[-1], df_code_column_only=df[['code']], df_close=df_close, df_amount=df_amount)])
 
         logging.info("\n===== INDEX Increase ======")
         logging.info(finlib.Finlib().pprint(df_rtn.sort_values('price_change', ascending=False, inplace=False)))
@@ -2226,7 +2227,7 @@ class Finlib_indicator:
 
         rtn_df = pd.DataFrame()
 
-        df_tmp = df_jin_cha.append(df_si_cha).sort_values(by='date').reset_index().drop('index', axis=1)
+        df_tmp = pd.concat([df_jin_cha,df_si_cha]).sort_values(by='date').reset_index().drop('index', axis=1)
 
         while True:
             if df_tmp.__len__() >= 2 and not (df_tmp.iloc[0]['action'] == 'B' and df_tmp.iloc[1]['action'] == 'S'):
@@ -2272,7 +2273,7 @@ class Finlib_indicator:
                     'profit_overall': [profit_overall],
                 })
 
-                rtn_df = rtn_df.append(tmp_df)
+                rtn_df = pd.concat([rtn_df,tmp_df])
 
         rtn_df = rtn_df.reset_index().drop('index', axis=1)
         return (rtn_df)
