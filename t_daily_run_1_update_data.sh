@@ -347,9 +347,9 @@ fi
 ## BestTV-W works
 ######################################
 # not run because time consuming. 20200518
-if [ $full_or_daily == "FULL" ]; then
-  python t_fenghong.py  --fetch_no_adj_data  --force_fetch_data #time consuming
-fi
+#if [ $full_or_daily == "FULL" ]; then
+#  python t_fenghong.py  --fetch_no_adj_data  --force_fetch_data #time consuming
+#fi
 
 
 

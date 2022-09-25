@@ -891,6 +891,7 @@ def fetch_info_daily(fast_fetch=False):
 
     trading_days = trade_days[(trade_days.cal_date <= int(todayS)) & (trade_days.is_open == 1)]
     trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)
+    trading_days = trading_days[:30]
 
     if fast_fetch:  # run on daily, fetch the most recent 5 day only.
         trading_days = trading_days[:5]
@@ -3864,7 +3865,8 @@ def _fetch_cctv_news():
     # df_result = pd.DataFrame(columns=['cat_name', 'cat_code'])
 
     # 数据开始于2006年6月，超过12年历史
-    date = datetime.date(2006, 6, 15)
+    # date = datetime.date(2006, 6, 15)
+    date = datetime.date(2022, 8, 15)
     today = datetime.date.today()
 
     while date <= today:
