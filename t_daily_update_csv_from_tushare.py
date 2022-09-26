@@ -304,9 +304,8 @@ def main():
         # todayS_l = datetime.today().strftime('%Y-%m-%d')
         todayS_l = exam_date
 
-    logging.info(("Update Data of " + todayS_l))
-
-    update_holc(todayS_l, base_dir, pickle_only, add_miss)
+    # logging.info(("Update Data of " + todayS_l))
+    # update_holc(todayS_l, base_dir, pickle_only, add_miss)
 
     logging.info(__file__+" "+"Script Completed.")
     os._exit(0)

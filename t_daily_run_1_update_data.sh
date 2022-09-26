@@ -64,7 +64,8 @@ python t_daily_fundamentals_2.py --fetch_basic_daily
 python /home/ryan/tushare_ryan/t_daily_get_ag_index_from_tushare.py --fetch_index;
 
 # output: /home/ryan/DATA/DAY_Global/AG/*.csv
-python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
+# obsolated, no longer use data in /AG/*.csv
+#python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
 
 ############################
 # output: /home/ryan/DATA/DAY_Global/AG_qfq/*.csv
