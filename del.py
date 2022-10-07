@@ -1556,7 +1556,9 @@ print(1)
 
 
 
-# df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
+df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
+
+
 start_d = '20210601'
 days=15
 period = []

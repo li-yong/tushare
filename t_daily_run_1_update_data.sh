@@ -20,7 +20,7 @@ fi
 
 
 cd /home/ryan/tushare_ryan
-git pull
+#git pull
 #sleep 2
 
 ##
@@ -65,7 +65,7 @@ python /home/ryan/tushare_ryan/t_daily_get_ag_index_from_tushare.py --fetch_inde
 
 # output: /home/ryan/DATA/DAY_Global/AG/*.csv
 # obsolated, no longer use data in /AG/*.csv
-#python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
+python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
 
 ############################
 # output: /home/ryan/DATA/DAY_Global/AG_qfq/*.csv

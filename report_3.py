@@ -536,6 +536,223 @@ def _bar_get_support_resist(df):
 
     return(rtn_df_bar_opt,rtn_df_bar_bs_line)
 
+def _bar_get_support_resist_simple(df):
+    ## start
+    bar_up = 0;
+    bar_dn = 0;
+    pct_gain = 0;
+    pct_lost = 0;
+    l_spt = 0;
+    l_spt_mid = 0;
+    l_rst = 0;
+    pre_row = None;
+    rvt_to_dn = False;
+    rvt_to_up = False;
+    rtn_df_bar_bs_line = pd.DataFrame()
+    rtn_df_bar_opt = pd.DataFrame()
+
+    code = df['code'].iloc[0]
+
+    df.loc[df['open'] > df['close'], 'bar_mid'] = df['open'] - (round((df['open'] - df['close']) / 2, 2))
+    df.loc[df['open'] <= df['close'], 'bar_mid'] = df['open'] + (round((df['close'] - df['open']) / 2, 2))
+
+    pct_gain = 0
+
+    df_up = df[df['close']>df['open']]
+    df_dn = df[df['close']<df['open']]
+
+    df_bs = pd.DataFrame()
+    ####  SUPPORT LINE
+    spt = 0
+    cnt_s = 0 # sell counter
+    for index, row in df_up.tail(35).reset_index().drop('index', axis=1).iterrows():
+        c = row['close']
+        d = row['date']
+
+        if c>spt:
+            spt = c
+            spt_d = d
+            cnt_s = 0
+            logging.info(f"spt updated {str(spt)} date {str(d)}")
+        elif c<spt:
+            cnt_s += 1
+            if cnt_s < 2:
+                logging.info(f"1st hit. {str(cnt_s)} SELL at {str(c)}, close lower than support, date {str(d)} support {str(spt)}")
+                continue
+
+            logging.info(f"{str(cnt_s)} SELL at {str(c)}, close lower than support, date {str(d)} support {str(spt)}")
+            _d = pd.DataFrame.from_dict({
+                "code":[c],
+                "opt":['S'],
+                "date":[d],
+                "c":[c],
+                'rs': [spt],
+                'rs_d': [spt_d],
+            })
+
+            df_bs = pd.concat([df_bs, _d])
+            spt = 0
+
+
+
+    #### RESIST LINE
+
+    resist = 10E9
+    cnt_b = 0
+    for index, row in df_dn.tail(35).reset_index().drop('index', axis=1).iterrows():
+        c = row['close']
+        d = row['date']
+
+
+        if c < resist:
+            resist = c
+            resist_d = d
+            cnt_b = 0
+            logging.info(f"resist updated {str(resist)} date {str(d)}")
+        elif c > resist:
+            cnt_b += 1
+            if cnt_b < 2:
+                logging.info(f"1st hit. {str(cnt_b)} SELL at {str(c)}, close larger than resist, support {str(resist)}")
+                continue
+
+            logging.info(f"BUY at {str(c)} , close larger than resist, date {str(d)} resist {str(resist)}")
+            _d = pd.DataFrame.from_dict({
+                "code":[c],
+                "opt":['B'],
+                "date":[d],
+                "c":[c],
+                'rs':[resist],
+                'rs_d':[resist_d],
+            })
+
+            df_bs = pd.concat([df_bs, _d])
+            resist = 10E9
+
+    df_bs = df_bs.sort_values(by='date',ascending=True)
+    print(df_bs)
+
+
+
+
+
+
+    for index, row in df.tail(35).reset_index().drop('index', axis=1).iterrows():
+        # if index > 30:
+        #     print('debug stop')
+        #     print(row['date'])
+            # logging.info(
+            #     f"idx {str(index)} {str(row['date'])}, bar_up {bar_up}, p_to_sell {str(l_spt)}. "
+            #     f"bar_dn {str(bar_dn)},  p_to_buy {str(l_rst)}")
+
+        rtn_df_bar_bs_line = pd.concat([rtn_df_bar_bs_line, pd.DataFrame().from_dict({
+            'code': [code],
+            'date': [row['date']],
+
+            'open': [row['open']],
+            'close': [row['close']],
+            'pre_close': [row['pre_close']],
+            'pct_chg': [row['pct_chg']],
+
+
+
+            'bar_up': [bar_up],
+            'p_to_sell': [l_spt],
+            'bar_dn': [bar_dn],
+            'p_to_buy': [l_rst],
+        })])
+
+        # if index==12:
+        #     logging.info("debug stop")
+
+        if bar_dn > 0 and row['pct_chg'] > 0 and row['close'] > l_rst:
+            # logging.info(f"buy point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_rst)}")
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt,pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['buy'],
+                'close': [row['close']],
+                'p_to_buy': [l_rst],
+                'p_to_sell': [l_spt],
+                'pct_gain':[pct_gain]
+            })])
+
+            bar_dn = 0;
+            l_rst = 0;
+            bar_up += 1
+            rvt_to_up = True
+            rvt_to_dn = False
+            continue
+
+        elif bar_up > 0 and row['pct_chg'] < 0 and row['close'] < l_spt:
+            # logging.info(f"sell point {code}, {str(row['date'])}, {str(row['close'])},  {str(l_spt)}")
+            _df_buy = rtn_df_bar_opt[rtn_df_bar_opt['opt']=='buy']
+
+            if _df_buy.__len__()>0:
+                last_pct_gain = _df_buy.iloc[-1]['pct_gain']
+                last_buy_close = _df_buy.iloc[-1]['close']
+                pct_gain = last_pct_gain + 100*(row['close']-last_buy_close)/last_buy_close
+                pct_gain = round(pct_gain,1)
+
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt, pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['sell'],
+                'close': [row['close']],
+                'p_to_sell': [l_spt],
+                'pct_gain':[pct_gain]
+            })])
+
+            bar_up = 0;
+            l_spt = 0;
+            bar_dn += 1
+            rvt_to_dn = True
+            rvt_to_up = False
+            continue
+        else:
+            rtn_df_bar_opt = pd.concat([rtn_df_bar_opt, pd.DataFrame().from_dict({
+                'code': [code],
+                'date': [row['date']],
+                'opt': ['keep'],
+                'close': [row['close']],
+                'p_to_buy': [l_rst],
+                'p_to_sell': [l_spt],
+                'pct_gain': [pct_gain]
+            })])
+
+        if index == 0:
+            pre_row = row
+            continue
+
+        if row['pct_chg'] > 0 and row['open'] < row['close']:
+            if bar_dn > 0:
+                # logging.info("ignore none-break upbar in down trend")
+                continue  # ignore upbar in down trend, the bar not break the down trend.
+
+            if not rvt_to_up:
+                bar_up += 1
+            else:
+                rvt_to_up = False
+
+            l_spt = row['open']  # move l_spt up
+            l_spt_mid = row['bar_mid']  # move l_spt up
+
+        if row['pct_chg'] < 0 and row['open'] > row['close']:
+            if bar_up > 0:
+                # logging.info("ignore none-break dnbar in up trend")
+                continue
+
+            if not rvt_to_dn:
+                bar_dn += 1
+            else:
+                rvt_to_dn = False
+
+            l_rst = row['open']  # move l_rst lower
+
+        pre_row = row
+        # end of for
+
+    return(rtn_df_bar_opt,rtn_df_bar_bs_line)
+
 
 def _bar_get_status(df_daily):
 
@@ -611,7 +828,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         rtn_df_bar_bs_line = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_bar_opt = pd.read_csv(csv_out_opt)
 
-        code='SH600519' #ryan debug
+        # code='SH600519' #ryan debug
         df_sample_bar_status = rtn_df_bar_status[rtn_df_bar_status['code']==code]
         df_sample_bar_bs_line = rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==code]
         df_sample_bar_opt = rtn_df_bar_opt[rtn_df_bar_opt['code']==code]
@@ -1740,6 +1957,24 @@ no_question = options.no_question
 debug = options.debug
 
 
+#ryan debug
+
+
+
+df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG_INDEX')
+df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG_BK')
+df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG')
+
+##
+dfs = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv")
+_rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist_simple(df=dfs)
+#
+# df_bar_status, df_bar_bs_line, df_bar_opt = bar_support_resist_strategy(
+#     csv_out_status=rst_dir + "/bar_ma_status.csv",
+#     csv_out_lian_ban_bk=rst_dir + "/bar_bs_line.csv",
+#     csv_out_opt=rst_dir + "/bar_bs_operate.csv",
+# )
+
 
 if no_question or input("Run xiao_hu_xian_2? [N]")=="Y":
     df_xhx2_opt = xiao_hu_xian_2(f"{rst_dir}/xiao_hu_xian_2.csv", debug=debug)
@@ -1755,7 +1990,7 @@ if no_question or input("Run lian ban tongji? [N]")=="Y":
         csv_out_lian_ban_opt = rst_dir+"/lianban_operate.csv",
         )
 
-if no_question or input("Run bar_support_resist_strategy? [N]")=="Y":
+if no_question or input("Run bar_support_resist_strategy? [N]")=="Y": #ryan debug
     df_bar_status,df_bar_bs_line,df_bar_opt = bar_support_resist_strategy(
         csv_out_status = rst_dir+"/bar_ma_status.csv",
         csv_out_lian_ban_bk = rst_dir+"/bar_bs_line.csv",

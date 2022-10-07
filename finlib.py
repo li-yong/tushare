@@ -5402,6 +5402,27 @@ class Finlib:
             df = self.adjust_column(df, ['code', 'name'])
 
         return(df)
+    def add_index_name_to_df(self, df, ts_pro_format=False):
+        # add stock name
+        # if ts_pro_format:
+        #     df=self.ts_code_to_code(df)
+
+        if df.empty:
+            logging.warning("empty df passed to add_index_name_to_df")
+            return(df)
+        
+        # df load from /home/ryan/DATA/DAY_Global/AG_INDEX/*SH/SZ.csv
+        df.loc[df['code'].str.contains('SH000001'), 'name'] = "上证综合指数" #
+        df.loc[df['code'].str.contains('SH000300'), 'name'] = "沪深300_SH" #沪深300指数
+        df.loc[df['code'].str.contains('SH000688'), 'name'] = "上证科创板50成份指数" #上证科创板50成份指数
+        df.loc[df['code'].str.contains('SH000905'), 'name'] = "中证小盘500指数" #中证小盘500指数
+        df.loc[df['code'].str.contains('SZ399001'), 'name'] = "深证成指" #
+        df.loc[df['code'].str.contains('SZ399005'), 'name'] = "中小100"
+        df.loc[df['code'].str.contains('SZ399006'), 'name'] = "创业板指"
+        df.loc[df['code'].str.contains('SZ399016'), 'name'] = "深证创新"
+        df.loc[df['code'].str.contains('SZ399300'), 'name'] = "沪深300_SZ"
+
+        return(df)
 
     def add_name_to_futu_code_list(self,ft_code_list):
 
@@ -5825,6 +5846,40 @@ class Finlib:
             df = self.regular_read_csv_to_stdard_df(data_csv=csv)
 
         return (df)
+    def load_all_ag_index_data(self,days=300):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/AG_INDEX"
+        csv = dir + "/ag_index_all_"+str(days)+"_days.csv"
+
+        if not self.is_cached(file_path=csv, day=1):
+            logging.info("generating csv from source.")
+
+            cmd1 = "head -1 " + dir + "/000001.SH.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/*.SH.csv`; do tail -" + str(days) + " $i |grep -vi code >> " + csv + "; done"
+            cmd3 = "for i in `ls " + dir + "/*.SZ.csv`; do tail -" + str(days) + " $i |grep -vi code >> " + csv + "; done"
+
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
+
+            os.system(cmd1)
+            os.system(cmd2)
+            os.system(cmd3)
+
+            #adding code to csv
+            df = self.ts_code_to_code(df=pd.read_csv(csv))  #convert ts_code to code
+            df.to_csv(csv, encoding='UTF-8', index=False)
+
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
+            df = self.add_index_name_to_df(df=df)
+
+            df.to_csv(csv, encoding='UTF-8', index=False)
+            logging.info("generated " + csv)
+        else:
+            logging.info("re-using csv as it generated in 1 days. " + csv)
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv)
+
+        return (df)
 
 
     def load_all_bk_qfq_data(self,days=300):
@@ -6209,7 +6264,7 @@ class Finlib:
                        suffixes=["", '_amt'])
         _df = pd.merge(left=_df, right=df_a_significant_body[['date']], on='date', how='inner', suffixes=["", '_b'])
 
-        df_pressure_support_all = _df[['code', 'date', 'close', 'vib','body','amount']]
+        df_pressure_support_all = _df[['code','name', 'date', 'close', 'vib','body','amount']]
         # logging.info(f"code {code} significant {str(perc)} perc")
         # logging.info(self.pprint(df_pressure_support_all.tail(10)))
 
@@ -6260,11 +6315,17 @@ class Finlib:
         return(df_pressure_support_all,df_pressure_support,selected)
 
 
-    def get_a_stock_significant(self, perc=90,last_n_days=300):
-        dir = '/home/ryan/DATA/result/'
+    def get_a_stock_significant(self, perc=90,last_n_days=300,mkt='AG'):
+        #mkt in [AG, AG_INDEX,AG_BK]
+        dir = '/home/ryan/DATA/result/'+str(mkt)
+
+        if not os.path.isdir(dir):
+            os.mkdir(dir)
+
         csv_o_ps = dir+"/pressure_support.csv"
         csv_o_ps_now = dir+"/pressure_support_now.csv"
         csv_o_ps_select = dir+"/pressure_support_select.csv"
+
 
         if self.is_cached(csv_o_ps,day=1) and self.is_cached(csv_o_ps_now, day=1) and self.is_cached(csv_o_ps_select, day=1):
             df_ps = pd.read_csv(csv_o_ps)
@@ -6277,8 +6338,15 @@ class Finlib:
         df_ps_now = pd.DataFrame()
         df_ps_select = pd.DataFrame()
 
-        df = self.load_all_ag_qfq_data(days=last_n_days)
-        df = self.add_stock_name_to_df(df=df)
+        if mkt == 'AG':
+            df = self.load_all_ag_qfq_data(days=last_n_days)
+            df = self.add_stock_name_to_df(df=df)
+        elif mkt == 'AG_BK':
+            df = self.load_all_bk_qfq_data(days=last_n_days)
+            df['name']=df['code']
+        elif mkt == 'AG_INDEX':
+            df = self.load_all_ag_index_data(days=last_n_days)
+
 
         i=0
         stock_list =df['code'].unique()
@@ -6295,14 +6363,17 @@ class Finlib:
             if selected:
                 df_ps_select = pd.concat([df_ps_select,df_pressure_support])
 
+        df_ps = df_ps.reset_index().drop('index', axis=1)
         df_ps.to_csv(csv_o_ps, encoding='UTF-8', index=False)
-        # logging.info(__file__ + ": " + "saved " + csv_o_ps + " . len " + str(df_ps.__len__()))
+        logging.info(__file__ + ": " + "saved " + csv_o_ps + " . len " + str(df_ps.__len__()))
 
+        df_ps_now = df_ps_now.reset_index().drop('index', axis=1)
         df_ps_now.to_csv(csv_o_ps_now, encoding='UTF-8', index=False)
-        # logging.info(__file__ + ": " + "saved " + csv_o_ps_now + " . len " + str(df_ps_now.__len__()))
+        logging.info(__file__ + ": " + "saved " + csv_o_ps_now + " . len " + str(df_ps_now.__len__()))
 
+        df_ps_select=df_ps_select.reset_index().drop('index', axis=1)
         df_ps_select.to_csv(csv_o_ps_select, encoding='UTF-8', index=False)
-        # logging.info(__file__ + ": " + "saved " + csv_o_ps_select + " . len " + str(df_ps_select.__len__()))
+        logging.info(__file__ + ": " + "saved " + csv_o_ps_select + " . len " + str(df_ps_select.__len__()))
 
 
         return(df_ps,df_ps_now, df_ps_select)
