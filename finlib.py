@@ -5871,8 +5871,6 @@ class Finlib:
             df.to_csv(csv, encoding='UTF-8', index=False)
 
             df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
-            df = self.add_index_name_to_df(df=df)
-
             df.to_csv(csv, encoding='UTF-8', index=False)
             logging.info("generated " + csv)
         else:
@@ -6346,6 +6344,7 @@ class Finlib:
             df['name']=df['code']
         elif mkt == 'AG_INDEX':
             df = self.load_all_ag_index_data(days=last_n_days)
+            df = self.add_index_name_to_df(df=df)
 
 
         i=0
