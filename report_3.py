@@ -288,8 +288,25 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
         df_s=df[df['code']==code]
 
         df_s = pd.merge(left=df_s, right=dfb, on=['code', 'date'], how='inner')
+
         if df_s.__len__() == 0:
             continue
+
+        df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
+
+        df_zt = df_s[df_s['pct_chg'] > ZT_P]
+        if df_zt.__len__()<2:
+            logging.info(f"less than 2 ZT in the window, {str(df_s.__len__())} days")
+            continue
+
+        if (df_zt.date_dt.iloc[-1] - df_zt.date_dt.iloc[-2]).days < 7:
+            logging.info(f"two ZT interval less than 7 days")
+            continue
+
+        if (df_zt.date_dt.iloc[-1] - df_zt.date_dt.iloc[-2]).days > 90:
+            logging.info(f"two ZT interval larger than 90 days")
+            continue
+
 
         df_s = finlib.Finlib().add_stock_name_to_df(df_s)
 
@@ -302,7 +319,6 @@ def xiao_hu_xian_2(csv_out_opt,debug=False):
         last_day = df_s.iloc[-1]['date']
         cur_p = df_s.iloc[-1]['close']
 
-        df_s['date_dt']=df_s['date'].apply(lambda _d: datetime.datetime.strptime(_d, "%Y%m%d"))
 
         if df_s.__len__()<20:
             continue
@@ -1958,16 +1974,11 @@ debug = options.debug
 
 
 #ryan debug
-
-
-
-df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG_INDEX')
-df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG_BK')
-df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100,mkt='AG')
+# MAIN
 
 ##
-dfs = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv")
-_rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist_simple(df=dfs)
+# dfs = finlib.Finlib().regular_read_csv_to_stdard_df(data_csv="/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv")
+# _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist_simple(df=dfs)
 #
 # df_bar_status, df_bar_bs_line, df_bar_opt = bar_support_resist_strategy(
 #     csv_out_status=rst_dir + "/bar_ma_status.csv",
@@ -1975,6 +1986,16 @@ _rtn_df_bar_opt, _rtn_df_bar_bs_line = _bar_get_support_resist_simple(df=dfs)
 #     csv_out_opt=rst_dir + "/bar_bs_operate.csv",
 # )
 
+
+if no_question or input("Run stock significant? [N]")=="Y":
+    # /home/ryan/DATA/result/AG_INDEX/*.csv
+    df_ps, df_ps_now, df_ps_select = finlib.Finlib().get_a_stock_significant(perc=90, last_n_days=200, mkt='AG_INDEX')
+
+    # /home/ryan/DATA/result/AG_BK/*.csv
+    df_ps, df_ps_now, df_ps_select = finlib.Finlib().get_a_stock_significant(perc=90, last_n_days=200, mkt='AG_BK')
+
+    # /home/ryan/DATA/result/AG/*.csv
+    df_ps, df_ps_now, df_ps_select = finlib.Finlib().get_a_stock_significant(perc=90, last_n_days=200, mkt='AG')
 
 if no_question or input("Run xiao_hu_xian_2? [N]")=="Y":
     df_xhx2_opt = xiao_hu_xian_2(f"{rst_dir}/xiao_hu_xian_2.csv", debug=debug)

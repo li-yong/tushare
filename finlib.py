@@ -6253,16 +6253,29 @@ class Finlib:
 
         df_a['vib'] = round(100 * (df_a['high'] - df_a['low']) / df_a['open'], 1)
         df_a['body'] = abs(round(100 * (df_a['close'] - df_a['open']) / df_a['open'], 1))
+        df_a['is_inc'] = False
+        df_a.loc[df_a['close']>df_a['open'],'is_inc'] = True
+
 
         df_a_significant_vib = df_a[df_a['vib'] >= stats.scoreatpercentile(df_a['vib'], perc)]
+        df_a_significant_vib['reason']='vib'
+
         df_a_significant_amount = df_a[df_a['amount'] >= stats.scoreatpercentile(df_a['amount'], perc)]
+        df_a_significant_amount['reason'] = 'amt'
+
         df_a_significant_body = df_a[df_a['body'] >= stats.scoreatpercentile(df_a['body'], perc)]
+        df_a_significant_body['reason'] = 'bdy'
 
         _df = pd.merge(left=df_a_significant_vib, right=df_a_significant_amount[['date']], on='date', how='inner',
                        suffixes=["", '_amt'])
         _df = pd.merge(left=_df, right=df_a_significant_body[['date']], on='date', how='inner', suffixes=["", '_b'])
 
-        df_pressure_support_all = _df[['code','name', 'date', 'close', 'vib','body','amount']]
+
+        # MAKE IT SIMIPLE. ABORT ABOVE INNER MERGE.
+        _df = pd.concat([df_a_significant_vib,df_a_significant_amount,df_a_significant_body])
+        # _df = df_a_significant_body
+
+        df_pressure_support_all = _df[['code','name', 'date', 'close', 'vib','body','amount','is_inc','reason']]
         # logging.info(f"code {code} significant {str(perc)} perc")
         # logging.info(self.pprint(df_pressure_support_all.tail(10)))
 
