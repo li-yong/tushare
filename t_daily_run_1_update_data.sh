@@ -421,14 +421,17 @@ python t_futu_trade.py --fetch_history_bar  --market US_HOLD
 #output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
 #output: /home/ryan/DATA/DAY_Global/AG_concept/EM/*.csv
 ######################################
-python ak_share.py --fetch_em_concept
-
+if [ $full_or_daily == "FULL" ]; then
+  python ak_share.py --fetch_em_concept
+fi
 
 ######################################
 #output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
 #output: /home/ryan/DATA/DAY_Global/AG_concept/EM/*.csv
 ######################################
-python ak_share.py --fetch_ths_concept
+if [ $full_or_daily == "FULL" ]; then
+  python ak_share.py --fetch_ths_concept
+fi
 
 
 ######################################

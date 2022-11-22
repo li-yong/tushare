@@ -844,7 +844,7 @@ def bar_support_resist_strategy(csv_out_status,csv_out_lian_ban_bk,csv_out_opt,d
         rtn_df_bar_bs_line = pd.read_csv(csv_out_lian_ban_bk)
         rtn_df_bar_opt = pd.read_csv(csv_out_opt)
 
-        # code='SH600519' #ryan debug
+        code='SH600519' #ryan debug
         df_sample_bar_status = rtn_df_bar_status[rtn_df_bar_status['code']==code]
         df_sample_bar_bs_line = rtn_df_bar_bs_line[rtn_df_bar_bs_line['code']==code]
         df_sample_bar_opt = rtn_df_bar_opt[rtn_df_bar_opt['code']==code]

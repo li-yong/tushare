@@ -383,11 +383,10 @@ def a_queue_card_to_desk():
                     q_next.curq = True
                 else:
                     print("ERROR, not able to determin current qc")
-
-
-
+                continue
             else:
                 continue
+
         if desk_card[col][0].color == exp_color and desk_card[col][0].number == exp_num:
             print(f"MOVE from queue to desk, {crd.fullname} -> {desk_card[col][0].fullname}, C{str(col)}R0")
             # inser to desk
