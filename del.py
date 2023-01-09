@@ -1392,7 +1392,7 @@ def zszq_act_profit():
     return(dfg)
 
 def nongli_bk_inc():
-    date_dict = finlib.Finlib().get_nong_li_date(start='20190101', end='20221231')
+    date_dict = finlib.Finlib().get_nong_li_date(start='20200101', end='20231231')
 
     i = 0
     start_date = ''
@@ -1544,7 +1544,7 @@ df_way0 = nl_bk_inc_inspect_0(df_rtn_nl_bk_inc)
 df_way1 = nl_bk_inc_inspect_1(df_rtn_nl_bk_inc)
 
 # date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
-date_dict= finlib.Finlib().get_nong_li_date(start='20200101',end='20201231')
+date_dict= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
 date_list = date_dict.keys()
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)

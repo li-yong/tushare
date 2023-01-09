@@ -6521,14 +6521,14 @@ class Finlib:
 
         # for code in df['code'].unique()[:2]:#debug
         for code in df['code'].unique():
-            logging.info(f"code {code}")
+            #logging.info(f"code {code}")
             adf = df[df['code'] == code][['code', 'date', 'close', 'open', 'high', 'low', 'vol', 'amount']]
 
             adf = adf[adf['date'] >= int(dayS)]
             adf = adf[adf['date'] <= int(dayE)]
 
             if adf.__len__() == 0:
-                logging.info(f"empty df, code {code},{dayS},{dayS_name},{dayE},{dayE_name}")
+                #logging.info(f"empty df, code {code},{dayS},{dayS_name},{dayE},{dayE_name}")
                 continue
 
             s = adf.iloc[0]
