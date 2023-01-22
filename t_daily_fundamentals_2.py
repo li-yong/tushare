@@ -21,6 +21,7 @@ import sys
 import os
 import logging
 import signal
+import threading
 
 logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m_%d %H:%M:%S", level=logging.DEBUG)
 
@@ -404,7 +405,7 @@ def load_fund_result(mini_score=80):
     return df_fund_2
 
 
-def fetch_pro_fund(fast_fetch=False):
+def fetch_pro_fund_ori(fast_fetch=False):
     ts.set_token(myToken)
     pro = ts.pro_api()
 
@@ -475,6 +476,108 @@ def fetch_pro_fund(fast_fetch=False):
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list)  #业绩预告
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list)  #业绩快报
         _ts_pro_fetch(pro, stock_list, fast_fetch, 'disclosure_date', query_fields_disclosure_date, fetch_period_list)  #财报披露计划日期
+
+def fetch_pro_fund(fast_fetch=False):
+    ts.set_token(myToken)
+    pro = ts.pro_api()
+
+    if not os.path.exists(fund_base):
+        os.makedirs(fund_base)
+
+    if not os.path.exists(fund_base_source + "/individual"):
+        os.makedirs(fund_base_source + "/individual")
+
+    time_series = finlib.Finlib().get_year_month_quarter()
+
+    fetch_period_list = time_series["fetch_most_recent_report_perid"]
+    fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
+    fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
+
+    if fast_fetch:
+        # high_score_stock_only
+        if force_run_global:  # ryan debug
+            stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
+            stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)
+        else:
+            stock_list = load_fund_result(mini_score=70)
+            # stock_list = finlib.Finlib().ts_code_to_code(df=stock_list)
+            # stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list)
+            stock_list = finlib.Finlib().remove_garbage(df=stock_list) #code: SH600519
+            # print(stock_list.__len__())
+
+    else:
+        stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
+        stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # code:SH603999
+        fetch_period_list = time_series["full_period_list"][0:4] + time_series["full_period_list_yearly"]
+        fetch_period_list = time_series["full_period_list"][0:1] #ryan debug
+        fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
+        fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
+        print(fetch_period_list)
+        # exit()
+
+
+    if debug_global:  # ryan debug start of fetching
+        stock_list = stock_list[stock_list["code"] == "SH600519"]
+        fetch_period_list = ['20201231']
+        # stock_list = stock_list[stock_list["code"] == "SH601995"]
+        # stock_list=stock_list[stock_list['code']=='300319.SZ'] #income 20181231 is empty
+
+    # select = datetime.datetime.today().day%2  # avoid too many requests a day
+
+    # if (select == 0)  or fast_fetch or force_run_global: #'save_only' runs on the HK VPS.
+    stock_list = finlib.Finlib().add_ts_code_to_column(df=stock_list,code_col='code')
+
+    # not fetching/calculating fundermental data at month 6,9, 11, 12
+    if not finlib.Finlib().get_report_publish_status()["process_fund_or_not"]:
+        logging.info(__file__ + " " + "not processing fundermental data at this month. ")
+        return ()
+    else:
+
+        # stock_list = _ts_pro_fetch(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list)
+
+        #return the valid stock_list which has data.
+        t_income = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, "income", query_fields_income, fetch_period_list))  # 利润表
+        t_balancesheet = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, "balancesheet", query_fields_balancesheet, fetch_period_list))   # 资产负债表
+        t_cashflow = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, "cashflow", query_fields_cashflow, fetch_period_list))   # 现金流量表
+        t_fina_indicator = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, "fina_indicator", query_fields_fina_indicator, fetch_period_list) )  # 财务指标数据
+        t_fina_audit = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, "fina_audit", query_fields_fina_audit, fetch_period_list))   # 财务审计意见
+
+# check following as stock_list is very short after previous filter.
+        t_dividend = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'dividend', query_fields_dividend, fetch_period_list))   #分红送股
+        t_fina_mainbz_p = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'fina_mainbz_p', query_fields_fina_mainbz, fetch_period_list) )  # 主营业务构成,Product
+        t_fina_mainbz_d = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'fina_mainbz_d', query_fields_fina_mainbz, fetch_period_list))   # 主营业务构成, Division
+        #
+        t_forecast = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'forecast', query_fields_forecast, fetch_period_list))   #业绩预告
+        t_express = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'express', query_fields_express, fetch_period_list))   #业绩快报
+        t_disclosure_date = threading.Thread(target=_ts_pro_fetch, args=(pro, stock_list, fast_fetch, 'disclosure_date', query_fields_disclosure_date, fetch_period_list))   #财报披露计划日期
+
+        t_income.start()
+        t_balancesheet.start()
+        t_cashflow.start()
+        t_fina_indicator.start()
+        t_fina_audit.start()
+
+        t_income.join()
+        t_balancesheet.join()
+        t_cashflow.join()
+        t_fina_indicator.join()
+        t_fina_audit.join()
+
+        t_dividend.start()
+        t_fina_mainbz_p.start()
+        t_fina_mainbz_d.start()
+        t_forecast.start()
+        t_express.start()
+        t_disclosure_date.start()
+
+        t_dividend.join()
+        t_fina_mainbz_p.join()
+        t_fina_mainbz_d.join()
+        t_forecast.join()
+        t_express.join()
+        t_disclosure_date.join()
+
+
 
 
 def handler(signum, frame):
@@ -595,46 +698,30 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
             # signal.alarm(5)
             df_tmp = pd.DataFrame()
             if query in ["income", "balancesheet", "cashflow", "fina_indicator", "fina_audit", "fina_mainbz_p", "fina_mainbz_d", "disclosure_date", "express"]:
-                if fast_fetch:
-                    if query in ["fina_audit", "fina_mainbz_p", "fina_mainbz_d", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
-                        continue
-                    else:
-                        try:
-                            if fetch_period_flag:
-                                logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                                if query == 'fina_mainbz_d':
-                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='D')
-                                elif query == 'fina_mainbz_p':
-                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='P')
-                                else:
-                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
+                if query in ["fina_audit", "fina_mainbz_p", "fina_mainbz_d", "disclosure_date", "express"] and (not str(period).__contains__("1231")) and fetch_period_flag:
+                    continue
+                else:
+                    try:
+                        if fetch_period_flag:
+                            logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
+                            if query == 'fina_mainbz_d':
+                                df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='D')
+                            elif query == 'fina_mainbz_p':
+                                df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, period=period, type='P')
+                            else:
+                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
 
-                            else:  # the 1st fetch
-                                logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                                if query == 'fina_mainbz_d':
-                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='D')
-                                elif query == 'fina_mainbz_p':
-                                    df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='P')
-                                else:
-                                    df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
+                        else:  # the 1st fetch
+                            logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
+                            if query == 'fina_mainbz_d':
+                                df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='D')
+                            elif query == 'fina_mainbz_p':
+                                df_tmp = pro_con.query('fina_mainbz', ts_code=ts_code, fields=query_fields, type='P')
+                            else:
+                                df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields)
 
-                        except Exception as e:
-                            logging.exception("Exception occurred")
-                # else:
-                #     if query in ["fina_audit", "fina_mainbz", "disclosure_date", "express"] and (not str(period).__contains__("1231")):
-                #         continue
-                #     else:
-                #         try:
-                #             if fetch_period_flag:
-                #                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period " + str(period))
-                #                 df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields, period=period)
-                #
-                #             else:  # the 1st fetch
-                #                 logging.info("query " + str(query) + " tscode " + str(ts_code) + " period is None")
-                #                 df_tmp = pro_con.query(query, ts_code=ts_code, fields=query_fields) ## Income,balance, most useful api
-                #
-                #         except Exception as e:
-                #             logging.exception("Exception occurred")
+                    except Exception as e:
+                        logging.exception("Exception occurred")
             elif query in ["forecast"]:
                 if fast_fetch:
                     if str(period).__contains__("1231"):
