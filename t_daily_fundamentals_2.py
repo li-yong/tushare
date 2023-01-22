@@ -437,9 +437,11 @@ def fetch_pro_fund(fast_fetch=False):
     else:
         stock_list = finlib.Finlib().get_A_stock_instrment()  # 603999
         stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=True, tspro_format=True)  # code:SH603999
-        fetch_period_list = time_series["full_period_list"][0:1] + time_series["full_period_list_yearly"]
+        fetch_period_list = time_series["full_period_list"][0:4] + time_series["full_period_list_yearly"]
         fetch_period_list = list(set(fetch_period_list))  # remove duplicate in list
         fetch_period_list.sort(reverse=True)  # 20181231 -> 20171231 -> 20161231
+        print(fetch_period_list)
+        # exit()
 
 
     if debug_global:  # ryan debug start of fetching

@@ -292,7 +292,7 @@ if [ $full_or_daily == "FULL" ]; then
 #  python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #pro fundation tables. 10 tables. all stocks
 
   ## ryan commented on 2022-07-25
-  #python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch --force_run  #fetch the latest period, all stocks.
+  python t_daily_fundamentals_2.py --fetch_pro_fund --fast_fetch --force_run  #fetch the latest period, all stocks.
 fi
 
 ######################################
