@@ -305,11 +305,7 @@ fi
 #                        600519.SH_fina_mainbz_d.csv
 #                        600519.SH_forecast.csv
 #                        600519.SH_fina_mainbz_p.csv
-
-
-
-
-
+#                        600519.SH_disclosure_date.csv
 
 if [ $full_or_daily == "MONTHLY" ]; then
    python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #fetch the latest period, all stocks.
