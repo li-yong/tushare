@@ -577,6 +577,9 @@ def fetch_pro_fund(fast_fetch=False):
         t_express.join()
         t_disclosure_date.join()
 
+        #all stocks, all querys are completed here.
+        return()
+
 
 
 
@@ -593,6 +596,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
     basic_df = get_pro_basic()
     fetch_most_recent_report_perid = finlib.Finlib().get_year_month_quarter()["fetch_most_recent_report_perid"][-1]
+    stable_report_perid = finlib.Finlib().get_year_month_quarter()['stable_report_perid']
 
     if not os.path.exists(fund_base_source):
         os.makedirs(fund_base_source)
@@ -631,6 +635,8 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 os.mkdir(dir)
 
             ind_csv = dir + "/" + ts_code + "_" + query + ".csv"
+            ind_csv_stable = fund_base_source + "/individual/" + stable_report_perid + "/" + ts_code + "_" + query + ".csv"
+
 
             # print(ind_csv)
 
@@ -652,8 +658,9 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                 modTime = time.mktime(now.timetuple())
                 os.utime(ind_csv, (modTime, modTime))
 
-            if (not force_run_global) and (period < fetch_most_recent_report_perid):
-                # logging.info(__file__ + " " + "not fetch stable period on " + ind_csv)
+            # if (not force_run_global) and (period < fetch_most_recent_report_perid):
+            if (not force_run_global) and os.path.exists(ind_csv_stable) and os.stat(ind_csv_stable).st_size > 0:
+                logging.info(__file__ + " " + "stable period file exists, not fetch again " + ind_csv_stable)
                 continue
 
             if os.path.exists(ind_csv) and os.stat(ind_csv).st_size > 0 and period < fetch_most_recent_report_perid:
