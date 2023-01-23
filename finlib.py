@@ -485,7 +485,8 @@ class Finlib:
 
             #Only count last year 1231 after March next year.
             if month < 3 and  (year - i ==1):
-                logging.info("ignore last year 1231 as current month less than 3. current month "+str(month))
+                # logging.info("ignore last year 1231 as current month less than 3. current month "+str(month))
+                pass
             else:
                 full_period_list_yearly.append(str(i) + "1231")
                 full_period_list.append(str(i) + "1231")

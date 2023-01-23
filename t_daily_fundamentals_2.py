@@ -518,7 +518,7 @@ def fetch_pro_fund(fast_fetch=False):
 
     if debug_global:  # ryan debug start of fetching
         stock_list = stock_list[stock_list["code"] == "SH600519"].reset_index().drop('index', axis=1)
-        fetch_period_list = ['20201231']
+        # fetch_period_list = ['20201231']
         # stock_list = stock_list[stock_list["code"] == "SH601995"]
         # stock_list=stock_list[stock_list['code']=='300319.SZ'] #income 20181231 is empty
 
@@ -557,12 +557,6 @@ def fetch_pro_fund(fast_fetch=False):
         t_fina_indicator.start()
         t_fina_audit.start()
 
-        t_income.join()
-        t_balancesheet.join()
-        t_cashflow.join()
-        t_fina_indicator.join()
-        t_fina_audit.join()
-
         t_dividend.start()
         t_fina_mainbz_p.start()
         t_fina_mainbz_d.start()
@@ -570,12 +564,41 @@ def fetch_pro_fund(fast_fetch=False):
         t_express.start()
         t_disclosure_date.start()
 
+
+        t_income.join()
+        logging.info("t_income is done")
+
+        t_balancesheet.join()
+        logging.info("t_balancesheet is done")
+
+        t_cashflow.join()
+        logging.info("t_cashflow is done")
+
+        t_fina_indicator.join()
+        logging.info("t_fina_indicator is done")
+
+        t_fina_audit.join()
+        logging.info("t_fina_audit is done")
+
+
         t_dividend.join()
+        logging.info("t_dividend is done")
+
         t_fina_mainbz_p.join()
+        logging.info("t_fina_mainbz_p is done")
+
         t_fina_mainbz_d.join()
+        logging.info("t_fina_mainbz_d is done")
+
         t_forecast.join()
+        logging.info("t_forecast is done")
+
         t_express.join()
+        logging.info("t_express is done")
+
         t_disclosure_date.join()
+        logging.info("t_disclosure_date is done")
+
 
         #all stocks, all querys are completed here.
         return()
@@ -794,7 +817,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
                         logging.exception("Exception occurred")
 
             logging.info(__file__ + " " + str(period) + " " + str(query) + ". received len " + str(df_tmp.__len__()))
-            logging.info(finlib.Finlib().pprint(df_tmp.head(1)))
+            logging.info(finlib.Finlib().pprint(df_tmp.tail(1)))
 
             # signal.alarm(0)
             # df_tmp = df_tmp.astype(str)
