@@ -299,7 +299,13 @@ fi
 #                        600519.SH_cashflow.csv
 #                        600519.SH_fina_audit.csv
 #                        600519.SH_fina_indicator.csv
-#                        600519.SH_income.csv
+
+#                        600519.SH_express.csv
+#                        600519.SH_dividend.csv
+#                        600519.SH_fina_mainbz_d.csv
+#                        600519.SH_forecast.csv
+#                        600519.SH_fina_mainbz_p.csv
+
 
 
 

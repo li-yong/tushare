@@ -410,6 +410,8 @@ class Finlib:
         if df.__len__() == 0:
             return(df)
 
+        df = df.reset_index().drop('index', axis=1)
+
         df_tmp = df.copy(deep=True)
 
         code_fmt = self.get_code_format(df_tmp['code'].iloc[0])['format']
