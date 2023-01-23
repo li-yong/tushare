@@ -290,9 +290,23 @@ if [ $full_or_daily == "FULL" ]; then
 
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/*.csv
 #  python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #pro fundation tables. 10 tables. all stocks
+fi
 
-  ## ryan commented on 2023-01-22
-  # python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #fetch the latest period, all stocks.
+
+#/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/*   ,
+# eg individual/20220930/600519.SH_income.csv
+#                        600519.SH_balancesheet.csv
+#                        600519.SH_cashflow.csv
+#                        600519.SH_fina_audit.csv
+#                        600519.SH_fina_indicator.csv
+#                        600519.SH_income.csv
+
+
+
+
+
+if [ $full_or_daily == "MONTHLY" ]; then
+   python t_daily_fundamentals_2.py --fetch_pro_fund --force_run  #fetch the latest period, all stocks.
 fi
 
 ######################################

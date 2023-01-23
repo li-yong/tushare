@@ -517,7 +517,7 @@ def fetch_pro_fund(fast_fetch=False):
 
 
     if debug_global:  # ryan debug start of fetching
-        stock_list = stock_list[stock_list["code"] == "SH600519"]
+        stock_list = stock_list[stock_list["code"] == "SH600519"].reset_index().drop('index', axis=1)
         fetch_period_list = ['20201231']
         # stock_list = stock_list[stock_list["code"] == "SH601995"]
         # stock_list=stock_list[stock_list['code']=='300319.SZ'] #income 20181231 is empty
