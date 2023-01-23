@@ -660,7 +660,7 @@ def _ts_pro_fetch(pro_con, stock_list, fast_fetch, query, query_fields, fetch_pe
 
             # if (not force_run_global) and (period < fetch_most_recent_report_perid):
             if (not force_run_global) and os.path.exists(ind_csv_stable) and os.stat(ind_csv_stable).st_size > 0:
-                logging.info(__file__ + " " + "stable period file exists, not fetch again " + ind_csv_stable)
+                logging.info(__file__ + " " + "stable period file exists, consider query data is up to date. " + ind_csv_stable)
                 continue
 
             if os.path.exists(ind_csv) and os.stat(ind_csv).st_size > 0 and period < fetch_most_recent_report_perid:
