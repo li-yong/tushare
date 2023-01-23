@@ -557,12 +557,13 @@ def fetch_pro_fund(fast_fetch=False):
         t_fina_indicator.start()
         t_fina_audit.start()
 
-        t_dividend.start()
-        t_fina_mainbz_p.start()
-        t_fina_mainbz_d.start()
-        t_forecast.start()
-        t_express.start()
-        t_disclosure_date.start()
+        if force_run_global:
+            t_dividend.start()
+            t_fina_mainbz_p.start()
+            t_fina_mainbz_d.start()
+            t_forecast.start()
+            t_express.start()
+            t_disclosure_date.start()
 
 
         t_income.join()
@@ -580,24 +581,24 @@ def fetch_pro_fund(fast_fetch=False):
         t_fina_audit.join()
         logging.info("t_fina_audit is done")
 
+        if force_run_global:
+            t_dividend.join()
+            logging.info("t_dividend is done")
 
-        t_dividend.join()
-        logging.info("t_dividend is done")
+            t_fina_mainbz_p.join()
+            logging.info("t_fina_mainbz_p is done")
 
-        t_fina_mainbz_p.join()
-        logging.info("t_fina_mainbz_p is done")
+            t_fina_mainbz_d.join()
+            logging.info("t_fina_mainbz_d is done")
 
-        t_fina_mainbz_d.join()
-        logging.info("t_fina_mainbz_d is done")
+            t_forecast.join()
+            logging.info("t_forecast is done")
 
-        t_forecast.join()
-        logging.info("t_forecast is done")
+            t_express.join()
+            logging.info("t_express is done")
 
-        t_express.join()
-        logging.info("t_express is done")
-
-        t_disclosure_date.join()
-        logging.info("t_disclosure_date is done")
+            t_disclosure_date.join()
+            logging.info("t_disclosure_date is done")
 
 
         #all stocks, all querys are completed here.
