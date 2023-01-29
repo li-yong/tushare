@@ -1,3 +1,7 @@
+0190000653
+0190685933
+  9970192059  rongzi_rongquan
+
 
 for i in {46..1}; do X=`date -d "-$i day" '+%Y-%m-%d'`; python t_daily_update_csv_from_tushare.py -a -e $X;  done
 

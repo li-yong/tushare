@@ -1476,8 +1476,6 @@ def nl_bk_inc_inspect_0(df_rtn_nl_bk_inc):
     logging.info(finlib.Finlib().pprint(df_summary[['code','data_s','data_sn','data_en','pct_change','cnt_of_inc']]))
 
 
-    print(1)
-
 
 # top bk inc in all time.
 def nl_bk_inc_inspect_1(df_rtn_nl_bk_inc):
@@ -1523,7 +1521,6 @@ def nl_bk_inc_inspect_1(df_rtn_nl_bk_inc):
     logging.info("\n" + finlib.Finlib().pprint(df_rtn_summary))
 
 
-    print(1)
 
 
 #### MAIN #####
@@ -1544,7 +1541,7 @@ df_way0 = nl_bk_inc_inspect_0(df_rtn_nl_bk_inc)
 df_way1 = nl_bk_inc_inspect_1(df_rtn_nl_bk_inc)
 
 # date_list= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
-date_dict= finlib.Finlib().get_nong_li_date(start='20210101',end='20221231')
+date_dict= finlib.Finlib().get_nong_li_date(start='20230101',end='20231231')
 date_list = date_dict.keys()
 
 df_ind = finlib.Finlib().list_index_performance(date_list=date_list)
