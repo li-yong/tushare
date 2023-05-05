@@ -4365,7 +4365,7 @@ class Finlib:
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'date': str}, encoding="utf-8")
         else:
             logging.fatal(__file__+" "+"unknown path file " + data_csv_fp)
-            exit(0)
+            sys.exit(1)
 
         if rtn_df.__len__() > 0:
             rtn_df = self.regular_column_names(rtn_df)

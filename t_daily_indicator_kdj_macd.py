@@ -825,6 +825,7 @@ def _ma_cross(csv_f,period, period_fast,period_slow):
 
     this_date = d1.date.strftime("%Y-%m-%d")  # '2019-03-31'
     c1 = d1.close
+    c1 = d1.close
 
     if d1['ma_fast_cross_over_slow'] == True:
         this_reason += constant.SMA_CROSS_OVER + "_"+period_fast+"_"+period_slow+"; "
@@ -840,7 +841,9 @@ def _ma_cross(csv_f,period, period_fast,period_slow):
         "code": [this_code],
         "date": [this_date],
         "close": [c1],
-
+        "close_fast_sma": [d1[f'close_{period_fast}_sma']],
+        "close_slow_sma": [d1[f'close_{period_slow}_sma']],
+        "indicator":"daily_inc_perc",
     }
 
     return(rtn)
@@ -882,6 +885,95 @@ def ma_cross(period, period_fast, period_slow, debug=False):
         logging.info(__file__+" "+"MA cross over saved to " + output_csv + " . len " + str(df_rtn.__len__()))
 
 
+#bo dong
+def ma_cross_vlt(period, period_fast, period_slow, debug=False):
+    output_csv = "/home/ryan/DATA/result/ma_cross_over_selection_" + period_fast+"_"+period_slow + ".csv"  #head: code, name, date, action(b/s), reason, strength.
+
+    df_rtn = pd.DataFrame()
+
+    stock_list = finlib.Finlib().get_A_stock_instrment()
+    stock_list = finlib.Finlib().add_market_to_code(stock_list, dot_f=False, tspro_format=False)
+
+    #stock_list = finlib.Finlib().remove_garbage(stock_list, code_field_name='code', code_format='C2D6')
+    if debug:
+        stock_list = stock_list.head(10) #debug
+
+    cnt = stock_list.__len__()
+    i = 0
+    for c in stock_list['code']:
+        i += 1
+        csv_f = '/home/ryan/DATA/DAY_Global/AG_qfq/' + c + ".csv"
+        logging.info(str(i) + " of " + str(cnt) + " " + c)
+
+        # df = pd.read_csv(csv_f)
+        df = finlib.Finlib().regular_read_csv_to_stdard_df(csv_f)
+        if df.__len__() < 180:
+            continue
+
+        df = df[['code', 'date', 'close']]
+        df['pre_close'] = df['close'].shift(1)
+        df['inc'] = (df['close'] - df['pre_close'])*100/df['pre_close'] # use daily increase as Measurment.
+
+        std_inc_180 = round(df['inc'][-180:].describe()['std'],2)
+        std_inc_60 = round(df['inc'][-60:].describe()['std'],2)
+        std_inc_3 = round(df['inc'][-3:].describe()['std'],2)
+
+        if std_inc_180 == 0:
+            continue
+
+
+        mean_inc_180 = round(df['inc'][-180:].describe()['mean'],2)
+        mean_inc_60 = round(df['inc'][-60:].describe()['mean'],2)
+        mean_inc_3 = round(df['inc'][-3:].describe()['mean'],2)
+
+        if mean_inc_180 == 0:
+            continue
+
+
+        _df = pd.DataFrame.from_dict(
+            {
+            'code':df.iloc[-1]['code'],
+            'date':df.iloc[-1]['date'],
+            'std_inc_180':[std_inc_180],
+            'std_inc_60':[std_inc_60],
+            'std_inc_3':[std_inc_3],
+            'mean_inc_180':[mean_inc_180],
+            'mean_inc_60':[mean_inc_60],
+            'mean_inc_3':[mean_inc_3],
+
+            'std_strength':[round( (std_inc_3 - std_inc_180)/std_inc_180, 2)],
+            'mean_strength':[round( (mean_inc_3 -mean_inc_180)/mean_inc_180,2)],
+            }
+        )
+        df_rtn = pd.concat([df_rtn, _df])
+
+
+        # df = df.drop(['close','pre_close'], axis=1)
+        # df = df.rename(columns={'inc':'close'})
+        # tmpcsv="/home/ryan/DATA/DAY_Global/AG_qfq/del.csv"
+        # df.to_csv(tmpcsv, encoding='UTF-8', index=False)
+        #
+        # r = _ma_cross(csv_f=tmpcsv, period=period, period_fast=period_fast, period_slow=period_slow)
+        #
+        # if r['action'] != ['']:
+        #     print(r) #ryan debug
+        #     df = pd.DataFrame(data=r)
+        #     df_rtn = pd.concat([df_rtn, df])
+
+    if df_rtn.empty:
+        logging.info("VLT cross over no qualified stock found.")
+    else:
+        df_rtn = df_rtn.query("`std_inc_180`<2 and `std_inc_60`<2 and `std_strength`>0 and `mean_strength`> 0")
+        df_rtn = df_rtn.sort_values(by='std_strength',ascending=False)
+        df_rtn = pd.merge(df_rtn, stock_list, how='inner', on='code')
+        df_rtn = finlib.Finlib().adjust_column(df_rtn, [ 'date','code', 'name', 'close', 'action', 'reason', 'strength'])
+        df_rtn.to_csv(output_csv, encoding='UTF-8', index=False)
+
+        logging.info(finlib.Finlib().pprint(df_rtn.head(5)))
+
+        logging.info(__file__+" "+"MA cross over saved to " + output_csv + " . len " + str(df_rtn.__len__()))
+
+
 def calculate(indicator, period,period_fast,period_slow, debug):
     if indicator == 'KDJ':
         kdj(period=period, debug=debug)
@@ -891,6 +983,9 @@ def calculate(indicator, period,period_fast,period_slow, debug):
 
     if indicator == 'MA_CROSS':
         ma_cross(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
+
+    if indicator == 'VLT_CROSS':
+        ma_cross_vlt(period=period, period_fast=period_fast, period_slow=period_slow, debug=debug)
 
 
 
@@ -972,7 +1067,7 @@ def main():
 
     parser = OptionParser()
 
-    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|MA_CROSS]")
+    parser.add_option("-i","--indicator", type="str", dest="indicator_f", default=None, help="indicator, one of [KDJ|MACD|MA_CROSS|VLT_CROSS]")
 
     parser.add_option("-p","--period", type="str", dest="period_f", default=None, help="period, one of [M|W|D]")
     parser.add_option("-f","--period_fast", type="str", dest="period_fast_f", default=None, help="fast period of MA, 21 e.g")
@@ -997,7 +1092,7 @@ def main():
 
 
     if indicator == None:
-        print("missing indicator [MACD|KDJ|MA_CROSS]")
+        print("missing indicator [MACD|KDJ|MA_CROSS|VLT_CROSS]")
 
     if analyze_f:
         analyze(indicator=indicator,  debug=debug)

@@ -1525,6 +1525,51 @@ def nl_bk_inc_inspect_1(df_rtn_nl_bk_inc):
 
 #### MAIN #####
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 读取股票数据
+df = pd.read_csv('/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv')
+df = df.tail(300)
+
+d = df['close'].describe()
+hv300 = round(100*d['std']/d['mean'],1)
+hv7 = round(100*d['std']/d['mean'],1)
+
+# 计算股票价格的移动平均线
+df['MA'] = df['close'].rolling(window=20).mean()
+
+# 计算股票价格与移动平均线的差值
+df['Diff'] = df['close'] - df['MA']
+
+# 计算 Diff 的一阶导数
+df['Diff_Derivative'] = df['Diff'].diff()
+
+# 定义操作员行为规则
+def operator_behavior(row):
+    if row['Diff'] > 0 and row['Diff_Derivative'] > 0:
+        return 'accumulation'
+    elif row['Diff'] < 0 and row['Diff_Derivative'] < 0:
+        return 'distribution'
+    else:
+        return 'undefined'
+
+# 应用操作员行为规则到数据集
+df['Operator_Behavior'] = df.apply(operator_behavior, axis=1)
+
+# 绘制股票价格与移动平均线的图表，并用颜色区分操作员行为
+plt.plot(df['close'], label='Close')
+plt.plot(df['MA'], label='MA')
+plt.scatter(df.index, df['close'], c=df['Operator_Behavior'].map({'accumulation': 'green', 'distribution': 'red', 'undefined': 'blue'}), alpha=0.5)
+plt.legend()
+plt.show()
+
+
+###
+f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_stock_company.csv"
+df = pd.read_csv(f)
+df[['code','city']].groupby('city').count().reset_index().sort_values(by='code').tail(20)
 # df = zszq_act_profit()
 # exit()
 
@@ -1554,6 +1599,7 @@ print(1)
 
 
 df_ps,df_ps_now,df_ps_select = finlib.Finlib().get_a_stock_significant(perc=80,last_n_days=100)
+
 
 
 start_d = '20210601'
