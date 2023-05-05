@@ -963,6 +963,7 @@ def ma_cross_vlt(period, period_fast, period_slow, debug=False):
     if df_rtn.empty:
         logging.info("VLT cross over no qualified stock found.")
     else:
+        df_rtn = finlib.Finlib().add_amount_mktcap(df=df_rtn,sorted_by_mktcap=True,mktcap_unit="100M")
         df_rtn = df_rtn.query("`std_inc_180`<2 and `std_inc_60`<2 and `std_strength`>0 and `mean_strength`> 0")
         df_rtn = df_rtn.sort_values(by='std_strength',ascending=False)
         df_rtn = pd.merge(df_rtn, stock_list, how='inner', on='code')
