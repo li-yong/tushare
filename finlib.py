@@ -1181,6 +1181,10 @@ class Finlib:
         this_year = datetime.today().strftime("%Y")
         csvf = "/home/ryan/DATA/pickle/trading_day_" +this_year  + ".csv"
         df_trade_cal = ts.pro_api().trade_cal(exchange='SSE', start_date='19980101', end_date=this_year+'1231')
+
+        if df_trade_cal['cal_date'][0] > df_trade_cal['cal_date'][1]:
+            df_trade_cal = df_trade_cal[::-1]  #ascending order
+
         df_trade_cal.to_csv(csvf, encoding='UTF-8', index=False)
         logging.info(__file__ + ": " + "trade_cal saved to " + csvf + " , len " + str(df_trade_cal.__len__()))
         return df_trade_cal

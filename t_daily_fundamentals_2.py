@@ -949,6 +949,7 @@ def fetch_basic_daily(fast_fetch=False):
     calendar_f = "/home/ryan/DATA/pickle/trading_day_" + str(datetime.datetime.today().year) + ".csv"
     if not os.path.isfile(calendar_f):
         logging.error("no such file " + calendar_f)
+        finlib.Finlib().get_ag_trading_day()
         exit()
 
     trade_days = pandas.read_csv(calendar_f)
