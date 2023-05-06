@@ -948,15 +948,14 @@ def fetch_basic_daily(fast_fetch=False):
     ##### get daily basic
     calendar_f = "/home/ryan/DATA/pickle/trading_day_" + str(datetime.datetime.today().year) + ".csv"
     if not os.path.isfile(calendar_f):
-        logging.error("no such file " + calendar_f)
+        logging.error("fetching file " + calendar_f)
         finlib.Finlib().get_ag_trading_day()
-        exit()
 
     trade_days = pandas.read_csv(calendar_f)
     todayS = datetime.datetime.today().strftime("%Y%m%d")
 
     trading_days = trade_days[(trade_days.cal_date <= int(todayS)) & (trade_days.is_open == 1)]
-    trading_days = trading_days[-30:]
+    trading_days = trading_days[-90:]
     # trading_days = trading_days.sort_values("cal_date", ascending=False, inplace=False)  #don't sort, we need create the latest_ symbol link.
 
     if fast_fetch:  # run on daily, fetch the most recent 5 day only.
