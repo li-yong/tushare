@@ -97,6 +97,8 @@ rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fenghong/  /
 rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/  /home/ryan/DATA/pickle/Stock_Fundamental/top_10_holder/
 rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/merged/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals/merged/
 
+#rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/peg/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/peg/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/holdertrade/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/cctv_news/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/
@@ -124,11 +126,11 @@ rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamental
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190331/
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190630/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190630/
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190930/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20190930/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20201231/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210630/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20210930/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20211231/
-rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220331/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220630/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220630/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220930/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20220930/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20221231/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20221231/
+rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20230331/ /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual/20230331/
 rsync -avztL ${source_host}:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/
 
 #rsync -avzt ${source_host}:/home/ryan/DATA/pickle/DOW_SP/  /home/ryan/DATA/pickle/DOW_SP/
