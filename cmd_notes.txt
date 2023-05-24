@@ -3,6 +3,9 @@
   9970192059  rongzi_rongquan
 
 
+
+cat /home/ryan/DATA/result/df_report_volatility_AG.csv | sort -t"," -n -k4 -r
+
 for i in {46..1}; do X=`date -d "-$i day" '+%Y-%m-%d'`; python t_daily_update_csv_from_tushare.py -a -e $X;  done
 
 for i in `ls`; do A="$(cut -d'.' -f1 <<< $i)"; echo $A.csv; mv $i $A.csv;   done
