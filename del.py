@@ -1593,6 +1593,127 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+## PnF point and figure
+import stockstats
+REVERSE = 3
+
+df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
+df = df_all[df_all['code']=='SH600519']
+df = stockstats.StockDataFrame.retype(df)
+df[['atr_14']] #add atr_14 column to df
+df['atr_14'] = df['atr_14'].apply(lambda _d: round(_d,2))
+df['box_size'] = df['atr_14'].shift(1) #exclude current day's variation from caculation of box_size.
+df = df[15:]
+df = df.reset_index() #.drop('index', axis=1)
+box_size = round(df.atr_14.iloc[-1],2) #the latest (current) box_size)
+# df[['atr_14']].reset_index().query("atr_1<60 and atr_1>50")
+#discard the NA, inaccurate atr_14
+
+fg_row = 0
+fg_trend = 'NO_TREND'
+
+for index, row in df.iterrows():
+    # print()
+    date = row['date']
+    close = row['close']
+    box_size = row['box_size']
+    # box_size = 35 #ryan debug, 35 is from the TV, ATR14,35,3
+    print(f'{date} {str(close)}')
+    # current trend price. It is the latest hitted bound price, not the current price.
+    if not 'cur_trend_price' in locals():
+        cur_trend_price = df.iloc[0].close
+
+    # up trend contine. if price is hit, draw a new tocken in same row
+    new_follow_trend_threshold_up = cur_trend_price + box_size
+    # down trend contine. if price is hit, draw a new tocken in same row
+    new_follow_trend_threshold_dn = cur_trend_price - box_size
+
+    # trend reversed from up to down. if price is hit, start a new row with a diffent token.
+    new_contraray_trend_threshold_up_to_dn = cur_trend_price - REVERSE * box_size
+
+    # trend reversed from down to up. if price is hit, start a new row with a diffent token.
+    new_contraray_trend_threshold_dn_to_up = cur_trend_price + REVERSE * box_size
+
+    # box number
+    box_number = int ((close - cur_trend_price)/box_size)
+
+    # logical start. None to up continue
+    if fg_trend == 'NO_TREND':
+        if close >= new_follow_trend_threshold_up:
+            fg_trend='UP'
+            print(f'1st POINT, fgrow {str(fg_row)}, add UP box: {str(box_number)}')
+            cur_trend_price = close
+            continue
+
+    # logical start. None to down continue
+    if fg_trend == 'NO_TREND':
+        if close <= new_follow_trend_threshold_dn:
+            fg_trend = 'DN'
+            print(f'1st POINT, fgrow {str(fg_row)}, add DN box: {str(box_number)}')
+            cur_trend_price = close
+            continue
+
+
+    # logical, up trend continue
+    if fg_trend == 'UP' and close >= new_follow_trend_threshold_up:
+        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+        print(f"up trend continue, fgrow {str(fg_row)}, add UP box {str(box_number)}")
+        cur_trend_price = close
+        continue
+
+
+    # logical, up trend rev to down trend
+    if fg_trend == 'UP' and close <= new_contraray_trend_threshold_up_to_dn:
+        fg_row += 1
+        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+        print(f"up trend rev to down, fgrow {str(fg_row)}, add DN box {str(box_number)}")
+        fg_trend = 'DN'
+        cur_trend_price = close
+        continue
+
+
+    # logical, down trend continue
+    if fg_trend == 'DN' and close <= new_follow_trend_threshold_dn:
+        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+        print(f"down trend continue, fgrow {str(fg_row)}, add DN box {str(box_number)}")
+        cur_trend_price = close
+        continue
+
+
+    # logical, down trend rev to up trend
+    if fg_trend == 'DN' and close >= new_contraray_trend_threshold_dn_to_up:
+        fg_row += 1
+        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+        print(f"down trend rev to up, fgrow {str(fg_row)}, add UP box {str(box_number)}")
+
+        cur_trend_price = close
+        fg_trend = 'UP'
+        continue
+
+
+
+    print('no point print for the day')
+
+
+print('end of fg_figure plot')
+exit()
+
+pro = ts.pro_api()
+#获取单一股票行情
+df = pro.us_daily(ts_code='NVDA', start_date='20221201', end_date='20230528')
+
+#获取某一日所有股票
+df = pro.us_daily(trade_date='20190904')
+
+rst_dir= "/home/ryan/DATA/result"
+
+if input("Run close volatility? [N]")=="Y":
+    csv_o = rst_dir+"/df_report_volatility_AG.csv"
+    df = stock_price_volatility(csv_o)
+    logging.info("\n##### new_share_profit #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+    exit()
+
 # # 读取股票数据
 # df = pd.read_csv('/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv')
 # df = df.tail(300)
