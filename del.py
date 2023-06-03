@@ -1641,7 +1641,8 @@ for index, row in df.iterrows():
     if fg_trend == 'NO_TREND':
         if close >= new_follow_trend_threshold_up:
             fg_trend='UP'
-            print(f'1st POINT, fgrow {str(fg_row)}, add UP box: {str(box_number)}')
+            y_col = 0
+            print(f'1st POINT, fgrow {str(fg_row)}, add UP box: {str(box_number)}, column={y_col}, price={close} date={date}')
             cur_trend_price = close
             continue
 
@@ -1649,15 +1650,17 @@ for index, row in df.iterrows():
     if fg_trend == 'NO_TREND':
         if close <= new_follow_trend_threshold_dn:
             fg_trend = 'DN'
-            print(f'1st POINT, fgrow {str(fg_row)}, add DN box: {str(box_number)}')
+            y_col = 0
+            print(f'1st POINT, fgrow {str(fg_row)}, add DN box: {str(box_number)}, column={y_col}, price={close} date={date}')
             cur_trend_price = close
             continue
 
 
     # logical, up trend continue
     if fg_trend == 'UP' and close >= new_follow_trend_threshold_up:
+        y_col += box_number
         print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"up trend continue, fgrow {str(fg_row)}, add UP box {str(box_number)}")
+        print(f"up trend continue, fgrow {str(fg_row)}, add UP box {str(box_number)}, column={y_col}, price={close} date={date},")
         cur_trend_price = close
         continue
 
@@ -1665,8 +1668,9 @@ for index, row in df.iterrows():
     # logical, up trend rev to down trend
     if fg_trend == 'UP' and close <= new_contraray_trend_threshold_up_to_dn:
         fg_row += 1
+        y_col = y_col - 1
         print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"up trend rev to down, fgrow {str(fg_row)}, add DN box {str(box_number)}")
+        print(f"up trend rev to down, fgrow {str(fg_row)}, add DN box {str(box_number)}, column={y_col}, price={close} date={date},")
         fg_trend = 'DN'
         cur_trend_price = close
         continue
@@ -1674,8 +1678,9 @@ for index, row in df.iterrows():
 
     # logical, down trend continue
     if fg_trend == 'DN' and close <= new_follow_trend_threshold_dn:
+        y_col -= abs(box_number)
         print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"down trend continue, fgrow {str(fg_row)}, add DN box {str(box_number)}")
+        print(f"down trend continue, fgrow {str(fg_row)}, add DN box {str(box_number)}, column={y_col}, price={close} date={date},")
         cur_trend_price = close
         continue
 
@@ -1683,8 +1688,9 @@ for index, row in df.iterrows():
     # logical, down trend rev to up trend
     if fg_trend == 'DN' and close >= new_contraray_trend_threshold_dn_to_up:
         fg_row += 1
+        y_col = y_col + 1
         print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"down trend rev to up, fgrow {str(fg_row)}, add UP box {str(box_number)}")
+        print(f"down trend rev to up, fgrow {str(fg_row)}, add UP box {str(box_number)}, column={y_col}, price={close} date={date},")
 
         cur_trend_price = close
         fg_trend = 'UP'
