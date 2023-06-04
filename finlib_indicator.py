@@ -2787,6 +2787,128 @@ class Finlib_indicator:
         df_rtn = df_rtn[['date','code','action','reason']]
         return(df_rtn)
 
+    # point and figure chart
+    def point_figure(self, df,code, name, REVERSE=3, debug=False):
+        rtn_dict={
+            'code':code,
+            'name':name,
+        }
+        df = stockstats.StockDataFrame.retype(df)
+        df[['atr_14']]  # add atr_14 column to df
+        df['atr_14'] = df['atr_14'].apply(lambda _d: round(_d, 2))
+        df['box_size'] = df['atr_14'].shift(1)  # exclude current day's variation from caculation of box_size.
+        df = df[15:]
+        df = df.reset_index()  # .drop('index', axis=1)
+        box_size = round(df.atr_14.iloc[-1], 2)  # the latest (current) box_size)
+        # df[['atr_14']].reset_index().query("atr_1<60 and atr_1>50")
+        # discard the NA, inaccurate atr_14
+
+        x_col = 0
+        fg_trend = 'NO_TREND'
+        df_figure = pd.DataFrame()
+
+        for index, row in df.iterrows():
+            date = row['date']
+            close = row['close']
+            box_size = row['box_size']
+            box_size = 35  # ryan debug, 35 is from the TV, ATR14,35,3
+            if debug:
+                logging.info(f'{date} {str(close)}')
+            # current trend price. It is the latest hitted bound price, not the current price.
+            if not 'cur_trend_price' in locals():
+                cur_trend_price = df.iloc[0].close
+
+            # up trend contine. if price is hit, draw a new tocken in same row
+            new_follow_trend_threshold_up = cur_trend_price + box_size
+            # down trend contine. if price is hit, draw a new tocken in same row
+            new_follow_trend_threshold_dn = cur_trend_price - box_size
+
+            # trend reversed from up to down. if price is hit, start a new row with a diffent token.
+            new_contraray_trend_threshold_up_to_dn = cur_trend_price - REVERSE * box_size
+
+            # trend reversed from down to up. if price is hit, start a new row with a diffent token.
+            new_contraray_trend_threshold_dn_to_up = cur_trend_price + REVERSE * box_size
+
+            # box number
+            box_number = int((close - cur_trend_price) / box_size)
+
+            # logical start. None to up continue
+            if fg_trend == 'NO_TREND':
+                if close >= new_follow_trend_threshold_up:
+                    fg_trend = 'UP'
+                    y_row = 1
+                    # logging.info(
+                    #     f'1st POINT, fgrow {str(x_col)}, add UP box: {str(box_number)}, column={y_row}, price={close} date={date}')
+                    # f'X {x_col}{y_row},{date},{close}'  # col, row
+                    # cur_trend_price = close
+                    cur_trend_price = new_follow_trend_threshold_up
+                    continue
+
+            # logical start. None to down continue
+            if fg_trend == 'NO_TREND':
+                if close <= new_follow_trend_threshold_dn:
+                    fg_trend = 'DN'
+                    y_row = -1
+                    # logging.info(
+                    #     f'1st POINT, fgrow {str(x_col)}, add DN box: {str(box_number)}, column={y_row}, price={close} date={date}')
+                    # cur_trend_price = close
+                    cur_trend_price = new_follow_trend_threshold_dn
+                    continue
+
+            # logical, up trend continue
+            if fg_trend == 'UP' and close >= new_follow_trend_threshold_up:
+                y_row += box_number
+                logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+                logging.info(
+                    f"up trend continue, fgrow {str(x_col)}, add UP box {str(box_number)}, column={y_row}, price={close} date={date},")
+                cur_trend_price = new_follow_trend_threshold_up
+                rtn_dict['trend_length']=f'UP, {y_row} {date} {close}'
+                continue
+
+            # logical, up trend rev to down trend
+            if fg_trend == 'UP' and close <= new_contraray_trend_threshold_up_to_dn:
+                x_col += 1
+                # y_row = y_row - 1
+                y_row = -1
+                logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+                logging.info(
+                    f"up trend rev to down, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
+                fg_trend = 'DN'
+                cur_trend_price = new_contraray_trend_threshold_up_to_dn
+                rtn_dict['trend_rev_at'] = f'U2D, {date} {close}'
+                continue
+
+            # logical, down trend continue
+            if fg_trend == 'DN' and close <= new_follow_trend_threshold_dn:
+                y_row -= abs(box_number)
+                logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+                logging.info(
+                    f"down trend continue, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
+                cur_trend_price = new_follow_trend_threshold_dn
+                rtn_dict['trend_length'] = f'D,{y_row} {date} {close}'
+
+                continue
+
+            # logical, down trend rev to up trend
+            if fg_trend == 'DN' and close >= new_contraray_trend_threshold_dn_to_up:
+                x_col += 1
+                # y_row = y_row + 1
+                y_row = 1
+                logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
+                logging.info(
+                    f"down trend rev to up, fgrow {str(x_col)}, add UP box {str(box_number)}, column={y_row}, price={close} date={date},")
+
+                cur_trend_price = new_contraray_trend_threshold_dn_to_up
+                fg_trend = 'UP'
+                rtn_dict['trend_rev_at'] = f'D2U, {date} {close}'
+                continue
+
+            if debug:
+                logging.info('no point print for the day')
+            #end of for loop
+
+        #enf of def
+        return(rtn_dict)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

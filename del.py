@@ -1594,111 +1594,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ## PnF point and figure
-import stockstats
-REVERSE = 3
-
-df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
-df = df_all[df_all['code']=='SH600519']
-df = stockstats.StockDataFrame.retype(df)
-df[['atr_14']] #add atr_14 column to df
-df['atr_14'] = df['atr_14'].apply(lambda _d: round(_d,2))
-df['box_size'] = df['atr_14'].shift(1) #exclude current day's variation from caculation of box_size.
-df = df[15:]
-df = df.reset_index() #.drop('index', axis=1)
-box_size = round(df.atr_14.iloc[-1],2) #the latest (current) box_size)
-# df[['atr_14']].reset_index().query("atr_1<60 and atr_1>50")
-#discard the NA, inaccurate atr_14
-
-fg_row = 0
-fg_trend = 'NO_TREND'
-
-for index, row in df.iterrows():
-    # print()
-    date = row['date']
-    close = row['close']
-    box_size = row['box_size']
-    # box_size = 35 #ryan debug, 35 is from the TV, ATR14,35,3
-    print(f'{date} {str(close)}')
-    # current trend price. It is the latest hitted bound price, not the current price.
-    if not 'cur_trend_price' in locals():
-        cur_trend_price = df.iloc[0].close
-
-    # up trend contine. if price is hit, draw a new tocken in same row
-    new_follow_trend_threshold_up = cur_trend_price + box_size
-    # down trend contine. if price is hit, draw a new tocken in same row
-    new_follow_trend_threshold_dn = cur_trend_price - box_size
-
-    # trend reversed from up to down. if price is hit, start a new row with a diffent token.
-    new_contraray_trend_threshold_up_to_dn = cur_trend_price - REVERSE * box_size
-
-    # trend reversed from down to up. if price is hit, start a new row with a diffent token.
-    new_contraray_trend_threshold_dn_to_up = cur_trend_price + REVERSE * box_size
-
-    # box number
-    box_number = int ((close - cur_trend_price)/box_size)
-
-    # logical start. None to up continue
-    if fg_trend == 'NO_TREND':
-        if close >= new_follow_trend_threshold_up:
-            fg_trend='UP'
-            y_col = 0
-            print(f'1st POINT, fgrow {str(fg_row)}, add UP box: {str(box_number)}, column={y_col}, price={close} date={date}')
-            cur_trend_price = close
-            continue
-
-    # logical start. None to down continue
-    if fg_trend == 'NO_TREND':
-        if close <= new_follow_trend_threshold_dn:
-            fg_trend = 'DN'
-            y_col = 0
-            print(f'1st POINT, fgrow {str(fg_row)}, add DN box: {str(box_number)}, column={y_col}, price={close} date={date}')
-            cur_trend_price = close
-            continue
 
 
-    # logical, up trend continue
-    if fg_trend == 'UP' and close >= new_follow_trend_threshold_up:
-        y_col += box_number
-        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"up trend continue, fgrow {str(fg_row)}, add UP box {str(box_number)}, column={y_col}, price={close} date={date},")
-        cur_trend_price = close
-        continue
+df_all = finlib.Finlib().load_all_ag_index_data()
+df_all = finlib.Finlib().add_index_name_to_df(df_all)
 
+for c in df_all['code'].unique():
+    df = df_all[df_all['code']==c]
+    name = df.iloc[0]['name']
 
-    # logical, up trend rev to down trend
-    if fg_trend == 'UP' and close <= new_contraray_trend_threshold_up_to_dn:
-        fg_row += 1
-        y_col = y_col - 1
-        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"up trend rev to down, fgrow {str(fg_row)}, add DN box {str(box_number)}, column={y_col}, price={close} date={date},")
-        fg_trend = 'DN'
-        cur_trend_price = close
-        continue
+    print(f"code {c}",{name})
 
-
-    # logical, down trend continue
-    if fg_trend == 'DN' and close <= new_follow_trend_threshold_dn:
-        y_col -= abs(box_number)
-        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"down trend continue, fgrow {str(fg_row)}, add DN box {str(box_number)}, column={y_col}, price={close} date={date},")
-        cur_trend_price = close
-        continue
-
-
-    # logical, down trend rev to up trend
-    if fg_trend == 'DN' and close >= new_contraray_trend_threshold_dn_to_up:
-        fg_row += 1
-        y_col = y_col + 1
-        print(f"debug: cur_p {cur_trend_price} box_size {box_size}")
-        print(f"down trend rev to up, fgrow {str(fg_row)}, add UP box {str(box_number)}, column={y_col}, price={close} date={date},")
-
-        cur_trend_price = close
-        fg_trend = 'UP'
-        continue
+    r = finlib_indicator.Finlib_indicator().point_figure(df=df,code=c,name=name,REVERSE=3)
+    print(1)
 
 
 
-    print('no point print for the day')
+df_all = finlib.Finlib().load_all_bk_qfq_data()
+df_all['name']=df_all['code']
+df = df_all[df_all['code']]
+
+
+# df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
+# df = df_all[df_all['code']=='SH600519']
+
+
 
 
 print('end of fg_figure plot')
