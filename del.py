@@ -1595,30 +1595,33 @@ import matplotlib.pyplot as plt
 
 ## PnF point and figure
 
-
+### PnF Index
 df_all = finlib.Finlib().load_all_ag_index_data()
 df_all = finlib.Finlib().add_index_name_to_df(df_all)
+reverse = 2
+
+
+### PnF bk
+df_all = finlib.Finlib().load_all_bk_qfq_data()
+df_all['name']=df_all['code']
+reverse = 3
+
+### PnF AG
+# df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
+# df = df_all[df_all['code']=='SH600519']
+
 
 for c in df_all['code'].unique():
+
+    # c="移动支付.em"
     df = df_all[df_all['code']==c]
     name = df.iloc[0]['name']
 
     print(f"code {c}",{name})
 
-    r = finlib_indicator.Finlib_indicator().point_figure(df=df,code=c,name=name,REVERSE=3)
+    r = finlib_indicator.Finlib_indicator().point_figure(df=df,code=c,name=name,reverse=reverse)
+    logging.info(r)
     print(1)
-
-
-
-df_all = finlib.Finlib().load_all_bk_qfq_data()
-df_all['name']=df_all['code']
-df = df_all[df_all['code']]
-
-
-# df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
-# df = df_all[df_all['code']=='SH600519']
-
-
 
 
 print('end of fg_figure plot')
