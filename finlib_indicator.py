@@ -2790,12 +2790,13 @@ class Finlib_indicator:
     # point and figure chart
     def point_figure(self, df,code, name, reverse=3, debug=False):
         if df.__len__() < 20:
-            return()
+            return(pd.DataFrame())
+
 
         rtn_dict={
-            'code':code,
-            'name':name,
-            'now':str(df.iloc[-1]['date']) + " " +str(df.iloc[-1]['close'])
+            'code':[code],
+            'name':[name],
+            'now':[str(df.iloc[-1]['date']) + " " +str(df.iloc[-1]['close'])],
         }
         df = stockstats.StockDataFrame.retype(df)
         df[['atr_14']]  # add atr_14 column to df
@@ -2862,6 +2863,7 @@ class Finlib_indicator:
             if fg_trend == 'NO_TREND':
                 if close >= new_follow_trend_threshold_up:
                     fg_trend = 'UP'
+                    rtn_dict['trend']=['UP']
                     y_row = 1
                     # logging.info(
                     #     f'1st POINT, fgrow {str(x_col)}, add UP box: {str(box_number)}, column={y_row}, price={close} date={date}')
@@ -2874,6 +2876,8 @@ class Finlib_indicator:
             if fg_trend == 'NO_TREND':
                 if close <= new_follow_trend_threshold_dn:
                     fg_trend = 'DN'
+                    rtn_dict['trend']=['DN']
+
                     y_row = -1
                     # logging.info(
                     #     f'1st POINT, fgrow {str(x_col)}, add DN box: {str(box_number)}, column={y_row}, price={close} date={date}')
@@ -2891,15 +2895,20 @@ class Finlib_indicator:
 
                 last_up_trend_date_dt = date_dt
                 last_up_trend_close = close
+                rtn_dict['trend'] = ['UP']
 
                 if last_rev_d2u_date_dt and last_rev_d2u_close:
                     since_rev_day = (last_trade_date_dt - last_rev_d2u_date_dt).days
                     # since_rev_day = (date_dt - last_rev_d2u_date_dt).days
                     # since_rev_inc = round(100*(close - last_rev_d2u_close)/last_rev_d2u_close,1)
                     since_rev_inc = round(100*(last_trade_close - last_rev_d2u_close)/last_rev_d2u_close,1)
-                    rtn_dict['trend_length'] = f'UP, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%'
+                    rtn_dict['trend_length'] = [f'UP, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%']
+
+
+                    rtn_dict['since_rev_day']=[since_rev_day]
+                    rtn_dict['since_rev_inc']=[since_rev_inc]
                 else:
-                    rtn_dict['trend_length']=f'UP, {y_row}, {date} {close}'
+                    rtn_dict['trend_length']=[f'UP, {y_row}, {date} {close}']
 
                 continue
 
@@ -2912,14 +2921,15 @@ class Finlib_indicator:
                 logging.info(
                     f"up trend rev to down, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
                 fg_trend = 'DN'
+                rtn_dict['trend'] = [fg_trend]
                 cur_trend_price = new_contraray_trend_threshold_up_to_dn
 
                 last_rev_u2d_date_dt = date_dt
                 last_rev_u2d_close = close
 
 
-                rtn_dict['trend_rev_at'] = f'U2D, {date} {close}'
-                rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}'
+                rtn_dict['trend_rev_at'] = [f'U2D, {date} {close}']
+                rtn_dict['trend_length'] = [f'DN, {y_row}, {date} {close}']
 
                 since_rev_day = None
                 since_rev_inc = None
@@ -2934,6 +2944,8 @@ class Finlib_indicator:
                     f"down trend continue, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
                 cur_trend_price = new_follow_trend_threshold_dn
 
+                rtn_dict['trend']=['DN']
+
                 last_dn_trend_date_dt = date_dt
                 last_dn_trend_close = close
 
@@ -2942,9 +2954,11 @@ class Finlib_indicator:
                     since_rev_day = (last_trade_date_dt - last_rev_u2d_date_dt).days
                     # since_rev_inc = round(100*(close-last_rev_u2d_close)/last_rev_u2d_close,1)
                     since_rev_inc = round(100*(last_trade_close-last_rev_u2d_close)/last_rev_u2d_close,1)
-                    rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%'
+                    rtn_dict['trend_length'] = [f'DN, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%']
+                    rtn_dict['since_rev_day'] = [since_rev_day]
+                    rtn_dict['since_rev_inc'] = [since_rev_inc]
                 else:
-                    rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}'
+                    rtn_dict['trend_length'] = [f'DN, {y_row}, {date} {close}']
 
                 continue
 
@@ -2959,12 +2973,13 @@ class Finlib_indicator:
 
                 cur_trend_price = new_contraray_trend_threshold_dn_to_up
                 fg_trend = 'UP'
+                rtn_dict['trend']=[fg_trend]
 
                 last_rev_d2u_date_dt = date_dt
                 last_rev_d2u_close = close
 
-                rtn_dict['trend_rev_at'] = f'D2U, {date} {close}'
-                rtn_dict['trend_length'] = f'UP, {y_row}, {date} {close}'
+                rtn_dict['trend_rev_at'] = [f'D2U, {date} {close}']
+                rtn_dict['trend_length'] = [f'UP, {y_row}, {date} {close}']
 
                 since_rev_day = None
                 since_rev_inc = None
@@ -2976,7 +2991,65 @@ class Finlib_indicator:
             #end of for loop
 
         #enf of def
-        return(rtn_dict)
+        rtn_df = pd.DataFrame.from_dict(rtn_dict)
+        return(rtn_df)
+
+    def get_pnf(self, type):
+
+        ## PnF point and figure
+        o_dir = '/home/ryan/DATA/result/point_and_figure'
+        if not os.path.isdir(o_dir):
+            os.mkdir(o_dir)
+
+        out_csv = f"{o_dir}/pnf_{type}.csv"
+
+        if finlib.Finlib().is_cached(out_csv, day=1):
+            logging.info(f"loading from {out_csv}")
+            return(pd.read_csv(out_csv))
+
+
+        if type == 'AG_INDEX':
+            ### PnF Index
+            df_all = finlib.Finlib().load_all_ag_index_data()
+            df_all = finlib.Finlib().add_index_name_to_df(df_all)
+            reverse = 2
+
+        if type == 'AG_BK':
+            ### PnF bk
+            df_all = finlib.Finlib().load_all_bk_qfq_data()
+            df_all['name'] = df_all['code']
+            reverse = 3
+
+        if type == 'AG':
+            ### PnF AG
+            df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
+            df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
+            reverse = 3
+
+
+
+        df_all['date_dt'] = df_all['date'].apply(lambda _d: datetime.strptime(str(_d), '%Y%m%d'))
+
+        pnf_df = pd.DataFrame()
+
+        for c in df_all['code'].unique():
+            # c="移动支付.em"
+            df = df_all[df_all['code'] == c]
+            name = df.iloc[0]['name']
+
+            print(f"code {c}", {name})
+
+            rtn_df = self.point_figure(df=df, code=c, name=name, reverse=reverse)
+            # logging.info(f'json:')+json.dumps(r)
+            # logging.info(rtn_df)
+            pnf_df = pd.concat([pnf_df, rtn_df])
+
+        logging.info(finlib.Finlib().pprint(pnf_df.head(10)))
+        pnf_df.to_csv(out_csv, encoding='UTF-8', index=False)
+        print(f'fg_figure saved to {out_csv}')
+        return(pnf_df)
+
+
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }

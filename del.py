@@ -1594,43 +1594,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-## PnF point and figure
-
-### PnF Index
-df_all = finlib.Finlib().load_all_ag_index_data()
-df_all = finlib.Finlib().add_index_name_to_df(df_all)
-reverse = 2
 
 
-### PnF bk
-# df_all = finlib.Finlib().load_all_bk_qfq_data()
-# df_all['name']=df_all['code']
-# reverse = 3
-
-### PnF AG
-# df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
-# df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
-# reverse = 3
-
-
-df_all['date_dt']=df_all['date'].apply(lambda _d: datetime.datetime.strptime(str(_d),'%Y%m%d'))
-
-for c in df_all['code'].unique():
-
-    # c="移动支付.em"
-    df = df_all[df_all['code']==c]
-    name = df.iloc[0]['name']
-
-    print(f"code {c}",{name})
-
-    r = finlib_indicator.Finlib_indicator().point_figure(df=df,code=c,name=name,reverse=reverse)
-    # logging.info(f'json:')+json.dumps(r)
-    logging.info(r)
-    print(1)
+# f = '/home/ryan/2.csv'
+# df = pd.read_csv(f)
+# df = finlib.Finlib().add_stock_name_to_df(df)
+# df = finlib.Finlib().add_amount_mktcap(df)
+#
+# df = finlib.Finlib().add_industry_to_df(df)
+#
+# print(finlib.Finlib().pprint(df))
 
 
-print('end of fg_figure plot')
-exit()
+df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_INDEX')
+df_b = df.query("trend=='UP' & since_rev_day<=3")
+df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_BK')
+df_b = df.query("trend=='UP' & since_rev_day<=3")
+df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+
+df = finlib_indicator.Finlib_indicator().get_pnf(type='AG')
+df_b = df.query("trend=='UP' & since_rev_day<=3")
+df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+
+
 
 pro = ts.pro_api()
 #获取单一股票行情
