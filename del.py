@@ -1613,12 +1613,18 @@ df_s = df.query("trend=='DN' & since_rev_day<=3")
 df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_BK')
 df_b = df.query("trend=='UP' & since_rev_day<=3")
 df_s = df.query("trend=='DN' & since_rev_day<=3")
+logging.info("BUY BK:\n"+finlib.Finlib().pprint(df_b))
+logging.info("SELL BK:\n"+finlib.Finlib().pprint(df_s))
 
 
 df = finlib_indicator.Finlib_indicator().get_pnf(type='AG')
 df_b = df.query("trend=='UP' & since_rev_day<=3")
 df_s = df.query("trend=='DN' & since_rev_day<=3")
 
+df_b = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_b))
+df_s = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_s))
+logging.info("BUY:\n"+finlib.Finlib().pprint(df_b))
+logging.info("SELL:\n"+finlib.Finlib().pprint(df_s))
 
 
 
