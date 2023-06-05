@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s', datefmt='%m_%d %H:%M:%S', level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-
+import json
 import tushare as ts
 import tushare.util.conns as ts_cs
 import tushare.stock.trading as ts_stock_trading

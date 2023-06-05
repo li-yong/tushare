@@ -1592,6 +1592,7 @@ def stock_price_volatility(csv_o):
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
 ## PnF point and figure
 
@@ -1602,14 +1603,17 @@ reverse = 2
 
 
 ### PnF bk
-df_all = finlib.Finlib().load_all_bk_qfq_data()
-df_all['name']=df_all['code']
-reverse = 3
+# df_all = finlib.Finlib().load_all_bk_qfq_data()
+# df_all['name']=df_all['code']
+# reverse = 3
 
 ### PnF AG
 # df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
-# df = df_all[df_all['code']=='SH600519']
+# df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
+# reverse = 3
 
+
+df_all['date_dt']=df_all['date'].apply(lambda _d: datetime.datetime.strptime(str(_d),'%Y%m%d'))
 
 for c in df_all['code'].unique():
 
@@ -1620,6 +1624,7 @@ for c in df_all['code'].unique():
     print(f"code {c}",{name})
 
     r = finlib_indicator.Finlib_indicator().point_figure(df=df,code=c,name=name,reverse=reverse)
+    # logging.info(f'json:')+json.dumps(r)
     logging.info(r)
     print(1)
 

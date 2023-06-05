@@ -2808,11 +2808,33 @@ class Finlib_indicator:
         # discard the NA, inaccurate atr_14
 
         x_col = 0
+
+        #last trading date
+        last_trade_date_dt = df.iloc[-1]['date_dt']
+        last_trade_close = df.iloc[-1]['close']
+
+        #the latest revert date, could be U2D or D2U
+        last_rev_u2d_date_dt = None
+        last_rev_u2d_close = None
+
+        last_rev_d2u_date_dt = None
+        last_rev_d2u_close = None
+
+        #last continue trend date
+        last_up_trend_date_dt = None
+        last_dn_trend_date_dt = None
+
+        last_up_trend_close = None
+        last_dn_trend_close = None
+
+
+
         fg_trend = 'NO_TREND'
         df_figure = pd.DataFrame()
 
         for index, row in df.iterrows():
             date = row['date']
+            date_dt = row['date_dt']
             close = row['close']
             box_size = row['box_size']
             # box_size = 35  # ryan debug, 35 is from the TV, ATR14,35,3
@@ -2866,7 +2888,19 @@ class Finlib_indicator:
                 logging.info(
                     f"up trend continue, fgrow {str(x_col)}, add UP box {str(box_number)}, column={y_row}, price={close} date={date},")
                 cur_trend_price = new_follow_trend_threshold_up
-                rtn_dict['trend_length']=f'UP, {y_row}, {date} {close}'
+
+                last_up_trend_date_dt = date_dt
+                last_up_trend_close = close
+
+                if last_rev_d2u_date_dt and last_rev_d2u_close:
+                    since_rev_day = (last_trade_date_dt - last_rev_d2u_date_dt).days
+                    # since_rev_day = (date_dt - last_rev_d2u_date_dt).days
+                    # since_rev_inc = round(100*(close - last_rev_d2u_close)/last_rev_d2u_close,1)
+                    since_rev_inc = round(100*(last_trade_close - last_rev_d2u_close)/last_rev_d2u_close,1)
+                    rtn_dict['trend_length'] = f'UP, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%'
+                else:
+                    rtn_dict['trend_length']=f'UP, {y_row}, {date} {close}'
+
                 continue
 
             # logical, up trend rev to down trend
@@ -2879,8 +2913,16 @@ class Finlib_indicator:
                     f"up trend rev to down, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
                 fg_trend = 'DN'
                 cur_trend_price = new_contraray_trend_threshold_up_to_dn
+
+                last_rev_u2d_date_dt = date_dt
+                last_rev_u2d_close = close
+
+
                 rtn_dict['trend_rev_at'] = f'U2D, {date} {close}'
                 rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}'
+
+                since_rev_day = None
+                since_rev_inc = None
 
                 continue
 
@@ -2891,7 +2933,18 @@ class Finlib_indicator:
                 logging.info(
                     f"down trend continue, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
                 cur_trend_price = new_follow_trend_threshold_dn
-                rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}'
+
+                last_dn_trend_date_dt = date_dt
+                last_dn_trend_close = close
+
+                if last_rev_u2d_date_dt and last_rev_u2d_close:
+                    # since_rev_day = (date_dt - last_rev_u2d_date_dt).days
+                    since_rev_day = (last_trade_date_dt - last_rev_u2d_date_dt).days
+                    # since_rev_inc = round(100*(close-last_rev_u2d_close)/last_rev_u2d_close,1)
+                    since_rev_inc = round(100*(last_trade_close-last_rev_u2d_close)/last_rev_u2d_close,1)
+                    rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}, {since_rev_day}D_{since_rev_inc}%'
+                else:
+                    rtn_dict['trend_length'] = f'DN, {y_row}, {date} {close}'
 
                 continue
 
@@ -2906,8 +2959,15 @@ class Finlib_indicator:
 
                 cur_trend_price = new_contraray_trend_threshold_dn_to_up
                 fg_trend = 'UP'
+
+                last_rev_d2u_date_dt = date_dt
+                last_rev_d2u_close = close
+
                 rtn_dict['trend_rev_at'] = f'D2U, {date} {close}'
                 rtn_dict['trend_length'] = f'UP, {y_row}, {date} {close}'
+
+                since_rev_day = None
+                since_rev_inc = None
 
                 continue
 
