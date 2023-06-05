@@ -1521,70 +1521,6 @@ def nl_bk_inc_inspect_1(df_rtn_nl_bk_inc):
     logging.info("\n" + finlib.Finlib().pprint(df_rtn_summary))
 
 
-def stock_price_volatility(csv_o):
-    if finlib.Finlib().is_cached(csv_o, day=1):
-        logging.info("using the result file "+csv_o)
-        df_rtn = pd.read_csv(csv_o)
-
-        logging.info("stock vilatility 300D describe ")
-        logging.info(df_rtn[["vlt_300D"]].describe())
-
-        logging.info("stock vilatility 300D most active 5 ")
-        logging.info(finlib.Finlib().pprint(df_rtn.sort_values(by='vlt_300D',ascending=True).tail(5)))
-
-        logging.info("stock vilatility 300D most stable 10 ")
-        logging.info(finlib.Finlib().pprint(df_rtn.sort_values(by='vlt_300D',ascending=True).head(10)))
-
-        return(df_rtn)
-
-    df_rtn = pd.DataFrame()
-
-    csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
-    df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index).tail(300).reset_index().drop('index', axis=1)
-    d = df_index['close'].describe()
-    vlt = round(100 * d['std'] / d['mean'], 1)
-    logging.info(f"code index SH000001, vlt300 {str(vlt)}")
-
-    _df=pd.DataFrame.from_dict({
-        'code':['SH000001'],
-        'name':['SZZS'],
-        'vlt_300D':[vlt],
-    })
-    df_rtn = pd.concat([df_rtn, _df])
-
-    df = finlib.Finlib().load_all_ag_qfq_data(days=300)
-    df = finlib.Finlib().add_stock_name_to_df(df=df)
-    # df = finlib.Finlib().remove_garbage(df=df)
-
-    codes = df['code'].unique()
-    codes.sort()
-    df_profit_report = pd.DataFrame()
-
-    for c in codes[:5000]:
-        logging.info(c)
-        if df.__len__() < 300:
-            continue
-
-        df_sub = df[df['code']==c].tail(300).reset_index().drop('index', axis=1)
-        name = df_sub.iloc[1]['name']
-
-        d = df_sub['close'].describe()
-
-        vlt=round(100*d['std']/d['mean'],1)
-        logging.info(f"code {c}, {name}, vlt300 {str(vlt)}")
-
-        _df = pd.DataFrame.from_dict({
-            'code': [c],
-            'name': [name],
-            'vlt_300D': [vlt],
-        })
-        df_rtn = pd.concat([df_rtn, _df])
-
-        continue
-
-    df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
-    logging.info("result saved to "+csv_o)
-
 
 
 #### MAIN #####
@@ -1595,93 +1531,14 @@ import matplotlib.pyplot as plt
 import json
 
 
-
-# f = '/home/ryan/2.csv'
-# df = pd.read_csv(f)
-# df = finlib.Finlib().add_stock_name_to_df(df)
-# df = finlib.Finlib().add_amount_mktcap(df)
-#
-# df = finlib.Finlib().add_industry_to_df(df)
-#
-# print(finlib.Finlib().pprint(df))
-
-
-df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_INDEX')
-df_b = df.query("trend=='UP' & since_rev_day<=3")
-df_s = df.query("trend=='DN' & since_rev_day<=3")
-
-df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_BK')
-df_b = df.query("trend=='UP' & since_rev_day<=3")
-df_s = df.query("trend=='DN' & since_rev_day<=3")
-logging.info("BUY BK:\n"+finlib.Finlib().pprint(df_b))
-logging.info("SELL BK:\n"+finlib.Finlib().pprint(df_s))
-
-
-df = finlib_indicator.Finlib_indicator().get_pnf(type='AG')
-df_b = df.query("trend=='UP' & since_rev_day<=3")
-df_s = df.query("trend=='DN' & since_rev_day<=3")
-
-df_b = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_b))
-df_s = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_s))
-logging.info("BUY:\n"+finlib.Finlib().pprint(df_b))
-logging.info("SELL:\n"+finlib.Finlib().pprint(df_s))
-
-
-
-pro = ts.pro_api()
-#获取单一股票行情
-df = pro.us_daily(ts_code='NVDA', start_date='20221201', end_date='20230528')
-
-#获取某一日所有股票
-df = pro.us_daily(trade_date='20190904')
-
 rst_dir= "/home/ryan/DATA/result"
-
-if input("Run close volatility? [N]")=="Y":
-    csv_o = rst_dir+"/df_report_volatility_AG.csv"
-    df = stock_price_volatility(csv_o)
-    logging.info("\n##### new_share_profit #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
-    exit()
-
-# # 读取股票数据
-# df = pd.read_csv('/home/ryan/DATA/DAY_Global/AG_qfq/SH600519.csv')
-# df = df.tail(300)
-#
-# # 计算股票价格的移动平均线
-# df['MA'] = df['close'].rolling(window=20).mean()
-#
-# # 计算股票价格与移动平均线的差值
-# df['Diff'] = df['close'] - df['MA']
-#
-# # 计算 Diff 的一阶导数
-# df['Diff_Derivative'] = df['Diff'].diff()
-#
-# # 定义操作员行为规则
-# def operator_behavior(row):
-#     if row['Diff'] > 0 and row['Diff_Derivative'] > 0:
-#         return 'accumulation'
-#     elif row['Diff'] < 0 and row['Diff_Derivative'] < 0:
-#         return 'distribution'
-#     else:
-#         return 'undefined'
-#
-# # 应用操作员行为规则到数据集
-# df['Operator_Behavior'] = df.apply(operator_behavior, axis=1)
-
-# # 绘制股票价格与移动平均线的图表，并用颜色区分操作员行为
-# plt.plot(df['close'], label='Close')
-# plt.plot(df['MA'], label='MA')
-# plt.scatter(df.index, df['close'], c=df['Operator_Behavior'].map({'accumulation': 'green', 'distribution': 'red', 'undefined': 'blue'}), alpha=0.5)
-# plt.legend()
-# plt.show()
-
 
 
 ###
 f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_stock_company.csv"
 df = pd.read_csv(f)
-df[['code','city']].groupby('city').count().reset_index().sort_values(by='code').tail(20)
+print(df[['code','city']].groupby('city').count().reset_index().sort_values(by='code').tail(20))
+
 # df = zszq_act_profit()
 # exit()
 
@@ -1731,12 +1588,6 @@ for i in range(days):
 
 rst_dir= "/home/ryan/DATA/result"
 
-if input("Run close volatility? [N]")=="Y":
-    csv_o = rst_dir+"/df_report_volatility_AG.csv"
-    df = stock_price_volatility(csv_o)
-    logging.info("\n##### new_share_profit #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
-    # exit()
 
 if input("Run Comparing Index Increase? [N]")=="Y":
     of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
@@ -1754,12 +1605,6 @@ if input("Run New Share Profit? [N]")=="Y":
     # exit()
 
 
-if input("Run close volatility? [N]")=="Y":
-    csv_o = rst_dir+"/df_report_volatility_AG.csv"
-    df = stock_price_volatility(csv_o)
-    logging.info("\n##### new_share_profit #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
-    # exit()
 
 if input("Run Jie Tao? [N]")=="Y":
     csv_o = rst_dir+"/jie_tao.csv"

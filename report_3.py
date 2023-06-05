@@ -1986,6 +1986,34 @@ debug = options.debug
 #     csv_out_opt=rst_dir + "/bar_bs_operate.csv",
 # )
 
+if no_question or input("Run Point and Figure check? [N]")=="Y":
+    csv_o = rst_dir+"/df_report_volatility_AG.csv"
+
+    df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_INDEX')
+    df_b = df.query("trend=='UP' & since_rev_day<=3")
+    df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+    df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_BK')
+    df_b = df.query("trend=='UP' & since_rev_day<=3")
+    df_s = df.query("trend=='DN' & since_rev_day<=3")
+    logging.info("BUY BK:\n" + finlib.Finlib().pprint(df_b))
+    logging.info("SELL BK:\n" + finlib.Finlib().pprint(df_s))
+
+    df = finlib_indicator.Finlib_indicator().get_pnf(type='AG')
+    df_b = df.query("trend=='UP' & since_rev_day<=3")
+    df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+    df_b = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_b))
+    df_s = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_s))
+    logging.info("BUY:\n" + finlib.Finlib().pprint(df_b))
+    logging.info("SELL:\n" + finlib.Finlib().pprint(df_s))
+
+if no_question or input("Run close volatility? [N]")=="Y":
+    csv_o = rst_dir+"/df_report_volatility_AG.csv"
+    df = finlib_indicator.Finlib_indicator().stock_price_volatility(csv_o)
+    logging.info("\n##### new_share_profit #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+
 
 if no_question or input("Run stock significant? [N]")=="Y":
     # /home/ryan/DATA/result/AG_INDEX/*.csv

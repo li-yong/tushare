@@ -3049,7 +3049,70 @@ class Finlib_indicator:
         print(f'fg_figure saved to {out_csv}')
         return(pnf_df)
 
+    def stock_price_volatility(self, csv_o):
+        if finlib.Finlib().is_cached(csv_o, day=1):
+            logging.info("using the result file " + csv_o)
+            df_rtn = pd.read_csv(csv_o)
 
+            logging.info("stock vilatility 300D describe ")
+            logging.info(df_rtn[["vlt_300D"]].describe())
+
+            logging.info("stock vilatility 300D most active 5 ")
+            logging.info(finlib.Finlib().pprint(df_rtn.sort_values(by='vlt_300D', ascending=True).tail(5)))
+
+            logging.info("stock vilatility 300D most stable 10 ")
+            logging.info(finlib.Finlib().pprint(df_rtn.sort_values(by='vlt_300D', ascending=True).head(10)))
+
+            return (df_rtn)
+
+        df_rtn = pd.DataFrame()
+
+        csv_index = '/home/ryan/DATA/DAY_Global/AG_INDEX/000001.SH.csv'
+        df_index = finlib.Finlib().regular_read_csv_to_stdard_df(csv_index).tail(300).reset_index().drop('index',
+                                                                                                         axis=1)
+        d = df_index['close'].describe()
+        vlt = round(100 * d['std'] / d['mean'], 1)
+        logging.info(f"code index SH000001, vlt300 {str(vlt)}")
+
+        _df = pd.DataFrame.from_dict({
+            'code': ['SH000001'],
+            'name': ['SZZS'],
+            'vlt_300D': [vlt],
+        })
+        df_rtn = pd.concat([df_rtn, _df])
+
+        df = finlib.Finlib().load_all_ag_qfq_data(days=300)
+        df = finlib.Finlib().add_stock_name_to_df(df=df)
+        # df = finlib.Finlib().remove_garbage(df=df)
+
+        codes = df['code'].unique()
+        codes.sort()
+        df_profit_report = pd.DataFrame()
+
+        for c in codes[:5000]:
+            logging.info(c)
+            if df.__len__() < 300:
+                continue
+
+            df_sub = df[df['code'] == c].tail(300).reset_index().drop('index', axis=1)
+            name = df_sub.iloc[1]['name']
+
+            d = df_sub['close'].describe()
+
+            vlt = round(100 * d['std'] / d['mean'], 1)
+            logging.info(f"code {c}, {name}, vlt300 {str(vlt)}")
+
+            _df = pd.DataFrame.from_dict({
+                'code': [c],
+                'name': [name],
+                'vlt_300D': [vlt],
+            })
+            df_rtn = pd.concat([df_rtn, _df])
+
+            continue
+
+        df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
+        logging.info("result saved to " + csv_o)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
