@@ -1534,6 +1534,26 @@ import json
 rst_dir= "/home/ryan/DATA/result"
 
 
+
+####
+df = finlib_indicator.Finlib_indicator().get_pnf(type='AG', debug=True)
+df_b = df.query("trend=='UP' & since_rev_day<=3")
+df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+df_b = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_b))
+df_s = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_s))
+logging.info("BUY:\n" + finlib.Finlib().pprint(df_b))
+logging.info("SELL:\n" + finlib.Finlib().pprint(df_s))
+
+
+
+###
+
+pro = ts.pro_api()
+
+# df = pro.index_weight(index_code='399300.SZ', start_date='20180901', end_date='20180930')
+df = pro.index_weight(trade_date='20230606')
+
 ###
 f = "/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/market/pro_stock_company.csv"
 df = pd.read_csv(f)

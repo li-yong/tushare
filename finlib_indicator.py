@@ -2865,6 +2865,7 @@ class Finlib_indicator:
                     fg_trend = 'UP'
                     rtn_dict['trend']=['UP']
                     y_row = 1
+                    y_row_b1 = 0
                     # logging.info(
                     #     f'1st POINT, fgrow {str(x_col)}, add UP box: {str(box_number)}, column={y_row}, price={close} date={date}')
                     # f'X {x_col}{y_row},{date},{close}'  # col, row
@@ -2879,6 +2880,7 @@ class Finlib_indicator:
                     rtn_dict['trend']=['DN']
 
                     y_row = -1
+                    y_row_b1 = 0
                     # logging.info(
                     #     f'1st POINT, fgrow {str(x_col)}, add DN box: {str(box_number)}, column={y_row}, price={close} date={date}')
                     # cur_trend_price = close
@@ -2888,6 +2890,8 @@ class Finlib_indicator:
             # logical, up trend continue
             if fg_trend == 'UP' and close >= new_follow_trend_threshold_up:
                 y_row += box_number
+                rtn_dict['y_row'] = y_row
+
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
                     f"up trend continue, fgrow {str(x_col)}, add UP box {str(box_number)}, column={y_row}, price={close} date={date},")
@@ -2916,6 +2920,7 @@ class Finlib_indicator:
             if fg_trend == 'UP' and close <= new_contraray_trend_threshold_up_to_dn:
                 x_col += 1
                 # y_row = y_row - 1
+                y_row_b1 = y_row
                 y_row = -1
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
@@ -2930,6 +2935,7 @@ class Finlib_indicator:
 
                 rtn_dict['trend_rev_at'] = [f'U2D, {date} {close}']
                 rtn_dict['trend_length'] = [f'DN, {y_row}, {date} {close}']
+                rtn_dict['y_row_b1'] = y_row_b1
 
                 since_rev_day = None
                 since_rev_inc = None
@@ -2939,6 +2945,7 @@ class Finlib_indicator:
             # logical, down trend continue
             if fg_trend == 'DN' and close <= new_follow_trend_threshold_dn:
                 y_row -= abs(box_number)
+                rtn_dict['y_row'] = y_row
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
                     f"down trend continue, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
@@ -2966,6 +2973,7 @@ class Finlib_indicator:
             if fg_trend == 'DN' and close >= new_contraray_trend_threshold_dn_to_up:
                 x_col += 1
                 # y_row = y_row + 1
+                y_row_b1 = y_row
                 y_row = 1
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
@@ -2980,6 +2988,7 @@ class Finlib_indicator:
 
                 rtn_dict['trend_rev_at'] = [f'D2U, {date} {close}']
                 rtn_dict['trend_length'] = [f'UP, {y_row}, {date} {close}']
+                rtn_dict['y_row_b1'] = y_row_b1
 
                 since_rev_day = None
                 since_rev_inc = None
@@ -2992,9 +3001,12 @@ class Finlib_indicator:
 
         #enf of def
         rtn_df = pd.DataFrame.from_dict(rtn_dict)
+
+        if debug:
+            print(finlib.Finlib().pprint(rtn_df))
         return(rtn_df)
 
-    def get_pnf(self, type):
+    def get_pnf(self, type, debug=False):
 
         ## PnF point and figure
         o_dir = '/home/ryan/DATA/result/point_and_figure'
@@ -3022,9 +3034,12 @@ class Finlib_indicator:
 
         if type == 'AG':
             ### PnF AG
-            df_all = finlib.Finlib().load_all_ag_qfq_data(days=1000)
+            df_all = finlib.Finlib().load_all_ag_qfq_data(days=300)
             df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
             reverse = 3
+
+            if debug:
+                df_all = df_all[df_all['code']=='SH600519']
 
 
 
