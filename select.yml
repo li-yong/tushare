@@ -181,4 +181,10 @@ US_INDEX:
     - SP500: sp500
     - DOW: dow
     - NASDAQ100: nasdaq100
+FUTU_CN_ETF:
+    - SZ159780: 双创ETF
+    - SZ159781: 双创50ETF
+    - SH501043: 沪深300LOF
+    - SH510210: 上证指数ETF
+    - SH513360: 教育ETF
 

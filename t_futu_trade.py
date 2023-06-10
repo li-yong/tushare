@@ -597,7 +597,8 @@ def get_history_bar(host,port,code,start, end, ktype,extended_time=False):
             logging.fatal(__file__ + " " + 'error:', data)
             raise Exception("Error on request_history_kline. " + ls)
         else:
-            data = data.append(data_n)
+            # data = data.append(data_n)
+            data = pd.concat([data, data_n])
 
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
 
@@ -1054,6 +1055,8 @@ def get_chk_code_list(market,debug):
     elif 'AG' in market:
         rtn_list += _get_chk_code_list(market='SH', debug=debug, hold=False)
         rtn_list += _get_chk_code_list(market='SZ', debug=debug, hold=False)
+    elif 'FUTU_CN_ETF' in market:
+        rtn_list += _get_chk_code_list(market='FUTU_CN_ETF', debug=debug, hold=False)
 
     rtn_list = list(set(rtn_list))
     return(rtn_list)
@@ -1099,6 +1102,17 @@ def _get_chk_code_list(market,debug,hold=False):
             _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='AG')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
         _ = _[_['code'].str.contains('SZ')]['code']
+        get_price_code_list = _.to_list()
+        if debug:
+            get_price_code_list = ['SZ.000001']
+    elif market == 'FUTU_CN_ETF':
+        if hold:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='FUTU_CN_ETF')['stock_list'])
+        else:
+            _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='FUTU_CN_ETF')['stock_list'])
+        _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
+        # _ = _[_['code'].str.contains('SZ')]['code']
+        _ = _['code']
         get_price_code_list = _.to_list()
         if debug:
             get_price_code_list = ['SZ.000001']
@@ -1789,7 +1803,7 @@ def main():
     # parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
-    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
+    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD|FUTU_CN_ETF]")
     parser.add_option("--check_high_volume", action="store_true", default=False, dest="check_high_volume", help="check high volume based on 1minute bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("--get_rt_ticker", action="store_true", default=False, dest="get_rt_ticker", help="get real time ticker 获取实时逐笔")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US-HK-AG|US_HOLD-HK_HOLD-AG_HOLD]")

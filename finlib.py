@@ -972,10 +972,10 @@ class Finlib:
             # code = str(row['code'])
             code = row['code']
             # print(row)
-            if re.match('^6', code):
+            if re.match('^[6|5]', code): #600519, 510210 上证指数ETF, 501043  沪深300LOF
                 code_S = "SH" + dot + code
                 code_S2 = code + dot + "SH"
-            elif re.match('^[0|3]', code):
+            elif re.match('^[0|3|1]', code): #159781   双创50ETF
                 code_S = "SZ" + dot + code
                 code_S2 = code + dot + "SZ"
             elif re.match('^8', code):
@@ -4635,6 +4635,9 @@ class Finlib:
             elif stock_global == 'US_INDEX':
                 csv_dir = "/home/ryan/DATA/DAY_Global/stooq/US_INDEX"
                 stock_list = selected_stocks['US_INDEX']
+            elif stock_global == 'FUTU_CN_ETF':
+                csv_dir = "/home/ryan/DATA/DAY_Global/FUTU_CN_ETF"
+                stock_list = selected_stocks['FUTU_CN_ETF']
             elif stock_global == "HK_INDEX":
                 csv_dir = "/home/ryan/DATA/DAY_Global/HK_INDEX"
                 stock_list = selected_stocks['HK_INDEX']
