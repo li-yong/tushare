@@ -3020,6 +3020,16 @@ class Finlib_indicator:
             return(pd.read_csv(out_csv))
 
 
+        if type == 'AG_OPTION_ETF_60M':
+            ### PnF Index
+            df_all = finlib.Finlib().load_all_ag_option_etf_60m()
+            reverse = 2
+
+        if type == 'AG_OPTION_ETF_DAY':
+            ### PnF Index
+            df_all = finlib.Finlib().load_all_ag_option_etf_day()
+            reverse = 2
+
         if type == 'AG_INDEX':
             ### PnF Index
             df_all = finlib.Finlib().load_all_ag_index_data()

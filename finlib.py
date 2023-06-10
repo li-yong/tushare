@@ -5856,6 +5856,8 @@ class Finlib:
             df = self.regular_read_csv_to_stdard_df(data_csv=csv)
 
         return (df)
+
+
     def load_all_ag_index_data(self,days=300):
         ######### For TRIN, Advance/Decline LINE #######\
         dir = "/home/ryan/DATA/DAY_Global/AG_INDEX"
@@ -5882,6 +5884,72 @@ class Finlib:
 
             df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
             df.to_csv(csv, encoding='UTF-8', index=False)
+            logging.info("generated " + csv)
+        else:
+            logging.info("re-using csv as it generated in 1 days. " + csv)
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv)
+
+        return (df)
+
+
+    def load_all_ag_option_etf_60m(self,entries=1000):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/"
+        csv = dir + f"/ag_option_etf_{entries}_60m.csv"
+
+        if not self.is_cached(file_path=csv, day=1):
+            logging.info("generating csv from source.")
+
+            cmd1 = "head -1 " + dir + "/FUTU_SH/SH.510050_60m.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/FUTU_SH/SH.*_60m.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+            cmd3 = "for i in `ls " + dir + "/FUTU_SZ/SZ.*_60m.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
+
+            os.system(cmd1)
+            os.system(cmd2)
+            os.system(cmd3)
+
+            #adding code to csv
+            df=pd.read_csv(csv)
+            df['code'] = df['code'].apply(lambda _d: _d.replace(".", ''))
+            df.to_csv(csv, encoding='UTF-8', index=False)
+
+            logging.info("generated " + csv)
+        else:
+            logging.info("re-using csv as it generated in 1 days. " + csv)
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv)
+
+        return (df)
+
+
+    def load_all_ag_option_etf_day(self,entries=300):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/"
+        csv = dir + f"/ag_option_etf_{entries}_day.csv"
+
+        if not self.is_cached(file_path=csv, day=1):
+            logging.info("generating csv from source.")
+
+            cmd1 = "head -1 " + dir + "/FUTU_SH/SH.510050_day.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/FUTU_SH/SH.*_day.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+            cmd3 = "for i in `ls " + dir + "/FUTU_SZ/SZ.*_day.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+
+            logging.info(cmd1)
+            logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
+            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
+
+            os.system(cmd1)
+            os.system(cmd2)
+            os.system(cmd3)
+
+            #adding code to csv
+            df=pd.read_csv(csv)
+            df['code'] = df['code'].apply(lambda _d: _d.replace(".", ''))
+            df.to_csv(csv, encoding='UTF-8', index=False)
+
             logging.info("generated " + csv)
         else:
             logging.info("re-using csv as it generated in 1 days. " + csv)

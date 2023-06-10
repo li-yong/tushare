@@ -405,7 +405,7 @@ def buy_sell_stock_if_p_up_below_hourly_ma_minutely_check(
     return()
 
 
-def place_sell_market_order(trd_ctx, code, qty, trd_env ):
+def place_sell_market_order(trd_ctx, code, qty, trd_env):
     trd_ctx = get_ctx_from_code(trd_ctx,code)
 
     logging.info(__file__ + " place_sell_market_order " + "code " + code + " , qty " + str(qty) + " , trd_env " + str(trd_env))
@@ -1111,7 +1111,6 @@ def _get_chk_code_list(market,debug,hold=False):
         else:
             _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='FUTU_CN_ETF')['stock_list'])
         _ = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
-        # _ = _[_['code'].str.contains('SZ')]['code']
         _ = _['code']
         get_price_code_list = _.to_list()
         if debug:
@@ -1199,12 +1198,15 @@ def get_atr(code, df_tv_all):
     atr_14 = df_tv_all[df_tv_all.code == code]['atr_14'].values[0]
     return(atr_14)
 
-def fetch_history_bar(host,port,market,debug):
-
+def fetch_history_bar(host,port,market,debug,ktype=KLType.K_1M):
+    if market == 'FUTU_CN_ETF':
+        _ = finlib.Finlib().remove_market_from_tscode(finlib.Finlib().get_stock_configuration(selected=True, stock_global='FUTU_CN_ETF')['stock_list'])
+        code_name_df = finlib.Finlib().add_market_to_code(df=_, dot_f=True, tspro_format=False)
 
     for code in get_chk_code_list(market=market, debug=debug):
+
         dir = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2]
-        csv_f = dir + "/" + code + "_1m.csv"
+        csv_f = dir + "/" + code + "_"+ktype.lower().split("_")[1]+".csv"
 
         if not os.path.isdir(dir):
             os.mkdir(dir)
@@ -1224,7 +1226,7 @@ def fetch_history_bar(host,port,market,debug):
             csv_max_date = end = datetime.datetime.today().strftime("%Y-%m-%d")
 
         logging.info("fetching date " + start + " " + end + " " + code)
-        df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=KLType.K_1M,
+        df = get_history_bar(host=host, port=port, code=code, start=start, end=end, ktype=ktype,
                              extended_time=True)
 
         df['date'] = df['time_key'].apply(
@@ -1237,6 +1239,12 @@ def fetch_history_bar(host,port,market,debug):
 
         df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'], keep='last',
                                                      ignore_index=True).reset_index().drop('index', axis=1)
+
+        if 'code_name_df' in locals():
+            name = code_name_df[code_name_df['code']==code]['name'].iloc[0]
+            df_rtn['name']=name
+            df_rtn = finlib.Finlib().adjust_column(df=df_rtn, col_name_list=['code','name'])
+
 
         df_rtn.to_csv(csv_f, encoding='UTF-8', index=False)
         logging.info("fetched, saved to " + csv_f
@@ -1868,7 +1876,8 @@ def main():
 
     #### fetch history bar
     if options.fetch_history_bar and is_port_open(host=host,port=port):
-        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug)
+        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug, ktype=options.ktype_short)
+        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug, ktype=options.ktype_long)
         exit()
 
     if options.check_high_volume:

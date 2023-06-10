@@ -1530,6 +1530,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
+a = finlib.Finlib().load_all_ag_option_etf_60m()
+a = finlib.Finlib().load_all_ag_option_etf_day()
 
 rst_dir= "/home/ryan/DATA/result"
 

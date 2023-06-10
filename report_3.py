@@ -1989,6 +1989,14 @@ debug = options.debug
 if no_question or input("Run Point and Figure check? [N]")=="Y":
     csv_o = rst_dir+"/df_report_volatility_AG.csv"
 
+    df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_OPTION_ETF_60M')
+    df_b = df.query("trend=='UP' & since_rev_day<=3")
+    df_s = df.query("trend=='DN' & since_rev_day<=3")
+
+    df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_OPTION_ETF_DAY')
+    df_b = df.query("trend=='UP' & since_rev_day<=3")
+    df_s = df.query("trend=='DN' & since_rev_day<=3")
+
     df = finlib_indicator.Finlib_indicator().get_pnf(type='AG_INDEX')
     df_b = df.query("trend=='UP' & since_rev_day<=3")
     df_s = df.query("trend=='DN' & since_rev_day<=3")
