@@ -421,12 +421,19 @@ if [ $full_or_daily == "FULL" ]; then
 fi
 
 ######################################
-# /home/ryan/DATA/DAY_Global/FUTU_[HK, SH, SZ, US]/*.csv
+# /home/ryan/DATA/DAY_Global/FUTU_[HK, SH, SZ, US]/*_1m.csv
 ######################################
 python t_futu_trade.py --fetch_history_bar  --market AG_HOLD
 python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
 python t_futu_trade.py --fetch_history_bar  --market AG
 python t_futu_trade.py --fetch_history_bar  --market HK
+
+
+###### AG Options and ETF
+# Output: /home/ryan/DATA/DAY_Global/FUTU_[SH,SZ]/*_day.csv,  *_60m.csv
+# /home/ryan/DATA/DAY_Global/FUTU_SH/SH.501043_day.csv  SH.501043_60m.csv
+# /home/ryan/DATA/DAY_Global/FUTU_SZ/SZ.159780_day.csv  SZ.159780_60m.csv
+python t_futu_trade.py --fetch_history_bar --market FUTU_CN_ETF --ktype_short=K_60M --ktype_long=K_DAY
 
 #purchased nasdaq basic card. 20220709
 python t_futu_trade.py --fetch_history_bar  --market US_HOLD

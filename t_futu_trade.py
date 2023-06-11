@@ -1237,7 +1237,7 @@ def fetch_history_bar(host,port,market,debug,ktype=KLType.K_1M):
             df['code']=finlib.Finlib().get_code_format(code)['C2D6']
             df = finlib.Finlib().adjust_column(df=df, col_name_list=['code', 'date'])
 
-        df_rtn = df_exist.append(df).drop_duplicates(subset=['time_key'], keep='last',
+        df_rtn = pd.concat([df_exist,df]).drop_duplicates(subset=['time_key'], keep='last',
                                                      ignore_index=True).reset_index().drop('index', axis=1)
 
         if 'code_name_df' in locals():

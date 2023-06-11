@@ -38,6 +38,10 @@ python report_3.py --no_question
 #run twice to get output:
 #/home/ryan/DATA/result/active_industry.csv
 #/home/ryan/DATA/result/active_bk.csv
+
+#output:
+# # /home/ryan/DATA/DAY_Global/ag_option_etf_1000_60m.csv
+## ag_option_etf_1000_60m.csv  ag_option_etf_300_day.csv
 python report_3.py --no_question
 
 ##########################

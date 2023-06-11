@@ -2801,6 +2801,8 @@ class Finlib_indicator:
         df = stockstats.StockDataFrame.retype(df)
         df[['atr_14']]  # add atr_14 column to df
         df['atr_14'] = df['atr_14'].apply(lambda _d: round(_d, 2))
+        # df = df[df['atr_14'] >= 0.01]
+
         df['box_size'] = df['atr_14'].shift(1)  # exclude current day's variation from caculation of box_size.
         df = df[15:]
         df = df.reset_index()  # .drop('index', axis=1)
@@ -2855,6 +2857,9 @@ class Finlib_indicator:
 
             # trend reversed from down to up. if price is hit, start a new row with a diffent token.
             new_contraray_trend_threshold_dn_to_up = cur_trend_price + reverse * box_size
+
+            if box_size == 0:
+                continue
 
             # box number
             box_number = int((close - cur_trend_price) / box_size)
@@ -2922,6 +2927,8 @@ class Finlib_indicator:
                 # y_row = y_row - 1
                 y_row_b1 = y_row
                 y_row = -1
+                rtn_dict['y_row'] = y_row
+
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
                     f"up trend rev to down, fgrow {str(x_col)}, add DN box {str(box_number)}, column={y_row}, price={close} date={date},")
@@ -2975,6 +2982,8 @@ class Finlib_indicator:
                 # y_row = y_row + 1
                 y_row_b1 = y_row
                 y_row = 1
+                rtn_dict['y_row'] = y_row
+
                 logging.info(f"debug: cur_p {cur_trend_price} box_size {box_size}")
                 logging.info(
                     f"down trend rev to up, fgrow {str(x_col)}, add UP box {str(box_number)}, column={y_row}, price={close} date={date},")
@@ -3051,9 +3060,10 @@ class Finlib_indicator:
             if debug:
                 df_all = df_all[df_all['code']=='SH600519']
 
-
-
-        df_all['date_dt'] = df_all['date'].apply(lambda _d: datetime.strptime(str(_d), '%Y%m%d'))
+        if 'time_key' in df_all.columns:
+            df_all['date_dt'] = df_all['time_key'].apply(lambda _d: datetime.strptime(str(_d), '%Y-%m-%d %H:%M:%S'))
+        else:
+            df_all['date_dt'] = df_all['date'].apply(lambda _d: datetime.strptime(str(_d), '%Y%m%d'))
 
         pnf_df = pd.DataFrame()
 
@@ -3069,9 +3079,11 @@ class Finlib_indicator:
             # logging.info(rtn_df)
             pnf_df = pd.concat([pnf_df, rtn_df])
 
-        logging.info(finlib.Finlib().pprint(pnf_df.head(10)))
+        pnf_df = finlib.Finlib().adjust_column(df=pnf_df,col_name_list=['code','name','trend','y_row','y_row_b1'])
+        logging.info(f"Point and Figure PnF of {type}:")
+        logging.info(finlib.Finlib().pprint(pnf_df.head(20)))
         pnf_df.to_csv(out_csv, encoding='UTF-8', index=False)
-        print(f'fg_figure saved to {out_csv}')
+        logging.info(f'fg_figure saved to {out_csv}')
         return(pnf_df)
 
     def stock_price_volatility(self, csv_o):
