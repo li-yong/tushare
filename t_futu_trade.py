@@ -1205,8 +1205,14 @@ def fetch_history_bar(host,port,market,debug,ktype=KLType.K_1M):
 
     for code in get_chk_code_list(market=market, debug=debug):
 
-        dir = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2]
+        if market == 'FUTU_CN_ETF':
+            dir = "/home/ryan/DATA/DAY_Global/FUTU_AG_OPTION"
+        else:
+            dir = "/home/ryan/DATA/DAY_Global/FUTU_" + code[0:2]
+
         csv_f = dir + "/" + code + "_"+ktype.lower().split("_")[1]+".csv"
+
+
 
         if not os.path.isdir(dir):
             os.mkdir(dir)
@@ -1811,7 +1817,8 @@ def main():
     # parser.add_option("--debug", action="store_true", default=False, dest="debug", help="debug, only check 1st 10 stocks in the list")
     parser.add_option("--real_account", action="store_true", default=False, dest="real", help="real environment")
     parser.add_option("--tv_source", action="store_true", default=False, dest="tv_source", help="open tradingview")
-    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD|FUTU_CN_ETF]")
+    parser.add_option("--fetch_history_bar", action="store_true", default=False, dest="fetch_history_bar", help="fetch history bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
+    parser.add_option("--fetch_history_bar_ag_option", action="store_true", default=False, dest="fetch_history_bar_ag_option", help="fetch history bar of AG Option, --market == FUTU_CN_ETF]")
     parser.add_option("--check_high_volume", action="store_true", default=False, dest="check_high_volume", help="check high volume based on 1minute bar, --market = [AG|HK|US|AG_HOLD|HK_HOLD|US_HOLD]")
     parser.add_option("--get_rt_ticker", action="store_true", default=False, dest="get_rt_ticker", help="get real time ticker 获取实时逐笔")
     parser.add_option("-m", "--market", default="HK", dest="market",type="str", help="market name. [US-HK-AG|US_HOLD-HK_HOLD-AG_HOLD]")
@@ -1874,10 +1881,15 @@ def main():
         quote_ctx.close()
         exit()
 
+    #### fetch history bar of AG option
+    if options.fetch_history_bar_ag_option and is_port_open(host=host,port=port):
+        fetch_history_bar(host=host,port=port,market='FUTU_CN_ETF', debug=options.debug, ktype=options.ktype_short)
+        fetch_history_bar(host=host,port=port,market='FUTU_CN_ETF', debug=options.debug, ktype=options.ktype_long)
+        exit()
+
     #### fetch history bar
     if options.fetch_history_bar and is_port_open(host=host,port=port):
-        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug, ktype=options.ktype_short)
-        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug, ktype=options.ktype_long)
+        fetch_history_bar(host=host,port=port,market=options.market, debug=options.debug)
         exit()
 
     if options.check_high_volume:

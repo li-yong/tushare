@@ -430,10 +430,8 @@ python t_futu_trade.py --fetch_history_bar  --market HK
 
 
 ###### AG Options and ETF
-# Output: /home/ryan/DATA/DAY_Global/FUTU_[SH,SZ]/*_day.csv,  *_60m.csv
-# /home/ryan/DATA/DAY_Global/FUTU_SH/SH.501043_day.csv  SH.501043_60m.csv
-# /home/ryan/DATA/DAY_Global/FUTU_SZ/SZ.159780_day.csv  SZ.159780_60m.csv
-python t_futu_trade.py --fetch_history_bar --market FUTU_CN_ETF --ktype_short=K_60M --ktype_long=K_DAY
+# Output: /home/ryan/DATA/DAY_Global/FUTU_AG_OPTION/*_day.csv,  *_60m.csv
+python t_futu_trade.py --fetch_history_bar_ag_option --market FUTU_CN_ETF --ktype_short=K_60M --ktype_long=K_DAY
 
 #purchased nasdaq basic card. 20220709
 python t_futu_trade.py --fetch_history_bar  --market US_HOLD

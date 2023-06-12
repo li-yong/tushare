@@ -5900,17 +5900,14 @@ class Finlib:
         if not self.is_cached(file_path=csv, day=1):
             logging.info("generating csv from source.")
 
-            cmd1 = "head -1 " + dir + "/FUTU_SH/SH.510050_60m.csv > " + csv
-            cmd2 = "for i in `ls " + dir + "/FUTU_SH/SH.*_60m.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
-            cmd3 = "for i in `ls " + dir + "/FUTU_SZ/SZ.*_60m.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+            cmd1 = "head -1 " + dir + "/FUTU_AG_OPTION/SH.510050_60m.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/FUTU_AG_OPTION/*_60m.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
 
             logging.info(cmd1)
             logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
-            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
 
             os.system(cmd1)
             os.system(cmd2)
-            os.system(cmd3)
 
             #adding code to csv
             df=pd.read_csv(csv)
@@ -5933,17 +5930,14 @@ class Finlib:
         if not self.is_cached(file_path=csv, day=1):
             logging.info("generating csv from source.")
 
-            cmd1 = "head -1 " + dir + "/FUTU_SH/SH.510050_day.csv > " + csv
-            cmd2 = "for i in `ls " + dir + "/FUTU_SH/SH.*_day.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
-            cmd3 = "for i in `ls " + dir + "/FUTU_SZ/SZ.*_day.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
+            cmd1 = "head -1 " + dir + "/FUTU_AG_OPTION/SH.510050_day.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/FUTU_AG_OPTION/*_day.csv`; do tail -" + str(entries) + " $i |grep -vi code >> " + csv + "; done"
 
             logging.info(cmd1)
             logging.info(cmd2)  # for i in `ls SH*.csv`; do tail -300 $i >> ag_all.csv;done
-            logging.info(cmd3)  # for i in `ls SZ*.csv`; do tail -300 $i >> ag_all.csv;done
 
             os.system(cmd1)
             os.system(cmd2)
-            os.system(cmd3)
 
             #adding code to csv
             df=pd.read_csv(csv)
