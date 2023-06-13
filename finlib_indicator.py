@@ -3132,6 +3132,8 @@ class Finlib_indicator:
                 continue
 
             df_sub = df[df['code'] == c].tail(300).reset_index().drop('index', axis=1)
+            if df_sub.__len__() < 300:
+                continue
             name = df_sub.iloc[1]['name']
 
             d = df_sub['close'].describe()
@@ -3150,6 +3152,7 @@ class Finlib_indicator:
 
         df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info("result saved to " + csv_o)
+        return(df_rtn)
 
     #input: df [open,high, low, close]
     #output: {hit:[T|F], high:value, low:value, }
