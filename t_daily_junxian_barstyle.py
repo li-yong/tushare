@@ -26,6 +26,10 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
     df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=ma_long)
     df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=ma_short, middle=ma_middle, long=ma_long)
 
+
+    #debug
+    df_bar_style = finlib_indicator.Finlib_indicator().zigzag_valley(df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
+
     ######################################################
     # Buy/Sell condition based on MA4_MA27_Distance
     ######################################################
@@ -375,6 +379,8 @@ def main():
     df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
     # df = finlib.Finlib().remove_garbage(df=df)
 
+    if debug_f:
+        df_all = df_all[df_all['code']=='SH600519']
     codes = df_all['code'].unique()
     codes.sort()
 

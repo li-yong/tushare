@@ -2305,6 +2305,111 @@ class Finlib_indicator:
         df_jin_cha = df[(df['b1_tmp_col'] <= threshod) & (df[col_name] > threshod)]
         return (df_si_cha, df_jin_cha)
 
+    def plot_pivots(self, X, pivots):
+        plt.xlim(0, len(X))
+        plt.ylim(X.min() * 0.99, X.max() * 1.01)
+        plt.plot(np.arange(len(X)), X, 'k:', alpha=0.5)
+        plt.plot(np.arange(len(X))[pivots != 0], X[pivots != 0], 'k-')
+        plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
+        plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
+
+    def zigzag_valley(self,df, ma_short, ma_middle, ma_long, dates=[]):
+
+        df = self.add_macd(df=df)
+        df = self.add_kdj(df=df)
+        df = self.add_rsi(df=df, middle=14)
+
+        df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
+        df['close'] = df['close'].apply(lambda _d: round(_d,1))
+        df = df.set_index('date')
+
+        X = df['close']
+        pivots = zigzag.peak_valley_pivots(X.values, 0.04, -0.04)
+        pivots[0]=0
+        pivots[-1]=0
+
+        # self.plot_pivots(X.values, pivots)
+
+
+        # plot
+        ts_pivots = pd.Series(X, index=X.index)
+        ts_pivots_peak = ts_pivots[pivots == 1].reset_index()
+        ts_pivots_valley = ts_pivots[pivots == -1].reset_index()
+        ts_pivots = ts_pivots[pivots != 0]
+
+        if ts_pivots_peak.iloc[-1]['date'] > ts_pivots_valley.iloc[-1]['date']:
+            peak_price = ts_pivots_peak.iloc[-1]['close']
+            peak_date = ts_pivots_peak.iloc[-1]['date']
+            # print("Most recent is Peak, downning from peak.")
+            # print("Peak date: "+ peak_date.strftime('%Y-%m-%d'))
+            # print("Peak price: "+ str(peak_price))
+
+            df1 = df.reset_index()
+            if df1['close'].max() == peak_price:
+                print("  Dbg, peak is all time high")
+                N_days_peak = str(df1.__len__())
+                peak_start_date = df1.iloc[0]['date']
+                peak_start_price = df1.iloc[0]['close']
+            else:
+                i = 2
+                while i <= ts_pivots_peak.__len__():
+                    if ts_pivots_peak.iloc[-1*i]['close'] > peak_price:
+                        pk_higher_date = ts_pivots_peak.iloc[-1*i]['date']
+                        print("  Dbg, pk higher date: "+ pk_higher_date.strftime('%Y-%m-%d'))
+                        df1 = df1[df1['date'] > pk_higher_date]
+                        df1 = df1[df1['close']<peak_price ]
+
+                        peak_start_date = df1.iloc[0]['date']
+                        peak_start_price = df1.iloc[0]['close']
+                        N_days_peak = (peak_date - peak_start_date).days
+                        break
+
+            print("Most recent is Peak, downning from peak.")
+            print("Peak date: "+ peak_date.strftime('%Y-%m-%d'))
+            print("Peak price: "+ str(peak_price))
+            print("N days Peak: " + str(N_days_peak))
+            print("  Dbg, Peak_start date: " + peak_start_date.strftime('%Y-%m-%d'))
+            print("  Dbg, Peak_start price: " + str(peak_start_price))
+
+
+
+
+
+
+        if dates.__len__() == 0:
+            dates.append(ts_pivots.index.values[-5])  #date[0] is day B1
+            dates.append(ts_pivots.index.values[-4])  #date[0] is day B1
+            dates.append(ts_pivots.index.values[-3])  #date[0] is day B1
+            dates.append(ts_pivots.index.values[-2])  #date[0] is day B1
+            dates.append(ts_pivots.index.values[-1])  #date[1] is today
+
+        # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
+        # df = df[keep_cols]
+        # df = df.set_index('date')
+
+        plt.clf()
+        # plt.suptitle(code+" "+name+" "+notes_in_title, fontproperties=font)
+
+        ax = plt.subplot(4, 1, 1)
+        ax.xaxis.set_visible(True)
+
+        days = (pd.to_datetime(str(dates[1])) - pd.to_datetime(str(dates[0]))).days
+
+        plt.title("close_"+pd.to_datetime(str(dates[0])).strftime("%m%d")+"_"+pd.to_datetime(str(dates[1])).strftime("%m%d")+"_"+str(days)+"_days_ago")
+
+        X.plot()
+        ts_pivots.plot(style='g-o')
+        if dates.__len__() >=5:
+            plt.annotate(X[X.index==dates[0]].values[0], xy=(dates[0], X[X.index==dates[0]].values[0]))
+            plt.annotate(X[X.index==dates[1]].values[0], xy=(dates[1], X[X.index==dates[1]].values[0]))
+            plt.annotate(X[X.index==dates[2]].values[0], xy=(dates[2], X[X.index==dates[2]].values[0]))
+            plt.annotate(X[X.index==dates[3]].values[0], xy=(dates[3], X[X.index==dates[3]].values[0]))
+            plt.annotate(X[X.index==dates[4]].values[0], xy=(dates[4], X[X.index==dates[4]].values[0]))
+        plt.show()
+
+        logging.info("figure saved to "  + "\n")
+        print()
+
     def zigzag_plot(self,df, code, name, notes_in_title="", dates=[]):
 
         df = self.add_macd(df=df)
