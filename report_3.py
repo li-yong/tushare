@@ -1990,29 +1990,40 @@ if no_question or input("Run Point and Figure check? [N]")=="Y":
     csv_o = rst_dir+"/df_report_volatility_AG.csv"
 
     type='AG_OPTION_ETF_60M'
-    df = finlib_indicator.Finlib_indicator().get_pnf(type=type)
+    df = finlib_indicator.Finlib_indicator().get_pnf(type=type,debug=debug)
     df_b_ag_opt_60m = df.query("trend=='UP' & since_rev_day<=3")
     df_s_ag_opt_60m = df.query("trend=='DN' & since_rev_day<=3")
+    logging.info("=== AG_OPTION_ETF_60M:\n" + finlib.Finlib().pprint(df))
+
+    logging.info("BUY AG_OPTION_ETF_60M:\n" + finlib.Finlib().pprint(df_b_ag_opt_60m))
+    logging.info("SELL AG_OPTION_ETF_60M:\n" + finlib.Finlib().pprint(df_s_ag_opt_60m))
 
     type = 'AG_OPTION_ETF_DAY'
-    df = finlib_indicator.Finlib_indicator().get_pnf(type=type)
+    df = finlib_indicator.Finlib_indicator().get_pnf(type=type,debug=debug)
     df_b_ag_opt_day = df.query("trend=='UP' & since_rev_day<=3")
     df_s_ag_opt_day = df.query("trend=='DN' & since_rev_day<=3")
+    logging.info("=== AG_OPTION_ETF_DAY:\n" + finlib.Finlib().pprint(df))
+    logging.info("BUY AG_OPTION_ETF_DAY:\n" + finlib.Finlib().pprint(df_b_ag_opt_day))
+    logging.info("SELL AG_OPTION_ETF_DAY:\n" + finlib.Finlib().pprint(df_s_ag_opt_day))
 
     type = 'AG_INDEX'
-    df = finlib_indicator.Finlib_indicator().get_pnf(type=type)
+    df = finlib_indicator.Finlib_indicator().get_pnf(type=type,debug=debug)
     df_b = df.query("trend=='UP' & since_rev_day<=3")
     df_s = df.query("trend=='DN' & since_rev_day<=3")
+    logging.info("=== AG_INDEX:\n" + finlib.Finlib().pprint(df))
+    logging.info("BUY AG_INDEX:\n" + finlib.Finlib().pprint(df_b))
+    logging.info("SELL AG_INDEX:\n" + finlib.Finlib().pprint(df_s))
+
 
     type = 'AG_BK'
-    df = finlib_indicator.Finlib_indicator().get_pnf(type=type)
+    df = finlib_indicator.Finlib_indicator().get_pnf(type=type,debug=debug)
     df_b = df.query("trend=='UP' & since_rev_day<=3")
     df_s = df.query("trend=='DN' & since_rev_day<=3")
     logging.info("BUY BK:\n" + finlib.Finlib().pprint(df_b))
     logging.info("SELL BK:\n" + finlib.Finlib().pprint(df_s))
 
     type = 'AG'
-    df = finlib_indicator.Finlib_indicator().get_pnf(type=type)
+    df = finlib_indicator.Finlib_indicator().get_pnf(type=type,debug=debug)
     df_b = df.query("trend=='UP' & since_rev_day<=3")
     df_s = df.query("trend=='DN' & since_rev_day<=3")
 

@@ -615,9 +615,16 @@ def zigzag_divation(debug=False):
 
         (rtn_df_macd_div, rtn_df_kdj_div, rtn_df_rsi_div) = finlib_indicator.Finlib_indicator().zigzag_divation(df=df_sub, code =code, name = name)
 
-        df_macd = df_macd.append(rtn_df_macd_div)
-        df_kdj = df_kdj.append(rtn_df_kdj_div)
-        df_rsi = df_rsi.append(rtn_df_rsi_div)
+        # df_macd = df_macd.append(rtn_df_macd_div)
+        df_macd = pd.concat([df_macd, rtn_df_macd_div])
+
+        # df_kdj = df_kdj.append(rtn_df_kdj_div)
+        df_kdj = pd.concat([df_kdj, rtn_df_kdj_div])
+
+        # df_rsi = df_rsi.append(rtn_df_rsi_div)
+        df_rsi = pd.concat([df_rsi, rtn_df_rsi_div])
+
+
 
         df_macd.to_csv(output_macd, encoding='UTF-8', index=False)
         df_kdj.to_csv(output_kdj, encoding='UTF-8', index=False)

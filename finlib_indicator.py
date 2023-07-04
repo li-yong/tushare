@@ -70,7 +70,15 @@ import zigzag
 logging.getLogger('matplotlib.font_manager').disabled = True
 import matplotlib.pyplot as plt
 
-plt.rcParams['font.family'] = ['WenQuanYi Micro Hei']
+# plt.rcParams['font.family'] = ['WenQuanYi Micro Hei']
+plt.rcParams['font.family'] = ['SimSun']
+plt.rcParams['font.sans-serif'] = ['SimSun']
+
+from matplotlib.font_manager import FontProperties
+font_path = r"/usr/share/fonts/truetype/windows-font/SIMSUN.TTC"
+# font = FontProperties(fname=font_path,size=30)
+font = FontProperties(fname=font_path)
+
 
 import numpy
 import math
@@ -2322,7 +2330,7 @@ class Finlib_indicator:
         # df = df.set_index('date')
 
         plt.clf()
-        plt.suptitle(code+" "+name+" "+notes_in_title)
+        plt.suptitle(code+" "+name+" "+notes_in_title, fontproperties=font)
 
         ax = plt.subplot(4, 1, 1)
         ax.xaxis.set_visible(False)
