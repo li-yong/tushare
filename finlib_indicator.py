@@ -2313,6 +2313,74 @@ class Finlib_indicator:
         plt.scatter(np.arange(len(X))[pivots == 1], X[pivots == 1], color='g')
         plt.scatter(np.arange(len(X))[pivots == -1], X[pivots == -1], color='r')
 
+    def n_days_peak(self, df, date, pivots_peak ):
+        peak_price = df[df['date']==date].close.values[0]
+        pivots_peak = pivots_peak[pivots_peak['date'] <= date]
+        df = df[df['date'] <= date]
+
+        if pivots_peak.__len__() == 0:
+            print("no before date records in pivots_peak ")
+            return(-1,-1,-1)
+
+
+        if df['close'].max() == peak_price:
+            print("  Dbg, peak is all time high")
+            N_days_peak = str(df.__len__())
+            peak_start_date = df.iloc[0]['date']
+            peak_start_price = df.iloc[0]['close']
+        else:
+            i = 2
+            while i <= pivots_peak.__len__():
+
+                if pivots_peak.iloc[-1 * i]['close'] > peak_price:
+                    pk_higher_date = pivots_peak.iloc[-1 * i]['date']
+                    print("  Dbg, pk higher date: " + pk_higher_date.strftime('%Y-%m-%d'))
+                    df = df[df['date'] > pk_higher_date]
+                    df = df[df['close'] < peak_price]
+
+                    peak_start_date = df.iloc[0]['date']
+                    peak_start_price = df.iloc[0]['close']
+                    N_days_peak = (date - peak_start_date).days
+                    break
+                i = i + 1
+
+
+        return(N_days_peak, peak_start_date, peak_start_price)
+
+    def n_days_valley(self, df, date, pivots_valley ):
+        valley_price = df[df['date']==date].close.values[0]
+        pivots_valley = pivots_valley[pivots_valley['date'] <= date]
+        df = df[df['date'] <= date]
+
+        if pivots_valley.__len__() == 0:
+            print("no before date records in pivots_peak ")
+            return(-1,-1,-1)
+
+
+        if df['close'].min() == valley_price:
+            print("  Dbg, valley is all time high")
+            N_days_valley = str(df.__len__())
+            valley_start_date = df.iloc[0]['date']
+            valley_start_price = df.iloc[0]['close']
+        else:
+            i = 2
+            while i <= pivots_valley.__len__():
+
+                if pivots_valley.iloc[-1 * i]['close'] < valley_price:
+                    pk_lower_date = pivots_valley.iloc[-1 * i]['date']
+                    print("  Dbg, pk lower date: " + pk_lower_date.strftime('%Y-%m-%d'))
+                    df = df[df['date'] > pk_lower_date]
+                    df = df[df['close'] > valley_price]
+
+                    valley_start_date = df.iloc[0]['date']
+                    valley_start_price = df.iloc[0]['close']
+                    N_days_valley = (date - valley_start_date).days
+                    break
+                i = i + 1
+
+
+        return(N_days_valley, valley_start_date, valley_start_price)
+
     def zigzag_valley(self,df, ma_short, ma_middle, ma_long, dates=[]):
 
         df = self.add_macd(df=df)
@@ -2337,43 +2405,27 @@ class Finlib_indicator:
         ts_pivots_valley = ts_pivots[pivots == -1].reset_index()
         ts_pivots = ts_pivots[pivots != 0]
 
+        # npeak only support the latest peak date.  Don't loop.
+        # for index, row in ts_pivots_valley.iterrows():
+        #     date=row['date'] #Timesatmp
+        #     N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(), date=date, pivots_peak=ts_pivots_peak)
+        peak_price = ts_pivots_peak.iloc[-1]['close']
+        peak_date = ts_pivots_peak.iloc[-1]['date']
+        N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(),
+                                                                          date=ts_pivots_peak.iloc[-1]['date'],
+                                                                          pivots_peak=ts_pivots_peak)
+        N_days_valley, valley_start_date, valley_start_price = self.n_days_valley(df=df.reset_index(),
+                                                                          date=ts_pivots_valley.iloc[-1]['date'],
+                                                                          pivots_valley=ts_pivots_valley)
+
         if ts_pivots_peak.iloc[-1]['date'] > ts_pivots_valley.iloc[-1]['date']:
-            peak_price = ts_pivots_peak.iloc[-1]['close']
-            peak_date = ts_pivots_peak.iloc[-1]['date']
-            # print("Most recent is Peak, downning from peak.")
-            # print("Peak date: "+ peak_date.strftime('%Y-%m-%d'))
-            # print("Peak price: "+ str(peak_price))
-
-            df1 = df.reset_index()
-            if df1['close'].max() == peak_price:
-                print("  Dbg, peak is all time high")
-                N_days_peak = str(df1.__len__())
-                peak_start_date = df1.iloc[0]['date']
-                peak_start_price = df1.iloc[0]['close']
-            else:
-                i = 2
-                while i <= ts_pivots_peak.__len__():
-                    if ts_pivots_peak.iloc[-1*i]['close'] > peak_price:
-                        pk_higher_date = ts_pivots_peak.iloc[-1*i]['date']
-                        print("  Dbg, pk higher date: "+ pk_higher_date.strftime('%Y-%m-%d'))
-                        df1 = df1[df1['date'] > pk_higher_date]
-                        df1 = df1[df1['close']<peak_price ]
-
-                        peak_start_date = df1.iloc[0]['date']
-                        peak_start_price = df1.iloc[0]['close']
-                        N_days_peak = (peak_date - peak_start_date).days
-                        break
-
+            # N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(), date=peak_date, pivots_peak=ts_pivots_peak)
             print("Most recent is Peak, downning from peak.")
             print("Peak date: "+ peak_date.strftime('%Y-%m-%d'))
             print("Peak price: "+ str(peak_price))
             print("N days Peak: " + str(N_days_peak))
-            print("  Dbg, Peak_start date: " + peak_start_date.strftime('%Y-%m-%d'))
-            print("  Dbg, Peak_start price: " + str(peak_start_price))
-
-
-
-
+            print("  Dbg, Peak_start_date (down since): " + peak_start_date.strftime('%Y-%m-%d'))
+            print("  Dbg, Peak_start_price (down since): " + str(peak_start_price))
 
 
         if dates.__len__() == 0:
