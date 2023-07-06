@@ -395,8 +395,24 @@ def main():
         df_rtn = cnt_jin_cha_si_cha(ma_short=ma_short, ma_middle=ma_middle,stock_global=stock_global,selected=selected, remove_garbage=remove_garbage,)
         exit()
 
+    if options.action=='junxian_style' and finlib.Finlib().is_cached(out_f):
+        logging.info("file generate in 1 day, no longer run. "+out_f)
+        df = pd.read_csv(out_f)
+        exit()
+
+    if options.action=='peak_valley' and finlib.Finlib().is_cached(out_f_peak_valley):
+        logging.info("file generate in 1 day, no longer run. "+out_f_peak_valley)
+        df = pd.read_csv(out_f_peak_valley)
+
+        df_up = df[(df['days_to_peak'] > df['days_to_valley'])]
+        df_up = df_up[(df_up['pct_to_valley'] > 15) & (df_up['pct_to_valley'] < 25)]
+        df_up = df_up[df_up['N_days_valley'] > 120]
+        exit()
+
+
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
+
 
    ###  Start of verify every stocks
     df_all = finlib.Finlib().load_all_ag_qfq_data(days=600)
