@@ -27,8 +27,10 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
     df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=ma_short, middle=ma_middle, long=ma_long)
 
 
-    #debug
-    df_bar_style = finlib_indicator.Finlib_indicator().zigzag_valley(df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
+    ######################################################
+    # current price to previous peak/valley
+    ######################################################
+    df_peak_valley_style = finlib_indicator.Finlib_indicator().zigzag_peak_valley(df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
 
     ######################################################
     # Buy/Sell condition based on MA4_MA27_Distance
@@ -195,6 +197,22 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
     return(df_a_stock_report)
 
 
+def verify_a_stock_peak_valley(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
+    ###################################
+    # Prepare
+    ###################################
+
+    df = finlib_indicator.Finlib_indicator().add_ma_ema(df=df, short=ma_short, middle=ma_middle, long=ma_long)
+    df = finlib_indicator.Finlib_indicator().add_tr_atr(df=df, short=ma_short, middle=ma_middle, long=ma_long)
+
+
+    ######################################################
+    # current price to previous peak/valley
+    ######################################################
+    df_peak_valley_style = finlib_indicator.Finlib_indicator().zigzag_peak_valley(df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long)
+    return(df_peak_valley_style)
+
+
 
 def show_result(file, dir, filebase,selected, stock_global):
     stock_global = stock_global.lower()
@@ -297,10 +315,12 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
 
     parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
+    parser.add_option("--action", dest="action", help="junxian_style|peak_valley")
     parser.add_option("-p", "--period", dest="period", default='D', help="[D|W|M]")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
     parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
+
 
     parser.add_option("--check_my_ma", action="store_true", dest="check_my_ma", default=False, help="run before market close")
     parser.add_option("--check_my_ma_allow_delay_min", type="int", action="store", dest="check_my_ma_allow_delay_min", default=30, help="minimal minutes to reuse cached market spot csv.")
@@ -314,6 +334,7 @@ def main():
 
     # df_rtn = pd.DataFrame()
     df_rtn = pd.DataFrame(columns=["code", "name"])
+    df_rtn_peak_valley = pd.DataFrame()
 
     (options, args) = parser.parse_args()
     debug_f = options.debug_f
@@ -344,10 +365,13 @@ def main():
 
     if period == 'D':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+        out_f_peak_valley = out_dir + "/" + stock_global.lower() + "_peak_valley.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
     elif period == 'W':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_w.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+        out_f_peak_valley = out_dir + "/" + stock_global.lower() + "_peak_valley_w.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
     elif period == 'M':
         out_f = out_dir + "/" + stock_global.lower() + "_junxian_barstyle_m.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
+        out_f_peak_valley = out_dir + "/" + stock_global.lower() + "_peak_valley_m.csv"  #/home/ryan/DATA/result/ag_junxian_barstyle.csv
     else:
         logging.fatal("unknown period " + str(period))
         exit()
@@ -381,7 +405,8 @@ def main():
 
     if debug_f:
         df_all = df_all[df_all['code']=='SH600519']
-    codes = df_all['code'].unique()
+    # codes = df_all['code'].unique()
+    codes = stock_list['code'].unique()
     codes.sort()
 
     i = 0
@@ -390,6 +415,9 @@ def main():
         logging.info(str(i) + " of " + str(codes.__len__()))
 
         df = df_all[df_all['code']==c].reset_index().drop('index', axis=1)
+
+        if df.__len__() == 0:
+            continue
 
         name, code = df.iloc[0]['name'], df.iloc[0]['code']
 
@@ -432,23 +460,35 @@ def main():
         df = df.iloc[-min_sample_f:].reset_index().drop('index', axis=1)
         df['name']  = pd.Series([name]*df.__len__(),name='name')
 
-        logging.info("verifying "+code + " " +name)
-        df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
+        if options.action=='junxian_style"':
+            logging.info("verifying "+code + " " +name)
+            df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
+            if not df_t.empty:
+                df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
+                df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
+                logging.debug("tmp output saved to " + out_f)
 
-        #print(df_t)
-        if not df_t.empty:
-            df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
-            df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-            logging.debug("tmp output saved to " + out_f)
 
-    df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
+        if options.action == 'peak_valley':
+            logging.info("verifying peak/valley "+code + " " +name)
+            df_t_peak_valley = verify_a_stock_peak_valley(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
+            if not df_t_peak_valley.empty:
+                df_rtn_peak_valley = pd.concat([df_rtn_peak_valley, df_t_peak_valley], sort=False).reset_index().drop('index', axis=1)
+                df_rtn_peak_valley.to_csv(out_f_peak_valley, encoding='UTF-8', index=False)
+                logging.debug("tmp peak_valley output saved to " + out_f_peak_valley)
 
-    df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','name','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+    if options.action=='junxian_style':
+        df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
+        df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','name','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
+        df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
+        logging.info("output saved to " + out_f)
+        exit(0)
 
-    df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-    logging.info("output saved to " + out_f)
+    if options.action=='peak_valley':
+        logging.info("output peak_valley saved to " + out_f_peak_valley)
+        exit(0)
 
-    exit(0)
+
 
 
 ### MAIN ####

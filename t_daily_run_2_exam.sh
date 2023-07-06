@@ -693,9 +693,12 @@ fi
 
 
 if [ $full_or_daily == "FULL" ]; then
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action junxian_stype
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W --action junxian_stype
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M --action junxian_stype
+    
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action peak_valley 
+
 fi
 
 #######################################
@@ -940,6 +943,7 @@ python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
 
 
 #python t_daily_update_order_tracking_stock.py
+
 
 
 

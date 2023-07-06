@@ -558,7 +558,7 @@ class Finlib_indicator:
                     continue
 
                 if (df_sma_short.iloc[-i] < df_sma_middle.iloc[-i] < df_sma_long.iloc[-i]):
-                    logging.info("latest kong tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
+                    logging.info("latest kong tou pailie is " + str(i) + " days before at " + str(df.iloc[-i]['date']))
                     n_last_ma_dtpl_days = i
                     rtn_dict['last_kongtou_pailie_n_days_before'] = i
                     rtn_dict['last_kongtou_pailie_date'] = df.iloc[-i]['date']
@@ -589,7 +589,7 @@ class Finlib_indicator:
                     continue
 
                 if (df_sma_short.iloc[-i] > df_sma_middle.iloc[-i] > df_sma_long.iloc[-i]):
-                    logging.info("latest duo tou pailie is " + str(i) + " days before at " + df.iloc[-i]['date'])
+                    logging.info("latest duo tou pailie is " + str(i) + " days before at " + str(df.iloc[-i]['date']))
                     rtn_dict['last_duotou_pailie_n_days_before'] = i
                     rtn_dict['reason'] += constant.MA_LAST_DUO_TOU_PAI_LIE_N_days + "_" + str(i) + '; '
                     rtn_dict['last_duotou_pailie_date'] = df.iloc[-i]['date']
@@ -2318,6 +2318,10 @@ class Finlib_indicator:
         pivots_peak = pivots_peak[pivots_peak['date'] <= date]
         df = df[df['date'] <= date]
 
+        N_days_peak = -1
+        peak_start_date = -1
+        peak_start_price = -1
+
         if pivots_peak.__len__() == 0:
             print("no before date records in pivots_peak ")
             return(-1,-1,-1)
@@ -2352,6 +2356,11 @@ class Finlib_indicator:
         pivots_valley = pivots_valley[pivots_valley['date'] <= date]
         df = df[df['date'] <= date]
 
+        N_days_valley = -1
+        valley_start_date = -1
+        valley_start_price = -1
+
+
         if pivots_valley.__len__() == 0:
             print("no before date records in pivots_peak ")
             return(-1,-1,-1)
@@ -2381,11 +2390,11 @@ class Finlib_indicator:
 
         return(N_days_valley, valley_start_date, valley_start_price)
 
-    def zigzag_valley(self,df, ma_short, ma_middle, ma_long, dates=[]):
-
-        df = self.add_macd(df=df)
-        df = self.add_kdj(df=df)
-        df = self.add_rsi(df=df, middle=14)
+    def zigzag_peak_valley(self,df, ma_short, ma_middle, ma_long, dates=[]):
+        rtn_dict={}
+        # df = self.add_macd(df=df)
+        # df = self.add_kdj(df=df)
+        # df = self.add_rsi(df=df, middle=14)
 
         df['date'] = df['date'].apply(lambda _d: datetime.strptime(str(_d), "%Y%m%d"))
         df['close'] = df['close'].apply(lambda _d: round(_d,1))
@@ -2405,18 +2414,66 @@ class Finlib_indicator:
         ts_pivots_valley = ts_pivots[pivots == -1].reset_index()
         ts_pivots = ts_pivots[pivots != 0]
 
+        if ts_pivots_peak.__len__() == 0:
+            return(pd.DataFrame())
+        if ts_pivots_valley.__len__() == 0:
+            return(pd.DataFrame())
+
+
+
         # npeak only support the latest peak date.  Don't loop.
         # for index, row in ts_pivots_valley.iterrows():
         #     date=row['date'] #Timesatmp
         #     N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(), date=date, pivots_peak=ts_pivots_peak)
         peak_price = ts_pivots_peak.iloc[-1]['close']
+        valley_price = ts_pivots_valley.iloc[-1]['close']
         peak_date = ts_pivots_peak.iloc[-1]['date']
         N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(),
                                                                           date=ts_pivots_peak.iloc[-1]['date'],
                                                                           pivots_peak=ts_pivots_peak)
+
+        if N_days_peak == -1:
+            return(pd.DataFrame())
+
+        pct_to_peak = round(100*(df.iloc[-1]['close'] - peak_price)/peak_price,2)
+        days_to_peak = (df.reset_index().iloc[-1]['date'] - ts_pivots_peak.iloc[-1]['date']).days
+
+
         N_days_valley, valley_start_date, valley_start_price = self.n_days_valley(df=df.reset_index(),
                                                                           date=ts_pivots_valley.iloc[-1]['date'],
                                                                           pivots_valley=ts_pivots_valley)
+        if N_days_valley == -1:
+            return(pd.DataFrame())
+        
+        pct_to_valley = round(100*(df.iloc[-1]['close'] - valley_price) / valley_price, 2)
+        days_to_valley = (df.reset_index().iloc[-1]['date'] - ts_pivots_valley.iloc[-1]['date']).days
+
+
+        rtn_dict={
+            'code' : [df.iloc[0]['code']],
+            'name' : [df.iloc[0]['name']],
+            'date' : [df.index[-1].strftime("%Y-%m-%d")],
+
+            'N_days_peak': [N_days_peak],
+            'pct_to_peak': [pct_to_peak],
+            'days_to_peak': [days_to_peak],
+
+            'N_days_valley': [N_days_valley],
+            'pct_to_valley': [pct_to_valley],
+            'days_to_valley': [days_to_valley],
+
+            # 'N_days_peak':N_days_peak,
+            'peak_date':[ts_pivots_peak.iloc[-1]['date']],
+            'peak_close':[ts_pivots_peak.iloc[-1]['close']],
+            'peak_start_date':[peak_start_date],
+            'peak_start_price':[peak_start_price],
+
+            # 'N_days_valley':N_days_valley,
+            'valley_date': [ts_pivots_valley.iloc[-1]['date']],
+            'valley_close': [ts_pivots_valley.iloc[-1]['close']],
+            'valley_start_date':[valley_start_date],
+            'valley_start_price':[valley_start_price],
+        }
 
         if ts_pivots_peak.iloc[-1]['date'] > ts_pivots_valley.iloc[-1]['date']:
             # N_days_peak, peak_start_date, peak_start_price = self.n_days_peak(df=df.reset_index(), date=peak_date, pivots_peak=ts_pivots_peak)
@@ -2427,40 +2484,42 @@ class Finlib_indicator:
             print("  Dbg, Peak_start_date (down since): " + peak_start_date.strftime('%Y-%m-%d'))
             print("  Dbg, Peak_start_price (down since): " + str(peak_start_price))
 
+        if False:
+                if dates.__len__() == 0:
+                    dates.append(ts_pivots.index.values[-5])  #date[0] is day B1
+                    dates.append(ts_pivots.index.values[-4])  #date[0] is day B1
+                    dates.append(ts_pivots.index.values[-3])  #date[0] is day B1
+                    dates.append(ts_pivots.index.values[-2])  #date[0] is day B1
+                    dates.append(ts_pivots.index.values[-1])  #date[1] is today
 
-        if dates.__len__() == 0:
-            dates.append(ts_pivots.index.values[-5])  #date[0] is day B1
-            dates.append(ts_pivots.index.values[-4])  #date[0] is day B1
-            dates.append(ts_pivots.index.values[-3])  #date[0] is day B1
-            dates.append(ts_pivots.index.values[-2])  #date[0] is day B1
-            dates.append(ts_pivots.index.values[-1])  #date[1] is today
+                # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
+                # df = df[keep_cols]
+                # df = df.set_index('date')
 
-        # keep_cols =['code', 'date', 'close', 'dif_main', 'dea_signal', 'macd_histogram', 'kdjk', 'kdjd', 'kdjj', 'rsi_middle_14']
-        # df = df[keep_cols]
-        # df = df.set_index('date')
+                plt.clf()
+                # plt.suptitle(code+" "+name+" "+notes_in_title, fontproperties=font)
 
-        plt.clf()
-        # plt.suptitle(code+" "+name+" "+notes_in_title, fontproperties=font)
+                ax = plt.subplot(4, 1, 1)
+                ax.xaxis.set_visible(True)
 
-        ax = plt.subplot(4, 1, 1)
-        ax.xaxis.set_visible(True)
+                days = (pd.to_datetime(str(dates[1])) - pd.to_datetime(str(dates[0]))).days
 
-        days = (pd.to_datetime(str(dates[1])) - pd.to_datetime(str(dates[0]))).days
+                plt.title("close_"+pd.to_datetime(str(dates[0])).strftime("%m%d")+"_"+pd.to_datetime(str(dates[1])).strftime("%m%d")+"_"+str(days)+"_days_ago")
 
-        plt.title("close_"+pd.to_datetime(str(dates[0])).strftime("%m%d")+"_"+pd.to_datetime(str(dates[1])).strftime("%m%d")+"_"+str(days)+"_days_ago")
+                X.plot()
+                ts_pivots.plot(style='g-o')
+                if dates.__len__() >=5:
+                    plt.annotate(X[X.index==dates[0]].values[0], xy=(dates[0], X[X.index==dates[0]].values[0]))
+                    plt.annotate(X[X.index==dates[1]].values[0], xy=(dates[1], X[X.index==dates[1]].values[0]))
+                    plt.annotate(X[X.index==dates[2]].values[0], xy=(dates[2], X[X.index==dates[2]].values[0]))
+                    plt.annotate(X[X.index==dates[3]].values[0], xy=(dates[3], X[X.index==dates[3]].values[0]))
+                    plt.annotate(X[X.index==dates[4]].values[0], xy=(dates[4], X[X.index==dates[4]].values[0]))
+                plt.show()
 
-        X.plot()
-        ts_pivots.plot(style='g-o')
-        if dates.__len__() >=5:
-            plt.annotate(X[X.index==dates[0]].values[0], xy=(dates[0], X[X.index==dates[0]].values[0]))
-            plt.annotate(X[X.index==dates[1]].values[0], xy=(dates[1], X[X.index==dates[1]].values[0]))
-            plt.annotate(X[X.index==dates[2]].values[0], xy=(dates[2], X[X.index==dates[2]].values[0]))
-            plt.annotate(X[X.index==dates[3]].values[0], xy=(dates[3], X[X.index==dates[3]].values[0]))
-            plt.annotate(X[X.index==dates[4]].values[0], xy=(dates[4], X[X.index==dates[4]].values[0]))
-        plt.show()
+                logging.info("figure saved to "  + "\n")
+                print()
 
-        logging.info("figure saved to "  + "\n")
-        print()
+        return(pd.DataFrame.from_dict(rtn_dict))
 
     def zigzag_plot(self,df, code, name, notes_in_title="", dates=[]):
 
