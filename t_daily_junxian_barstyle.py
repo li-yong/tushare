@@ -395,19 +395,29 @@ def main():
         df_rtn = cnt_jin_cha_si_cha(ma_short=ma_short, ma_middle=ma_middle,stock_global=stock_global,selected=selected, remove_garbage=remove_garbage,)
         exit()
 
-    if options.action=='junxian_style' and finlib.Finlib().is_cached(out_f):
+    if options.action=='junxian_style' and finlib.Finlib().is_cached(out_f,day=3):
         logging.info("file generate in 1 day, no longer run. "+out_f)
         df = pd.read_csv(out_f)
         exit()
 
-    if options.action=='peak_valley' and finlib.Finlib().is_cached(out_f_peak_valley):
+    if 'peak_valley' in options.action and finlib.Finlib().is_cached(out_f_peak_valley):
         logging.info("file generate in 1 day, no longer run. "+out_f_peak_valley)
         df = pd.read_csv(out_f_peak_valley)
 
-        df_up = df[(df['days_to_peak'] > df['days_to_valley'])]
-        df_up = df_up[(df_up['pct_to_valley'] > 15) & (df_up['pct_to_valley'] < 25)]
-        df_up = df_up[df_up['N_days_valley'] > 120]
-        exit()
+        df_pkvly_up = df[(df['days_to_peak'] > df['days_to_valley'])]
+        df_pkvly_up = df_pkvly_up[(df_pkvly_up['pct_to_valley'] > 15) & (df_pkvly_up['pct_to_valley'] < 25)]
+        df_pkvly_up = df_pkvly_up[df_pkvly_up['N_days_valley'] > 120]
+        # exit()
+
+    if 'junxian_style' in options.action and finlib.Finlib().is_cached(out_f,day=3):
+        logging.info("file generate in 1 day, no longer run. "+out_f)
+        df_jx = pd.read_csv(out_f)
+        df_jx = df_jx[df_jx['close'] > df_jx['sma_long_60']]
+
+        df_up = pd.merge(df_pkvly_up, df_jx, on="code",how="inner")
+        df_up = finlib.Finlib().add_amount_mktcap(df=df_up)
+        print(df_up[['code','name_x','total_mv']])
+        # exit()
 
 
     if not os.path.isdir(out_dir):
@@ -476,7 +486,7 @@ def main():
         df = df.iloc[-min_sample_f:].reset_index().drop('index', axis=1)
         df['name']  = pd.Series([name]*df.__len__(),name='name')
 
-        if options.action=='junxian_style"':
+        if options.action=='junxian_style':
             logging.info("verifying "+code + " " +name)
             df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
             if not df_t.empty:

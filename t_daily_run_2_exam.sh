@@ -693,9 +693,9 @@ fi
 
 
 if [ $full_or_daily == "FULL" ]; then
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action junxian_stype
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W --action junxian_stype
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M --action junxian_stype
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action junxian_style
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W --action junxian_style
+    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M --action junxian_style
     
     python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action peak_valley 
 
