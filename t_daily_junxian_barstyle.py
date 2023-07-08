@@ -416,7 +416,7 @@ def main():
 
         df_up = pd.merge(df_pkvly_up, df_jx, on="code",how="inner")
         df_up = finlib.Finlib().add_amount_mktcap(df=df_up)
-        print(df_up[['code','name_x','total_mv']])
+        logging.info(finlib.Finlib().pprint(df_up[['code','name_x','total_mv']]))
         # exit()
 
 
