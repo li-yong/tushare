@@ -9,7 +9,7 @@ import constant
 from scipy import stats
 import datetime
 
-def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
+def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D',report_all_bars_style=False):
     #df must have columns [code, date, open, low,high,close]
 
     # csv_in = "/home/ryan/DATA/DAY_Global/AG/SH600519.csv"
@@ -50,6 +50,9 @@ def verify_a_stock(df,ma_short=5,ma_middle=10,ma_long=20,period='D'):
     ######################################################
     df_bar_style = finlib_indicator.Finlib_indicator().upper_body_lower_shadow(df, ma_short=ma_short, ma_middle=ma_middle,ma_long=ma_long)
     df_today_bar_style = df_bar_style[-1:].reset_index().drop('index', axis=1)    #<<<<<< TODAY BAR_STYLE
+    
+    if report_all_bars_style:
+        return(df_bar_style)
 
 
 
@@ -312,11 +315,13 @@ def main():
 
     parser.add_option("--min_sample", type="int", action="store", dest="min_sample_f", default=200, help="minimal samples number of input to analysis")
 
-    parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug ")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug_f", default=False, help="debug")
 
-    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD], source is /home/ryan/DATA/DAY_global/xx/")
+
+    parser.add_option("-x", "--stock_global", dest="stock_global", help="[CH(US)|KG(HK)|KH(HK)|MG(US)|US(US)|AG(AG)|dev(debug)|AG_HOLD|HK_HOLD|US_HOLD|AG_INDEX], source is /home/ryan/DATA/DAY_global/xx/")
     parser.add_option("--action", dest="action", help="junxian_style|peak_valley")
     parser.add_option("-p", "--period", dest="period", default='D', help="[D|W|M]")
+    parser.add_option("--report_all_bars_style", action="store_true", dest="report_all_bars_style", default=False, help="return all bar's styple. otherwise by default only return the latest bar's report on bar_style.")
 
     parser.add_option("--selected", action="store_true", dest="selected", default=False, help="only check stocks defined in /home/ryan/tushare_ryan/select.yml")
     parser.add_option("--remove_garbage", action="store_true", dest="remove_garbage", default=False, help="remove garbage stocks from list before proceeding list")
@@ -417,17 +422,21 @@ def main():
         df_up = pd.merge(df_pkvly_up, df_jx, on="code",how="inner")
         df_up = finlib.Finlib().add_amount_mktcap(df=df_up)
         logging.info(finlib.Finlib().pprint(df_up[['code','name_x','total_mv']]))
-        # exit()
+        exit()
 
 
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 
-
    ###  Start of verify every stocks
-    df_all = finlib.Finlib().load_all_ag_qfq_data(days=600)
-    df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
-    # df = finlib.Finlib().remove_garbage(df=df)
+    if stock_global in ["AG_INDEX"]:
+        df_all = finlib.Finlib().load_all_ag_index_data()
+        df_all = finlib.Finlib().add_index_name_to_df(df_all)
+        stock_list = finlib.Finlib().ts_code_to_code(stock_list)
+    else:
+        df_all = finlib.Finlib().load_all_ag_qfq_data(days=600)
+        df_all = finlib.Finlib().add_stock_name_to_df(df=df_all)
+        # df = finlib.Finlib().remove_garbage(df=df)
 
     if debug_f:
         df_all = df_all[df_all['code']=='SH600519']
@@ -488,11 +497,11 @@ def main():
 
         if options.action=='junxian_style':
             logging.info("verifying "+code + " " +name)
-            df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period)
+            df_t = verify_a_stock(df=df, ma_short=ma_short, ma_middle=ma_middle, ma_long=ma_long,period=period, report_all_bars_style=options.report_all_bars_style)
             if not df_t.empty:
                 df_rtn = pd.concat([df_rtn, df_t], sort=False).reset_index().drop('index', axis=1)
                 df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
-                logging.debug("tmp output saved to " + out_f)
+                logging.info("tmp output saved to " + out_f)
 
 
         if options.action == 'peak_valley':
@@ -501,9 +510,9 @@ def main():
             if not df_t_peak_valley.empty:
                 df_rtn_peak_valley = pd.concat([df_rtn_peak_valley, df_t_peak_valley], sort=False).reset_index().drop('index', axis=1)
                 df_rtn_peak_valley.to_csv(out_f_peak_valley, encoding='UTF-8', index=False)
-                logging.debug("tmp peak_valley output saved to " + out_f_peak_valley)
+                logging.info("tmp peak_valley output saved to " + out_f_peak_valley)
 
-    if options.action=='junxian_style':
+    if options.action=='junxian_style' and options.stock_global=='AG':
         df_ma_across_score = pd.read_csv('/home/ryan/DATA/result/jin_cha_si_cha_cnt.csv')
         df_rtn = pd.merge(df_rtn, df_ma_across_score[['code','name','ma_x_score']], on='code', how='inner', suffixes=('', '_x')).drop('name_x', axis=1)
         df_rtn.to_csv(out_f, encoding='UTF-8', index=False)
