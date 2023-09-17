@@ -1108,7 +1108,8 @@ def fetch_industry_l123():
         logging.info(
             str(index) + " of " + str(df3.__len__()) + ", fetching index_code " + row['index_code'] + " ," + row[
                 'industry_name'] + " ," + row['level'])
-        df3n = df3n.append(pro.index_member(index_code=row['index_code']))
+        # df3n = df3n.append(pro.index_member(index_code=row['index_code']))
+        df3n = pd.concat([df3n,pro.index_member(index_code=row['index_code'])])
         time.sleep(1)
     df3n = df3n.reset_index().drop('index', axis=1)
     df3n = pd.merge(df3n, df_index, on='index_code', how='inner')

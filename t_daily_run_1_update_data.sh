@@ -117,17 +117,17 @@ fi
 # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/daily_money_flow/hsgt_top10.csv
 #
 ######################################
-python t_daily_hsgt.py --fetch_hsgt_top_10
+# python t_daily_hsgt.py --fetch_hsgt_top_10
 
-if [ $full_or_daily == "FULL" ]; then
-  rm -f /home/ryan/DATA/DAY_Global/AG_MoneyFlow/*.csv
-  python t_daily_hsgt.py --fetch_moneyflow_all --force_run  #time consuming
-fi
+# if [ $full_or_daily == "FULL" ]; then
+  # rm -f /home/ryan/DATA/DAY_Global/AG_MoneyFlow/*.csv
+  # python t_daily_hsgt.py --fetch_moneyflow_all --force_run  #time consuming
+# fi
 
 
-if [ $full_or_daily == "FULL" ]; then
-  python t_daily_hsgt.py --fetch_moneyflow_daily  #time consuming (a little)
-fi
+# if [ $full_or_daily == "FULL" ]; then
+  # python t_daily_hsgt.py --fetch_moneyflow_daily  #time consuming (a little)
+# fi
 
 ######################################
 #
@@ -212,9 +212,9 @@ python t_daily_fundamentals_2.py --fetch_pro_basic
 # /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge/pledge_detail.csv
 # #ts_code,symbol,name,area,industry,list_date
 ######################################
-if [ $full_or_daily == "FULL" ]; then
-  python t_daily_fundamentals_2.py --fetch_pledge_stat_detail
-fi
+# if [ $full_or_daily == "FULL" ]; then
+  # python t_daily_fundamentals_2.py --fetch_pledge_stat_detail
+# fi
 
 ######################################
 #

@@ -1530,6 +1530,118 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
+from optparse import OptionParser
+parser = OptionParser()
+
+parser.add_option("-n", "--no_question", action="store_true", default=False, dest="no_question", help="run all without question.")
+parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug mode.")
+
+(options, args) = parser.parse_args()
+no_question = options.no_question
+debug = options.debug
+
+
+### FOO 20230916 start, queKou
+
+if True:
+    df_rst_gaokai_gaozou = pd.DataFrame()
+    df_rst_dikai_gaozou = pd.DataFrame()
+    csv_out_dikai_gaozou = '/home/ryan/DATA/result/dikai_gaozou.csv'
+    csv_out_gaokai_gaozou = "/home/ryan/DATA/result/gaokai_gaozou.csv"
+
+    n_days = 5
+    df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
+
+    rtn_df_gg = pd.DataFrame()
+
+
+    for code in df['code'].unique():
+        # code='SH600519'
+        dfs=df[df['code']==code].reset_index().drop('index',axis=1)
+
+        if dfs.__len__()<n_days:
+            continue
+
+        dfs = dfs.tail(n_days).reset_index().drop('index',axis=1)
+        dfs['tiaokong_kaipan_quekou'] = round((dfs['open']-dfs['pre_close'])/dfs['pre_close']*100,2) #<0, tiaokong dikai, >0 tiaokong gaokai
+        dfs['zhengfu'] = round((dfs['close'] - dfs['open'])/dfs['open']*100,2)
+
+
+        df_tmp_long_gaokai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']>1) & (dfs['zhengfu']>3)]  #long, kanzhang. tiaokong gaokai + gaokai gaozou
+        df_tmp_long_dikai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']<-1) & (dfs['zhengfu']>3) & (dfs['close']>dfs['pre_close'])]  #long, tiaokong dikai + dikai gaozou
+
+        if df_tmp_long_dikai_gaozou.__len__()>0:
+            print(finlib.Finlib().pprint(df_tmp_long_dikai_gaozou))
+        
+        if df_tmp_long_gaokai_gaozou.__len__()>0:
+            print(finlib.Finlib().pprint(df_tmp_long_gaokai_gaozou))
+
+
+
+        df_rst_dikai_gaozou = pd.concat([df_rst_dikai_gaozou, df_tmp_long_dikai_gaozou]).reset_index().drop('index', axis=1)
+        df_rst_gaokai_gaozou = pd.concat([df_rst_gaokai_gaozou, df_tmp_long_gaokai_gaozou]).reset_index().drop('index', axis=1)
+
+
+
+
+        pass
+    print(df_rst_dikai_gaozou)
+    df_rst_dikai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_dikai_gaozou))
+    df_rst_gaokai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_gaokai_gaozou))
+
+    df_rst_dikai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_dikai_gaozou)
+    df_rst_gaokai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_gaokai_gaozou)
+
+
+
+    print(finlib.Finlib().pprint(df_rst_dikai_gaozou.head(10)))
+    print(finlib.Finlib().pprint(df_rst_gaokai_gaozou.head(10)))
+
+
+    df_rst_dikai_gaozou.to_csv(csv_out_dikai_gaozou, encoding='UTF-8', index=False)
+    df_rst_gaokai_gaozou.to_csv(csv_out_gaokai_gaozou, encoding='UTF-8', index=False)
+
+
+    logging.info('completed, save to '+csv_out_dikai_gaozou)
+    logging.info('completed, save to '+csv_out_gaokai_gaozou)
+
+### FOO 20230916 end
+
+
+### FOO 20230916 start , position weight
+
+if False and POSITION_WEIGHT:
+    n_days = 60
+    df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
+
+    rtn_df_gg = pd.DataFrame()
+
+
+    for code in df['code'].unique():
+        code='SH600519'
+        dfs=df[df['code']==code].reset_index().drop('index',axis=1)
+
+        if dfs.__len__()<n_days:
+            continue
+
+        dfs = dfs.tail(n_days).reset_index().drop('index',axis=1)
+        dfs['position_weight']=(dfs['close']-dfs.close.min()) / (dfs.close.max()-dfs.close.min()) * math.pi/2 #project output to 0 to pi/2
+        dfs['position_weight']=    dfs['position_weight'].apply(lambda _d: math.sin(_d)+1) # range 0-1
+        dfs['position_weighted_pct_chg'] = dfs['pct_chg']*dfs['position_weight']
+
+        df_dn = dfs[dfs['pct_chg']<0]
+        df_up = dfs[dfs['pct_chg']>0]
+        
+        print(df_dn['position_weighted_pct_chg'].describe()['std'])
+        print(df_up['position_weighted_pct_chg'].describe()['std'])
+
+        print(df_dn['position_weighted_pct_chg'].describe())
+        print(df_up['position_weighted_pct_chg'].describe())
+
+        pass
+
+### FOO 20230916 end
+
 a = finlib.Finlib().load_all_ag_option_etf_60m()
 a = finlib.Finlib().load_all_ag_option_etf_day()
 
@@ -1611,7 +1723,7 @@ for i in range(days):
 rst_dir= "/home/ryan/DATA/result"
 
 
-if input("Run Comparing Index Increase? [N]")=="Y":
+if  no_question or input("Run Comparing Index Increase? [N]")=="Y":
     of=rst_dir+"/cmp_with_idx_inc_jing_cha.csv"
     df = cmp_with_idx_inc(of)
     df = finlib.Finlib().filter_days(df=df,date_col='date',within_days=5)
@@ -1619,7 +1731,7 @@ if input("Run Comparing Index Increase? [N]")=="Y":
     logging.info(finlib.Finlib().pprint(df.head(5)))
     exit()
 
-if input("Run New Share Profit? [N]")=="Y":
+if  no_question or input("Run New Share Profit? [N]")=="Y":
     csv_o = rst_dir+"/new_share_profit.csv"
     df = new_share_profit(csv_o)
     logging.info("\n##### new_share_profit #####")
@@ -1628,7 +1740,7 @@ if input("Run New Share Profit? [N]")=="Y":
 
 
 
-if input("Run Jie Tao? [N]")=="Y":
+if  no_question or input("Run Jie Tao? [N]")=="Y":
     csv_o = rst_dir+"/jie_tao.csv"
     df = jie_tao(csv_o)
     logging.info("\n##### jie_tao #####")
@@ -1636,7 +1748,7 @@ if input("Run Jie Tao? [N]")=="Y":
     # exit()
 
 
-if input("Run fudu_daily_check? [N]")=="Y":
+if  no_question or input("Run fudu_daily_check? [N]")=="Y":
     df = fudu_daily_check()
     logging.info("\n##### futu_daily_check #####")
     logging.info(finlib.Finlib().pprint(df.head(5)))
@@ -1645,38 +1757,38 @@ if input("Run fudu_daily_check? [N]")=="Y":
 
 # stock_holder_check()
 # exit()
-if input("Run stock_vs_index_perf_perc_chg? [Y]") != "N":
+if  no_question or input("Run stock_vs_index_perf_perc_chg? [Y]") != "N":
     a = stock_vs_index_perf_perc_chg()
     # exit()
 
-if input("Run stock_vs_index_perf_amount? [Y]") != "N":
+if  no_question or input("Run stock_vs_index_perf_amount? [Y]") != "N":
     a = stock_vs_index_perf_amount()
     # exit()
 
-if input("Run price_amount_increase? [Y]") != "N":
+if  no_question or input("Run price_amount_increase? [Y]") != "N":
      # startD and endD have to be trading day.
     df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
     # exit()
 
-if input("Run bayes_start? [Y]") != "N":
+if  no_question or input("Run bayes_start? [Y]") != "N":
     csv_o = rst_dir+"/bayes.csv"
     df = bayes_start(csv_o)
     # exit()
 
-if input("Run check_stop_loss_based_on_ma_across? [Y]") != "N":
+if  no_question or input("Run check_stop_loss_based_on_ma_across? [Y]") != "N":
     check_stop_loss_based_on_ma_across()
     # exit()
 
 
-if input("Run grep_garbage ? [Y]") != "N":
+if  no_question or input("Run grep_garbage ? [Y]") != "N":
     grep_garbage() #save to files /home/ryan/DATA/result/garbage/*.csv
     # exit()
 
-if input("Run ag_industry_selected? [Y]") != "N":
+if  no_question or input("Run ag_industry_selected? [Y]") != "N":
     df_industry = ag_industry_selected()
     # exit()
 
-if input("Run graham_instinsic_value? [Y]") != "N":
+if  no_question or input("Run graham_instinsic_value? [Y]") != "N":
     df_intrinsic_value = graham_intrinsic_value()
 
 

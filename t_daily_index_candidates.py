@@ -28,6 +28,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 # reduce webdriver session log for every request.
 logging.getLogger("urllib3").setLevel(logging.WARNING)  # This supress post/get log in console.
@@ -316,23 +317,28 @@ def fetch_stock_industry_wugui_selenium(browser):
     ### fetch industry start
     u="https://wglh.com/sector/"
     browser.get(u)
-    obj_tbl = browser.find_element_by_id("table1")
+    obj_tbl = browser.find_element(By.ID, 'table1')
+    # obj_tbl = browser.find_element_by_id("table1")
 
     df_all = pd.DataFrame()
     industry_links = []
-    for l in obj_tbl.find_elements_by_partial_link_text(''):
+    for l in obj_tbl.find_elements(By.PARTIAL_LINK_TEXT, ''):
         industry_links.append(l.get_property('href'))
 
     for l in industry_links:
         # print(l.get_property('href'))
         browser.get(l)
 
-        industry_name = browser.find_elements_by_class_name('clearfix')[0].text.split("_")[0]
-        industry_code = browser.find_elements_by_class_name('clearfix')[0].text.split("_")[1].splitlines()[0].split(".")[1]
+        print(browser.find_elements(By.CLASS_NAME, 'clearfix')[0].text)
+
+        industry_name = browser.find_elements(By.CLASS_NAME, 'mb-1')[0].text.split("_")[0]
+        industry_code = browser.find_elements(By.CLASS_NAME, 'mb-1')[0].text.split("_")[1].splitlines()[0].split(".")[1]
         # print(industry_name)
 
-        tbl = browser.find_element_by_class_name('bootstrap-table')
-        s_list = tbl.find_elements_by_class_name('text-left')
+        tbl = browser.find_elements(By.CLASS_NAME, 'bootstrap-table')
+        s_list = browser.find_elements(By.CLASS_NAME, 'text-start')
+
+        # s_list = tbl.find_elements(By.CLASS_NAME, 'text-start')
 
         for i in s_list:
             code = i.text.split(". ")[0]
@@ -373,7 +379,7 @@ def fetch_index_wugui_selenium(browser):
 
     for index_name in wg_index_dict.keys():
         code = wg_index_dict[index_name]['c']
-        u = 'https://androidinvest.com/chinaindicesdodown/'+code+'/'
+        u = 'https://wglh.com/chinaindicesdodown/'+code+'/'
         f = os.path.abspath(os.path.expanduser("~")+"/Downloads/"+datetime.datetime.today().strftime("%Y%m%d")+"_IndexData_"+code+".xls")
 
         # 20210125_IndexData_CSI931087.xls
