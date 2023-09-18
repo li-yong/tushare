@@ -64,8 +64,7 @@ def fetch_daily_spot(stock_global,force_run=False):
         b_dir = b_dir+"/HK_AK"
         f_sl = b_dir+"/us_ak_daily_latest.csv"
 
-        if os.path.exists(f_sl):
-            os.unlink(f_sl)
+
 
         if not os.path.isdir(b_dir):
             os.mkdir(b_dir)
@@ -81,16 +80,15 @@ def fetch_daily_spot(stock_global,force_run=False):
         in_day_price_df.to_csv(csv_f, encoding='UTF-8', index=False)
         logging.info("today HK mkt close from source akshare saved to " + csv_f)
 
+        if os.path.exists(f_sl):
+            os.unlink(f_sl)
+
         os.symlink(csv_f, f_sl)
         logging.info("HK_AK, symbol link created. "+f_sl+" --> "+csv_f)
 
     elif stock_global == 'US_AK':
         b_dir = b_dir + "/US_AK"
         f_sl = b_dir+"/us_ak_daily_latest.csv"
-
-        if os.path.exists(f_sl):
-            os.unlink(f_sl)
-
 
         if not os.path.isdir(b_dir):
             os.mkdir(b_dir)
@@ -104,6 +102,9 @@ def fetch_daily_spot(stock_global,force_run=False):
                                                             force_fetch=force_fetch)
         in_day_price_df.to_csv(csv_f, encoding='UTF-8', index=False)
         logging.info("today US mkt close from source akshare saved to " + csv_f)
+
+        if os.path.exists(f_sl):
+            os.unlink(f_sl)
 
         os.symlink(csv_f, f_sl)
         logging.info("US_AK, symbol link created. "+f_sl+" --> "+csv_f)
