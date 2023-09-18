@@ -1544,36 +1544,75 @@ debug = options.debug
 ### FOO 20230916 start, queKou
 
 if True:
+    mkt = 'US_AK'
     df_rst_gaokai_gaozou = pd.DataFrame()
     df_rst_dikai_gaozou = pd.DataFrame()
+    df_rst_gaokai_quekou = pd.DataFrame()
+    df_rst_dikai_quekou = pd.DataFrame()
+
     csv_out_dikai_gaozou = '/home/ryan/DATA/result/dikai_gaozou.csv'
     csv_out_gaokai_gaozou = "/home/ryan/DATA/result/gaokai_gaozou.csv"
 
+    csv_out_gaokai_quekou = "/home/ryan/DATA/result/gaokai_quekou.csv"
+
     n_days = 5
-    df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
+    if mkt == 'AG':
+        df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
+    if mkt == 'US_AK':
+        df = finlib.Finlib().load_all_us_ak_data(days=n_days)
+        df = finlib.Finlib().filter_mktcap_top_US_AK(df=df,topN=1000)
+
+    mkt = finlib.Finlib().find_df_market(df.head(1000))
+   
 
     rtn_df_gg = pd.DataFrame()
 
 
     for code in df['code'].unique():
-        # code='SH600519'
+        # code='SH600895'
         dfs=df[df['code']==code].reset_index().drop('index',axis=1)
 
         if dfs.__len__()<n_days:
             continue
+
+        dfs['pre_low']=dfs['low'].shift(1)
+        dfs['pre_high']=dfs['high'].shift(1)
+        dfs['pre_close']=dfs['close'].shift(1)
 
         dfs = dfs.tail(n_days).reset_index().drop('index',axis=1)
         dfs['tiaokong_kaipan_quekou'] = round((dfs['open']-dfs['pre_close'])/dfs['pre_close']*100,2) #<0, tiaokong dikai, >0 tiaokong gaokai
         dfs['zhengfu'] = round((dfs['close'] - dfs['open'])/dfs['open']*100,2)
 
 
-        df_tmp_long_gaokai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']>1) & (dfs['zhengfu']>3)]  #long, kanzhang. tiaokong gaokai + gaokai gaozou
-        df_tmp_long_dikai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']<-1) & (dfs['zhengfu']>3) & (dfs['close']>dfs['pre_close'])]  #long, tiaokong dikai + dikai gaozou
+        df_tmp_long_gaokai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']>1) & (dfs['zhengfu']>3) & (dfs['low']>dfs['pre_high']) & (dfs['close']> dfs['open'])]  #long, kanzhang. tiaokong gaokai + gaokai gaozou
+        df_tmp_long_dikai_gaozou = dfs[ (dfs['tiaokong_kaipan_quekou']<-1) & (dfs['zhengfu']>3) & (dfs['close']>dfs['pre_high']) & (dfs['close']> dfs['open'])]  #long, tiaokong dikai + dikai gaozou
 
-        if df_tmp_long_dikai_gaozou.__len__()>0:
-            print(finlib.Finlib().pprint(df_tmp_long_dikai_gaozou))
+        # if df_tmp_long_dikai_gaozou.__len__()>0:
+        #     print(finlib.Finlib().pprint(df_tmp_long_dikai_gaozou))
         
         if df_tmp_long_gaokai_gaozou.__len__()>0:
+            for index, row in df_tmp_long_gaokai_gaozou.iterrows():
+                if dfs.index.max() == index:
+                    print("tiaokong quekou")
+                    break
+
+                if dfs[index+1:]['low'].min() > row['pre_high']:
+                    xiayan = row['pre_high']
+                    shangyan = dfs[index:]['low'].min()
+                    curP=dfs['close'].iloc[-1]
+                    print("tiaokong quekou. xiayan: "+str(xiayan)+" shangyan: "+str(shangyan)+" curP:"+str(curP))
+                    df_rst_gaokai_quekou = pd.concat([df_rst_gaokai_quekou, 
+                                                      pd.DataFrame({
+                                                          'code': [row['code']],
+                                                          'date': [row['date']],
+                                                          'qk_xy': [xiayan],
+                                                          'qk_sy': [shangyan],
+                                                          'cur_p': [curP],
+                                                          'tiaokong_kaipan_quekou': [row['tiaokong_kaipan_quekou']],
+                                                          'zhengfu': [row['zhengfu']],
+                                                      })
+                                                      ]).reset_index().drop('index', axis=1)
+
             print(finlib.Finlib().pprint(df_tmp_long_gaokai_gaozou))
 
 
@@ -1581,29 +1620,54 @@ if True:
         df_rst_dikai_gaozou = pd.concat([df_rst_dikai_gaozou, df_tmp_long_dikai_gaozou]).reset_index().drop('index', axis=1)
         df_rst_gaokai_gaozou = pd.concat([df_rst_gaokai_gaozou, df_tmp_long_gaokai_gaozou]).reset_index().drop('index', axis=1)
 
+        pass #end of for loop
+
+    if mkt == 'AG':
+        df_rst_dikai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_dikai_gaozou))
+        df_rst_gaokai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_gaokai_gaozou))
+
+        df_rst_dikai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_dikai_gaozou)
+        df_rst_gaokai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_gaokai_gaozou)
 
 
+        #quekou
+        df_rst_gaokai_quekou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_gaokai_quekou))
+        df_rst_gaokai_quekou = finlib.Finlib().add_stock_name_to_df(df_rst_gaokai_quekou)
 
-        pass
-    print(df_rst_dikai_gaozou)
-    df_rst_dikai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_dikai_gaozou))
-    df_rst_gaokai_gaozou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_gaokai_gaozou))
-
-    df_rst_dikai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_dikai_gaozou)
-    df_rst_gaokai_gaozou = finlib.Finlib().add_stock_name_to_df(df_rst_gaokai_gaozou)
-
-
-
-    print(finlib.Finlib().pprint(df_rst_dikai_gaozou.head(10)))
-    print(finlib.Finlib().pprint(df_rst_gaokai_gaozou.head(10)))
+    
+    if mkt== 'US_AK':
+        df_rst_dikai_gaozou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_dikai_gaozou)
+        df_rst_gaokai_gaozou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_gaokai_gaozou)
+        df_rst_gaokai_quekou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_gaokai_quekou)
 
 
     df_rst_dikai_gaozou.to_csv(csv_out_dikai_gaozou, encoding='UTF-8', index=False)
     df_rst_gaokai_gaozou.to_csv(csv_out_gaokai_gaozou, encoding='UTF-8', index=False)
 
+    df_rst_gaokai_quekou.to_csv(csv_out_gaokai_quekou, encoding='UTF-8', index=False)
 
-    logging.info('completed, save to '+csv_out_dikai_gaozou)
-    logging.info('completed, save to '+csv_out_gaokai_gaozou)
+    print("df_rst_dikai_gaozou:\n"+finlib.Finlib().pprint(+df_rst_dikai_gaozou.head(10)))
+    print("df_rst_gaokai_gaozou:\n"+finlib.Finlib().pprint(df_rst_gaokai_gaozou.head(10)))
+    print("df_rst_gaokai_quekou:\n"+finlib.Finlib().pprint(df_rst_gaokai_quekou.head(10)))
+
+
+
+
+
+
+
+
+    logging.info('completed, csv_out_dikai_gaozou save to '+csv_out_dikai_gaozou)
+    logging.info('completed, csv_out_gaokai_gaozou save to '+csv_out_gaokai_gaozou)
+
+
+
+
+    logging.info('completed, csv_out_gaokai_quekou save to '+csv_out_gaokai_quekou)
+
+
+
+    exit()
 
 ### FOO 20230916 end
 

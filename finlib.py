@@ -5027,8 +5027,45 @@ class Finlib:
 
         return(df)
 
+    def find_df_market(self,df):
+        #determin the df is AG or US
+        mkt = 'UNKNOWN'
+        s = ''.join(df['code'].unique())
+        alpha_s = len(re. findall('\w', s))  # ['s','h'], len 2
+        number_s = len(re. findall('\d', s)) # ['6,0,0,5,1,9], len 6
+        
+        if len(s)<3:
+            mkt = 'US_AK'
+        
+        if number_s/alpha_s > 2:
+            mkt='AG'
+        
+        if number_s/alpha_s < 0.1:
+            mkt='US_AK'
+
+        return(mkt)
+            
+    def add_amount_mkcap_industry_pe_US_AK(self,df):
+        if df.__len__()==0:
+            logging.warning("empty incoming df")
+            return(df)
+        
+        csv_base = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv' #symbol link to /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_20230918.csv
+        df_base = pd.read_csv(csv_base)
+        df = pd.merge(df,df_base[['code','cname','category','volume','mktcap','pe','market']],on='code',how='inner')
+        df = df.sort_values('mktcap', ascending=False)
+        return(df)
+
+            
+    def filter_mktcap_top_US_AK(self,df, topN=1000):  
+        csv_base = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv' #symbol link to /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_20230918.csv
+        df_base = pd.read_csv(csv_base).head(topN)
+        df = pd.merge(df,df_base[['code']],on='code',how='inner')
+        return(df)
+
     # mktcap_unit: 100M, Yi
     def add_amount_mktcap(self,df,sorted_by_mktcap=True, mktcap_unit=None):
+
         cols = df.columns
 
         if 'amount' in cols and 'total_mv' in cols and 'circ_mv' in cols:
@@ -5820,6 +5857,33 @@ class Finlib:
         # df_rtn = df_concept[df_concept['cat_name'].str.contains("光伏概念")]
         df_rtn = df_concept[df_concept['cat_name'].str.contains(concept)]
         return(df_rtn)
+
+
+    def load_all_us_ak_data(self,days=30):
+        ######### For TRIN, Advance/Decline LINE #######\
+        dir = "/home/ryan/DATA/DAY_Global/akshare/US"
+        csv = dir + "/us_all_"+str(days)+"_days.csv.agg"
+
+        if not self.is_cached(file_path=csv, day=1):
+            logging.info("generating csv from source.")
+
+            cmd1 = "head -1 " + dir + "/AAPL.csv > " + csv
+            cmd2 = "for i in `ls " + dir + "/*.csv`; do tail -" + str(days) + " $i |grep -viE 'code.*high' >> " + csv + "; done"
+
+            logging.info(cmd1)
+            logging.info(cmd2) 
+
+            os.system(cmd1)
+            os.system(cmd2)
+
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
+            df.to_csv(csv, encoding='UTF-8', index=False)
+            logging.info("generated " + csv)
+        else:
+            logging.info("re-using csv as it generated in 1 days. " + csv)
+            df = self.regular_read_csv_to_stdard_df(data_csv=csv)
+
+        return (df)
 
     def load_all_ag_qfq_data(self,days=300):
         ######### For TRIN, Advance/Decline LINE #######\
