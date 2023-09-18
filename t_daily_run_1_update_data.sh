@@ -84,8 +84,19 @@ fi
 #python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x HK;
 #python /home/ryan/tushare_ryan/t_fetch_us_hk_bar.py --selected -x US;
 
+if [ $full_or_daily == "FULL" ]; then
+  # fresh fetch /home/ryan/DATA/DAY_Global/akshare/US/*.csv
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_base -x US_AK
+fi
+
+
 if [ $full_or_daily == "DAILY" ]; then
+  #output: /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_20230918.csv
+  #        /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv <<< symbol link
   python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK
+
+  # append the latest day to /home/ryan/DATA/DAY_Global/akshare/US/*.csv
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --update_base -x US_AK
 fi
 
 ######################################
