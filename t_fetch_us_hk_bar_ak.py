@@ -123,7 +123,7 @@ def update_base(stock_global, csv_dir, stock_list): #append_daily_spot_to_base
         if stock_global == 'HK_AK':
             daily_source_dir = '/home/ryan/DATA/pickle/daily_update_source/HK_AK/hk_ak_daily_'
         elif stock_global == 'US_AK':
-            daily_source_dir = '/home/ryan/DATA/pickle/daily_update_source/US_AK/hk_ak_daily_'
+            daily_source_dir = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_'
         else:
             logging.fatal()
             exit()

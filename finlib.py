@@ -5599,7 +5599,7 @@ class Finlib:
         minute = datetime.now().minute
 
         rtn = True
-        if (hour > 9) and (hour <= 16): #10.00 ~ 16.59
+        if (hour > 6) and (hour <= 16): #10.00 ~ 16.59
             rtn = False
         return(rtn)
 
