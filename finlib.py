@@ -5031,7 +5031,7 @@ class Finlib:
         #determin the df is AG or US
         mkt = 'UNKNOWN'
         s = ''.join(df['code'].unique())
-        alpha_s = len(re. findall('\w', s))  # ['s','h'], len 2
+        alpha_s = len(re. findall('[A-Za-z]', s))  # ['s','h'], len 2
         number_s = len(re. findall('\d', s)) # ['6,0,0,5,1,9], len 6
         
         if len(s)<3:

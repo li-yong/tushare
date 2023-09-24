@@ -1544,6 +1544,7 @@ debug = options.debug
 ### FOO 20230916 start, queKou
 
 if True:
+    mkt = 'AG'
     mkt = 'US_AK'
     df_rst_gaokai_gaozou = pd.DataFrame()
     df_rst_dikai_gaozou = pd.DataFrame()
@@ -1559,11 +1560,9 @@ if True:
         df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
     if mkt == 'US_AK':
         df = finlib.Finlib().load_all_us_ak_data(days=n_days)
-        df = finlib.Finlib().filter_mktcap_top_US_AK(df=df,topN=1000)
+        df = finlib.Finlib().filter_mktcap_top_US_AK(df=df,topN=20000)
 
     mkt = finlib.Finlib().find_df_market(df.head(1000))
-   
-
     rtn_df_gg = pd.DataFrame()
 
 

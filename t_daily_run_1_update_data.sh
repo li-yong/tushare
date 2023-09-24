@@ -93,7 +93,7 @@ fi
 if [ $full_or_daily == "DAILY" ]; then
   #output: /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_20230918.csv
   #        /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv <<< symbol link
-  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK --force_run
 
   # append the latest day to /home/ryan/DATA/DAY_Global/akshare/US/*.csv
   python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --update_base -x US_AK

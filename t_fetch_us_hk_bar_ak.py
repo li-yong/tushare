@@ -13,7 +13,7 @@ import sys
 
 
 
-def fetch_base(stock_global, csv_dir, stock_list):
+def fetch_base(stock_global, csv_dir, stock_list, force_run=False):
     i = 0
     for index, row in stock_list.iterrows():
         i += 1
@@ -26,7 +26,7 @@ def fetch_base(stock_global, csv_dir, stock_list):
         csv_f = csv_dir + "/" + code + ".csv"
         logging.info(str(i) + " of " + str(stock_list.__len__())+" "+code+" "+name+" "+csv_f)
 
-        if finlib.Finlib().is_cached(csv_f, day=1):
+        if finlib.Finlib().is_cached(csv_f, day=1) and (not force_run):
             logging.info("skip file updated in 1 days "+csv_f)
             continue
         try:
@@ -238,7 +238,7 @@ def main():
         os.mkdir(out_dir)
 
     if options.fetch_base:
-        fetch_base(stock_global=stock_global, csv_dir=csv_dir, stock_list=stock_list)
+        fetch_base(stock_global=stock_global, csv_dir=csv_dir, stock_list=stock_list,force_run=force_run)
         exit()
     elif options.update_base:
         if options.selected:
