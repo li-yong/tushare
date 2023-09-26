@@ -1542,18 +1542,14 @@ debug = options.debug
 
 
 ### FOO 20230916 start, queKou
-
-if True:
-    mkt = 'AG'
-    mkt = 'US_AK'
+def quekou_up(mkt):
     df_rst_gaokai_gaozou = pd.DataFrame()
     df_rst_dikai_gaozou = pd.DataFrame()
     df_rst_gaokai_quekou = pd.DataFrame()
-    df_rst_dikai_quekou = pd.DataFrame()
 
-    csv_out_dikai_gaozou = '/home/ryan/DATA/result/dikai_gaozou.csv'
-    csv_out_gaokai_gaozou = "/home/ryan/DATA/result/gaokai_gaozou.csv"
-    csv_out_gaokai_quekou = "/home/ryan/DATA/result/gaokai_quekou.csv"
+    csv_out_dikai_gaozou = f"/home/ryan/DATA/result/dikai_gaozou_{mkt}.csv"
+    csv_out_gaokai_gaozou = f"/home/ryan/DATA/result/gaokai_gaozou_{mkt}.csv"
+    csv_out_gaokai_quekou = f"/home/ryan/DATA/result/gaokai_quekou_{mkt}.csv"
 
     n_days = 5
     if mkt == 'AG':
@@ -1563,8 +1559,6 @@ if True:
         df = finlib.Finlib().filter_mktcap_top_US_AK(df=df,topN=20000)
 
     mkt = finlib.Finlib().find_df_market(df.head(1000))
-    rtn_df_gg = pd.DataFrame()
-
 
     for code in df['code'].unique():
         # code='SH600895'
@@ -1649,21 +1643,200 @@ if True:
     print("df_rst_gaokai_quekou:\n"+finlib.Finlib().pprint(df_rst_gaokai_quekou.head(10)))
 
 
+    logging.info('completed, csv_out_dikai_gaozou save to '+csv_out_dikai_gaozou +" len "+ str(df_rst_dikai_gaozou.__len__()))
+    logging.info('completed, csv_out_gaokai_gaozou save to '+csv_out_gaokai_gaozou +" len "+ str(df_rst_gaokai_gaozou.__len__()))
+    logging.info('completed, csv_out_gaokai_quekou save to '+csv_out_gaokai_quekou +" len "+ str(df_rst_gaokai_quekou.__len__()))
+
+
+
+    return()
+
+def quekou_dn(mkt):
+    df_rst_gaokai_dizou = pd.DataFrame()
+    df_rst_dikai_dizou = pd.DataFrame()
+    df_rst_dikai_quekou = pd.DataFrame()
+
+    csv_out_gaokai_dizou = f"/home/ryan/DATA/result/gaokai_dizou_{mkt}.csv"
+    csv_out_dikai_dizou = f"/home/ryan/DATA/result/dikai_dizou_{mkt}.csv"
+    csv_out_dikai_quekou = f"/home/ryan/DATA/result/dikai_quekou_{mkt}.csv"
+
+    n_days = 5
+    if mkt == 'AG':
+        df = finlib.Finlib().load_all_ag_qfq_data(days=n_days)
+    if mkt == 'US_AK':
+        df = finlib.Finlib().load_all_us_ak_data(days=n_days)
+        df = finlib.Finlib().filter_mktcap_top_US_AK(df=df,topN=20000)
+
+    mkt = finlib.Finlib().find_df_market(df.head(1000))
+
+
+    for code in df['code'].unique():
+        # code='SH600895'
+        dfs=df[df['code']==code].reset_index().drop('index',axis=1)
+
+        if dfs.__len__()<n_days:
+            continue
+
+        dfs['pre_low']=dfs['low'].shift(1)
+        dfs['pre_high']=dfs['high'].shift(1)
+        dfs['pre_close']=dfs['close'].shift(1)
+
+        dfs = dfs.tail(n_days).reset_index().drop('index',axis=1)
+        dfs['tiaokong_kaipan_quekou'] = round((dfs['open']-dfs['pre_close'])/dfs['pre_close']*100,2) #<0, tiaokong dikai, >0 tiaokong dikai
+        dfs['zhengfu'] = round((dfs['close'] - dfs['open'])/dfs['open']*100,2)
+
+
+        df_tmp_long_gaokai_dizou = dfs[ (dfs['tiaokong_kaipan_quekou']>1) & (dfs['zhengfu']<-3) & (dfs['close']<dfs['pre_low']) & (dfs['close']< dfs['open'])]  #long, kanzhang. tiaokong dikai + dikai dizou
+        df_tmp_long_dikai_dizou = dfs[ (dfs['tiaokong_kaipan_quekou']<-1) & (dfs['zhengfu']<-3) & (dfs['high']<dfs['pre_low']) & (dfs['close']< dfs['open'])]  #long, tiaokong dikai + dikai dizou
+
+        # if df_tmp_long_dikai_dizou.__len__()>0:
+        #     print(finlib.Finlib().pprint(df_tmp_long_dikai_dizou))
+        
+        if df_tmp_long_dikai_dizou.__len__()>0:
+            for index, row in df_tmp_long_dikai_dizou.iterrows():
+                if dfs.index.max() == index:
+                    print("tiaokong quekou")
+                    break
+
+                if dfs[index+1:]['high'].min() < row['pre_low']:
+                    shangyan = row['pre_low']
+                    xiayan = dfs[index:]['high'].max()
+                    curP=dfs['close'].iloc[-1]
+                    print("dn tiaokong quekou. shangyan: "+str(shangyan)+" xiayan: "+str(xiayan)+" curP:"+str(curP))
+                    df_rst_dikai_quekou = pd.concat([df_rst_dikai_quekou, 
+                                                      pd.DataFrame({
+                                                          'code': [row['code']],
+                                                          'date': [row['date']],
+                                                          'qk_xy': [xiayan],
+                                                          'qk_sy': [shangyan],
+                                                          'cur_p': [curP],
+                                                          'tiaokong_kaipan_quekou': [row['tiaokong_kaipan_quekou']],
+                                                          'zhengfu': [row['zhengfu']],
+                                                      })
+                                                      ]).reset_index().drop('index', axis=1)
+
+            print(finlib.Finlib().pprint(df_tmp_long_dikai_dizou))
+
+
+
+        df_rst_gaokai_dizou = pd.concat([df_rst_gaokai_dizou, df_tmp_long_gaokai_dizou]).reset_index().drop('index', axis=1)
+        df_rst_dikai_dizou = pd.concat([df_rst_dikai_dizou, df_tmp_long_dikai_dizou]).reset_index().drop('index', axis=1)
+
+        pass #end of for loop
+
+    if mkt == 'AG':
+        df_rst_gaokai_dizou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_gaokai_dizou))
+        df_rst_dikai_dizou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_dikai_dizou))
+
+        df_rst_gaokai_dizou = finlib.Finlib().add_stock_name_to_df(df_rst_gaokai_dizou)
+        df_rst_dikai_dizou = finlib.Finlib().add_stock_name_to_df(df_rst_dikai_dizou)
+
+
+        #quekou
+        df_rst_dikai_quekou = finlib.Finlib().add_industry_to_df(finlib.Finlib().add_amount_mktcap(df_rst_dikai_quekou))
+        df_rst_dikai_quekou = finlib.Finlib().add_stock_name_to_df(df_rst_dikai_quekou)
+
+    
+    if mkt== 'US_AK':
+        df_rst_dikai_dizou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_dikai_dizou)
+        df_rst_dikai_dizou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_dikai_dizou)
+        df_rst_dikai_quekou = finlib.Finlib().add_amount_mkcap_industry_pe_US_AK(df_rst_dikai_quekou)
+
+
+    df_rst_gaokai_dizou.to_csv(csv_out_gaokai_dizou, encoding='UTF-8', index=False)
+    df_rst_dikai_dizou.to_csv(csv_out_dikai_dizou, encoding='UTF-8', index=False)
+
+    df_rst_dikai_quekou.to_csv(csv_out_dikai_quekou, encoding='UTF-8', index=False)
+
+    print("df_rst_gaokai_dizou:\n"+finlib.Finlib().pprint(+df_rst_gaokai_dizou.head(10)))
+    print("df_rst_dikai_dizou:\n"+finlib.Finlib().pprint(df_rst_dikai_dizou.head(10)))
+    print("df_rst_dikai_quekou:\n"+finlib.Finlib().pprint(df_rst_dikai_quekou.head(10)))
+
+
+    logging.info('completed, csv_out_gaokai_dizou save to '+csv_out_gaokai_dizou+" len "+str(df_rst_gaokai_dizou.__len__()))
+    logging.info('completed, csv_out_dikai_dizou save to '+csv_out_dikai_dizou+" len "+str(df_rst_dikai_dizou.__len__()))
+    logging.info('completed, csv_out_dikai_quekou save to '+csv_out_dikai_quekou+" len "+str(df_rst_dikai_quekou.__len__()))
+
+
+
+    return()
+
+def quekou_show_up(mkt):
+    csv_out_gaokai_gaozou = f"/home/ryan/DATA/result/gaokai_gaozou_{mkt}.csv"
+    csv_out_dikai_gaozou = f"/home/ryan/DATA/result/gaokai_gaozou_{mkt}.csv"
+    csv_out_gaokai_quekou = f"/home/ryan/DATA/result/gaokai_quekou_{mkt}.csv"
+
+    df_rst_gaokai_gaozou = pd.read_csv(csv_out_gaokai_gaozou)
+    df_rst_dikai_gaozou = pd.read_csv(csv_out_dikai_gaozou)
+    df_rst_gaokai_quekou = pd.read_csv(csv_out_gaokai_quekou)
+
+    if df_rst_gaokai_quekou.__len__() == 0:
+        print('empty df_rst_gaokai_quekou')
+    else:
+        sr = df_rst_gaokai_quekou.groupby(by='industry_name_L1_L2_L3')['industry_name_L1_L2_L3'].count().sort_values(ascending=True)
+        for items in sr.items():
+            if items[1]<=1:
+                continue
+            print('df_rst_gaokai_quekou '+items[0]+" count "+str(items[1]))
+            print(finlib.Finlib().pprint(df_rst_gaokai_quekou[df_rst_gaokai_quekou['industry_name_L1_L2_L3']==items[0]]))
+
+    df_rst_gaozou = pd.concat([df_rst_gaokai_gaozou,df_rst_dikai_gaozou])
+
+    if df_rst_gaozou.__len__()==0:
+        print("empty df_rst_gaozou")
+    else:
+        sr = df_rst_gaozou.groupby(by='industry_name_L1_L2_L3')['industry_name_L1_L2_L3'].count().sort_values(ascending=True)
+        for items in sr.items():
+            if items[1]<=1:
+                continue
+            print('df_rst_gaozou '+items[0]+" count "+str(items[1]))
+            print(finlib.Finlib().pprint(df_rst_gaozou[df_rst_gaozou['industry_name_L1_L2_L3']==items[0]]))
+
+    return()
+
+def quekou_show_dn(mkt):
+    csv_out_gaokai_dizou = f"/home/ryan/DATA/result/gaokai_dizou_{mkt}.csv"
+    csv_out_dikai_dizou = f"/home/ryan/DATA/result/dikai_dizou_{mkt}.csv"
+    csv_out_dikai_quekou = f"/home/ryan/DATA/result/dikai_quekou_{mkt}.csv"
+
+    df_rst_gaokai_dizou = pd.read_csv(csv_out_gaokai_dizou)
+    df_rst_dikai_dizou = pd.read_csv(csv_out_dikai_dizou)
+    df_rst_dikai_quekou = pd.read_csv(csv_out_dikai_quekou)
+
+    df_rst_dizou = pd.concat([df_rst_gaokai_dizou,df_rst_dikai_dizou])
+
+    if df_rst_dikai_quekou.__len__()==0:
+        print("empty df_rst_dikai_quekou")
+    else:
+        sr = df_rst_dikai_quekou.groupby(by='industry_name_L1_L2_L3')['industry_name_L1_L2_L3'].count().sort_values(ascending=True)
+        for items in sr.items():
+            if items[1]<=1:
+                continue
+            print('df_rst_dikai_quekou '+items[0]+" count "+str(items[1]))
+            print(finlib.Finlib().pprint(df_rst_dikai_quekou[df_rst_dikai_quekou['industry_name_L1_L2_L3']==items[0]]))
+
+    if df_rst_dizou.__len__()==0:
+        print("empty df_rst_dizou")
+    else:
+        sr = df_rst_dizou.groupby(by='industry_name_L1_L2_L3')['industry_name_L1_L2_L3'].count().sort_values(ascending=True)
+        for items in sr.items():
+            if items[1]<=1:
+                continue
+            print('df_rst_dizou '+items[0]+" count "+str(items[1]))
+            print(finlib.Finlib().pprint(df_rst_dizou[df_rst_dizou['industry_name_L1_L2_L3']==items[0]]))
+
+    return()
 
 
 
 
 
+if True:
+    quekou_dn(mkt='AG')
+    quekou_up(mkt='AG')
 
-    logging.info('completed, csv_out_dikai_gaozou save to '+csv_out_dikai_gaozou)
-    logging.info('completed, csv_out_gaokai_gaozou save to '+csv_out_gaokai_gaozou)
-
-
-
-
-    logging.info('completed, csv_out_gaokai_quekou save to '+csv_out_gaokai_quekou)
-
-
+    quekou_show_dn(mkt='AG')
+    quekou_show_up(mkt='AG')
 
     exit()
 
