@@ -62,7 +62,7 @@ def fetch_daily_spot(stock_global,force_run=False):
 
     if stock_global == 'HK_AK':
         b_dir = b_dir+"/HK_AK"
-        f_sl = b_dir+"/us_ak_daily_latest.csv"
+        f_sl = b_dir+"/hk_ak_daily_latest.csv"
 
 
 
@@ -153,7 +153,7 @@ def update_base(stock_global, csv_dir, stock_list): #append_daily_spot_to_base
 
             source_df = pd.read_csv(source_daily_csv_f, converters={"code":str, "date":str})
             a_stock_today_df = source_df[source_df['code']==code]
-            df_target = pd.concat(df_target, pd.DataFrame.from_dict({
+            df_target = pd.concat([df_target, pd.DataFrame.from_dict({
                 'code':[code],
                 'name':[name],
                 'date':[added_date],
@@ -162,7 +162,7 @@ def update_base(stock_global, csv_dir, stock_list): #append_daily_spot_to_base
                 'low':[a_stock_today_df.iloc[0]['low']],
                 'close':[a_stock_today_df.iloc[0]['close']],
                 'volume':[a_stock_today_df.iloc[0]['volume']],
-                }).reset_index().drop('index', axis=1)
+                }).reset_index().drop('index', axis=1)]
             )
 
             df_target.to_csv(csv_f, encoding='UTF-8', index=False)

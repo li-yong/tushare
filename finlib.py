@@ -655,7 +655,7 @@ class Finlib:
 
     def get_price(self, code_m, date=None):  # code_m: SH600519
         if date is not None:
-            if re.match("\d{4}-\d{2}-\d{2}", date):
+            if re.match(r"\d{4}-\d{2}-\d{2}", date):
                 date = re.sub("-", "", date)
                 date = str(date)
             logging.info(__file__+" "+"change date to "+date)
@@ -826,8 +826,8 @@ class Finlib:
     def _DEL_get_jaqs_field(self, ts_code, date=None):  # date: YYYYMMDD, code:600519, read from ~/DATA/DAY_JAQS/SH600519.csv
         # date : None, then return the latest record.
 
-        code_in_number_only = re.match("(\d{6})\.(.*)", ts_code).group(1)
-        market = re.match("(\d{6})\.(.*)", ts_code).group(2)
+        code_in_number_only = re.match(r"(\d{6})\.(.*)", ts_code).group(1)
+        market = re.match(r"(\d{6})\.(.*)", ts_code).group(2)
 
         self.append_market_to_code_single_dot(code=code_in_number_only)  # '600519.SH'
         codeInFmtMktCode = self.add_market_to_code_single(code=code_in_number_only)  # 'SH600519'
@@ -896,16 +896,16 @@ class Finlib:
 
     def append_market_to_code_single_dot(self, code):
         code_S = code
-        if re.match('^6', code):
+        if re.match(r'^6', code):
             code_S = code + ".SH"
-        elif re.match('^[0|3]', code):
+        elif re.match(r'^[0|3]', code):
             code_S = code + ".SZ"
-        elif re.match('^[9]', code):  # B Gu
+        elif re.match(r'^[9]', code):  # B Gu
             # logging.info(("ignore B GU " + code))
             pass
-        elif re.match('SH', code):  #
+        elif re.match(r'SH', code):  #
             code_S = code
-        elif re.match('SZ', code):  #
+        elif re.match(r'SZ', code):  #
             code_S = code
         else:
             pass
@@ -920,21 +920,21 @@ class Finlib:
         if dot_f == True:
             dot = '.'
 
-        if re.match('^6', code):
+        if re.match(r'^6', code):
             code_S = "SH" + code
             code_S2 = code + dot + 'SH'
-        elif re.match('^[0|3]', code):
+        elif re.match(r'^[0|3]', code):
             code_S = "SZ" + code
             code_S2 = code + dot + 'SZ'
-        elif re.match('^[9]', code):  # B Gu
+        elif re.match(r'^[9]', code):  # B Gu
             pass
             #logging.info(("ignore B GU " + code))
-        elif re.match('^SH', code):  #
-            code_number = re.match('^SH(.*)', code).group(1)
+        elif re.match(r'^SH', code):  #
+            code_number = re.match(r'^SH(.*)', code).group(1)
             code_S = code
             code_S2 = code_number + dot + 'SH'
-        elif re.match('^SZ', code):  #
-            code_number = re.match('^SZ(.*)', code).group(1)
+        elif re.match(r'^SZ', code):  #
+            code_number = re.match(r'^SZ(.*)', code).group(1)
             code_S = code
             code_S2 = code_number + dot + 'SZ'
         else:
@@ -957,7 +957,7 @@ class Finlib:
         df = df.reset_index().drop('index',axis=1)
         df.code = df.code.astype(str)
 
-        if re.match('^SH',  df.code.iloc[0]) or re.match('^SZ',  df.code.iloc[0]) or re.match('^BJ',  df.code.iloc[0]) :
+        if re.match(r'^SH',  df.code.iloc[0]) or re.match(r'^SZ',  df.code.iloc[0]) or re.match(r'^BJ',  df.code.iloc[0]) :
             logging.warning("df code already has market, do nothing. First code "+df.code.iloc[0])
             return(df)
 
@@ -972,29 +972,29 @@ class Finlib:
             # code = str(row['code'])
             code = row['code']
             # print(row)
-            if re.match('^[6|5]', code): #600519, 510210 上证指数ETF, 501043  沪深300LOF
+            if re.match(r'^[6|5]', code): #600519, 510210 上证指数ETF, 501043  沪深300LOF
                 code_S = "SH" + dot + code
                 code_S2 = code + dot + "SH"
-            elif re.match('^[0|3|1]', code): #159781   双创50ETF
+            elif re.match(r'^[0|3|1]', code): #159781   双创50ETF
                 code_S = "SZ" + dot + code
                 code_S2 = code + dot + "SZ"
-            elif re.match('^8', code):
+            elif re.match(r'^8', code):
                 code_S = "BJ" + dot + code
                 code_S2 = code + dot + "BJ"
-            elif re.match('^[9]', code):  # B Gu
+            elif re.match(r'^[9]', code):  # B Gu
                 #logging.info(("ignore B GU " + code))
                 continue
-            elif re.match('^SH', code):  #
+            elif re.match(r'^SH', code):  #
                 code_S = code
-                code_number = re.match('^SH(.*)', code).group(1)  # 600519
+                code_number = re.match(r'^SH(.*)', code).group(1)  # 600519
                 code_S2 = code_number + dot + 'SH'
-            elif re.match('^SZ', code):  #
+            elif re.match(r'^SZ', code):  #
                 code_S = code
-                code_number = re.match('^SZ(.*)', code).group(1)  # 600519
+                code_number = re.match(r'^SZ(.*)', code).group(1)  # 600519
                 code_S2 = code_number + dot + 'SZ'
-            elif re.match('^BJ', code):  #
+            elif re.match(r'^BJ', code):  #
                 code_S = code
-                code_number = re.match('^BJ(.*)', code).group(1)  #
+                code_number = re.match(r'^BJ(.*)', code).group(1)  #
                 code_S2 = code_number + dot + 'BJ'
             else:
                 #logging.info(("Fatal: UNKNOWN CODE " + code))
@@ -1074,7 +1074,7 @@ class Finlib:
 
         def _tmp_lambda(ts_code):
             # logging.info(str(ts_code))
-            regx = re.match('(\d{6})\.(.*)', ts_code)
+            regx = re.match(r'(\d{6})\.(.*)', ts_code)
             #mkt + dcode
             return(regx.group(2) + regx.group(1))
 
@@ -1104,7 +1104,7 @@ class Finlib:
                 exam_date = todayS
                 date = todayS
 
-        tmp = re.match("^(\d{4})(\d{2})(\d{2})$", date)
+        tmp = re.match(r"^(\d{4})(\d{2})(\d{2})$", date)
 
         if tmp:
             yyyy = tmp.group(1)
@@ -1721,7 +1721,7 @@ class Finlib:
                         val_pre_op = op_pre[idx_pre_op]  # value of latest op, in 'B0','S0','pB', 'B1','S1' etc.
                         # print "matched previous op "+val_pre_op
 
-                    op_match = re.match("([B|S])(\d+)", val_pre_op)
+                    op_match = re.match(r"([B|S])(\d+)", val_pre_op)
                     if op_match:
                         pre_op = op_match.group(1)  # in B, S
                         pre_opn = op_match.group(2)  # in 0, 1, 2..
@@ -1795,7 +1795,7 @@ class Finlib:
                     # logical start: buy
                     code = str(df.iloc[i - 1, df.columns.get_loc('code')])
 
-                    # code_match = re.match('S[H|Z](\d+)', code)
+                    # code_match = re.match(r'S[H|Z](\d+)', code)
                     # if code_match:
                     #    pass
                     # code = code_match.group(1)
@@ -2609,8 +2609,8 @@ class Finlib:
     def create_or_update_ptn_perf_db_record(self, df, dict, code, day_cnt, cursor, cnx, db_tbl):
 
         for ptn_code in list(dict.keys()):
-            ptn_dict = re.match("(.*)_(.*)", ptn_code).group(1)
-            code_dict = re.match("(.*)_(.*)", ptn_code).group(2)
+            ptn_dict = re.match(r"(.*)_(.*)", ptn_code).group(1)
+            code_dict = re.match(r"(.*)_(.*)", ptn_code).group(2)
 
             if ptn_dict == 'pv_ignore':
                 continue
@@ -2833,7 +2833,7 @@ class Finlib:
 
         if not list_date_df.empty:
             list_date = list_date_df['list_date'].iloc[0]
-            year = re.match("(\d{4})\d{2}\d{2}", str(list_date)).group(1)
+            year = re.match(r"(\d{4})\d{2}\d{2}", str(list_date)).group(1)
             earlist_report_period = year + "1231"
             if date < earlist_report_period:
                 # logging.info(__file__+" "+"stock has not been on market. "+ts_code + " , "+date+" . Earliest on market report "+earlist_report_period)
@@ -2847,7 +2847,7 @@ class Finlib:
 
     def file_verify(self, file_path, day=3, hide_pass=False, print_len=True):
 
-        rem = re.match("(.*\/)\*\.(.*)", file_path)
+        rem = re.match(r"(.*\/)\*\.(.*)", file_path)
 
         if rem:
             root_dir = rem.group(1)
@@ -2870,7 +2870,7 @@ class Finlib:
 
         flen = "na"
 
-        if print_len and re.match(".*\.csv", file_path):
+        if print_len and re.match(r".*\.csv", file_path):
 
             try:
                 flen = str(pd.read_csv(file_path, encoding="utf-8", dtype=str).__len__())
@@ -2882,7 +2882,7 @@ class Finlib:
 
         string_expected_not_update_or_not = ""
 
-        rem = re.match(".*_(\d{4}_\d)\.csv", file_path)  # fundamental_peg_2018_4.csv
+        rem = re.match(r".*_(\d{4}_\d)\.csv", file_path)  # fundamental_peg_2018_4.csv
         if rem:
             file_content_date = rem.group(1)
             year = self.get_report_publish_status()['completed_quarter_year']  # '2018
@@ -2895,7 +2895,7 @@ class Finlib:
             else:
                 string_expected_not_update_or_not = " unexpected"
 
-        rem = re.match(".*_(\d{8})\.csv", file_path)
+        rem = re.match(r".*_(\d{8})\.csv", file_path)
         if rem:
             file_content_date = rem.group(1)
             # d = self.get_report_publish_status()['completed_year_rpt_date']
@@ -2955,10 +2955,10 @@ class Finlib:
             return True
 
     def get_code_format(self, code_input):
-        rem_D6DotC2 = re.match("(\d{6})\.(.*)", code_input)  # 600519.SH
-        rem_C2DotD6 = re.match("([a-zA-Z]{2})\.(\d{6})", code_input)  # SH.600519
-        rem_C2D6 = re.match("([a-zA-Z]{2})(\d{6})", code_input)  # SH600519
-        rem_D6 = re.match("^(\d{6})$", code_input)  # 600519
+        rem_D6DotC2 = re.match(r"(\d{6})\.(.*)", code_input)  # 600519.SH
+        rem_C2DotD6 = re.match(r"([a-zA-Z]{2})\.(\d{6})", code_input)  # SH.600519
+        rem_C2D6 = re.match(r"([a-zA-Z]{2})(\d{6})", code_input)  # SH600519
+        rem_D6 = re.match(r"^(\d{6})$", code_input)  # 600519
 
         if rem_D6DotC2:
             code = rem_D6DotC2.group(1)
@@ -4307,7 +4307,7 @@ class Finlib:
             rtn_df = pd.read_csv(data_csv_fp, converters={'code': str, 'date': str}, header=None, skiprows=1, names=['code', 'date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'tnv'])
         elif dir == base_dir + "/AG_qfq":
             # ag_all_360_days
-            if re.match(dir+'/ag_all_\d+_days.csv', data_csv_fp):
+            if re.match(dir+r'/ag_all_\d+_days.csv', data_csv_fp):
                 rtn_df = pd.read_csv(data_csv_fp, converters={'trade_date': str}, encoding="utf-8")
                 rtn_df = rtn_df.rename(columns={'trade_date':'date'})
             else:
@@ -5859,22 +5859,33 @@ class Finlib:
         return(df_rtn)
 
 
-    def load_all_us_ak_data(self,days=30):
+    def load_all_us_ak_data(self,days=30,mktcap_n=1000):
         ######### For TRIN, Advance/Decline LINE #######\
         dir = "/home/ryan/DATA/DAY_Global/akshare/US"
         csv = dir + "/us_all_"+str(days)+"_days.csv.agg"
+
+        csv_mktcap_us = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv'
+        df_mktcap_us = pd.read_csv(csv_mktcap_us)[['code']].head(mktcap_n)
+
+
+
+        
 
         if not self.is_cached(file_path=csv, day=1):
             logging.info("generating csv from source.")
 
             cmd1 = "head -1 " + dir + "/AAPL.csv > " + csv
-            cmd2 = "for i in `ls " + dir + "/*.csv`; do tail -" + str(days) + " $i |grep -viE 'code.*high' >> " + csv + "; done"
 
             logging.info(cmd1)
-            logging.info(cmd2) 
 
             os.system(cmd1)
-            os.system(cmd2)
+
+
+            for index,row in df_mktcap_us.iterrows():
+                code = row['code']
+                cmd2 = "for i in `ls " + dir + f"/{code}.csv`; do tail -" + str(days) + " $i |grep -viE 'code.*high' >> " + csv + "; done"
+                # logging.info(cmd2) 
+                os.system(cmd2)
 
             df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
             df.to_csv(csv, encoding='UTF-8', index=False)

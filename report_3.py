@@ -2032,11 +2032,19 @@ if no_question or input("Run Point and Figure check? [N]")=="Y":
     logging.info("BUY:\n" + finlib.Finlib().pprint(df_b))
     logging.info("SELL:\n" + finlib.Finlib().pprint(df_s))
 
-if no_question or input("Run close volatility? [N]")=="Y":
+if no_question or input("Run close volatility AG? [N]")=="Y":
     csv_o = rst_dir+"/df_report_volatility_AG.csv"
     df = finlib_indicator.Finlib_indicator().stock_price_volatility(csv_o)
     logging.info("\n##### new_share_profit #####")
     logging.info(finlib.Finlib().pprint(df.head(5)))
+
+
+if no_question or input("Run close volatility US? [N]")=="Y":
+    csv_o = rst_dir+"/df_report_volatility_US.csv"
+    df = finlib_indicator.Finlib_indicator().stock_price_volatility_us(csv_o)
+    logging.info("\n##### new_share_profit #####")
+    logging.info(finlib.Finlib().pprint(df.head(5)))
+
 
 
 if no_question or input("Run stock significant? [N]")=="Y":
