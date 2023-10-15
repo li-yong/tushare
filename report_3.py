@@ -2043,7 +2043,7 @@ if no_question or input("Run close volatility US? [N]")=="Y":
     csv_o = rst_dir+"/df_report_volatility_US.csv"
     df = finlib_indicator.Finlib_indicator().stock_price_volatility_us(csv_o)
     logging.info("\n##### new_share_profit #####")
-    logging.info(finlib.Finlib().pprint(df.head(5)))
+    logging.info(finlib.Finlib().pprint(df.head(100)))
 
 
 

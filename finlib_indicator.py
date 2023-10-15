@@ -3419,7 +3419,6 @@ class Finlib_indicator:
 
         df = finlib.Finlib().load_all_us_ak_data(days=300, mktcap_n=1000)
 
-        df = finlib.Finlib().add_stock_name_to_df(df=df)
         # df = finlib.Finlib().remove_garbage(df=df)
 
         codes = df['code'].unique()
@@ -3454,6 +3453,9 @@ class Finlib_indicator:
 
             continue
 
+        
+        df_rtn = finlib.Finlib().add_name_mktcap_pe_to_df_us(df=df_rtn)
+        df_rtn = df_rtn.sort_values(by=['mktcap'], ascending=False, inplace=False)
         df_rtn.to_csv(csv_o, encoding='UTF-8', index=False)
         logging.info("result saved to " + csv_o)
         return(df_rtn)

@@ -86,17 +86,17 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
   # fresh fetch /home/ryan/DATA/DAY_Global/akshare/US/*.csv
-  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_base -x US_AK
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_base -x US_AK &
 fi
 
 
 if [ $full_or_daily == "DAILY" ]; then
   #output: /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_20230918.csv
   #        /home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv <<< symbol link
-  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK --force_run
+  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x US_AK --force_run 
 
   # append the latest day to /home/ryan/DATA/DAY_Global/akshare/US/*.csv
-  python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --update_base -x US_AK
+  # python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --update_base -x US_AK  &
 fi
 
 ######################################
@@ -268,7 +268,7 @@ if [ $full_or_daily == "FULL" ]; then
   python t_daily_fundamentals_2.py --fetch_info_daily --force_run
 
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/pledge_detail.csv  pledge_stat.csv
-  python t_daily_fundamentals_2.py --fetch_pledge_stat_detail --force_run
+  python t_daily_fundamentals_2.py --fetch_pledge_stat_detail --force_run &
 
   #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/changed_name_stocks.csv
   #ts_code,name,start_date,end_date,ann_date,change_reason

@@ -4942,9 +4942,9 @@ class Finlib:
 
         # daily update, check every day.
         if daily_update:
-            if os.path.exists(sl_out_csv):
-                os.unlink(sl_out_csv)
-
+            if os.path.lexists(sl_out_csv):
+               os.unlink(sl_out_csv)
+        
             os.symlink(out_csv, sl_out_csv)
             logging.info("\nsymbol link created. " + sl_out_csv + " --> " + out_csv)
 
@@ -5031,8 +5031,8 @@ class Finlib:
         #determin the df is AG or US
         mkt = 'UNKNOWN'
         s = ''.join(df['code'].unique())
-        alpha_s = len(re. findall('[A-Za-z]', s))  # ['s','h'], len 2
-        number_s = len(re. findall('\d', s)) # ['6,0,0,5,1,9], len 6
+        alpha_s = len(re. findall(r'[A-Za-z]', s))  # ['s','h'], len 2
+        number_s = len(re. findall(r'\d', s)) # ['6,0,0,5,1,9], len 6
         
         if len(s)<3:
             mkt = 'US_AK'
@@ -5262,9 +5262,8 @@ class Finlib:
             logging.info("df_amt saved to " + out_csv + ", len " + str(df_amt.__len__()))
 
     # daily update, check every day.
-        if daily_update:
-            if os.path.exists(sl_out_csv):
-                os.unlink(sl_out_csv)
+        if os.path.exists(sl_out_csv):
+            os.unlink(sl_out_csv)
 
             os.symlink(out_csv, sl_out_csv)
             logging.info("\ndaily_update, the latest N days amount symbol link created. "+sl_out_csv+" --> "+out_csv)
@@ -5858,6 +5857,17 @@ class Finlib:
         df_rtn = df_concept[df_concept['cat_name'].str.contains(concept)]
         return(df_rtn)
 
+    def add_name_mktcap_pe_to_df_us(self, df):
+        csv_mktcap_us = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv'
+        df_mktcap_us = pd.read_csv(csv_mktcap_us)[['code','name','category','mktcap','pe']]
+        df_mktcap_us['mktcap'] =  df_mktcap_us['mktcap'].fillna(0)
+        df_mktcap_us['mktcap'] =  df_mktcap_us['mktcap'].apply(lambda _d: int(round(_d/100000000)))
+
+        df_mktcap_us['pe'] =  df_mktcap_us['pe'].fillna(0)
+        df_mktcap_us['pe'] =  df_mktcap_us['pe'].apply(lambda _d: int(_d))
+
+        df = pd.merge(left=df, right=df_mktcap_us, on='code', how='inner') #append name, category, mktcap, pe
+        return(df)
 
     def load_all_us_ak_data(self,days=30,mktcap_n=1000):
         ######### For TRIN, Advance/Decline LINE #######\
@@ -5867,9 +5877,6 @@ class Finlib:
         csv_mktcap_us = '/home/ryan/DATA/pickle/daily_update_source/US_AK/us_ak_daily_latest.csv'
         df_mktcap_us = pd.read_csv(csv_mktcap_us)[['code']].head(mktcap_n)
 
-
-
-        
 
         if not self.is_cached(file_path=csv, day=1):
             logging.info("generating csv from source.")
@@ -5886,14 +5893,17 @@ class Finlib:
                 cmd2 = "for i in `ls " + dir + f"/{code}.csv`; do tail -" + str(days) + " $i |grep -viE 'code.*high' >> " + csv + "; done"
                 # logging.info(cmd2) 
                 os.system(cmd2)
+            
 
             df = self.regular_read_csv_to_stdard_df(data_csv=csv) #convert ts_date to date
+
             df.to_csv(csv, encoding='UTF-8', index=False)
             logging.info("generated " + csv)
         else:
             logging.info("re-using csv as it generated in 1 days. " + csv)
             df = self.regular_read_csv_to_stdard_df(data_csv=csv)
 
+        
         return (df)
 
     def load_all_ag_qfq_data(self,days=300):

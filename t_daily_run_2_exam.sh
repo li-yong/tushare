@@ -801,6 +801,10 @@ fi
 
 python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 
+#output:
+# /home/ryan/DATA/result/dikai_gaozou_AG.csv , gaokai_gaozou_AG.csv ,  gaokai_quekou_AG.csv
+# gaokai_dizou_AG.csv , dikai_dizou_AG.csv ,  dikai_quekou_AG.csv
+python quekou.py -a run -x AG
 
 ################################
 # input: /home/ryan/DATA/DAY_Global/AG/*.csv, ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/*.csv
@@ -823,21 +827,21 @@ python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 
 if [ $full_or_daily == "FULL" ]; then
 # After 12.01
-  python t_daily_index_candidates.py --index_name hs300 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
-  python t_daily_index_candidates.py --index_name zz100 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
-  python t_daily_index_candidates.py --index_name szcz  --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
-  python t_daily_index_candidates.py --index_name sz100 --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
+#   python t_daily_index_candidates.py --index_name hs300 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
+#   python t_daily_index_candidates.py --index_name zz100 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
+#   python t_daily_index_candidates.py --index_name szcz  --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
+#   python t_daily_index_candidates.py --index_name sz100 --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
 
 # After 6.1
-#  python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
-#  python t_daily_index_candidates.py --index_name zz100 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update
-#  python t_daily_index_candidates.py --index_name szcz  --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update --force_run
-#  python t_daily_index_candidates.py --index_name sz100 --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update
+ python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
+ python t_daily_index_candidates.py --index_name zz100 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update
+ python t_daily_index_candidates.py --index_name szcz  --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update --force_run
+ python t_daily_index_candidates.py --index_name sz100 --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
 # python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
-python t_daily_index_candidates.py --index_name hs300 --period_start 20211101 --period_end 20221031 --index_source wugui  --daily_update --force_run
+python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
 fi
 
 #######################################
@@ -848,12 +852,13 @@ fi
 #python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
 
 
+# TV no longer allow get data
 #using tradingview source.  period_start/end is not actually used, just not to broke the program
-python t_daily_index_candidates.py --index_name nasdaq100 --period_start 20210101 --period_end 20210101
-python t_daily_index_candidates.py --index_name spx500 --period_start 20210101 --period_end 20210101
-python t_daily_index_candidates.py --index_name cn --period_start 20210101 --period_end 20210101
-python t_daily_index_candidates.py --index_name cn_sse --period_start 20210101 --period_end 20210101
-python t_daily_index_candidates.py --index_name cn_szse --period_start 20210101 --period_end 20210101
+# python t_daily_index_candidates.py --index_name nasdaq100 --period_start 20210101 --period_end 20210101
+# python t_daily_index_candidates.py --index_name spx500 --period_start 20210101 --period_end 20210101
+# python t_daily_index_candidates.py --index_name cn --period_start 20210101 --period_end 20210101
+# python t_daily_index_candidates.py --index_name cn_sse --period_start 20210101 --period_end 20210101
+# python t_daily_index_candidates.py --index_name cn_szse --period_start 20210101 --period_end 20210101
 
 #/home/ryan/DATA/result/high_volumes/*.csv
 python t_futu_trade.py --check_high_volume --market AG_HOLD
