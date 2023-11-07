@@ -115,11 +115,11 @@ def define_global(stock_global):
             "df_very_strong_up_trend": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_UP_TREND)", "term": "MIDDLE TERM", "price": "NA"},
             "df_very_strong_down_trend": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.VERY_STONG_DOWN_TREND)", "term": "MIDDLE TERM", "price": "NA"},
 
-            "df_ma5_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
-            "df_ma5_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+            # "df_ma5_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            # "df_ma5_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA5_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
 
-            "df_ma21_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
-            "df_ma21_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
+            # "df_ma21_koudi_lt_1": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_LT_1)", "term": "SHORT TERM", "price": "NA"},
+            # "df_ma21_koudi_gt_5": {"op": "S", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.MA21_UP_KOUDI_DISTANCE_GT_5)", "term": "SHORT TERM", "price": "NA"},
 
             # "df_two_week_fluc_sma5_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_5_LT_3)", "term": "SHORT TERM", "price": "NA"},
             # "df_two_week_fluc_sma21_lt_3": {"op": "B", "file": "API", "api": "finlib_indicator.Finlib_indicator().get_indicator_critirial(constant.TWO_WEEK_FLUC_SMA_21_LT_3)", "term": "MIDDLE TERM", "price": "NA"},

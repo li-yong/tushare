@@ -5198,9 +5198,9 @@ class Finlib:
     def get_last_n_days_stocks_amount(self,ndays=365, dayS=None, dayE=None, daily_update=None,short_period=False,debug=False, force_run=False):
 
         dayS, dayE, ndays = self.get_dayS_dayE_ndays(ndays=ndays, dayS=dayS, dayE=dayE)
+        sl_out_csv = "/home/ryan/DATA/result/stocks_amount_" + str(ndays) + "_days.csv" #symbol link
 
         if daily_update:
-            sl_out_csv = "/home/ryan/DATA/result/stocks_amount_" + str(ndays) + "_days.csv" #symbol link
             sl_daily_ma_koudi_csv = "/home/ryan/DATA/result/latest_ma_koudi.csv"
             daily_ma_koudi_csv = "/home/ryan/DATA/result/ma_koudi_" + dayS + '_' + dayE + ".csv"
 

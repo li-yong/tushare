@@ -70,7 +70,7 @@ python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py;
 ############################
 # output: /home/ryan/DATA/DAY_Global/AG_qfq/*.csv
 if [ $full_or_daily == "FULL" ]; then
-  python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq
+  python /home/ryan/tushare_ryan/t_daily_update_csv_from_tushare.py --refresh_qfq &
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
@@ -354,9 +354,9 @@ fi
 #
 ######################################
 # not run because time consuming. 20200518
-if [ $full_or_daily == "DAILY" ]; then
-   python t_top_10_holders.py --fetch  --stock_global AG --selected  #time consuming
-fi
+# if [ $full_or_daily == "DAILY" ]; then
+  #  python t_top_10_holders.py --fetch  --stock_global AG --selected  #time consuming
+# fi
 
 
 if [ $full_or_daily == "FULL" ]; then
@@ -434,20 +434,21 @@ fi
 ######################################
 # /home/ryan/DATA/DAY_Global/FUTU_[HK, SH, SZ, US]/*_1m.csv
 ######################################
-python t_futu_trade.py --fetch_history_bar  --market AG_HOLD
-python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
-python t_futu_trade.py --fetch_history_bar  --market AG
-python t_futu_trade.py --fetch_history_bar  --market HK
+if [ $full_or_daily == "FULL" ]; then
+  python t_futu_trade.py --fetch_history_bar  --market AG_HOLD
+  python t_futu_trade.py --fetch_history_bar  --market HK_HOLD
+  python t_futu_trade.py --fetch_history_bar  --market AG
+  python t_futu_trade.py --fetch_history_bar  --market HK
 
 
-###### AG Options and ETF
-# Output: /home/ryan/DATA/DAY_Global/FUTU_AG_OPTION/*_day.csv,  *_60m.csv
-python t_futu_trade.py --fetch_history_bar_ag_option --market FUTU_CN_ETF --ktype_short=K_60M --ktype_long=K_DAY
+  ###### AG Options and ETF
+  # Output: /home/ryan/DATA/DAY_Global/FUTU_AG_OPTION/*_day.csv,  *_60m.csv
+  python t_futu_trade.py --fetch_history_bar_ag_option --market FUTU_CN_ETF --ktype_short=K_60M --ktype_long=K_DAY
 
-#purchased nasdaq basic card. 20220709
-python t_futu_trade.py --fetch_history_bar  --market US_HOLD
+  #purchased nasdaq basic card. 20220709
+  python t_futu_trade.py --fetch_history_bar  --market US_HOLD
 
-
+fi
 
 ######################################
 #output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
@@ -457,7 +458,6 @@ if [ $full_or_daily == "FULL" ]; then
   python ak_share.py --fetch_em_concept
 fi
 
-  python ak_share.py --fetch_em_concept
 ######################################
 #output: /home/ryan/DATA/DAY_Global/AG_concept_bars/EM/*.csv
 #output: /home/ryan/DATA/DAY_Global/AG_concept/EM/*.csv
@@ -465,15 +465,12 @@ fi
 if [ $full_or_daily == "FULL" ]; then
   python ak_share.py --fetch_ths_concept
 fi
-
-  python ak_share.py --fetch_ths_concept
 
 ######################################
 #
 ######################################
 #python ak_share.py  --fetch_after_market
 python ~/tushare_ryan/t_fetch_us_hk_bar_ak.py --fetch_daily_spot -x HK_AK
-
 
 
 echo "done, script completed"

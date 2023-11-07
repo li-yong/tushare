@@ -4,7 +4,8 @@
 #mv  /home/ryan/DATA/result/today ~/DATA/result/today.del
 #mkdir  /home/ryan/DATA/result/today
 
-
+timelog=/home/ryan/del.time.log
+echo > $timelog
 
 full_or_daily=$1
 
@@ -32,8 +33,14 @@ bash -x clean_result_dir.sh
 #### Process AG ########
 #mysqldump -uroot -padmin888.@_@  ryan_stock_db order_tracking_stock > order_tracking_stock.sql.backup_`hostname`_`date +"%Y-%m-%d_%H_%M_%S"`
 
-python del.py --no_question
-python report_3.py --no_question
+echo "del.py" >> $timelog
+/usr/bin/time -a -o $timelog python del.py --no_question
+
+echo "report3.py 1st run" >> $timelog
+/usr/bin/time -a -o $timelog python report_3.py --no_question 
+
+echo "report3.py 2nd run" >> $timelog
+/usr/bin/time -a -o $timelog python report_3.py --no_question 
 
 #run twice to get output:
 #/home/ryan/DATA/result/active_industry.csv
@@ -42,7 +49,7 @@ python report_3.py --no_question
 #output:
 # # /home/ryan/DATA/DAY_Global/ag_option_etf_1000_60m.csv
 ## ag_option_etf_1000_60m.csv  ag_option_etf_300_day.csv
-python report_3.py --no_question
+
 
 ##########################
 #input:
@@ -52,7 +59,8 @@ python report_3.py --no_question
 # die_ting.csv	   pe_top_30p.csv    stable_price_volume.csv  vcp.csv			   volume_ratio_top_20p.csv  zhangting_volume_ration_lt_1.csv
 #pe_bottom_30p.csv  pocket_pivot.csv  step1.out.csv	      volume_ratio_bottom_10p.csv  zhang_ting.csv
 ##########################
-python t_daily_pattern_Hit_Price_Volume_2.py
+echo "t_daily_pattern_Hit_Price_Volume_2.py" >> $timelog
+/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume_2.py 
 
 
 ########################################################  Step1 Others  ################################################
@@ -66,12 +74,12 @@ python t_daily_pattern_Hit_Price_Volume_2.py
 if [ $full_or_daily == "FULL" ]; then
      echo "NOT RUN"
      #rm -f /home/ryan/DATA/result/today/announcement.csv
-     #python t_daily_announcement.py
+     #/usr/bin/time -a -o $timelog python t_daily_announcement.py
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "NOT RUN"
-    #python t_daily_announcement.py
+    #/usr/bin/time -a -o $timelog python t_daily_announcement.py
 fi
 
 
@@ -85,16 +93,16 @@ fi
 if [ $full_or_daily == "FULL" ]; then
     echo "NOT RUN"
     #rm -f /home/ryan/DATA/result/jaqs_quarterly_fundamental.csv
-    #python t_monthly_jaqs_fundamental.py --calc_quartly_report  --force_run  #<<< 16 min
+    #/usr/bin/time -a -o $timelog python t_monthly_jaqs_fundamental.py --calc_quartly_report  --force_run  #<<< 16 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "NOT RUN"
-    #python t_monthly_jaqs_fundamental.py --calc_quartly_report
+    #/usr/bin/time -a -o $timelog python t_monthly_jaqs_fundamental.py --calc_quartly_report
 fi
 
 
-#python t_monthly_jaqs_fundamental.py --calc_quartly_report --force_run
+#/usr/bin/time -a -o $timelog python t_monthly_jaqs_fundamental.py --calc_quartly_report --force_run
 
 ################################################
 #input: "/home/ryan/DATA/DAY_No_Adj/*.csv"
@@ -106,15 +114,15 @@ if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/fenghong_profit_analysis.csv
     rm -f /home/ryan/DATA/result/fenghong_score.csv
 
-    python t_fenghong.py --analyze_one --force_run  #<<< 3 min
-    python t_fenghong.py --analyze_two --force_run  #<<< 1 min
+    /usr/bin/time -a -o $timelog python t_fenghong.py --analyze_one --force_run  #<<< 3 min
+    /usr/bin/time -a -o $timelog python t_fenghong.py --analyze_two --force_run  #<<< 1 min
 
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "SKIP"
-    #python t_fenghong.py --analyze_one
-    #python t_fenghong.py --analyze_two
+    #/usr/bin/time -a -o $timelog python t_fenghong.py --analyze_one
+    #/usr/bin/time -a -o $timelog python t_fenghong.py --analyze_two
 fi
 
 
@@ -130,8 +138,10 @@ fi
 #input:  /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/hsgt_top10.csv
 #output : /home/ryan/DATA/result/hsgt_top_10_selected.csv
 #########################
-python t_daily_hsgt.py --analyze_hsgt
-
+if [ $full_or_daily == "DAILY" ]; then
+    echo "SKIP"
+    # /usr/bin/time -a -o $timelog python t_daily_hsgt.py --analyze_hsgt
+fi
 
 #########################
 #input:  /home/ryan/DATA/DAY_Global/AG_MoneyFlow/*.csv
@@ -144,16 +154,22 @@ python t_daily_hsgt.py --analyze_hsgt
 if [ $full_or_daily == "FULL" ]; then
   #/home/ryan/DATA/tmp/moneyflow_ana/mf_today_snap.csv #len 1683
   #/home/ryan/DATA/result/today/mf_today_top5_large_amount.csv #len 5
-  python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5
+  /usr/bin/time -a -o $timelog python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5
 fi
 
 #/home/ryan/DATA/tmp/moneyflow_ana/mf_today_snap.csv Len 63
 #/home/ryan/DATA/result/today/mf_today_top5_large_amount.csv Len 5
-python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5 --mf_ana_prime_stock
+if [ $full_or_daily == "DAILY" ]; then
+    echo "SKIP"
+    # /usr/bin/time -a -o $timelog python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5 --mf_ana_prime_stock
+fi
 
 #/home/ryan/DATA/tmp/moneyflow_ana/mf_today_snap_selected.csv Len 35
 #/home/ryan/DATA/result/selected/mf_today_top5_large_amount.csv Len 5
-python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5 --selected
+if [ $full_or_daily == "DAILY" ]; then
+    echo "SKIP"
+    # /usr/bin/time -a -o $timelog python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hold_days 5 --selected
+fi
 
 ######################### merge_local_basic
 #input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/basic_*.csv
@@ -162,12 +178,13 @@ python t_daily_hsgt.py --analyze_moneyflow --mf_ana_pre_days 3 --mf_ana_test_hol
 
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv; # WARNNING, will spend hours to generate.
-    python t_daily_fundamentals_2.py --merge_local_basic --force_run  # <<< ??? hour. update weekly.
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_local_basic --force_run  # <<< ??? hour. update weekly.
 fi
 
 #/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic.csv
 if [ $full_or_daily == "DAILY" ]; then
-  python t_daily_fundamentals_2.py --merge_local_basic --fast_fetch ## only merge last trading days to. 50 sec
+    echo "t_daily_fundamentals_2.py merge_local_basic" >> $timelog
+  /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_local_basic --fast_fetch ## only merge last trading days to. 50 sec
 fi
 
 
@@ -184,7 +201,8 @@ fi
 # output:/home/ryan/DATA/DAY_Global/AG_concept/stock_concept_map.csv
 ####
 if [ $full_or_daily == "DAILY" ]; then
-  python ak_share.py --generate_stock_concept
+  echo "ak_share.py generate_stock_concept" >> $timelog
+  /usr/bin/time -a -o $timelog python ak_share.py --generate_stock_concept
 fi
 
 ######################### merge_local
@@ -194,14 +212,14 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv; # WARNNING, will spend hours to generate.
-    python t_daily_fundamentals_2.py --merge_local --force_run  # <<< 2.5 hour. update everyday, since its output is other matrics input.;
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_local --force_run  # <<< 2.5 hour. update everyday, since its output is other matrics input.;
 fi
 
 
 #03_07 23:09:00 file updated in 3 days, not process. /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/income.csv
 if [ $full_or_daily == "DAILY" ]; then
     echo "SKIP"
-    #python t_daily_fundamentals_2.py --merge_local --fast_fetch
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_local --fast_fetch
 fi
 
 #########################  Get ADL
@@ -213,8 +231,10 @@ fi
 #/home/ryan/DATA/result/adl/amt_perc_top_5_stocks.csv
 
 #########################
-python t_daily_adl_trin.py -n 14
-
+if [ $full_or_daily == "DAILY" ]; then
+    echo "SKIP"
+# /usr/bin/time -a -o $timelog python t_daily_adl_trin.py -n 14
+fi
 
 #########################  merge_individual
 #input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/*.csv
@@ -223,12 +243,12 @@ python t_daily_adl_trin.py -n 14
 #########################
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/individual_per_stock/*.csv  # dangerous, will spend hours to generate
-    python t_daily_fundamentals_2.py --merge_individual --force_run  #<<<< 1 hour
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_individual --force_run  #<<<< 1 hour
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "skipped"
-    #python t_daily_fundamentals_2.py --merge_individual --fast_fetch #@todo, bug: only merge the latest day, but not the days which has not been in the target.
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --merge_individual --fast_fetch #@todo, bug: only merge the latest day, but not the days which has not been in the target.
 fi
 
 
@@ -244,7 +264,7 @@ fi
 # head: code,symbol,name,area,industry,list_date,on_market_days,ts_code,trade_date,close,turnover_rate,turnover_rate_f,volume_ratio,pe,pe_ttm,pb,ps,ps_ttm,total_share,float_share,total_mv,circ_mv,volume_ratio_perc_rank,total_mv_perc_rank,circ_mv_perc_rank,pe_perc_rank,pe_ttm_perc_rank,ps_ttm_perc_rank,turnover_rate_f_perc_rank,name_x,industry_x,area_x,pe_x,outstanding,totals,totalAssets,liquidAssets,fixedAssets,reserved,reservedPerShare,esp,bvps,pb_x,timeToMarket,undp,perundp,rev,profit,gpr,npr,holders,name_x,roe,roa,total_profit,net_profit,free_cashflow,total_revenue,total_assets,total_liab,ebit,ebitda,netdebt,fcff,fcfe,name_year1,roe_year1,roa_year1,total_profit_year1,net_profit_year1,free_cashflow_year1,total_revenue_year1,total_assets_year1,total_liab_year1,ebit_year1,ebitda_year1,netdebt_year1,fcff_year1,fcfe_year1,ev,ev_ebitda_ratio,ev_ebitda_ratio_rank,total_mv_net_profit_ratio,total_mv_net_profit_ratio_rank
 
 #########################
-python t_daily_fundamentals_2.py  --generate_today_fund1_fund2_stock_basic
+/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --generate_today_fund1_fund2_stock_basic
 
 ######################### sum_mainbz
 #input: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv
@@ -252,12 +272,12 @@ python t_daily_fundamentals_2.py  --generate_today_fund1_fund2_stock_basic
 #########################
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_sum.csv  # dangerous, will spend hours to generate
-    python t_daily_fundamentals_2.py  --sum_mainbz --force_run  #<<< 20 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --sum_mainbz --force_run  #<<< 20 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "skipped"
-    #python t_daily_fundamentals_2.py  --sum_mainbz
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --sum_mainbz
 fi
 
 
@@ -275,17 +295,17 @@ fi
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/result/jaqs/jaqs_all.pickle.  JAQS is DEAD.
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/*.csv
-    python t_daily_fundamentals_2.py  --merge_quarterly --big_memory  --force_run # <<<  2 hour . jaqs_all.pickle re-generated, while ts_all.pickle is invalid.
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --merge_quarterly --big_memory  --force_run # <<<  2 hour . jaqs_all.pickle re-generated, while ts_all.pickle is invalid.
 
     #generate real ts_all.pickle based on the merged/*.csv just generated.
     rm -f /home/ryan/DATA/result/jaqs/ts_all.pickle
-    python t_daily_fundamentals_2.py --big_memory #  <<< 5 min ,  ts_all.pickle is valid now. geneated from --merge_quarterly output.
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --big_memory #  <<< 5 min ,  ts_all.pickle is valid now. geneated from --merge_quarterly output.
 fi
 
 #only merge 1q before data. Use when the script runs stable.
 if [ $full_or_daily == "DAILY" ]; then
     echo "SKIP"
-    #python t_daily_fundamentals_2.py  --merge_quarterly --big_memory --fast_fetch  #<<< only merage current, e.g. 20181231
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --merge_quarterly --big_memory --fast_fetch  #<<< only merage current, e.g. 20181231
 fi
 
 ######################### extract_latest
@@ -295,11 +315,12 @@ fi
 ##########################
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv
-    python t_daily_fundamentals_2.py  --extract_latest --force_run #<<< 20 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --extract_latest --force_run #<<< 20 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_fundamentals_2.py  --extract_latest
+    echo "t_daily_fundamentals_2.py extract_latest" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --extract_latest
 fi
 
 ######################### disclosure_date_notify_day
@@ -308,11 +329,13 @@ fi
 ######################
 if [ $full_or_daily == "FULL" ]; then
         #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/disclosure_date_notify.csv
-    python t_daily_fundamentals_2.py  --disclosure_date_notify_day 15 --force_run # <<<< 1 sec
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --disclosure_date_notify_day 15 --force_run # <<<< 1 sec
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_fundamentals_2.py  --disclosure_date_notify_day 15 --force_run #refresh every run.
+    echo "SKIP"
+    # echo "t_daily_fundamentals_2.py disclosure_date_notify_day" >> $timelog
+    # /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --disclosure_date_notify_day 15 --force_run #refresh every run.
 fi
 
 
@@ -324,12 +347,12 @@ fi
 ######################
 if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv
-    python t_daily_fundamentals_2.py  --percent_mainbz_f --force_run  #<<<< 4 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --percent_mainbz_f --force_run  #<<<< 4 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
   echo "SKIP"
-  #python t_daily_fundamentals_2.py  --percent_mainbz_f
+  #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --percent_mainbz_f
 fi
 
 
@@ -343,11 +366,12 @@ fi
 #         /home/ryan/DATA/result/industry_top_mv_eps.csv
 ######################
 if [ $full_or_daily == "FULL" ]; then
-    python t_daily_fundamentals_2.py --industry_top --force_run
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --industry_top --force_run
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    python t_daily_fundamentals_2.py --industry_top
+    echo "t_daily_fundamentals_2.py industry_top" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --industry_top
 fi
 
 
@@ -356,7 +380,7 @@ fi
 #output:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/merged/*.csv
 #########################
 if [ $full_or_daily == "FULL" ]; then
-  python t_yearly_beneish.py
+  /usr/bin/time -a -o $timelog python t_yearly_beneish.py
 fi
 
 
@@ -380,7 +404,7 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
     #rm -fr /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/step[1-8]
-    python t_daily_fundamentals_2.py  --analyze  --fully_a --big_memory --force_run  # <<<<  18 hour !!!
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --analyze  --fully_a --big_memory --force_run  # <<<<  18 hour !!!
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
@@ -388,7 +412,8 @@ if [ $full_or_daily == "DAILY" ]; then
     # 30min. force_run is required.
     #force_run is required because it calculated the dymanic changing data that keep updating. eg. one 20190308, the data is not fixed
     #of 20181231, the daily run keeps calculate rpt_20181231 for every step.
-    python t_daily_fundamentals_2.py  --analyze  --daily_a --big_memory
+    echo "t_daily_fundamentals_2.py analyze daily_a" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --analyze  --daily_a --big_memory
 fi
 
 
@@ -404,13 +429,13 @@ if [ $full_or_daily == "FULL" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/white_horse.csv
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/hen_cow.csv
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/freecashflow_price_ratio.csv
-    python t_daily_fundamentals_2.py  --wh_hencow_fcf --force_run  # <<<< 1 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --wh_hencow_fcf --force_run  # <<<< 1 min
 fi
 
 
 if [ $full_or_daily == "DAILY" ]; then
     echo "SKIP"
-    #python t_daily_fundamentals_2.py  --wh_hencow_fcf --force_run #refresh every run.
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --wh_hencow_fcf --force_run #refresh every run.
 fi
 
 
@@ -426,14 +451,14 @@ fi
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/pe_pb_rank.csv
     rm -f /home/ryan/DATA/result/pe_pb_rank_selected.csv
-    python t_daily_pe_pb_roe_history.py --force_run  # <<< 2min
+    /usr/bin/time -a -o $timelog python t_daily_pe_pb_roe_history.py --force_run  # <<< 2min
 fi
 
 
 
 if [ $full_or_daily == "DAILY" ]; then
       echo "SKIP"
-      python t_daily_pe_pb_roe_history.py  #refresh every run.
+      /usr/bin/time -a -o $timelog python t_daily_pe_pb_roe_history.py  #refresh every run.
 fi
 
 ###############################################
@@ -441,7 +466,7 @@ fi
 #
 ##############################################
 if [ $full_or_daily == "FULL" ]; then
-   python t_yearly_beneish.py
+   /usr/bin/time -a -o $timelog python t_yearly_beneish.py
 fi
 
 
@@ -454,7 +479,7 @@ fi
 ################################################
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/fundamental.csv
-    python t_daily_fundamentals.py --process_hist_data --force_run  #<<< 1 hour 30 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --process_hist_data --force_run  #<<< 1 hour 30 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
@@ -472,12 +497,12 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/fundamental_peg.csv
-    python t_daily_fundamentals.py --calc_peg --force_run #time consuming. 5 hours?  24572 items. modifed check from 2017_1.
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --calc_peg --force_run #time consuming. 5 hours?  24572 items. modifed check from 2017_1.
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
       echo "SKIP"
-    #python t_daily_fundamentals.py --calc_peg
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --calc_peg
 fi
 
 ################################################
@@ -491,13 +516,13 @@ fi
 #rm -f /home/ryan/DATA/result/latest_fundamental_quarter.csv  ### This is a link.
 
 if [ $full_or_daily == "FULL" ]; then
-    python t_daily_fundamentals.py --exam_quarterly --force_run #<<< 3 min
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --exam_quarterly --force_run #<<< 3 min
 fi
 
 
 if [ $full_or_daily == "DAILY" ]; then
       echo "SKIP"
-    #python t_daily_fundamentals.py --exam_quarterly --force_run #refresh every run.
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --exam_quarterly --force_run #refresh every run.
 fi
 
 
@@ -514,7 +539,7 @@ fi
 #rm -f /home/ryan/DATA/result/today/fundamentals.csv
 
 # no longer work. not reasonable to check fundamental everyday.  ryan-2022-01-28
-# python t_daily_fundamentals.py --exam_daily  --force_run #refresh every run.  #<<< 20 sec
+# /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --exam_daily  --force_run #refresh every run.  #<<< 20 sec
 
 ################################################
 ##update this year peg
@@ -532,13 +557,13 @@ fi
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/fundamental_peg_2019_1.csv
     rm -f /home/ryan/DATA/result/fundamental_peg_2019_1_selected.csv
-    python t_daily_fundamentals.py --this_year_quarter  --force_run   #<<< 3 sec
+    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --this_year_quarter  --force_run   #<<< 3 sec
 fi
 
 
 if [ $full_or_daily == "DAILY" ]; then
       echo "SKIP"
-    #python t_daily_fundamentals.py --this_year_quarter --force_run #refresh every run.
+    #/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --this_year_quarter --force_run #refresh every run.
 fi
 
 
@@ -551,7 +576,7 @@ fi
 
 ################################################
 # no longer work. 2022-01-28
-# python t_daily_fundamentals.py --calc_ps --force_run # <<< 3 sec. Quick so always forcerun
+# /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --calc_ps --force_run # <<< 3 sec. Quick so always forcerun
 
 ################################################
 #input and output: /home/ryan/DATA/result/Fundamental_Quarter_Report_2018_4.csv
@@ -563,11 +588,11 @@ fi
 ################################################
 #if [ $full_or_daily == "FULL" ]; then
 # no longer work. 2022-01-28 #KeyError: 'npr'
-#    python t_daily_fundamentals.py --calc_fund_2 --force_run  #<<< 50 sec
+#    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --calc_fund_2 --force_run  #<<< 50 sec
 #fi
 
 #if [ $full_or_daily == "DAILY" ]; then
-#    python t_daily_fundamentals.py --calc_fund_2 --force_run #refresh every run.
+#    /usr/bin/time -a -o $timelog python t_daily_fundamentals.py --calc_fund_2 --force_run #refresh every run.
 #fi
 
 
@@ -579,8 +604,8 @@ fi
 ################################################
 # no longer work. 2021-01-28 KeyError: 'score_sum'
 #rm -f /home/ryan/DATA/result/industry_top.csv
-#python t_daily_fundamentals.py --industry_rank_f #<<<  2 sec
-#python t_daily_fundamentals.py --industry_rank_f --force_run
+#/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --industry_rank_f #<<<  2 sec
+#/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --industry_rank_f --force_run
 
 ################################################
 #input: csv_q
@@ -588,8 +613,8 @@ fi
 ################################################
 # no longer work. 2021-01-28 KeyError: 'score_sum'
 #rm -f /home/ryan/DATA/result/area_top.csv
-#python t_daily_fundamentals.py --area_rank_f  #<<<  2 sec
-#python t_daily_fundamentals.py --area_rank_f --force_run
+#/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --area_rank_f  #<<<  2 sec
+#/usr/bin/time -a -o $timelog python t_daily_fundamentals.py --area_rank_f --force_run
 
 ######################################################## Step4 SUMMARY ################################################
 
@@ -601,15 +626,17 @@ fi
 
 if [ $full_or_daily == "FULL" ]; then
     rm -f /home/ryan/DATA/result/key_points_AG_today_selected.csv
-    python t_daily_get_key_points.py  -x AG  --calc_base --force_run  #  <<< slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
-    python t_daily_get_key_points.py  -x AG  --calc_today  --force_run # <<<< 4 min, fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
-    python t_daily_get_key_points.py  -x AG  --today_selection --force_run  #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
+    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --calc_base --force_run  #  <<< slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
+    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --calc_today  --force_run # <<<< 4 min, fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
+    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --today_selection --force_run  #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-#    python t_daily_get_key_points.py  -x AG  --calc_base  #slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
-    python t_daily_get_key_points.py  -x AG  --calc_today  #fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
-    python t_daily_get_key_points.py  -x AG  --today_selection #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
+#    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --calc_base  #slow (10hours).  run every 7 days. output: /home/ryan/DATA/result/key_points_AG.csv
+       echo "t_daily_get_key_points.py analyze calc_today" >> $timelog
+
+    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --calc_today  #fast. output: /home/ryan/DATA/result/key_points_AG_today.csv
+    /usr/bin/time -a -o $timelog python t_daily_get_key_points.py  -x AG  --today_selection #fast. output: /home/ryan/DATA/result/key_points_AG_today_selected.csv
 fi
 
 
@@ -626,12 +653,12 @@ fi
 #  /home/ryan/DATA/result/top_10_holder_detail_latest.csv"
 ###############################
 if [ $full_or_daily == "FULL" ]; then
-    python t_top_10_holders.py --analyze --stock_global AG
+    /usr/bin/time -a -o $timelog python t_top_10_holders.py --analyze --stock_global AG
 fi
 
 # not necessory run daily
 #if [ $full_or_daily == "DAILY" ]; then
-#    python t_top_10_holders.py --analyze --stock_global AG --selected
+#    /usr/bin/time -a -o $timelog python t_top_10_holders.py --analyze --stock_global AG --selected
 #fi
 
 ################################
@@ -640,7 +667,7 @@ fi
 #        /home/ryan/DATA/result/zigzag_kdj_div.csv  zigzag_macd_div.csv  zigzag_rsi_div.csv
 if [ $full_or_daily == "FULL" ]; then
   rm -f /home/ryan/DATA/DAY_Global/AG_qfq/ag_all.csv
-  python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --zigzag_div --zigzag_plt
 fi
 
 
@@ -650,7 +677,7 @@ fi
 # output: /home/ryan/DATA/result/concept_top.csv
 ###############################
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_fundamentals_2.py  --concept_top
+  /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --concept_top
 fi
 ################################################
 #run1
@@ -662,20 +689,22 @@ fi
 #output: /home/ryan/DATA/result/selected/talib_and_pv_no_db_filter_ag.csv
 ################################################
 rm -f /home/ryan/DATA/result/selected/talib_and_pv_no_db_filter_AG.csv
-python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG --selected
+echo "t_daily_pattern_Hit_Price_Volume.py bool_calc_std_mean " >> $timelog
+/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG --selected
 
 
 
 ####################################
 # output: /home/ryan/DATA/result/selected/jin_cha_si_cha_cnt.csv
-python t_daily_junxian_barstyle.py -x AG_HOLD --ma_short 4 --ma_middle 27 --calc_ma_across_count --selected
+echo "t_daily_junxian_barstyle.py AG_HOLD " >> $timelog
+/usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG_HOLD --ma_short 4 --ma_middle 27 --calc_ma_across_count --selected
 
 
 ####################################
 # output: /home/ryan/DATA/result/jin_cha_si_cha_cnt.csv
-#python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count  --remove_garbage
+#/usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count  --remove_garbage
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count
+  /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_count
 fi
 #######################################
 # output: /home/ryan/DATA/result/ag_junxian_barstyle.csv
@@ -687,26 +716,27 @@ fi
 
 
 #if [ $full_or_daily == "DAILY" ]; then
-#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period D
-#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period W
-#    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period M
+#    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period D
+#    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period W
+#    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --remove_garbage --period M
 #
 #fi
 
 
 if [ $full_or_daily == "FULL" ]; then
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action junxian_style
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W --action junxian_style
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M --action junxian_style
+    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action junxian_style
+    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period W --action junxian_style
+    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period M --action junxian_style
     
-    python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action peak_valley 
+    /usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG  --ma_short 4 --ma_middle 27 --ma_long 60 --period D --action peak_valley 
 
 fi
 
 #######################################
 # output: /home/ryan/DATA/result/hong_san_bin.csv
 #######################################
-python t_daily_junxian_barstyle.py  --hong_san_bin --stock_global AG --remove_garbage
+echo "t_daily_junxian_barstyle.py hong_san_bin " >> $timelog
+/usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py  --hong_san_bin --stock_global AG --remove_garbage
 
 #######################################
 # output: /home/ryan/DATA/result/
@@ -714,14 +744,15 @@ python t_daily_junxian_barstyle.py  --hong_san_bin --stock_global AG --remove_ga
 #ag_junxian_barstyle.csv                ag_junxian_barstyle_jincha_major.csv  ag_junxian_barstyle_very_strong_down_trend.csv  ag_junxian_barstyle_yunxian_buy.csv
 #ag_junxian_barstyle_duotou_pailie.csv  ag_junxian_barstyle_jincha_minor.csv  ag_junxian_barstyle_very_strong_up_trend.csv    ag_junxian_barstyle_yunxian_sell.csv
 #######################################
-python t_daily_junxian_barstyle.py -x AG --show_result
+echo "t_daily_junxian_barstyle.py show_result" >> $timelog
+/usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG --show_result
 
 #rm -f /home/ryan/DATA/result/today/talib_and_pv_no_db_filter_AG.csv
-#python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG
+#/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume.py --bool_calc_std_mean --bool_perc_std_mean --bool_pv_hit -m 7 -x AG
 
-#python t_daily_pattern_Hit_Price_Volume.py -0  -m 30 -x AG  #it was 22 ->222 ->30
-#python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -x AG
-#python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -m 22  #Only run pv test.
+#/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume.py -0  -m 30 -x AG  #it was 22 ->222 ->30
+#/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -x AG
+#/usr/bin/time -a -o $timelog python t_daily_pattern_Hit_Price_Volume.py -1 -2 -4  -m 22  #Only run pv test.
 
 
 
@@ -742,16 +773,22 @@ python t_daily_junxian_barstyle.py -x AG --show_result
 #
 ###############################
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
-  python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
-  python t_daily_indicator_kdj_macd.py --indicator MACD --period M
-  python t_daily_indicator_kdj_macd.py --indicator MACD --period W
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator KDJ --period M
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator KDJ --period W
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MACD --period M
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MACD --period W
 fi
 
-python t_daily_indicator_kdj_macd.py --indicator KDJ --period D
-python t_daily_indicator_kdj_macd.py --indicator KDJ --analyze
-python t_daily_indicator_kdj_macd.py --indicator MACD --period D
-python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
+if [ $full_or_daily == "DAILY" ]; then
+echo "t_daily_indicator_kdj_macd.py KDJ period D" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator KDJ --period D
+echo "t_daily_indicator_kdj_macd.py KDJ analyze" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator KDJ --analyze
+echo "t_daily_indicator_kdj_macd.py MACD period D" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MACD --period D
+echo "t_daily_indicator_kdj_macd.py MACD analyze" >> $timelog
+    /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
+fi
 
 ########################
 # MA 21 cross up MA 55
@@ -761,13 +798,15 @@ python t_daily_indicator_kdj_macd.py --indicator MACD --analyze
 # output: /home/ryan/DATA/result/ma_cross_over_selection_21_55.csv"
 ########################
 if [ $full_or_daily == "FULL" ]; then
-  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 10
-  python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 5 --period_slow 10
+  /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 10 --period_slow 20
 fi
 
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 4 --period_slow 27
-python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
-
+if [ $full_or_daily == "DAILY" ]; then
+    echo "SKIP"
+    # /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --period D --period_fast 4 --period_slow 27
+    # /usr/bin/time -a -o $timelog python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
+fi
 
 
 ##############################
@@ -780,13 +819,13 @@ python t_daily_indicator_kdj_macd.py --indicator MA_CROSS --analyze
 if [ $full_or_daily == "FULL" ]; then
 
   # /home/ryan/DATA/result/selected/ag_index_fib.csv
-  python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG_INDEX --selected
+  /usr/bin/time -a -o $timelog python t_fibonacci.py --begin_date "20220101"  --save_fig --min_sample=400 -x AG_INDEX --selected
 
   # /home/ryan/DATA/result/ag_fib.csv
-  python t_fibonacci.py --begin_date "20200101"  --min_sample=400 -x AG
+  /usr/bin/time -a -o $timelog python t_fibonacci.py --begin_date "20220101"  --min_sample=400 -x AG
 
   ## /home/ryan/DATA/result/selected/ag_fib.csv
-  python t_fibonacci.py --begin_date "20200101"  --save_fig --min_sample=400 -x AG --selected
+  /usr/bin/time -a -o $timelog python t_fibonacci.py --begin_date "20220101"  --save_fig --min_sample=400 -x AG --selected
 
 fi
 
@@ -796,15 +835,17 @@ fi
 #output: /home/ryan/DATA/result/selected/ag_curve_shape.csv
 #########################
 if [ $full_or_daily == "FULL" ]; then
-    python t_double_bottom.py -x AG --save_fig --min_sample 90
+    /usr/bin/time -a -o $timelog python t_double_bottom.py -x AG --save_fig --min_sample 90
 fi
 
-python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
+echo "t_double_bottom.py" >> $timelog
+/usr/bin/time -a -o $timelog python t_double_bottom.py  -x AG --save_fig --min_sample 90 --selected
 
 #output:
 # /home/ryan/DATA/result/dikai_gaozou_AG.csv , gaokai_gaozou_AG.csv ,  gaokai_quekou_AG.csv
 # gaokai_dizou_AG.csv , dikai_dizou_AG.csv ,  dikai_quekou_AG.csv
-python quekou.py -a run -x AG
+echo "quekou.py analyze run" >> $timelog
+/usr/bin/time -a -o $timelog python quekou.py -a run -x AG
 
 ################################
 # input: /home/ryan/DATA/DAY_Global/AG/*.csv, ~/DATA/pickle/Stock_Fundamental/fundamentals_2/source/basic_daily/*.csv
@@ -820,28 +861,28 @@ python quekou.py -a run -x AG
 # 	/home/ryan/DATA/result/stocks_amount_365_days.csv  << symbol link to stocks_amount_20200124_20210123.csv
 ###############################
 #if [ $full_or_daily == "FULL" ]; then
-#  python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430  --index_source wugui --force_run  # HS300
-#  python t_daily_index_candidates.py --index_name szcz --period_start 20211101 --period_end 20220430  --index_source wugui --force_run  # SHEN_ZHEN
+#  /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430  --index_source wugui --force_run  # HS300
+#  /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name szcz --period_start 20211101 --period_end 20220430  --index_source wugui --force_run  # SHEN_ZHEN
 #fi
 
 
 if [ $full_or_daily == "FULL" ]; then
 # After 12.01
-#   python t_daily_index_candidates.py --index_name hs300 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
-#   python t_daily_index_candidates.py --index_name zz100 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
-#   python t_daily_index_candidates.py --index_name szcz  --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
-#   python t_daily_index_candidates.py --index_name sz100 --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
+    #   /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name hs300 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
+    #   /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name zz100 --period_start 20220501 --period_end 20230430 --index_source wugui  --daily_update
+    #   /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name szcz  --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
+    #   /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name sz100 --period_start 20221101 --period_end 20230430 --index_source wugui  --daily_update
 
 # After 6.1
- python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
- python t_daily_index_candidates.py --index_name zz100 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update
- python t_daily_index_candidates.py --index_name szcz  --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update --force_run
- python t_daily_index_candidates.py --index_name sz100 --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update
+    /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
+    /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name zz100 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update
+    /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name szcz  --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update --force_run
+    /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name sz100 --period_start 20230501 --period_end 20231031 --index_source wugui  --daily_update
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-# python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
-python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
+    # /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name hs300 --period_start 20210501 --period_end 20220430 --index_source wugui  --daily_update
+    /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name hs300 --period_start 20221101 --period_end 20231031 --index_source wugui  --daily_update --force_run
 fi
 
 #######################################
@@ -849,58 +890,58 @@ fi
 # output: /home/ryan/DATA/result/price_let_mashort_equal_malong.csv
 #######################################
 # no longer work, 2022-01-28  [Errno 2] No such file or directory: '/home/ryan/DATA/result/stocks_amount_365_days.csv'
-#python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
+#/usr/bin/time -a -o $timelog python t_daily_junxian_barstyle.py -x AG --ma_short 4 --ma_middle 27 --calc_ma_across_price
 
 
 # TV no longer allow get data
 #using tradingview source.  period_start/end is not actually used, just not to broke the program
-# python t_daily_index_candidates.py --index_name nasdaq100 --period_start 20210101 --period_end 20210101
-# python t_daily_index_candidates.py --index_name spx500 --period_start 20210101 --period_end 20210101
-# python t_daily_index_candidates.py --index_name cn --period_start 20210101 --period_end 20210101
-# python t_daily_index_candidates.py --index_name cn_sse --period_start 20210101 --period_end 20210101
-# python t_daily_index_candidates.py --index_name cn_szse --period_start 20210101 --period_end 20210101
+# /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name nasdaq100 --period_start 20210101 --period_end 20210101
+# /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name spx500 --period_start 20210101 --period_end 20210101
+# /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name cn --period_start 20210101 --period_end 20210101
+# /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name cn_sse --period_start 20210101 --period_end 20210101
+# /usr/bin/time -a -o $timelog python t_daily_index_candidates.py --index_name cn_szse --period_start 20210101 --period_end 20210101
 
 #/home/ryan/DATA/result/high_volumes/*.csv
-python t_futu_trade.py --check_high_volume --market AG_HOLD
-python t_futu_trade.py --check_high_volume --market HK_HOLD
-python t_futu_trade.py --check_high_volume --market AG
-python t_futu_trade.py --check_high_volume --market HK
+/usr/bin/time -a -o $timelog python t_futu_trade.py --check_high_volume --market AG_HOLD
+/usr/bin/time -a -o $timelog python t_futu_trade.py --check_high_volume --market HK_HOLD
+/usr/bin/time -a -o $timelog python t_futu_trade.py --check_high_volume --market AG
+/usr/bin/time -a -o $timelog python t_futu_trade.py --check_high_volume --market HK
 
 ##purchased nasdaq basic card. 20220709
-python t_futu_trade.py --check_high_volume --market US_HOLD
+/usr/bin/time -a -o $timelog python t_futu_trade.py --check_high_volume --market US_HOLD
 
 # Set AG Price reminder at FuTu Client, based on the daily price. run after 3:00pm
-python t_futu_trade.py --set_ag_reminder
+/usr/bin/time -a -o $timelog python t_futu_trade.py --set_ag_reminder
 
 
 #############
 # output: /hdd/DATA/result/report_2019-03-29_AG.txt
 #############
-python t_summary.py -x AG --action generate_report
+/usr/bin/time -a -o $timelog python t_summary.py -x AG --action generate_report
 
 
 #############
 # output: /home/ryan/DATA/result/report_2019-03-29_AG_short.csv
 #############
-python t_summary.py -x AG --action analyze_report
+/usr/bin/time -a -o $timelog python t_summary.py -x AG --action analyze_report
 
 
 #############--calc_base
 # output: /home/ryan/DATA/result/report_new_dev_B_20210105_AG.txt
 #         /home/ryan/DATA/result/report_new_dev_S_20210105_AG.txt
 #############
-python t_summary_new_dev.py -x AG --operation B --action generate_report --remove_garbage
+/usr/bin/time -a -o $timelog python t_summary_new_dev.py -x AG --operation B --action generate_report --remove_garbage
 
-python t_summary_new_dev.py -x AG --operation B --action generate_report
-python t_summary_new_dev.py -x AG --operation S --action generate_report
+/usr/bin/time -a -o $timelog python t_summary_new_dev.py -x AG --operation B --action generate_report
+/usr/bin/time -a -o $timelog python t_summary_new_dev.py -x AG --operation S --action generate_report
 
 #### Check performance of each day's selected.
 # output:  /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
 # $ grep === /home/ryan/DATA/result/result_new_dev_B/20210125/summary.txt
 #=== df_szcz_add_candidate , 0126: -3.28, 0127: -0.15, 0128: -2.2, 0129: -0.98
 #=== df_sz100_add_candidate , 0126: -4.3, 0127: 0.04, 0128: -3.06, 0129: -1.5
-python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation B
-python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
+/usr/bin/time -a -o $timelog python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation B
+/usr/bin/time -a -o $timelog python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
 
 
 #######
@@ -949,7 +990,7 @@ python t_summary_new_dev.py -x AG  --action analyze_post_perf --operation S
 
 
 
-#python t_daily_update_order_tracking_stock.py
+#/usr/bin/time -a -o $timelog python t_daily_update_order_tracking_stock.py
 
 
 
