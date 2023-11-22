@@ -3504,9 +3504,12 @@ class Finlib:
         
         df_gar_detail = df_gar_detail[df_gar_detail['p_total_ratio_sum'] >= detail_ratio_sum_threshold]
 
-        # df_gar = self.ts_code_to_code(df_gar)
-        # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
-        # df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+        df_gar = self.ts_code_to_code(df_gar)
+        df_gar = pd.DataFrame(df_gar['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+
+        df_gar_detail = self.ts_code_to_code(df_gar_detail)
+        df_gar_detail = pd.DataFrame(df_gar_detail['code'].drop_duplicates()).reset_index().drop('index', axis=1)
+
         logging.info("pledge static: pledge_ration >= " + str(statistic_ratio_threshold) + ", len " + str(df_gar.__len__()))
         logging.info("pledge detail: p_total_ratio_sum >= " + str(detail_ratio_sum_threshold) + ", len " + str(df_gar_detail.__len__()))
 
@@ -5256,7 +5259,7 @@ class Finlib:
                 # df_amt = df_amt.append(df_sub)
                 df_amt = pd.concat([df_amt,df_sub])
 
-                logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
+                # logging.info(str(i)+" of " +str(df.__len__())+" "+name + " " + code + ",  append " + str(df_sub.__len__()) + " lines.")
 
             df_amt.to_csv(out_csv, encoding='UTF-8', index=False)
             logging.info("df_amt saved to " + out_csv + ", len " + str(df_amt.__len__()))

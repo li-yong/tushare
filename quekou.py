@@ -51,8 +51,10 @@ def quekou_up(mkt):
 
     mkt = finlib.Finlib().find_df_market(df.head(1000))
 
+    #ryan debug
+    # df = df[df['code']=='SZ300364']
+
     for code in df['code'].unique():
-        # code='SH600895'
         dfs=df[df['code']==code].reset_index().drop('index',axis=1)
 
         if dfs.__len__()<n_days:
@@ -83,7 +85,7 @@ def quekou_up(mkt):
                     xiayan = row['pre_high']
                     shangyan = dfs[index:]['low'].min()
                     curP=dfs['close'].iloc[-1]
-                    print("tiaokong quekou. xiayan: "+str(xiayan)+" shangyan: "+str(shangyan)+" curP:"+str(curP))
+                    print("tiaokong quekou. "+row['code']+", "+row['date']+", xiayan: "+str(xiayan)+" shangyan: "+str(shangyan)+" curP:"+str(curP))
                     df_rst_gaokai_quekou = pd.concat([df_rst_gaokai_quekou, 
                                                       pd.DataFrame({
                                                           'code': [row['code']],
@@ -193,7 +195,7 @@ def quekou_dn(mkt):
                     shangyan = row['pre_low']
                     xiayan = dfs[index:]['high'].max()
                     curP=dfs['close'].iloc[-1]
-                    print("dn tiaokong quekou. shangyan: "+str(shangyan)+" xiayan: "+str(xiayan)+" curP:"+str(curP))
+                    print("dn tiaokong quekou. "+row['code']+", "+row['date']+", shangyan: "+str(shangyan)+" xiayan: "+str(xiayan)+" curP:"+str(curP))
                     df_rst_dikai_quekou = pd.concat([df_rst_dikai_quekou, 
                                                       pd.DataFrame({
                                                           'code': [row['code']],
@@ -396,7 +398,7 @@ if action not in ['run','report']:
 
 
 if action == 'run':
-    quekou_dn(mkt=mkt)
+    # quekou_dn(mkt=mkt)
     quekou_up(mkt=mkt)
 
 if action == 'report':

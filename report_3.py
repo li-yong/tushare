@@ -1967,9 +1967,16 @@ parser = OptionParser()
 
 parser.add_option("-n", "--no_question", action="store_true", default=False, dest="no_question", help="run all without question.")
 parser.add_option("-d", "--debug", action="store_true", default=False, dest="debug", help="debug mode.")
+parser.add_option("--daily_run", action="store_true", default=False, dest="daily_run", help="daily run.")
+parser.add_option("--weekly_run", action="store_true", default=False, dest="daily_run", help="daily run.")
+parser.add_option("--run_scope", type="str", dest="run_scope", default='DAILY', help="run scope [daily|weekly].")
+
+
+
 
 (options, args) = parser.parse_args()
 no_question = options.no_question
+run_scope = options.run_scope
 debug = options.debug
 
 
@@ -1986,7 +1993,7 @@ debug = options.debug
 #     csv_out_opt=rst_dir + "/bar_bs_operate.csv",
 # )
 
-if no_question or input("Run Point and Figure check? [N]")=="Y":
+if (no_question or input("Run Point and Figure check? [N]")=="Y") and run_scope=='DAILY':
     csv_o = rst_dir+"/df_report_volatility_AG.csv"
 
     type='AG_OPTION_ETF_60M'
@@ -2032,14 +2039,14 @@ if no_question or input("Run Point and Figure check? [N]")=="Y":
     logging.info("BUY:\n" + finlib.Finlib().pprint(df_b))
     logging.info("SELL:\n" + finlib.Finlib().pprint(df_s))
 
-if no_question or input("Run close volatility AG? [N]")=="Y":
+if (no_question or input("Run close volatility AG? [N]")=="Y") and run_scope=='DAILY':
     csv_o = rst_dir+"/df_report_volatility_AG.csv"
     df = finlib_indicator.Finlib_indicator().stock_price_volatility(csv_o)
     logging.info("\n##### new_share_profit #####")
     logging.info(finlib.Finlib().pprint(df.head(5)))
 
 
-if no_question or input("Run close volatility US? [N]")=="Y":
+if (no_question or input("Run close volatility US? [N]")=="Y") and run_scope=='DAILY':
     csv_o = rst_dir+"/df_report_volatility_US.csv"
     df = finlib_indicator.Finlib_indicator().stock_price_volatility_us(csv_o)
     logging.info("\n##### new_share_profit #####")
@@ -2047,7 +2054,7 @@ if no_question or input("Run close volatility US? [N]")=="Y":
 
 
 
-if no_question or input("Run stock significant? [N]")=="Y":
+if (no_question or input("Run stock significant? [N]")=="Y") and run_scope=='FULL':
     # /home/ryan/DATA/result/AG_INDEX/*.csv
     df_ps, df_ps_now, df_ps_select = finlib.Finlib().get_a_stock_significant(perc=90, last_n_days=200, mkt='AG_INDEX')
 
@@ -2057,12 +2064,12 @@ if no_question or input("Run stock significant? [N]")=="Y":
     # /home/ryan/DATA/result/AG/*.csv
     df_ps, df_ps_now, df_ps_select = finlib.Finlib().get_a_stock_significant(perc=90, last_n_days=200, mkt='AG')
 
-if no_question or input("Run xiao_hu_xian_2? [N]")=="Y":
+if (no_question or input("Run xiao_hu_xian_2? [N]")=="Y") and run_scope=='DAILY':
     df_xhx2_opt = xiao_hu_xian_2(f"{rst_dir}/xiao_hu_xian_2.csv", debug=debug)
 
 
 
-if no_question or input("Run lian ban tongji? [N]")=="Y":
+if (no_question or input("Run lian ban tongji? [N]")=="Y") and run_scope=='DAILY':
     df_lian_ban_gg,df_lian_ban_industry,df_lian_ban_concept,df_lian_ban_opt = lianban_tongji(
         n_days=3, up_threshold=5, dn_threshold=-5,
         csv_out_lian_ban_gg = rst_dir+"/lianban_gg.csv",
@@ -2071,7 +2078,7 @@ if no_question or input("Run lian ban tongji? [N]")=="Y":
         csv_out_lian_ban_opt = rst_dir+"/lianban_operate.csv",
         )
 
-if no_question or input("Run bar_support_resist_strategy? [N]")=="Y": #ryan debug
+if (no_question or input("Run bar_support_resist_strategy? [N]")=="Y") and run_scope=='FULL': #ryan debug
     df_bar_status,df_bar_bs_line,df_bar_opt = bar_support_resist_strategy(
         csv_out_status = rst_dir+"/bar_ma_status.csv",
         csv_out_lian_ban_bk = rst_dir+"/bar_bs_line.csv",
@@ -2080,11 +2087,11 @@ if no_question or input("Run bar_support_resist_strategy? [N]")=="Y": #ryan debu
 
 
     # exit()
-if no_question or input("Run lemon766? [N]")=="Y":
+if (no_question or input("Run lemon766? [N]")=="Y") and run_scope=='DAILY':
     df_lemon766 = lemon_766(csv_o = rst_dir+"/lemon_766.csv")
     # exit()
 
-if no_question or input("Run bk_increase? [N]")=="Y":
+if (no_question or input("Run bk_increase? [N]")=="Y") and run_scope=='DAILY':
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase.csv",start=20220427,ndays=3)
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",start=20220101,ndays=200)
     # df_bk_increase = bk_increase(csv_o = rst_dir+"/bk_increase",dayS=20210715,ndays=30)
@@ -2092,11 +2099,11 @@ if no_question or input("Run bk_increase? [N]")=="Y":
     df_bk_increase = finlib.Finlib().bk_increase(csv_o = rst_dir+"/bk_increase.csv",ndays=3)
     # exit()
 
-if no_question or input("Run BK ma_across? [N]")=="Y":
+if (no_question or input("Run BK ma_across? [N]")=="Y") and run_scope=='DAILY':
     df_ma_across = bk_ma_across(csv_o_b = rst_dir+"/bk_ma_cross_over.csv", csv_o_s = rst_dir+"/bk_ma_cross_down.csv")
 
 
-if no_question or input("Run TD_indicator? [Y]")!="N":
+if (no_question or input("Run TD_indicator? [Y]")!="N") and run_scope=='DAILY':
     df_td = TD_indicator_start()
     logging.info("\n##### TD_indicator_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
@@ -2104,20 +2111,20 @@ if no_question or input("Run TD_indicator? [Y]")!="N":
 
 
 
-if no_question or input("Run TD_indicator_BK? [Y]")!="N":
+if (no_question or input("Run TD_indicator_BK? [Y]")!="N") and run_scope=='DAILY':
     df_td = bk_TD_indicator_start()
     logging.info("\n##### TD_indicator_bk_main #####")
     logging.info(finlib.Finlib().pprint(df_td.head(5)))
     # exit()
 
-if no_question or input("Run Big V? [Y]")!="N":
+if (no_question or input("Run Big V? [Y]")!="N") and run_scope=='DAILY':
     csv_o = "/home/ryan/DATA/result/big_v.csv"
     df_big_v = big_v(csv_o=csv_o)
     logging.info("\n##### big_v #####")
     logging.info(finlib.Finlib().pprint(df_big_v.tail(5)))
     # exit()
 
-if no_question or input("Run Inner Merge TD_BigV? [N]") != "Y":
+if (no_question or input("Run Inner Merge TD_BigV? [N]") != "Y") and run_scope=='DAILY':
     df_rst = pd.merge(left=df_td, right=df_big_v,on='code',how='inner',suffixes=['_td','_bv'])
 
     logging.info("\n##### Inner Merge of TD and Big_V #####")
@@ -2128,14 +2135,14 @@ if no_question or input("Run Inner Merge TD_BigV? [N]") != "Y":
     # exit()
 
 
-if no_question or input("Run xiaohuxian? [N]") == "Y":
+if (no_question or input("Run xiaohuxian? [N]") == "Y") and run_scope=='DAILY':
     csv_out = rst_dir+"/xiao_hu_xian.csv"
     df_xhx = xiao_hu_xian(csv_out)
     logging.info("\n##### xiao_hu_xian #####")
     logging.info(finlib.Finlib().pprint(df_xhx.head(5)))
 
 
-if no_question or input("Run result_effort_ratio ? [Y]") != "N":
+if (no_question or input("Run result_effort_ratio ? [Y]") != "N") and run_scope=='DAILY':
     csv_o = rst_dir+"/result_effort_ratio.csv"
     df_result_effort = result_effort_ratio(csv_o=csv_o)
 
@@ -2143,7 +2150,7 @@ if no_question or input("Run result_effort_ratio ? [Y]") != "N":
     logging.info(finlib.Finlib().pprint(df_result_effort.tail(5)[['code','name','date','close','date_1','result_effort_ratio']]))
 
 ### Exception: 抱歉，您没有访问该接口的权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。
-# if no_question or input("Run ZD Tongji? [Y]") != "N":
+# if (no_question or input("Run ZD Tongji? [Y]") != "N") and run_scope=='DAILY':
 #     out_csv = rst_dir+"/daily_ZD_tongji.csv"
 #     df_zd = daily_UD_tongji(out_csv,ndays=5)
 #     logging.info("\n##### daily_UD_tongji #####")
@@ -2151,7 +2158,7 @@ if no_question or input("Run result_effort_ratio ? [Y]") != "N":
 
 
 
-if no_question or input("Run price_amount_increase? [N]") == "Y":
+if (no_question or input("Run price_amount_increase? [N]") == "Y") and run_scope=='DAILY':
      # startD and endD have to be trading day.
     df_increase = finlib_indicator.Finlib_indicator().price_amount_increase(startD=None, endD=None)
     # exit()

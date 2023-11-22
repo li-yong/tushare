@@ -36,11 +36,19 @@ bash -x clean_result_dir.sh
 echo "del.py" >> $timelog
 /usr/bin/time -a -o $timelog python del.py --no_question
 
-echo "report3.py 1st run" >> $timelog
-/usr/bin/time -a -o $timelog python report_3.py --no_question 
+if [ $full_or_daily == "DAILY" ]; then
+    echo "report3.py 1st run" >> $timelog
+    /usr/bin/time -a -o $timelog python report_3.py --no_question --run_scope=DAILY
 
-echo "report3.py 2nd run" >> $timelog
-/usr/bin/time -a -o $timelog python report_3.py --no_question 
+    echo "report3.py 2nd run" >> $timelog
+    /usr/bin/time -a -o $timelog python report_3.py --no_question --run_scope=DAILY
+elif [ $full_or_daily == "FULL" ]; then
+    echo "report3.py 1st run" >> $timelog
+    /usr/bin/time -a -o $timelog python report_3.py --no_question --run_scope=FULL
+
+    echo "report3.py 2nd run" >> $timelog
+    /usr/bin/time -a -o $timelog python report_3.py --no_question --run_scope=FULL
+fi
 
 #run twice to get output:
 #/home/ryan/DATA/result/active_industry.csv
@@ -313,14 +321,15 @@ fi
 #input:source/*.csv
 #output: source/latest/*.csv
 ##########################
-if [ $full_or_daily == "FULL" ]; then
+if [ $full_or_daily == "MONTHLY" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/*.csv
     /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --extract_latest --force_run #<<< 20 min
 fi
 
 if [ $full_or_daily == "DAILY" ]; then
-    echo "t_daily_fundamentals_2.py extract_latest" >> $timelog
-    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --extract_latest
+    echo "SKIP"
+    # echo "t_daily_fundamentals_2.py extract_latest" >> $timelog
+    # /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --extract_latest
 fi
 
 ######################### disclosure_date_notify_day
@@ -345,7 +354,7 @@ fi
 #input:/home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/fina_mainbz_p.csv
 #output: /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv <<<  ts_code,name,end_date,bz_cnt,perc_cost,perc_profit,perc_sales,bz_cost,bz_item,bz_profit,bz_sales,curr_type
 ######################
-if [ $full_or_daily == "FULL" ]; then
+if [ $full_or_daily == "MONTHLY" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/source/latest/fina_mainbz_percent.csv
     /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --percent_mainbz_f --force_run  #<<<< 4 min
 fi
@@ -365,7 +374,7 @@ fi
 #output:  /home/ryan/DATA/result/industry_top_mainbz_profit.csv
 #         /home/ryan/DATA/result/industry_top_mv_eps.csv
 ######################
-if [ $full_or_daily == "FULL" ]; then
+if [ $full_or_daily == "MONTHLY" ]; then
     /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py --industry_top --force_run
 fi
 
@@ -402,7 +411,7 @@ fi
 #      /home/ryan/DATA/result/jaqs/jaqs_all.pickle  << everytime when --big_memory specified.  JAQS is DEAD.
 #      /home/ryan/DATA/result/jaqs/ts_all.pickle  << everytime when --big_memory specified.
 
-if [ $full_or_daily == "FULL" ]; then
+if [ $full_or_daily == "MONTHLY" ]; then
     #rm -fr /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/step[1-8]
     /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --analyze  --fully_a --big_memory --force_run  # <<<<  18 hour !!!
 fi
@@ -412,8 +421,10 @@ if [ $full_or_daily == "DAILY" ]; then
     # 30min. force_run is required.
     #force_run is required because it calculated the dymanic changing data that keep updating. eg. one 20190308, the data is not fixed
     #of 20181231, the daily run keeps calculate rpt_20181231 for every step.
-    echo "t_daily_fundamentals_2.py analyze daily_a" >> $timelog
-    /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --analyze  --daily_a --big_memory
+
+    echo "SKIP"
+    # echo "t_daily_fundamentals_2.py analyze daily_a" >> $timelog
+    # /usr/bin/time -a -o $timelog python t_daily_fundamentals_2.py  --analyze  --daily_a --big_memory
 fi
 
 
@@ -425,7 +436,7 @@ fi
 #       /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/hen_cow.csv
 #       /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/freecashflow_price_ratio.csv
 ###################
-if [ $full_or_daily == "FULL" ]; then
+if [ $full_or_daily == "MONTHLY" ]; then
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/white_horse.csv
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/hen_cow.csv
     #rm -f /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/report/freecashflow_price_ratio.csv

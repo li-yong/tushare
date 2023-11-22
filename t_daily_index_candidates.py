@@ -266,7 +266,8 @@ def hs300_on_market_days_filter():
 
         len_removed_for_a_mkt = len_df_tmp_ori - df_tmp.__len__()
 
-        df_hs300_filted_on_market_days = df_hs300_filted_on_market_days.append(df_tmp)
+        df_hs300_filted_on_market_days = pd.concat([df_hs300_filted_on_market_days,df_tmp])
+
         logging.info("appended df of "+m+", len removed "+ str(len_df_tmp_ori)+ " - "+str(df_tmp.__len__()) +" = "+str(len_removed_for_a_mkt))
 
     logging.info("after filted by HS300 on market days, df len is "+str(df_hs300_filted_on_market_days.__len__()))
@@ -345,7 +346,7 @@ def fetch_stock_industry_wugui_selenium(browser):
             name = i.text.split(". ")[1]
             logging.info(code+" "+name+" "+industry_name)
             df = pd.DataFrame({'code':[code],'name_wg':[name],'industry_name_wg':[industry_name],'industry_code_wg':[industry_code]})
-            df_all = df_all.append(df)
+            df_all = pd.concat([df_all,df])
 
         df_all.to_csv(csv_o, encoding='UTF-8', index=False)
 
@@ -538,7 +539,7 @@ def jsl_kzz_parse(browser):
             print("unexpected row")
             continue
 
-        df = df.append(pd.Series(d, index=df.columns), ignore_index=True)
+        df = pd.concat([df, pd.Series(d, index=df.columns)],ignore_index=True)
 
     df = df.drop(columns=['行号','操作'], axis=1)
     df = df.rename(columns={
