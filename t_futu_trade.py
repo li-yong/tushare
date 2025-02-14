@@ -37,6 +37,9 @@ from selenium.webdriver.support import expected_conditions as EC
 # reduce webdriver session log for every request.
 from selenium.webdriver.remote.remote_connection import LOGGER as SELENIUM_LOGGER
 from selenium.webdriver.remote.remote_connection import logging as SELENIUM_logging
+
+import yfinance as yf
+
 SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 
 logging.getLogger("FTConsoleLog").setLevel(logging.WARNING)  #
@@ -1873,6 +1876,52 @@ def main():
     if ma_period_short > ma_period_long:
         logging.fatal("ma_period_short > ma_period_long, quit. ma_period_short "+str(ma_period_short) + " ma_period_long "+str(ma_period_long))
         exit(1)
+
+    ##########################start
+
+
+    trd_ctx = OpenSecTradeContext(filter_trdmarket=TrdMarket.HK, host='127.0.0.1', port=11111,
+                                  security_firm=SecurityFirm.FUTUSECURITIES)
+    ret, data = trd_ctx.history_order_list_query()
+    if ret != RET_OK:
+        print('history_order_list_query error: ', data)
+        exit(0)
+
+    for key, value in data.iterrows():
+        # print(value['order_status'])
+
+        if value['order_status'] in ('FAILED','CANCELLED_ALL','WAITING_SUBMIT'):
+            continue
+
+        if value['trd_side'] != 'BUY':
+            continue
+
+        date_str = value['create_time'].split()[0]
+        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        today = datetime.datetime.today()
+        days_diff = (today - date_obj).days
+
+        code = value['code'].replace("US.", "")
+
+
+        stock = yf.Ticker(code)
+        data = stock.history(period='1d')  # 获取当天数据
+        if not data.empty:
+            closing_prices= round(data['Close'].iloc[-1],2)  # 取收盘价
+        else:
+            closing_prices = None  # 可能当天无交易数据
+
+        # print(code,closing_prices)
+
+        price_delta = (closing_prices - value['price'])/value['price']*100 - 0.05*days_diff
+        price_delta = round(price_delta,2)
+
+
+        print(value['code'], date_str, value['price'], value['trd_side'],value['stock_name'],days_diff,closing_prices,price_delta)
+
+    # print(data)
+    trd_ctx.close()
+    exit()
 
     #### set reminder
     if options.set_ag_reminder and is_port_open(host=host,port=port):
