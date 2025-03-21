@@ -64,7 +64,7 @@ SELENIUM_LOGGER.setLevel(SELENIUM_logging.ERROR)
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 
-import zigzag
+# import zigzag
 # from pandas_datareader import get_data_yahoo
 
 logging.getLogger('matplotlib.font_manager').disabled = True
