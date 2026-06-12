@@ -57,7 +57,7 @@ for url in urls:
         df = pd.read_html(table)[0]
 
         if url == 'nasdqa100':
-            df = df[['Ticker','Company']]
+            df = df[['Symbol','Company']]
             df.columns = ['code', 'name']
         elif url == 'dow':
             df = df[['Symbol', 'Company']]

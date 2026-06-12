@@ -416,13 +416,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/t_futu_trade.py</url>
-          <line>1926</line>
+          <line>1939</line>
           <option name="timeStamp" value="3584" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/t_futu_trade.py</url>
-          <line>1919</line>
-          <option name="timeStamp" value="3604" />
+          <line>1884</line>
+          <option name="timeStamp" value="3605" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

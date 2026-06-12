@@ -10,6 +10,7 @@ import akshare as ak
 import datetime
 import traceback
 import sys
+import signal
 
 
 
@@ -26,17 +27,28 @@ def fetch_base(stock_global, csv_dir, stock_list, force_run=False):
         csv_f = csv_dir + "/" + code + ".csv"
         logging.info(str(i) + " of " + str(stock_list.__len__())+" "+code+" "+name+" "+csv_f)
 
-        if finlib.Finlib().is_cached(csv_f, day=1) and (not force_run):
+        if finlib.Finlib().is_cached(csv_f, day=1,use_last_trade_day=False) and (not force_run):
             logging.info("skip file updated in 1 days "+csv_f)
             continue
         try:
             exc_info = sys.exc_info()
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError("API call timed out after 5 seconds")
+            
+            # Set the timeout handler
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(5)  # Set 5 second timeout
+            
             if stock_global == 'HK_AK':
                 df = ak.stock_hk_daily(symbol=code, adjust="qfq")
             elif stock_global == 'US_AK':
                 df = ak.stock_us_daily(symbol=code, adjust="qfq")
+            
+            # Cancel the alarm if API call succeeded
+            signal.alarm(0)
 
-            df = df.reset_index().rename(columns={"index": "date"})
+            # df = df.reset_index().rename(columns={"index": "date"})
             df['date'] = df['date'].apply(lambda _d: _d.strftime('%Y%m%d'))
             df['name'] = name
             df['code'] = code
@@ -44,9 +56,13 @@ def fetch_base(stock_global, csv_dir, stock_list, force_run=False):
             df = finlib.Finlib().adjust_column(df,['code','name','date'])
             df.to_csv(csv_f, encoding='UTF-8', index=False)
             logging.info("saved "+csv_f)
+        except TimeoutError as e:
+            logging.error(f"Timeout error for {code}: {str(e)}")
         except:
             logging.info(__file__+" "+"\tcaught exception when getting data")
         finally:
+            # Make sure to cancel any pending alarm
+            signal.alarm(0)
             if exc_info == (None, None, None):
                 pass  # no exception
             else:

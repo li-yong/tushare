@@ -23,6 +23,7 @@ import traceback
 import math
 import stockstats
 import numpy as np
+import json
 
 from optparse import OptionParser
 
@@ -843,7 +844,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         if ret != RET_OK:
             raise Exception("Cannot get HK order info, "+df_order_list_hk)
         else:
-            df_order_list = df_order_list.append(df_order_list_hk).reset_index().drop('index', axis=1)
+            df_order_list = pd.concat([df_order_list, df_order_list_hk]).reset_index().drop('index', axis=1)
 
 
         #checking postion
@@ -851,7 +852,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         if ret != RET_OK:
             raise Exception("Failed to get HK position. "+df_position_list_hk)
         else:
-            df_position_list = df_position_list.append(df_position_list_hk).reset_index().drop('index', axis=1)
+            df_position_list = pd.concat([df_position_list, df_position_list_hk]).reset_index().drop('index', axis=1)
 
     if 'US' in market or 'US_HOLD' in market:
         #checking orders(in queue) 查询今日订单
@@ -859,7 +860,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         if ret != RET_OK:
             raise Exception("Cannot get US order info, "+df_order_list_us)
         else:
-            df_order_list = df_order_list.append(df_order_list_us).reset_index().drop('index', axis=1)
+            df_order_list = pd.concat([df_order_list, df_order_list_us]).reset_index().drop('index', axis=1)
 
 
         #checking postion
@@ -867,7 +868,7 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         if ret != RET_OK:
             raise Exception("Failed to get US position. "+df_position_list_us)
         else:
-            df_position_list = df_position_list.append(df_position_list_us).reset_index().drop('index', axis=1)
+            df_position_list = pd.concat([df_position_list, df_position_list_us]).reset_index().drop('index', axis=1)
 
     # if 'SH' in mkt or 'SZ' in mkt or 'AG' in mkt:
     if 'AG' in market or 'AG_HOLD' in market:
@@ -876,14 +877,14 @@ def get_persition_and_order(trd_ctx,market,trd_env):
         if ret != RET_OK:
             raise Exception("Cannot get CN order info, "+df_order_list_cn)
         else:
-            df_order_list = df_order_list.append(df_order_list_cn).reset_index().drop('index', axis=1)
+            df_order_list = pd.concat([df_order_list, df_order_list_cn]).reset_index().drop('index', axis=1)
 
         #checking postion
         ret, df_position_list_cn = trd_ctx['trd_ctx_cn'].position_list_query(trd_env=trd_env)
         if ret != RET_OK:
             raise Exception("Failed to get CN position. "+df_position_list_cn)
         else:
-            df_position_list = df_position_list.append(df_position_list_cn).reset_index().drop('index', axis=1)
+            df_position_list = pd.concat([df_position_list, df_position_list_cn]).reset_index().drop('index', axis=1)
 
 
     return(
@@ -1025,7 +1026,7 @@ def tv_monitor_minutely(browser, column_filed,interval,market,filter):
     csv_f = "/home/ryan/DATA/result/tv_filter_monitor.csv"
     if os.path.isfile(csv_f):
         df = pd.read_csv(csv_f)
-        df = df.append(df_result_a)
+        df = pd.concat([df, df_result_a])
     else:
         df = df_result_a
 
@@ -1331,7 +1332,7 @@ def check_high_volume(market,debug,ndays=3):
             b1 = a[a['time_key'].str.contains(r[0])]
             b2 = a[a['time_key'].str.contains(r[1])]
             b3 = a[a['time_key'].str.contains(r[2])]
-            b = b1.append(b2).append(b3) # b is 1min bars of a code in 3 days window
+            b = pd.concat([b1, b2, b3]) # b is 1min bars of a code in 3 days window
 
             b = b[['code','date', 'time_key', 'close', 'volume','change_rate']]
             b['change_rate']=round(b['change_rate'],1)
@@ -1343,14 +1344,14 @@ def check_high_volume(market,debug,ndays=3):
             c = b.sort_values(by='pv_power').tail(1) #the highest 1min volume in 10 days
             logging.info(f"High vol of {ds}\n"+finlib.Finlib().pprint(c))
 
-            df_rtn = df_rtn.append(c)
+            df_rtn = pd.concat([df_rtn, c])
 
             print("go")
 
         # # aa = df[df['time_key'].str.contains(pat='2022-0[67]',regex=True)]
         # aa = df[df['time_key'].str.contains(pat='2022-06-2[89]',regex=True)]
         # aa1 = df[df['time_key'].str.contains(pat='2022-06-3[01]',regex=True)]
-        # aa = aa.append(aa1)
+        # aa = pd.concat([aa, aa1])
         #
         # vol_avg_window = 15
         # a['vol_ratio_n'] = round(a['volume'] / a['volume'].rolling(window=vol_avg_window).mean().shift(1), 2)
@@ -1473,7 +1474,7 @@ def check_high_volume_ori(market,debug,ndays=3):
             df_today_hit = finlib.Finlib().df_format_column(df=df_today_hit, precision='%.1e')
 
             logging.info(code+" hit an abnormal high value in past "+str(ndays) +" days." )
-            df_rtn = df_rtn.append(df_today_hit)
+            df_rtn = pd.concat([df_rtn, df_today_hit])
 
     df_rtn = df_rtn.reset_index().drop('index', axis=1)
     df_rtn.to_csv(csv, encoding='UTF-8', index=False)
@@ -1748,8 +1749,7 @@ def set_ag_price_reminder(quote_ctx, clear_all, host="127.0.0.1",port=11111, deb
     df2 = pd.read_csv('/home/ryan/059.csv', converters={'证券代码': str,}, encoding="GB18030")
     df3 = pd.read_csv('/home/ryan/653.csv', converters={'证券代码': str,}, encoding="GB18030")
 
-    df = df1.append(df2)
-    df = df.append(df3)
+    df = pd.concat([df1, df2, df3])
 
     df = df[['证券代码', '证券名称', '证券数量', '可卖数量', '当前价', '成本价',
              '今日盈亏', '今日盈亏比例(%)', '持仓盈亏', '持仓盈亏比例(%)',
@@ -1808,7 +1808,148 @@ def set_price_reminder(quote_ctx, code,price, reason_cn, reminder_type=PriceRemi
     else:
         logging.info('error:', data)
 
-
+def trailing_stop_loss(quote_ctx, trd_ctx, code_list=None, trail_percent=5, simulator=True, pwd_unlock='123456', config_file=None):
+    """
+    Implements a trailing stop loss feature for Futu accounts.
+    
+    Args:
+        quote_ctx: The OpenQuoteContext object for getting market data
+        trd_ctx: The trading context dictionary containing all market trading contexts
+        code_list: List of stock codes to monitor. If None, will monitor all positions
+        trail_percent: The percentage below high price to set stop loss (e.g. 5 means 5%)
+        simulator: Whether to use simulation or real money trading
+        pwd_unlock: The password to unlock trading functionality
+        config_file: Path to a JSON file for storing high prices between runs
+    
+    Returns:
+        None
+    """
+    logging.info("Starting trailing stop loss with trail percent: {}%".format(trail_percent))
+    
+    if simulator:
+        trd_env = TrdEnv.SIMULATE
+    else:
+        trd_env = TrdEnv.REAL
+        logging.info("WILL RUN IN REAL ACCOUNT")
+    
+    # Initialize high price tracking dictionary
+    high_prices = {}
+    
+    # Try to load previous high prices from config file if provided
+    if config_file and os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                high_prices = json.load(f)
+                logging.info("Loaded high prices from config file: {}".format(config_file))
+        except Exception as e:
+            logging.error("Failed to load config file: {}".format(str(e)))
+    
+    # If no specific stocks provided, get all current positions
+    if not code_list:
+        logging.info("No specific codes provided, monitoring all positions")
+        code_list = []
+        for market in ['US', 'HK', 'SH', 'SZ']:
+            mkt_trd_ctx = get_ctx_from_code(trd_ctx, market+'.dummy')
+            _po = get_persition_and_order(trd_ctx=mkt_trd_ctx, market=market, trd_env=trd_env)
+            if not _po['position_list'].empty:
+                code_list.extend(_po['position_list']['code'].tolist())
+        
+        if not code_list:
+            logging.info("No positions found. Exiting.")
+            return
+        
+        logging.info("Found {} positions to monitor: {}".format(len(code_list), code_list))
+    
+    try:
+        while True:
+            try:
+                # Get current prices for all stocks in positions
+                df_market_snapshot = get_current_price(host=quote_ctx.host, port=quote_ctx.port, code_list=code_list)
+                
+                # Check each position for trailing stop loss
+                for _, row in df_market_snapshot.iterrows():
+                    code = row['code']
+                    current_price = row['last_price']
+                    
+                    # Initialize high price if not already tracked
+                    if code not in high_prices:
+                        high_prices[code] = current_price
+                        logging.info(f"Initialized {code} high price to {current_price}")
+                    
+                    # Update high price if current price is higher
+                    if current_price > high_prices[code]:
+                        old_high = high_prices[code]
+                        high_prices[code] = current_price
+                        logging.info(f"{code} new high: {old_high} -> {current_price}")
+                        
+                        # If configuration file provided, save updated high prices
+                        if config_file:
+                            try:
+                                with open(config_file, 'w') as f:
+                                    json.dump(high_prices, f)
+                            except Exception as e:
+                                logging.error(f"Failed to save config file: {str(e)}")
+                    
+                    # Calculate stop price based on high and trail percentage
+                    stop_price = round(high_prices[code] * (1 - trail_percent/100), 2)
+                    
+                    # Check if price is at or below stop price
+                    if current_price <= stop_price:
+                        logging.info(f"{code} triggered stop loss! Current: {current_price}, High: {high_prices[code]}, Stop: {stop_price}")
+                        
+                        # Get position details for this stock
+                        mkt_trd_ctx = get_ctx_from_code(trd_ctx, code)
+                        _po = get_persition_and_order(trd_ctx=mkt_trd_ctx, market=code.split('.')[0], trd_env=trd_env)
+                        df_position = _po['position_list'][_po['position_list']['code'] == code]
+                        
+                        if not df_position.empty:
+                            # Get quantity to sell
+                            qty_to_sell = df_position.iloc[0]['can_sell_qty']
+                            
+                            if qty_to_sell > 0:
+                                # Place sell market order
+                                logging.info(f"Placing trailing stop market sell order for {code}, qty: {qty_to_sell}")
+                                order_table = place_sell_market_order(trd_ctx, code, qty_to_sell, trd_env)
+                                
+                                # Remove from high_prices after selling
+                                if code in high_prices:
+                                    del high_prices[code]
+                                    logging.info(f"Removed {code} from tracking after stop loss execution")
+                    else:
+                        # Set price reminder at stop price (reminder will trigger if price drops)
+                        reminder_msg = f"Trail stop {trail_percent}% below high {high_prices[code]}"
+                        set_price_reminder(
+                            quote_ctx, 
+                            code,
+                            stop_price, 
+                            reminder_msg, 
+                            reminder_type=PriceReminderType.PRICE_DOWN,
+                            host=quote_ctx.host,
+                            port=quote_ctx.port
+                        )
+                        
+                        logging.info(f"{code} - Current: {current_price}, High: {high_prices[code]}, Stop: {stop_price}")
+                
+            except Exception as e:
+                logging.error(f"Error in trailing stop loss loop: {str(e)}")
+                traceback.print_exc()
+            
+            # Sleep before next check
+            time.sleep(60)  # Check every minute
+            
+    except KeyboardInterrupt:
+        logging.info("Trailing stop loss monitoring stopped by user")
+        
+        # Save high prices before exiting if config file provided
+        if config_file:
+            try:
+                with open(config_file, 'w') as f:
+                    json.dump(high_prices, f)
+                logging.info(f"Saved high prices to {config_file}")
+            except Exception as e:
+                logging.error(f"Failed to save config file: {str(e)}")
+                
+    return
 
 def main():
     logging.basicConfig(filename='/home/ryan/del.log', filemode='a', format='%(asctime)s %(message)s',  datefmt='%m_%d %H:%M:%S', level=logging.DEBUG)
@@ -1839,6 +1980,10 @@ def main():
     parser.add_option("--sell_only", action="store_true", default=False, dest="sell_only", help="only sell")
     parser.add_option("--close_all_positions", action="store_true", default=False, dest="close_all_positions", help="close_all_positions")
     parser.add_option("--set_ag_reminder", action="store_true", default=False, dest="set_ag_reminder", help="set_ag_reminder")
+    parser.add_option("--trailing_stop", action="store_true", default=False, dest="trailing_stop", help="enable trailing stop loss monitoring")
+    parser.add_option("--trail_percent", default=5, dest="trail_percent", type=float, help="percentage for trailing stop loss (default 5%)")
+    parser.add_option("--trail_config", default="trailing_stop_config.json", dest="trail_config", type="str", help="configuration file to store high prices")
+    parser.add_option("--trail_codes", default="", dest="trail_codes", type="str", help="comma-separated list of stock codes to monitor (default: all positions)")
 
 
     (options, args) = parser.parse_args()
@@ -1878,56 +2023,101 @@ def main():
         exit(1)
 
     ##########################start
+    if False:
+
+        rtn_df = pd.DataFrame()
+        trd_ctx = OpenSecTradeContext(filter_trdmarket=TrdMarket.HK, host='127.0.0.1', port=11111,security_firm=SecurityFirm.FUTUSECURITIES)
+        ret, data = trd_ctx.history_order_list_query()
+        if ret != RET_OK:
+            print('history_order_list_query error: ', data)
+            exit(0)
+
+        for key, value in data.iterrows():
+            # print(value['order_status'])
+
+            if value['order_status'] in ('FAILED','CANCELLED_ALL','WAITING_SUBMIT'):
+                continue
+
+            if value['trd_side'] != 'BUY':
+                continue
+
+            date_str = value['create_time'].split()[0]
+            date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            today = datetime.datetime.today()
+            days_diff = (today - date_obj).days
+
+            code = value['code'].replace("US.", "")
 
 
-    trd_ctx = OpenSecTradeContext(filter_trdmarket=TrdMarket.HK, host='127.0.0.1', port=11111,
-                                  security_firm=SecurityFirm.FUTUSECURITIES)
-    ret, data = trd_ctx.history_order_list_query()
-    if ret != RET_OK:
-        print('history_order_list_query error: ', data)
-        exit(0)
+            stock = yf.Ticker(code)
+            data_p = stock.history(period='1d')  # 获取当天数据
+            if not data_p.empty:
+                closing_prices= round(data_p['Close'].iloc[-1],2)  # 取收盘价
+            else:
+                closing_prices = None  # 可能当天无交易数据
 
-    for key, value in data.iterrows():
-        # print(value['order_status'])
+            # print(code,closing_prices)
 
-        if value['order_status'] in ('FAILED','CANCELLED_ALL','WAITING_SUBMIT'):
-            continue
+            price_delta = (closing_prices - value['price'])/value['price']*100 - 0.05*days_diff
+            price_delta = round(price_delta,2)
 
-        if value['trd_side'] != 'BUY':
-            continue
+            # Sample data (replace with actual data)
+            _data = [
+                {'code': value['code'], 'date': date_str, 'qty': value['dealt_qty'], 'price': value['dealt_avg_price'],
+                'trd_side': value['trd_side'], 'stock_name': value['stock_name'],
+                'days_diff': days_diff, 'closing_prices': closing_prices, 'price_delta': price_delta}
+            ]
 
-        date_str = value['create_time'].split()[0]
-        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-        today = datetime.datetime.today()
-        days_diff = (today - date_obj).days
+            # Convert to DataFrame
+            _df = pd.DataFrame(_data)
+            rtn_df = pd.concat([rtn_df, _df],ignore_index=True)
 
-        code = value['code'].replace("US.", "")
+            # print(value['code'], date_str, value['price'], value['trd_side'],value['stock_name'],days_diff,closing_prices,price_delta)
 
+        # print(data)
+        trd_ctx.close()
 
-        stock = yf.Ticker(code)
-        data = stock.history(period='1d')  # 获取当天数据
-        if not data.empty:
-            closing_prices= round(data['Close'].iloc[-1],2)  # 取收盘价
-        else:
-            closing_prices = None  # 可能当天无交易数据
-
-        # print(code,closing_prices)
-
-        price_delta = (closing_prices - value['price'])/value['price']*100 - 0.05*days_diff
-        price_delta = round(price_delta,2)
-
-
-        print(value['code'], date_str, value['price'], value['trd_side'],value['stock_name'],days_diff,closing_prices,price_delta)
-
-    # print(data)
-    trd_ctx.close()
-    exit()
+        # Display DataFrame
+        print(finlib.Finlib().pprint(rtn_df))
+        # tools.display_dataframe_to_user(name="Stock Data", dataframe=rtn_df)
+        exit()
 
     #### set reminder
     if options.set_ag_reminder and is_port_open(host=host,port=port):
         quote_ctx = OpenQuoteContext(host=host, port=port)
         set_ag_price_reminder(quote_ctx=quote_ctx, clear_all=True, debug=options.debug)
         quote_ctx.close()
+        exit()
+        
+    #### trailing stop loss
+    if options.trailing_stop and is_port_open(host=host,port=port):
+        quote_ctx = OpenQuoteContext(host=host, port=port)
+        trd_ctx = _get_trd_ctx(host=host, port=port)
+        
+        # Unlock the trading context
+        _unlock_trd_ctx(trd_ctx=trd_ctx, pwd_unlock=pwd_unlock)
+        
+        # Parse codes if provided
+        code_list = None
+        if options.trail_codes:
+            code_list = options.trail_codes.split(',')
+            logging.info(f"Will monitor specific codes: {code_list}")
+        
+        # Run the trailing stop loss function
+        trailing_stop_loss(
+            quote_ctx=quote_ctx,
+            trd_ctx=trd_ctx,
+            code_list=code_list,
+            trail_percent=options.trail_percent,
+            simulator=simulator,
+            pwd_unlock=pwd_unlock,
+            config_file=options.trail_config
+        )
+        
+        # Close connections
+        quote_ctx.close()
+        for ctx in trd_ctx.values():
+            ctx.close()
         exit()
 
     #### fetch history bar of AG option
@@ -1970,7 +2160,7 @@ def main():
     df_tv_us = finlib.Finlib().load_tv_fund(market='US', period='1D')
     df_tv_hk = finlib.Finlib().load_tv_fund(market='HK', period='1D')
     df_tv_cn = finlib.Finlib().load_tv_fund(market='AG', period='1D')
-    df_tv_all = df_tv_us.append(df_tv_hk).append(df_tv_cn).reset_index().drop('index', axis=1)
+    df_tv_all = pd.concat([df_tv_us, df_tv_hk, df_tv_cn]).reset_index().drop('index', axis=1)
 
 
 
@@ -2187,19 +2377,19 @@ def _extreme_low_price_JianLou():
         code = 'US.' + row['code']
         name = row['name']
         new_df = pd.DataFrame([[code, name]], columns=['code', 'name'])
-        df_input = df_input.append(new_df, ignore_index=True)
+        df_input = pd.concat([df_input, new_df], ignore_index=True)
 
     for index, row in df_nasdqa100.iterrows():
         code = 'US.' + row['code']
         name = row['name']
         new_df = pd.DataFrame([[code, name]], columns=['code', 'name'])
-        df_input = df_input.append(new_df, ignore_index=True)
+        df_input = pd.concat([df_input, new_df], ignore_index=True)
 
     for index, row in df_hkhs.iterrows():
         code = 'HK.' + row['code']
         name = row['name']
         new_df = pd.DataFrame([[code, name]], columns=['code', 'name'])
-        df_input = df_input.append(new_df, ignore_index=True)
+        df_input = pd.concat([df_input, new_df], ignore_index=True)
 
     ### Buy according to df_input
     ret, df_market_snapshot = quote_ctx.get_market_snapshot(df_input['code'].tolist())

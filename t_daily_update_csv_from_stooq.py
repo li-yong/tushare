@@ -35,7 +35,7 @@ def stooq_download(code, mkt, days=1, force_fetch=False):
     if not os.path.isdir(dir_o):
         pathlib.Path(dir_o).mkdir(parents=True, exist_ok=True)
 
-    if finlib.Finlib().is_cached(csv_o, day=days) and (not force_fetch):
+    if finlib.Finlib().is_cached(csv_o, day=days, use_last_trade_day=False) and (not force_fetch):
         logging.info(__file__+" "+"file is updated in " + str(days) + " days. not fetch again. " + csv_o)
         return
 

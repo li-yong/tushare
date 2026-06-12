@@ -23,6 +23,10 @@ import numpy as np
 import tabulate
 import akshare as ak
 
+
+
+
+
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 # import matplotlib.pyplot as plt
@@ -55,6 +59,7 @@ from io import StringIO
 
 # warnings.filterwarnings("error")
 warnings.filterwarnings("default")
+warnings.filterwarnings("ignore")
 
 # 2018.01.31  15:24, removed a lot DEL_ functions and committed to the git.
 
