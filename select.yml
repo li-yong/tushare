@@ -1,3 +1,35 @@
+# ── US swing watchlist (t_us_tech_swing.py) ───────────────────────────────────
+# Hand-curated. Holdings are NOT listed here — they come live from Futu.
+# The NDX predictor informs edits to this list; it never edits it automatically.
+US_SWING_MAG7:
+    - AAPL
+    - MSFT
+    - NVDA
+    - GOOGL
+    - META
+    - AMZN
+    - TSLA
+US_SWING_SEMIS:
+    - AMD
+    - AVGO
+    - AMAT
+    - ASML
+    - LRCX
+    - KLAC
+    - TSM
+US_SWING_HYPERSCALERS:   # capex source for the AI transmission chain
+    - MSFT
+    - GOOGL
+    - META
+    - AMZN
+US_SWING_BAROMETERS:     # market-state ETFs only; never traded
+    - QQQ
+    - SOXX
+# Account equity (USD) used for position sizing. Hand-maintained — keep roughly
+# current; a 10% stale value shifts share counts by 10%, not the decision.
+# Holdings themselves still come live from Futu (see CONTEXT.md).
+US_SWING_EQUITY: 100000
+
 US_HOLD:
     - FUTU: FUTU
     - TSLA: TSLA
