@@ -114,6 +114,14 @@ TRIM_PCT          = 25.0    # trim 50% at +25%
 LAYOUT_DAYS_MIN   = 14      # earnings layout window: 2 weeks out
 LAYOUT_DAYS_MAX   = 28      # earnings layout window: 4 weeks out
 
+# Key-level stop (breakout): place the stop under the nearest real support
+# below entry instead of at the deep consolidation low — tightens R:R honestly.
+KEY_PIVOT_WIN     = 3       # a swing low = local min over ±3 daily bars
+KEY_LOOKBACK_D    = 120     # search swing lows within ~6 months
+KEY_CLUSTER_PCT   = 0.015   # swing lows within 1.5% collapse into one level
+KEY_STOP_MIN_PCT  = 0.02    # stop must sit ≥2% below entry (avoid whipsaw)
+KEY_STOP_MAX_PCT  = 0.15    # ignore support more than 15% below entry (too wide)
+
 # Position sizing (CONTEXT.md: R = 1% of equity; cap 25% of equity per name)
 RISK_PCT          = 0.01    # 1 R = 1% of account equity
 MAX_POSITION_PCT  = 0.25    # a single position's notional ≤ 25% of equity
@@ -287,7 +295,34 @@ def get_market_state() -> tuple[str, dict]:
 
 
 # ── Layer 2 + 3: Entry signals ────────────────────────────────────────────────
-def _breakout_signal(weekly: pd.DataFrame) -> dict | None:
+def _key_support_below(daily, entry):
+    """Highest real support level below `entry`, from clustered daily swing lows.
+
+    A swing low is a daily low that is the minimum over ±KEY_PIVOT_WIN bars.
+    Candidates are limited to the band [entry−15%, entry−2%]; the nearest ones
+    (within KEY_CLUSTER_PCT of each other) are merged into one level so a
+    repeatedly-tested support counts once. Returns that level, or None.
+    """
+    if daily is None or daily.empty or len(daily) < 2 * KEY_PIVOT_WIN + 1:
+        return None
+    lows = daily['low'].tail(KEY_LOOKBACK_D).reset_index(drop=True)
+    w = KEY_PIVOT_WIN
+    pivots = [float(lows.iloc[i]) for i in range(w, len(lows) - w)
+              if lows.iloc[i] == lows.iloc[i - w:i + w + 1].min()]
+    if not pivots:
+        return None
+
+    hi = entry * (1 - KEY_STOP_MIN_PCT)   # stop ceiling: ≥2% below entry
+    lo = entry * (1 - KEY_STOP_MAX_PCT)   # stop floor: ≤15% below entry
+    cands = sorted({p for p in pivots if lo <= p <= hi}, reverse=True)
+    if not cands:
+        return None
+    top = cands[0]
+    cluster = [p for p in cands if (top - p) / top <= KEY_CLUSTER_PCT]
+    return round(sum(cluster) / len(cluster), 2)
+
+
+def _breakout_signal(weekly: pd.DataFrame, daily: pd.DataFrame | None = None) -> dict | None:
     """
     Breakout buy (used in STRONG market):
     - Weekly close clears 10-week consolidation high
@@ -311,8 +346,15 @@ def _breakout_signal(weekly: pd.DataFrame) -> dict | None:
         return None  # no breakout
 
     entry = round(cur_close, 2)
-    stop  = round(range_low, 2)
-    risk  = entry - stop
+
+    # Stop at the nearest real support below entry; fall back to the deep
+    # consolidation low only when no key level is found in range.
+    key_stop = _key_support_below(daily, entry)
+    if key_stop is not None and entry - key_stop > 0:
+        stop, stop_basis = key_stop, 'key-level'
+    else:
+        stop, stop_basis = round(range_low, 2), 'range-low'
+    risk = entry - stop
     if risk <= 0:
         return None
 
@@ -327,6 +369,7 @@ def _breakout_signal(weekly: pd.DataFrame) -> dict | None:
         'type':        'BREAKOUT',
         'entry':       entry,
         'stop':        stop,
+        'stop_basis':  stop_basis,
         'target':      target,
         'rr':          rr,
         'rr_ok':       rr >= MIN_RR,
@@ -439,7 +482,7 @@ def scan_stock(ticker: str, market_state: str) -> dict:
         r['earnings_days'] = _upcoming_earnings(ticker)
 
         if market_state == 'STRONG':
-            r['signal'] = _breakout_signal(weekly)
+            r['signal'] = _breakout_signal(weekly, daily)
             if r['signal'] is None:
                 # also show if a pullback is forming as secondary note
                 pb = _pullback_signal(daily)
@@ -625,7 +668,8 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         if s:
             vol_note = ''
             if s['type'] == 'BREAKOUT':
-                vol_note = f"vol×{s['vol_ratio']:.1f}{'✓' if s['high_vol'] else '✗'}"
+                basis = 'key' if s.get('stop_basis') == 'key-level' else 'rng'
+                vol_note = f"vol×{s['vol_ratio']:.1f}{'✓' if s['high_vol'] else '✗'} stop:{basis}"
             elif s['type'] == 'PULLBACK':
                 flags = []
                 if s.get('declining_vol'):  flags.append('vol↓')
