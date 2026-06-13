@@ -28,18 +28,26 @@ https://indexes.nasdaq.com/docs/Methodology_NDX.pdf
   - 上市满3个完整日历月（Seasoning）
 
 用法：
-  python ndx_predictor.py                 # 实跑：拉取真实数据并预测
+  python ndx_predictor.py                 # 实跑：拉取真实数据并预测（约5-10分钟）
   python ndx_predictor.py --demo          # 演示：用合成数据验证规则引擎
   python ndx_predictor.py --top 200       # 限制候选池大小（加速）
   python ndx_predictor.py --out report.md # 输出报告文件
 
-依赖：pip install yfinance pandas requests lxml
+数据流（实跑模式）：
+  1. nasdaqtrader.com 符号目录 → 合格交易层级(Global Select/Market)的全体证券
+  2. Futu OpenD 市场快照（400只/批）→ 全市值(公司级，含多类股)、上市日期
+  3. 按全市值预筛至 top N + 现有成分股
+  4. Futu 历史K线(turnover) → 三个月日均成交额(ADVT) + 市值折算回参考日
+  5. 纳斯达克官方 screener API（1次请求）→ 全交易所行业分类
+
+依赖：pip install pandas requests lxml futu-api（且 OpenD 已启动）
 """
 
 import argparse
 import calendar
 import datetime as dt
 import json
+import os
 import time
 from dataclasses import dataclass, field, asdict
 from io import StringIO
@@ -151,14 +159,21 @@ def fetch_nasdaq_universe() -> pd.DataFrame:
         r"Warrant|Right|Unit|Preferred|Depositary Shs|%|Notes",
         case=False, na=False)]
     df = df.rename(columns={"Symbol": "ticker", "Security Name": "name"})
+    df = df.dropna(subset=["ticker"])
+    df["ticker"] = df["ticker"].astype(str).str.strip()
+    df = df[df["ticker"] != ""]
     print(f"  ↳ 合格交易层级证券: {len(df)} 只")
     return df[["ticker", "name"]].reset_index(drop=True)
 
 
 def fetch_current_constituents() -> list[str]:
     """从 Wikipedia 拉取当前 NDX 成分股（更新及时、可机器解析）"""
+    import requests
     print("  ↳ 获取当前纳斯达克100成分股 ...")
-    tables = pd.read_html(WIKI_NDX_URL)
+    r = requests.get(WIKI_NDX_URL, timeout=30,
+                     headers={"User-Agent": "Mozilla/5.0 (ndx-predictor research)"})
+    r.raise_for_status()
+    tables = pd.read_html(StringIO(r.text))
     for t in tables:
         cols = [str(c).lower() for c in t.columns]
         if any("ticker" in c or "symbol" in c for c in cols):
@@ -171,47 +186,121 @@ def fetch_current_constituents() -> list[str]:
     raise RuntimeError("无法从 Wikipedia 解析成分股表，请检查页面结构")
 
 
-def enrich_with_yfinance(tickers: list[str], batch_pause: float = 0.5) -> pd.DataFrame:
+def fetch_futu_caps(tickers: list[str]) -> pd.DataFrame:
     """
-    用 yfinance 批量获取：全市值、行业、上市日期、三个月日均成交额。
-    注意：Yahoo 的 marketCap 是公司级市值（含多类股），可近似官方"全市值"。
+    用 Futu OpenD 市场快照批量获取全市值与上市日期（400只/批，全宇宙约1分钟）。
+    实测 Futu 的 total_market_val 为公司级市值（GOOG/GOOGL 均返回 Alphabet
+    全部股份类别的总市值），可直接近似官方 Full Market Cap。
     """
-    import yfinance as yf
-    rows = []
-    total = len(tickers)
-    ref_end = dt.date.today()
-    ref_start = ref_end - dt.timedelta(days=95)
+    from futu import OpenQuoteContext, Market, SecurityType, RET_OK
+    host = os.environ.get("FUTU_OPEND_HOST", "127.0.0.1")
+    port = int(os.environ.get("FUTU_OPEND_PORT", "11111"))
+    ctx = OpenQuoteContext(host=host, port=port)
+    try:
+        ret, basic = ctx.get_stock_basicinfo(Market.US, SecurityType.STOCK)
+        if ret != RET_OK:
+            raise RuntimeError(f"get_stock_basicinfo 失败: {basic}")
+        basic = basic[~basic["delisting"]]
+        known = set(basic["code"])
+        codes = [f"US.{t}" for t in tickers if f"US.{t}" in known]
+        print(f"  ↳ Futu 可识别证券: {len(codes)}/{len(tickers)}，开始批量快照 ...")
 
-    for i, tk in enumerate(tickers, 1):
-        if i % 25 == 0 or i == total:
-            print(f"  ↳ 拉取基本面 {i}/{total} ...")
-        try:
-            t = yf.Ticker(tk)
-            info = t.info or {}
-            mcap = info.get("marketCap")
-            if not mcap:
-                continue
-            hist = t.history(start=ref_start.isoformat(),
-                             end=ref_end.isoformat(), auto_adjust=False)
-            advt = float((hist["Close"] * hist["Volume"]).mean()) if len(hist) else 0.0
-            first_trade = info.get("firstTradeDateEpochUtc")
-            first_trade_date = (dt.datetime.utcfromtimestamp(first_trade).date().isoformat()
-                                if first_trade else None)
-            rows.append({
-                "ticker": tk,
-                "name": info.get("shortName", ""),
-                "sector": info.get("sector", ""),
-                "industry": info.get("industry", ""),
-                "quote_type": info.get("quoteType", ""),
-                "full_market_cap": float(mcap),
-                "advt_3m": advt,
-                "first_trade_date": first_trade_date,
-            })
-            time.sleep(batch_pause)
-        except Exception as e:
-            print(f"    ⚠ {tk}: {e.__class__.__name__}")
-            continue
-    return pd.DataFrame(rows)
+        frames = []
+
+        def snap_batch(batch: list[str]):
+            ret, snap = ctx.get_market_snapshot(batch)
+            if ret == RET_OK:
+                frames.append(snap[["code", "total_market_val", "listing_date"]])
+            elif len(batch) > 1:  # 个别无效代码导致整批失败 → 二分重试
+                mid = len(batch) // 2
+                snap_batch(batch[:mid])
+                snap_batch(batch[mid:])
+            else:
+                print(f"    ⚠ 快照失败，跳过 {batch[0]}: {snap}")
+
+        for i in range(0, len(codes), 400):
+            snap_batch(codes[i:i + 400])
+            print(f"  ↳ 快照进度 {min(i + 400, len(codes))}/{len(codes)}")
+            time.sleep(0.6)  # 频率限制：30秒内最多60次
+    finally:
+        ctx.close()
+
+    df = pd.concat(frames, ignore_index=True)
+    df["ticker"] = df["code"].str.split(".", n=1).str[1]
+    df = df.rename(columns={"total_market_val": "full_market_cap",
+                            "listing_date": "first_trade_date"})
+    df = df[df["full_market_cap"] > 0]
+    return df[["ticker", "full_market_cap", "first_trade_date"]]
+
+
+def fetch_futu_history(tickers: list[str], ref_date: dt.date) -> pd.DataFrame:
+    """
+    用 Futu 历史K线（含成交额 turnover 字段）逐只计算：
+      - advt_3m: 参考日前三个月的日均成交额
+      - ref_px_ratio: 参考日收盘价/最新收盘价，用于把当前市值折算回参考日
+    历史K线有月度额度限制，先查额度；不足时按"距决策边界(排名~112)远近"
+    截断，边界外的大市值股票缺 ADVT 视为通过（$5M 门槛对其无约束力）。
+    """
+    from futu import OpenQuoteContext, RET_OK, KLType, AuType, KL_FIELD
+    host = os.environ.get("FUTU_OPEND_HOST", "127.0.0.1")
+    port = int(os.environ.get("FUTU_OPEND_PORT", "11111"))
+    start = (ref_date - dt.timedelta(days=95)).isoformat()
+    end = dt.date.today().isoformat()
+    rows = []
+    ctx = OpenQuoteContext(host=host, port=port)
+    try:
+        ret, quota = ctx.get_history_kl_quota(get_detail=False)
+        remain = quota[1] if ret == RET_OK else 0
+        budget = max(remain - 20, 0)  # 留余量，避免耗尽月度额度
+        todo = tickers[:budget]
+        if len(todo) < len(tickers):
+            print(f"  ⚠ 历史K线额度不足(剩{remain})，仅精算决策边界附近 {len(todo)} 只")
+        total = len(todo)
+        for i, tk in enumerate(todo, 1):
+            if i % 50 == 0 or i == total:
+                print(f"  ↳ 历史K线进度 {i}/{total}（额度剩余约 {remain - i}）")
+            try:
+                ret, kl, _ = ctx.request_history_kline(
+                    f"US.{tk}", start=start, end=end,
+                    ktype=KLType.K_DAY, autype=AuType.NONE,
+                    fields=[KL_FIELD.DATE_TIME, KL_FIELD.CLOSE, KL_FIELD.TRADE_VAL],
+                    max_count=120)
+                if ret != RET_OK or not len(kl):
+                    continue
+                kl["date"] = pd.to_datetime(kl["time_key"]).dt.date
+                upto_ref = kl[kl["date"] <= ref_date]
+                if not len(upto_ref):
+                    continue
+                advt = float(upto_ref["turnover"].mean())
+                ratio = float(upto_ref["close"].iloc[-1]) / float(kl["close"].iloc[-1])
+                rows.append({"ticker": tk, "advt_3m": advt, "ref_px_ratio": ratio})
+            except Exception as e:
+                print(f"    ⚠ {tk}: {e.__class__.__name__}")
+            time.sleep(0.4)  # 频率限制
+    finally:
+        ctx.close()
+    return pd.DataFrame(rows, columns=["ticker", "advt_3m", "ref_px_ratio"])
+
+
+def fetch_nasdaq_sectors() -> pd.DataFrame:
+    """
+    纳斯达克官方 screener API 一次请求返回全交易所的行业分类。
+    其 sector/industry 为交易所自身分类，与官方 ICB 口径比 Yahoo 更接近
+    （SPAC 标为 Blank Checks、REIT 标为 Real Estate Investment Trusts）。
+    """
+    import requests
+    print("  ↳ 下载纳斯达克官方行业分类 ...")
+    r = requests.get("https://api.nasdaq.com/api/screener/stocks",
+                     params={"download": "true", "exchange": "NASDAQ"},
+                     headers={"User-Agent": "Mozilla/5.0",
+                              "Accept": "application/json"},
+                     timeout=30)
+    r.raise_for_status()
+    rows = r.json()["data"]["rows"]
+    df = pd.DataFrame(rows)[["symbol", "name", "sector", "industry"]]
+    df = df.rename(columns={"symbol": "ticker"})
+    df["ticker"] = df["ticker"].str.strip()
+    return df
 
 
 # ----------------------------------------------------------------------------
@@ -235,19 +324,22 @@ def apply_eligibility(df: pd.DataFrame, asof: dt.date,
     def eligible(row):
         reasons = []
         tk = row["ticker"]
-        # 1) 行业：排除金融（带 ICB 修正）
-        is_fin = (row["sector"] == "Financial Services")
+        industry = row["industry"] or ""
+        # 1) 行业：排除金融（带 ICB 修正；兼容 Nasdaq screener 与 Yahoo 命名）
+        is_fin = row["sector"] in ("Finance", "Financial Services")
         if tk in ICB_NON_FINANCIAL_OVERRIDES:
             is_fin = False
         if tk in ICB_FINANCIAL_OVERRIDES:
             is_fin = True
         if is_fin:
             reasons.append("金融行业(ICB)")
-        # 2) REIT 排除
-        if "REIT" in (row["industry"] or ""):
+        # 2) REIT / SPAC 排除
+        if "REIT" in industry or "Investment Trust" in industry:
             reasons.append("REIT")
-        # 3) 流动性
-        if row["advt_3m"] < ADVT_MIN_USD:
+        if "Blank Check" in industry:
+            reasons.append("SPAC")
+        # 3) 流动性（缺历史数据视为通过——仅发生在远离决策边界的大市值股）
+        if pd.notna(row["advt_3m"]) and row["advt_3m"] < ADVT_MIN_USD:
             reasons.append(f"ADVT不足(${row['advt_3m']/1e6:.1f}M<$5M)")
         # 4) Seasoning（已是成分股则豁免）
         if tk not in constituents and months_listed(row["first_trade_date"], asof) < 3:
@@ -310,27 +402,15 @@ def predict_quarterly_rebalance(df: pd.DataFrame,
             "reason": f"全市值排名 #{int(r['rank'])} > {REMOVAL_RANK_CUTOFF}",
         })
 
-    # --- Step 3: 替补（最高排名的合格非成分股）---
-    n_after_removal = int(comp["is_constituent"].sum()) - len(removed)
-    n_needed = max(INDEX_TARGET_COUNT - n_after_removal, 0)
-    replacements = comp[~comp["is_constituent"]].head(n_needed * 3).head(n_needed)
-    for _, r in replacements.iterrows():
-        res.additions.append({
-            "ticker": r["tickers"], "name": r["name"],
-            "rank": int(r["rank"]),
-            "full_market_cap_B": round(r["full_market_cap"] / 1e9, 1),
-            "reason": "替补：合格非成分股中全市值排名最高",
-        })
-
-    # --- Step 4: Fast Entry（全市值进入现有成分股前40名）---
+    # --- Step 3: Fast Entry（全市值进入现有成分股前40名，不占替补名额）---
+    fe_companies: set = set()
     const_caps = comp[comp["is_constituent"]]["full_market_cap"]
     if len(const_caps) >= FAST_ENTRY_TOP_N:
         threshold = const_caps.nlargest(FAST_ENTRY_TOP_N).iloc[-1]
-        added_companies = {a["ticker"] for a in res.additions}
         fe = comp[(~comp["is_constituent"])
-                  & (comp["full_market_cap"] >= threshold)
-                  & (~comp["tickers"].isin(added_companies))]
+                  & (comp["full_market_cap"] >= threshold)]
         for _, r in fe.iterrows():
+            fe_companies.add(r["company"])
             res.fast_entries.append({
                 "ticker": r["tickers"], "name": r["name"],
                 "rank": int(r["rank"]),
@@ -338,6 +418,19 @@ def predict_quarterly_rebalance(df: pd.DataFrame,
                 "reason": (f"Fast Entry：全市值超过现有成分股第{FAST_ENTRY_TOP_N}名"
                            f"(${threshold/1e9:.0f}B)"),
             })
+
+    # --- Step 4: 替补（最高排名的合格非成分股，补足至100只）---
+    n_members = int(comp["is_constituent"].sum()) - len(removed) + len(fe_companies)
+    n_needed = max(INDEX_TARGET_COUNT - n_members, 0)
+    replacements = comp[~comp["is_constituent"]
+                        & ~comp["company"].isin(fe_companies)].head(n_needed)
+    for _, r in replacements.iterrows():
+        res.additions.append({
+            "ticker": r["tickers"], "name": r["name"],
+            "rank": int(r["rank"]),
+            "full_market_cap_B": round(r["full_market_cap"] / 1e9, 1),
+            "reason": "替补：合格非成分股中全市值排名最高",
+        })
 
     # --- 观察名单：风险区与候补区 ---
     risk = comp[comp["is_constituent"]
@@ -362,8 +455,9 @@ def predict_quarterly_rebalance(df: pd.DataFrame,
             "full_market_cap_B": round(r["full_market_cap"] / 1e9, 1),
         })
 
-    res.notes.append("全市值采用Yahoo公司级marketCap近似官方Full Market Cap（含未上市股份）")
-    res.notes.append("行业过滤基于Yahoo分类近似ICB，边界公司（支付/金融科技）需人工复核")
+    res.notes.append("全市值采用Futu公司级total_market_val近似官方Full Market Cap"
+                     "（含全部股份类别），并按参考日收盘价折算")
+    res.notes.append("行业过滤基于纳斯达克screener分类近似ICB，边界公司（支付/金融科技/加密）需人工复核")
     res.notes.append("官方参考日为2/5/8/11月最后交易日的数据快照；越接近参考日预测越准")
     return res
 
@@ -454,9 +548,10 @@ def build_demo_data() -> tuple[pd.DataFrame, set[str]]:
                          industry="Biotech", quote_type="EQUITY",
                          full_market_cap=(60 - k) * 1e9,
                          advt_3m=3e7, first_trade_date="2018-06-01"))
+    # 全市值须超过成分股第40名(2680B)才触发 Fast Entry
     rows.append(dict(ticker="MEGA", name="AI云巨头", sector="Technology",
                      industry="Infrastructure", quote_type="EQUITY",
-                     full_market_cap=900e9, advt_3m=2e9,
+                     full_market_cap=2750e9, advt_3m=2e9,
                      first_trade_date="2025-03-01"))
     rows.append(dict(ticker="FINX", name="某银行", sector="Financial Services",
                      industry="Banks", quote_type="EQUITY",
@@ -484,21 +579,40 @@ def main():
     print(f"下一次调整: {schedule['kind']}  "
           f"参考日={schedule['reference_date']}  生效日={schedule['effective_date']}\n")
 
+    ref_date = dt.date.fromisoformat(schedule["reference_date"])
+
     if args.demo:
         print("演示模式：合成数据验证规则引擎")
         df, constituents = build_demo_data()
+        asof = dt.date.today()
     else:
-        print("实跑模式：拉取真实数据（约需10-30分钟，取决于候选池大小）")
+        print("实跑模式：拉取真实数据（约需5-10分钟）")
         universe = fetch_nasdaq_universe()
         constituents = set(fetch_current_constituents())
         all_tickers = sorted(set(universe["ticker"]) | constituents)
-        print(f"  ↳ 待评估证券总数: {len(all_tickers)}（将按市值筛至前{args.top}）")
-        df = enrich_with_yfinance(all_tickers)
-        df = df[df["quote_type"] == "EQUITY"]
-        keep = set(df.nlargest(args.top, "full_market_cap")["ticker"]) | constituents
-        df = df[df["ticker"].isin(keep)]
+        print(f"  ↳ 待评估证券总数: {len(all_tickers)}（Futu快照预筛至前{args.top}）")
 
-    asof = dt.date.today()
+        caps = fetch_futu_caps(all_tickers)
+        keep = set(caps.nlargest(args.top, "full_market_cap")["ticker"]) | constituents
+        caps = caps[caps["ticker"].isin(keep)].reset_index(drop=True)
+        print(f"  ↳ 预筛后待精算: {len(caps)} 只（top {args.top} + 现有成分股）")
+
+        # 历史K线额度有限时优先精算决策边界（排名~112）附近的股票
+        caps = caps.sort_values("full_market_cap", ascending=False)
+        caps["prelim_rank"] = range(1, len(caps) + 1)
+        kept = (caps.assign(crit=(caps["prelim_rank"] - 112).abs())
+                    .sort_values("crit")["ticker"].tolist())
+
+        hist = fetch_futu_history(kept, ref_date)
+        sectors = fetch_nasdaq_sectors()
+        df = (caps.merge(hist, on="ticker", how="left")
+                  .merge(sectors, on="ticker", how="left"))
+        for col in ("name", "sector", "industry"):
+            df[col] = df[col].fillna("")
+        # 市值折算回参考日（官方排名采用参考日快照）
+        df["full_market_cap"] *= df["ref_px_ratio"].fillna(1.0)
+        asof = ref_date  # 合格性（Seasoning等）按参考日判定
+
     df = apply_eligibility(df, asof, constituents)
 
     excluded = df[~df["eligible"]]
@@ -515,7 +629,8 @@ def main():
     if args.out:
         Path(args.out).write_text(report, encoding="utf-8")
         print(f"\n报告已写入 {args.out}")
-    save_snapshot(res)
+    if not args.demo:  # 演示数据不计入预测历史
+        save_snapshot(res)
 
 
 if __name__ == "__main__":

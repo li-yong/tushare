@@ -499,16 +499,22 @@ def scan_stock(ticker: str, market_state: str) -> dict:
 
 # ── Layer 4: Position management ──────────────────────────────────────────────
 def get_futu_positions(host: str, port: int) -> pd.DataFrame | None:
+    """Live US positions from Futu OpenD.
+
+    Returns a DataFrame (possibly empty = connected but no US positions) on
+    success, or None when OpenD is genuinely unreachable. futu-api ≥10 replaced
+    the per-market OpenUSTradeContext with OpenSecTradeContext + filter_trdmarket.
+    """
     try:
-        from futu import OpenUSTradeContext, TrdEnv, RET_OK
+        from futu import OpenSecTradeContext, TrdEnv, TrdMarket, RET_OK
         logging.getLogger('FTConsoleLog').setLevel(logging.WARNING)
-        ctx = OpenUSTradeContext(host=host, port=port)
+        ctx = OpenSecTradeContext(filter_trdmarket=TrdMarket.US, host=host, port=port)
         ret, df = ctx.position_list_query(trd_env=TrdEnv.REAL)
         ctx.close()
         if ret != RET_OK:
             logging.warning(f"Futu position query failed: {df}")
             return None
-        return df if not df.empty else None
+        return df  # empty df = connected with no positions (not "unavailable")
     except Exception as e:
         logging.warning(f"Cannot connect to FutuOpenD ({host}:{port}): {e}")
         return None
@@ -779,6 +785,24 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         'Concurrent positions ≤ 5?',
     ]:
         p(f'  □  {item}')
+    p()
+
+    # ── Legend / field explanations ───────────────────────────────────────────
+    p('[ 字段说明 / LEGEND ]')
+    p(f'  MARKET STATE 市场状态: STRONG=QQQ与SOXX均在{MA_WEEKLY}周线上方 / MIXED=一上一下 / WEAK=均在下方')
+    p('  ENTRY SIGNALS 入场信号 (机会, 尚未持有):')
+    p('    Entry 建议入场价 · Stop 建议止损价 · Target 目标价')
+    p(f'    R:R 盈亏比=(目标-入场)/(入场-止损); ✓ = ≥{MIN_RR:.0f}:1 值得做, ✗ = 不值得')
+    p(f'    Shares 建议买入股数 (=账户{RISK_PCT:.0%}风险÷每股风险, 单票≤{MAX_POSITION_PCT:.0%}仓位); * = 被仓位上限压过')
+    p('      ⚠ Shares 是"建议买入量", 不是你的持仓! 你的持仓在 HOLDINGS 区')
+    p('    Notes: stop:key=止损在关键支撑位 / stop:rng=回退到区间低点; vol×N=量比; ER Nd=N天后财报')
+    p('  HOLDINGS 持仓止损 (你的真实持仓, 需开富途 OpenD):')
+    p(f'    Qty 持有股数 · Stop(20wMA)={MA_WEEKLY}周线止损位 · vs Stop 距止损%')
+    p(f'    Status: OK / APPROACHING(距止损≤{STOP_NEAR_PCT:.0%}逼近) / BREACHED(跌破→今日离场)')
+    p('  POSITION MANAGEMENT 持仓管理 (对已有仓位的操作):')
+    p(f'    MOVE STOP→breakeven: 浮盈≥{BREAKEVEN_PCT:.0f}% → 止损上移到成本价(锁不亏)')
+    p(f'    TRIM 50%: 浮盈≥{TRIM_PCT:.0f}% → 减半锁利 (只要仍达标会每天提示, 是状态非一次性)')
+    p(f'    EXIT: 周收盘跌破{MA_WEEKLY}周线 → 清仓 (优先于止盈)')
     p()
 
     # Write to file
