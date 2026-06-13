@@ -17,6 +17,18 @@ US_SWING_SEMIS:
     - LRCX
     - KLAC
     - TSM
+    - ADI
+    - MRVL
+    - MU
+    - TXN
+    - MPWR     # power-mgmt silicon for AI servers (searchlight add 2026-06)
+    - MCHP     # MCUs / analog (searchlight add 2026-06)
+US_SWING_AI_CHAIN:       # AI datacenter buildout beyond chips: optical / storage / networking
+    - LITE     # 光模块 Lumentum — AI optical interconnect
+    - SNDK     # 存储 SanDisk — NAND
+    - STX      # 存储 Seagate — datacenter HDD
+    - WDC      # 存储 Western Digital
+    - CSCO     # 网络 Cisco — datacenter networking
 US_SWING_HYPERSCALERS:   # capex source for the AI transmission chain
     - MSFT
     - GOOGL
@@ -29,116 +41,3 @@ US_SWING_BAROMETERS:     # market-state ETFs only; never traded
 # current; a 10% stale value shifts share counts by 10%, not the decision.
 # Holdings themselves still come live from Futu (see CONTEXT.md).
 US_SWING_EQUITY: 100000
-
-US_HOLD:
-    - FUTU: FUTU
-    - TSLA: TSLA
-    - TSM: TSM
-HK_HOLD:
-    - '03690': 美团点评
-    - '00700': 腾讯控股
-CN_HOLD:
-    - SH600519: 贵州茅台
-    - SH600999: 招商证券
-    - SH600036: 招商银行
-US:
-    - AAPL: APPLE        
-    - FUTU: FUTU        
-    - ZM: ZOOM
-    - MSFT: Mircosoft
-    - QCOM: 高通
-    #- YUMC: 百胜中国
-    #- BA: 波音
-    - BILL: Bill
-    #- BTCmain: BTC
-    #- PYPL: PayPal
-    - CLDR: Cloudera
-    - BILI: 哔哩哔哩
-    - BIDU: BAIDU
-    - NIO: NIO
-    - AMZN: Amazon
-    #- MKC: McCormick
-    #- HUBS: Hubspot
-    - TWLO: Twilio
-    - TSM: TSM
-    #- COST: Costco
-    #- INTU: Intuit
-    #- NFLX: Netflix
-    #- APPN: Appian
-    #- ANET: Arista_Networks
-    #- SHOP: Shopify
-    #- SIVB: SVB_Financial_Group
-    #- TTD: The_Trade_Desk
-    - TSLA: Tesla
-    - FB: Facebook
-    #- ZNGA: Zynga
-    #- MA: Mastercard
-    #- MMM: 3M
-    - NVDA: NVIDIA
-    #- RH: RH
-    - ADBE: Adobe_Systems
-    - DIS: Walt_Disney
-    - SBUX: Starbucks
-    - WB: Weibo
-    - AMD: AMD
-    #- VIX: 标普500波动率指数
-    #- SNPS: 新思科技
-    #- KHC: 卡夫亨氏
-    #- GOOS: 加拿大鹅
-    #- PINS: Pinterest
-    - DELL: DELL
-    - NOW: ServiceNow
-    #- XLK: 高科技指数ETF-SPDR
-    - GOOG: Google
-    #- NTAP: NetApp
-    #- HAS: Hasbro
-    #- MTCH: Match
-    #- OKTA: Okta
-    #- DJR: 道琼斯股票房地产投资信托
-HK:
-    - '03690': 美团点评
-    - '00700': 腾讯控股
-    - '01810': 小米集团
-    - '09977': 凤翔股份
-    - '00136': 恒腾网络
-    - '02333': 长城汽车
-    - '06160': 百济神州
-    - '02158': 医度科技
-    - '06618': 京东健康
-CN:
-    - SH600519: 贵州茅台
-    - SZ000333: 美的集团
-    - SH600036: 招商银行
-    - SH601398: 工商银行
-    - SZ000895: 双汇发展
-    - SH600276: 恒瑞医药
-    - SH600667: 太极实业
-    - SH600315: 上海家化
-    - SZ002223: 鱼跃医疗
-    - SZ000651: 格力电器
-    - SZ000002: 万科A
-CN_INDEX:
-    - 000001.SH: 上证综指
-    - 000300.SH: 沪深300
-    - 000905.SH: 中证500
-US_INDEX:
-    - SP500: sp500
-    - DOW: dow
-    - NASDAQ100: nasdaq100
-FUTU_CN_ETF:
-    - SZ159780: 双创ETF
-    - SZ159781: 双创50ETF
-    - SZ159901: 深圳100ETF
-    - SH501043: 沪深300LOF
-    - SH510210: 上证指数ETF
-    - SH513360: 教育ETF
-    # 期权标的
-    - SH510050: 上证50ETF
-    - SH510300: 沪深300ETF
-    - SH510500: 中证500ETF
-    - SH588000: 科创50ETF
-    - SH588080: 科创50ETF易方达
-    - SZ159915: 创业板50ETF
-    - SZ159901: 深圳100ETF
-
-

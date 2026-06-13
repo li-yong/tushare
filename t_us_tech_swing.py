@@ -46,6 +46,7 @@ WATCHLIST_FILE = '/home/ryan/tushare_ryan/select.yml'
 # Defaults double as the fallback if select.yml is missing/unreadable.
 MAG7 = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META', 'AMZN', 'TSLA']
 SEMIS = ['AMD', 'AVGO', 'AMAT', 'ASML', 'LRCX', 'KLAC', 'TSM']
+AI_CHAIN = ['LITE', 'SNDK', 'STX', 'WDC', 'CSCO']  # AI datacenter buildout beyond chips
 HYPERSCALERS = ['MSFT', 'GOOGL', 'META', 'AMZN']
 BAROMETERS = ['QQQ', 'SOXX']                  # QQQ = Nasdaq, SOXX = semis ETF
 ACCOUNT_EQUITY = 0.0                          # hand-maintained, loaded from select.yml
@@ -57,7 +58,7 @@ def _load_watchlist():
     YAML entries may be bare tickers or `TICKER: label` maps — we take the
     ticker either way, so the same loader works across select.yml's styles.
     """
-    global MAG7, SEMIS, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY
+    global MAG7, SEMIS, AI_CHAIN, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY
     try:
         import yaml
         with open(WATCHLIST_FILE) as fh:
@@ -74,6 +75,7 @@ def _load_watchlist():
 
         MAG7 = _tickers('US_SWING_MAG7', MAG7)
         SEMIS = _tickers('US_SWING_SEMIS', SEMIS)
+        AI_CHAIN = _tickers('US_SWING_AI_CHAIN', AI_CHAIN)
         HYPERSCALERS = _tickers('US_SWING_HYPERSCALERS', HYPERSCALERS)
         BAROMETERS = _tickers('US_SWING_BAROMETERS', BAROMETERS)
         ACCOUNT_EQUITY = float(cfg.get('US_SWING_EQUITY', 0) or 0)
@@ -100,7 +102,7 @@ def _position_size(entry, stop, equity):
 
 
 _load_watchlist()
-UNIVERSE = list(dict.fromkeys(MAG7 + SEMIS))  # deduplicated, order preserved
+UNIVERSE = list(dict.fromkeys(MAG7 + SEMIS + AI_CHAIN))  # deduplicated, order preserved
 
 # ── Parameters ────────────────────────────────────────────────────────────────
 MA_WEEKLY         = 20      # 20-week MA for market-state and exit rule
@@ -812,6 +814,32 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         logging.info(f"Report saved → {output_file}")
 
 
+def write_signal_csv(results, path):
+    """Machine-readable per-ticker technical signal, for t_us_resonance.py to join.
+
+    One row per scanned ticker; signal fields are blank when there is no setup.
+    Purely additive — does not affect the text Morning Report.
+    """
+    rows = []
+    for r in results:
+        s = r.get('signal') or {}
+        rows.append({
+            'ticker':        r['ticker'],
+            'close':         r.get('close'),
+            'signal_type':   s.get('type', ''),
+            'confidence':    s.get('confidence', ''),
+            'entry':         s.get('entry'),
+            'stop':          s.get('stop'),
+            'target':        s.get('target'),
+            'rr':            s.get('rr'),
+            'rr_ok':         s.get('rr_ok'),
+            'exit_signal':   r.get('exit_signal'),
+            'earnings_days': r.get('earnings_days'),
+        })
+    pd.DataFrame(rows).to_csv(path, index=False)
+    logging.info(f'Tech signal CSV → {path}')
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     parser = OptionParser(usage='%prog [options]')
@@ -865,6 +893,15 @@ def main():
 
     print_report(market_state, baro_info, results, alerts, out_file,
                  equity=ACCOUNT_EQUITY, stop_status=stop_status, futu_ok=futu_ok)
+
+    # Machine-readable signal CSV (consumed by t_us_resonance.py)
+    out_dir = '/home/ryan/DATA/result'
+    if os.path.isdir(out_dir):
+        date_str = datetime.datetime.now().strftime('%Y%m%d')
+        try:
+            write_signal_csv(results, f'{out_dir}/us_tech_signal_{date_str}.csv')
+        except Exception as e:
+            logging.warning(f'tech signal CSV write failed: {e}')
 
 
 if __name__ == '__main__':
