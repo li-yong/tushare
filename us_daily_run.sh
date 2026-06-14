@@ -13,6 +13,10 @@
 #     <date>.csv + us_resonance_<date>.txt
 #   • Broad consolidation-breakout screener (t_us_breakout_screen.py) across the
 #     US large-cap universe → us_breakout_screen_<date>.{txt,csv}
+#   • Steady-climber screener (t_us_steady_climb.py) across NASDAQ-100: smooth
+#     low-vol uptrends that reclaim dips fast → us_steady_climb_<date>.{txt,csv}
+#   • Out-of-pool searchlight (t_us_searchlight.py): scores NDX-100 names outside
+#     the watchlist on 贵气×兑现 → us_searchlight_<date>.{txt,csv}
 # Fundamentals come from Futu F10 with yfinance fallback (us_fundamentals.py);
 # OpenD down → those stages degrade to yfinance / empty, never crash.
 #
@@ -65,6 +69,21 @@ BO_TXT=/home/ryan/DATA/result/us_breakout_screen_$(date +%Y%m%d).txt
 "$PY" t_us_breakout_screen.py 2>> "$LOG" | tee "$BO_TXT" >> "$LOG"
 bo_rc=${PIPESTATUS[0]}
 echo "----- breakout screen done (rc=$bo_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: steady-climber screen (小步慢涨·跌一点快补回) across NASDAQ-100.
+# Smooth low-vol uptrends that reclaim dips fast — writes its own dated txt+csv.
+# Non-fatal: logs its own rc, never flips the run's exit code.
+run_step "steady-climb" "$PY" t_us_steady_climb.py --universe ndx
+
+# Supplementary: out-of-pool searchlight (池外侦察) — scores every NDX-100 name
+# outside the current watchlist on 贵气×兑现, surfacing stronger names we don't
+# yet track. Writes its own CSV; we tee the human table to a dated report.
+# Non-fatal — its rc never flips the run's exit code.
+echo "----- searchlight start $(ts) -----" >> "$LOG"
+SL_TXT=/home/ryan/DATA/result/us_searchlight_$(date +%Y%m%d).txt
+"$PY" t_us_searchlight.py 2>> "$LOG" | tee "$SL_TXT" >> "$LOG"
+sl_rc=${PIPESTATUS[0]}
+echo "----- searchlight done (rc=$sl_rc) $(ts) -----" >> "$LOG"
 
 if [ $rc -eq 0 ]; then
     echo "===== us_daily_run OK    $(ts) =====" >> "$LOG"
