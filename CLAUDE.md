@@ -20,10 +20,10 @@ A personal quant-trading toolkit, originally for CN A-shares (unmaintained since
 
 Three cron runners, all pinned to `CRON_TZ=America/Los_Angeles` 14:00 (~1h after the US close). Cadence matches how often each stage's underlying data moves; pick the runner accordingly when adding a script. Each runner's primary stage drives its exit code; supplementary stages use the `run_step` helper (or a tee'd block) so a single failure logs its own rc but never flips the run, and OpenD-down stages degrade gracefully.
 
-- **`us_daily_run.sh`** — weekdays (`0 14 * * 1-5`). Primary: `t_us_tech_swing.py` → Morning Report `result/us_tech_swing_<date>.txt`. Supplementary: three-layer chain `t_us_premium.py → t_us_delivery.py → t_us_resonance.py` (贵气×兑现×共振); `t_us_breakout_screen.py` (consolidation breakout); `t_us_steady_climb.py` (小步慢涨·跌一点快补回, NDX-100); `t_us_searchlight.py` (池外 贵气×兑现 侦察). Logs to `us_daily_run.log`.
+- **`us_daily_run.sh`** — weekdays (`0 14 * * 1-5`). Primary: `t_us_tech_swing.py` → Morning Report `result/us_tech_swing_<date>.txt`. Supplementary: three-layer chain `t_us_premium.py → t_us_delivery.py → t_us_resonance.py` (贵气×兑现×共振); `t_us_breakout_screen.py` (consolidation breakout); `t_us_steady_climb.py` (小步慢涨·跌一点快补回, NDX-100); `t_us_searchlight.py` (池外 贵气×兑现 侦察); `t_us_key_kline.py --scan --universe both` (关键K线 择时扫描, SP500∪NDX → `us_key_kline_scan_<date>.txt`). Logs to `us_daily_run.log`.
 - **`us_weekly_run.sh`** — Sundays (`0 14 * * 0`). Slow-moving screens: `t_us_undervalue.py` (超跌优质, SP500∪NDX; primary) + `t_us_watchlist_suggest.py` (print-only — never `--apply` from cron). Logs to `us_weekly_run.log`.
 - **`us_monthly_run.sh`** — 1st of month (`0 14 1 * *`). `t_us_cycle_monitor.py` (DRAM/AI 周期, SEC EDGAR quarterly XBRL — monthly catches every new filing). Logs to `us_monthly_run.log`.
-- Run by hand: `ndx_predictor.py` (quarterly, 3/6/9/12, NDX rebalance); `t_us_key_kline.py` (per-ticker chart annotator, needs `--ticker`).
+- Run by hand: `ndx_predictor.py` (quarterly, 3/6/9/12, NDX rebalance); `t_us_key_kline.py` — `--ticker SYM` annotates one name (chart + 现状 timing/stop block + legend), or `--scan` sweeps a pre-filtered universe (S&P 500 ∪ Nasdaq-100; `--universe sp500|ndx|both`, `--plot-top N`) for names at a fresh entry now, ranked. Not a free-market screener (方法论 §2.1: only quality pools have a real 主语).
 
 ### CN-era orchestration (retired, in `attic/`)
 

@@ -1,0 +1,34 @@
+[
+  {
+    "Id": "500V400000aobkYIAQ",
+    "CaseNumber": "00083388",
+    "Subject": "Native Replication Peer Creation Failure",
+    "Status": "Solved",
+    "Priority": "Normal",
+    "Origin": "Email",
+    "Type": "Support Request",
+    "CreatedDate": "2025-08-19T00:44:18.000+0000",
+    "LastModifiedDate": "2025-08-19T01:05:45.000+0000",
+    "ClosedDate": "2025-08-19T01:05:44.000+0000",
+    "AccountId": null,
+    "ContactId": null,
+    "OwnerId": "0056R00000CHogUQAT",
+    "OriginalSubject": "Automatic reply: [EXTERNAL] Re: Case #00077314 | NCI-DCEG-CGR: NCIVS-p001: VA2438004701| Native Replication Peer Creation Fails"
+  },
+  {
+    "Id": "500V400000aowiUIAQ",
+    "CaseNumber": "00083385",
+    "Subject": "Ignoring S3 Conditional Write Header",
+    "Status": "Solved",
+    "Priority": "High",
+    "Origin": "Internal",
+    "Type": "Support Request",
+    "CreatedDate": "2025-08-18T23:43:58.000+0000",
+    "LastModifiedDate": "2025-08-19T05:19:43.000+0000",
+    "ClosedDate": "2025-08-19T05:19:42.000+0000",
+    "AccountId": "0011N00001BdNLHQA3",
+    "ContactId": "0036R00003whQ1IQAU",
+    "OwnerId": "0056R00000Dm3c7QAB",
+    "OriginalSubject": "Tesla: aus08p1vstfs01:  ALERT: Ignoring S3 conditional write Header 'If-None-Match' received in req=0x1110d1000066b1  Occurred on -cn2 (172.16.3.2) [... - 2025-08-18 23:43:22"
+  }
+]

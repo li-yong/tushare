@@ -1,0 +1,480 @@
+ryan@haha_brain:/hdd2/repo/trading/tushare_ryan$ python t_daily_fundamentals_2.py -e
+fetch_all_f: False
+extract_latest: True
+1 of 1, extracting latest income of 600519.SH
+
+=== DataFrame income ===
+ts_code                     600519.SH
+name                             贵州茅台
+end_date                     20131231
+basic_eps                       14.58
+total_revenue          31070596222.23
+revenue                 30921801316.6
+oth_b_income                      0.0
+n_income_attr_p        15136639784.35
+distable_profit                   0.0
+admin_exp                2834740716.0
+ann_date                   20140325.0
+ass_invest_income                 0.0
+assets_impair_loss         -2004032.3
+biz_tax_surchg          2790747889.49
+comm_exp                     90547.86
+comm_income                  120918.6
+comp_type                         1.0
+compens_payout                    0.0
+compens_payout_refu               0.0
+compr_inc_attr_m_s        828260096.7
+compr_inc_attr_p       15136639784.35
+diluted_eps                     14.58
+div_payt                          0.0
+ebit                    21360380587.3
+ebitda                  21916678096.4
+f_ann_date                 20140325.0
+fin_exp                 -429074364.68
+forex_gain                        0.0
+fv_value_chg_gain                 0.0
+income_tax              5467460544.92
+insur_reser_refu                  0.0
+insurance_exp                     0.0
+int_exp                   35507483.16
+int_income               148673987.03
+invest_income               3010000.0
+minority_gain             828260096.7
+n_asset_mg_income                 0.0
+n_commis_income                   0.0
+n_income               15964899881.05
+n_oth_b_income                    0.0
+n_oth_income                      0.0
+n_sec_tb_income                   0.0
+n_sec_uw_income                   0.0
+nca_disploss               8997287.17
+non_oper_exp             391947775.17
+non_oper_income           32763249.14
+oper_cost               2193920307.99
+oper_exp                          0.0
+operate_profit          21791544952.0
+oth_compr_income                  0.0
+other_bus_cost                    0.0
+out_prem                          0.0
+prem_earned                       0.0
+prem_income                       0.0
+prem_refund                       0.0
+reins_cost_refund                 0.0
+reins_exp                         0.0
+reins_income                      0.0
+report_type                       1.0
+reser_insur_liab                  0.0
+sell_exp                1858132722.71
+t_compr_income         15964899881.05
+total_cogs              9282061270.23
+total_profit           21432360425.97
+undist_profit                     0.0
+une_prem_reser                    0.0
+Name: 25141, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/income.csv
+1 of 1, extracting latest balancesheet of 600519.SH
+
+=== DataFrame balancesheet ===
+ts_code                            600519.SH
+name                                    贵州茅台
+end_date                            20131231
+total_assets                  55454150677.05
+total_liab                    11325058403.79
+money_cap                      25185009331.7
+undistr_porfit                35974971858.64
+invest_real_estate                       0.0
+fa_avail_for_sale                        0.0
+lt_borr                                  0.0
+st_borr                                  0.0
+cb_borr                                  0.0
+acc_exp                                  0.0
+acc_receivable                           0.0
+accounts_receiv                    927222.79
+acct_payable                    284748288.89
+acting_trading_sec                       0.0
+acting_uw_sec                            0.0
+adv_receipts                    3045113586.1
+agency_bus_liab                          0.0
+amor_exp                                 0.0
+ann_date                          20140325.0
+bond_payable                             0.0
+cap_rese                       1374964415.72
+cash_reser_cb                            0.0
+cip                             456328292.13
+client_depos                             0.0
+client_prov                              0.0
+comm_payable                             0.0
+comp_type                                1.0
+const_materials                   1725110.46
+decr_in_disbur                    90527500.0
+defer_inc_non_cur_liab                   0.0
+defer_tax_assets                825372524.65
+defer_tax_liab                           0.0
+deferred_inc                             0.0
+depos                                    0.0
+depos_ib_deposits              2773189099.54
+depos_in_oth_bfi                         0.0
+depos_oth_bfi                            0.0
+depos_received                           0.0
+deriv_assets                             0.0
+deriv_liab                               0.0
+div_payable                              0.0
+div_receiv                               0.0
+estimated_liab                           0.0
+f_ann_date                        20140325.0
+fix_assets                     8523256960.11
+fixed_assets_disp                        0.0
+forex_differ                             0.0
+goodwill                                 0.0
+hfs_assets                               0.0
+hfs_sales                                0.0
+htm_invest                        50000000.0
+indem_payable                            0.0
+indep_acct_assets                        0.0
+indept_acc_liab                          0.0
+int_payable                      27383888.89
+int_receiv                      188599147.23
+intan_assets                   3563308110.51
+inventories                    11836810239.0
+invest_as_receiv                         0.0
+invest_loss_unconf                       0.0
+lending_funds                            0.0
+loan_oth_bank                            0.0
+loanto_oth_bank_fi                       0.0
+lt_amor_exp                       8048744.96
+lt_eqt_invest                      4000000.0
+lt_payable                               0.0
+lt_payroll_payable                       0.0
+lt_rec                                   0.0
+minority_int                   1506875785.45
+nca_within_1y                            0.0
+non_cur_liab_due_1y                      0.0
+notes_payable                            0.0
+notes_receiv                     296084005.0
+oil_and_gas_assets                       0.0
+ordin_risk_reser                 13296286.27
+oth_assets                               0.0
+oth_comp_income                          0.0
+oth_cur_assets                           0.0
+oth_cur_liab                             0.0
+oth_eqt_tools                            0.0
+oth_eqt_tools_p_shr                      0.0
+oth_liab                                 0.0
+oth_nca                                  0.0
+oth_ncl                                  0.0
+oth_payable                    1604688158.14
+oth_receiv                      119574188.82
+payable_to_reinsurer                     0.0
+payables                                 0.0
+payroll_payable                 260284491.74
+ph_invest                                0.0
+ph_pledge_loans                          0.0
+pledge_borr                              0.0
+policy_div_payable                       0.0
+prec_metals                              0.0
+prem_receiv_adva                         0.0
+premium_receiv                           0.0
+prepayment                     4304579299.68
+produc_bio_assets                        0.0
+pur_resale_fa                            0.0
+r_and_d                                  0.0
+refund_cap_depos                         0.0
+refund_depos                             0.0
+reinsur_receiv                           0.0
+reinsur_res_receiv                       0.0
+report_type                              1.0
+reser_lins_liab                          0.0
+reser_lthins_liab                        0.0
+reser_outstd_claims                      0.0
+reser_une_prem                           0.0
+rr_reins_lins_liab                       0.0
+rr_reins_lthins_liab                     0.0
+rr_reins_outstd_cla                      0.0
+rr_reins_une_prem                        0.0
+rsrv_insur_cont                          0.0
+sett_rsrv                                0.0
+sold_for_repur_fa                        0.0
+special_rese                             0.0
+specific_payables                 17770000.0
+st_bonds_payable                         0.0
+st_fin_payable                           0.0
+surplus_rese                   4220803927.18
+taxes_payable                  3311880890.49
+time_deposits                            0.0
+total_cur_assets               41931583434.2
+total_cur_liab                 11307288403.8
+total_hldr_eqy_exc_min_int    42622216487.81
+total_hldr_eqy_inc_min_int    44129092273.26
+total_liab_hldr_eqy           55454150677.05
+total_nca                      13522567242.8
+total_ncl                         17770000.0
+total_share                     1038180000.0
+trad_asset                               0.0
+trading_fl                               0.0
+transac_seat_fee                         0.0
+treasury_share                           0.0
+Name: 23229, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/balancesheet.csv
+1 of 1, extracting latest cashflow of 600519.SH
+
+=== DataFrame cashflow ===
+ts_code                              600519.SH
+name                                      贵州茅台
+end_date                              20131231
+net_profit                      15964899881.05
+amort_intang_assets                31617810.78
+ann_date                            20140325.0
+beg_bal_cash                     22061999850.2
+beg_bal_cash_equ                           0.0
+c_cash_equ_beg_period           22061999850.17
+c_cash_equ_end_period           21991742237.67
+c_disp_withdrwl_invest                     0.0
+c_fr_oth_operate_a                585366816.43
+c_fr_sale_sg                     33233870603.7
+c_inf_fr_operate_a              36713125003.02
+c_paid_for_taxes                12533350979.21
+c_paid_goods_s                   3152308925.47
+c_paid_invest                              0.0
+c_paid_to_for_empl               3135608084.79
+c_pay_acq_const_fiolta           5405740026.23
+c_pay_claims_orig_inco                     0.0
+c_pay_dist_dpcp_int_exp          7391988549.25
+c_prepay_amt_borr                          0.0
+c_recp_borrow                              0.0
+c_recp_cap_contrib                   6000000.0
+c_recp_return_invest                 3010000.0
+comp_type                                  1.0
+conv_copbonds_due_within_1y                0.0
+conv_debt_into_cap                         0.0
+decr_def_inc_tax_assets          -181715611.33
+decr_deferred_exp                          0.0
+decr_inventories                -2171082645.61
+decr_oper_payable                 -63379598.19
+depr_fa_coga_dpba                 520481867.72
+eff_fx_flu_cash                            0.0
+end_bal_cash                     21991742237.7
+end_bal_cash_equ                           0.0
+f_ann_date                          20140325.0
+fa_fnc_leases                              0.0
+finan_exp                            -17474.78
+free_cashflow                  6869896178.8713
+ifc_cash_incr                      120698483.4
+im_n_incr_cash_equ                 -70257612.5
+im_net_cashflow_oper_act        12655024861.92
+incl_cash_rec_saims                  6000000.0
+incl_dvd_profit_paid_sc_ms        631766584.82
+incr_acc_exp                               0.0
+incr_def_inc_tax_liab                      0.0
+incr_oper_payable               -1453960453.18
+invest_loss                         -3010000.0
+loss_disp_fiolta                           0.0
+loss_fv_chg                                0.0
+loss_scr_fa                         8997287.17
+lt_amort_deferred_exp               4197830.59
+n_cap_incr_repur                           0.0
+n_cash_flows_fnc_act            -7385971074.47
+n_cashflow_act                  12655024861.92
+n_cashflow_inv_act              -5339311399.95
+n_depos_incr_fi                  2773189099.54
+n_disp_subs_oth_biz                        0.0
+n_inc_borr_oth_fi                          0.0
+n_incr_cash_cash_equ               -70257612.5
+n_incr_clt_loan_adv                 91447500.0
+n_incr_dep_cbob                  3193267094.01
+n_incr_disp_faas                           0.0
+n_incr_disp_tfa                            0.0
+n_incr_insured_dep                         0.0
+n_incr_loans_cb                            0.0
+n_incr_loans_oth_bank                      0.0
+n_incr_pledge_loan                         0.0
+n_recp_disp_fiolta                         0.0
+n_recp_disp_sobu                           0.0
+n_reinsur_prem                             0.0
+oth_cash_pay_oper_act            1943903415.49
+oth_cash_recp_ral_fnc_act             17474.78
+oth_cashpay_ral_fnc_act                    0.0
+oth_pay_ral_inv_act               692967608.36
+oth_recp_ral_inv_act              756386234.64
+others                                     0.0
+pay_comm_insur_plcy                        0.0
+pay_handling_chrg                   8214142.13
+prem_fr_orig_contr                         0.0
+proc_issue_bonds                           0.0
+prov_depr_assets                    -2004032.3
+recp_tax_rends                             0.0
+report_type                                1.0
+st_cash_out_act                  24058100141.1
+stot_cash_in_fnc_act                6017474.78
+stot_cashout_fnc_act             7391988549.25
+stot_inflows_inv_act              759396234.64
+stot_out_inv_act                 6098707634.59
+uncon_invest_loss                          0.0
+Name: 24851, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/cashflow.csv
+warning, no column named end_date in cols
+warning, no column named name in cols
+warning, no column named ts_code in cols
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/forecast.csv
+1 of 1, extracting latest dividend of 600519.SH
+
+=== DataFrame dividend ===
+ts_code          600519.SH
+name                  贵州茅台
+end_date          20131231
+ann_date        20140325.0
+cash_div            4.1503
+cash_div_tax         4.374
+div_listdate    20140626.0
+div_proc                实施
+ex_date         20140625.0
+imp_ann_date    20140618.0
+pay_date        20140625.0
+record_date     20140624.0
+stk_bo_rate            0.1
+stk_co_rate            0.0
+stk_div                0.1
+Name: 8129, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/dividend.csv
+warning, no column named end_date in cols
+warning, no column named name in cols
+warning, no column named ts_code in cols
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/express.csv
+1 of 1, extracting latest fina_indicator of 600519.SH
+warning, no column named rd_exp in cols
+
+=== DataFrame fina_indicator ===
+ts_code                              600519.SH
+name                                      贵州茅台
+end_date                              20131231
+eps                                      14.58
+roe                                    39.4328
+debt_to_assets                         20.4224
+total_revenue_ps                       29.9279
+netprofit_margin                       51.6299
+adminexp_of_gr                          9.1235
+ann_date                            20140325.0
+ar_turn                              3299.1401
+assets_to_eqt                           1.2566
+assets_turn                             0.6186
+assets_yoy                             23.2364
+basic_eps_yoy                          13.7285
+bps                                    41.0547
+bps_yoy                                24.8098
+ca_to_assets                           75.6149
+ca_turn                                 0.7951
+capital_rese_ps                         1.3244
+cash_ratio                              2.2642
+cfps                                   -0.0677
+cfps_yoy                                6.1544
+cogs_of_sales                           7.0951
+current_exint                    8506715415.36
+current_ratio                           3.7084
+currentdebt_to_debt                    99.8431
+debt_to_eqt                             0.2566
+diluted2_eps                             14.58
+dp_assets_to_eqt                        1.3085
+dt_eps                                   14.58
+dt_eps_yoy                             13.7285
+dt_netprofit_yoy                          15.3
+ebit                             21002851065.1
+ebit_of_gr                             67.5972
+ebit_ps                                20.2305
+ebitda                           21559148574.2
+ebt_yoy                                14.6085
+eqt_to_debt                             3.7635
+eqt_to_interestdebt                    15.2191
+eqt_to_talcapital                      93.8344
+eqt_yoy                                24.8101
+equity_yoy                             24.8101
+expense_of_sales            13.789000000000001
+extra_item                       -314887668.65
+fa_turn                                 4.0534
+fcfe                             10259228310.5
+fcfe_ps                                 9.8819
+fcff                          10259228310.4841
+fcff_ps                                 9.8819
+finaexp_of_gr                           -1.381
+fixed_assets                      8981310362.7
+gc_of_gr                               29.8741
+gross_margin                     28727881008.6
+grossprofit_margin                     92.9049
+impai_ttm                              -0.0064
+int_to_talcap                           6.1656
+interestdebt                     2800572988.43
+invest_capital                   45422789476.2
+longdeb_to_debt                         0.1569
+nca_to_assets                          24.3851
+netdebt                         -22384436343.2
+netprofit_yoy                          13.7402
+networking_capital               8239858687.19
+noncurrent_exint                    17770000.0
+npta                        31.785999999999998
+ocf_to_debt                             1.1174
+ocf_to_shortdebt                        1.1192
+ocf_yoy                                 6.1546
+ocfps                                  12.1896
+op_income                        21788534952.0
+op_of_gr                               70.1356
+op_yoy                                 15.7233
+or_yoy                                  16.883
+profit_dedt                      15451527453.0
+profit_to_gr                           51.3827
+profit_to_op                           68.9796
+q_dt_roe                               10.1886
+q_gc_to_gr                             36.2792
+q_npta                                  8.2169
+q_ocf_to_sales                         37.9465
+q_op_qoq                                2.9004
+q_roe                                  10.0192
+q_saleexp_to_gr                         7.6375
+q_sales_yoy                            37.7411
+quick_ratio                             2.6615
+retained_earnings               40195775785.82
+retainedps                             38.7175
+revenue_ps                             29.7846
+roa                                    41.8165
+roa2_yearly                            41.8165
+roa_dp                      30.136999999999997
+roa_yearly                  31.785999999999998
+roe_dt                                 40.2531
+roe_waa                                  39.43
+roe_yearly                             39.4328
+roe_yoy                                -8.8694
+roic                                   38.0449
+saleexp_to_gr                           5.9804
+surplus_rese_ps                         4.0656
+tangasset_to_intdebt                   13.6492
+tangible_asset                   38225487107.7
+tangibleasset_to_debt                   3.3753
+tangibleasset_to_netdebt                   0.0
+tbassets_to_totalassets                68.9317
+tr_yoy                                 17.4455
+turn_days                            1763.9504
+undist_profit_ps                        34.652
+working_capital                  30624295030.4
+Name: 24501, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/fina_indicator.csv
+1 of 1, extracting latest fina_audit of 600519.SH
+
+=== DataFrame fina_audit ===
+ts_code          600519.SH
+name                  贵州茅台
+end_date          20131231
+ann_date        20140325.0
+audit_agency      立信会计师事务所
+audit_result       标准无保留意见
+audit_sign          杨雄,王晓明
+Name: 12179, dtype: object
+
+
+saved to /home/ryan/DATA/pickle/Stock_Fundamental/fundamentals_2/tmp/600519.SH_20131231/fina_audit.csv

@@ -254,5 +254,30 @@ python t_us_key_kline.py --ticker NVDA --no-earnings
 - `prepare_frame` 改为**全量算指标再切 period**(warmup),并预计算 `range_high` 列。
 - 初吻跨 breakout 按 date 去重;`main` 对区间过短(< CONSOL_DAYS)告警。
 - 实测 `get_earnings_dates` 返回结构与 §5.4 假设一致(index tz-aware、列含 `Surprise(%)`)。
+
+### 落地后修订(2026-06-21,补 §6.3 现状块)
+- 图例只回答"关键K线在哪儿"(历史);新增 `print_status()` 在图例前打印一段**现状(now)**:
+  截至最后一根 bar 的趋势排列(站上 MA20/50/150)、**最近一根进场型关键K线**、以及"现价上车"的
+  止损 / 单笔风险 / 1R。这才正面兑现方法论 §2.2 的本职 **WHEN(现在是否进场点)+ WHERE(止损/1R)**。
+  - 以**当前 close** 作进场参照(而非信号 bar 的 price):一是这才是你真会付的价,二是规避 FIRST_KISS
+    `price==stop` 导致 1R 退化为 0。
+  - 三态:现价跌破止损 → "信号失效,勿追";`≤ ACTIONABLE_RECENT(15) bar` → "★ 新信号·进场敏感窗口";
+    更旧 → "信号偏旧,作参考止损位"。常量 `ACTIONABLE_RECENT` / `ENTRY_TYPES` 集中在常量区。
+  - 纯加法:未改任何检测器阈值(蓝图 §9 告诫别过拟合)。
+
+### 落地后修订(2026-06-21,新增 `--scan` 全池扫描)
+- 新增 `--scan` 模式:在**预过滤池**(S&P 500 ∪ Nasdaq-100,`--universe sp500|ndx|both`)里一遍扫出
+  "此刻处于新鲜进场点"的名字,按 类型→趋势→1R 排名输出表;`--plot-top N` 只给头部画 PNG。
+  - **哲学(关键):这不是全市场筛选器。** 方法论 §2.1 —— 微盘/垃圾股的关键K线"主语"可被伪造
+    (庄家对倒),正是三层框架要滤掉的;裸扫全市场会把假主语全请回来。故只扫指数成分(成分=粗过滤)。
+    工具只在池内找**时机**,从不**加新名字**。
+  - 复用:股票池借 `t_us_undervalue.load_universe`(Wikipedia,当日缓存);批量取数 `_bulk_ohlcv`
+    用一次 `yf.download(group_by='ticker')`(同 undervalue 的 bulk_drops 模式,仍是 yfinance 唯一源)。
+    检测器/`compute_status` 原样复用 —— 为此把 `prepare_frame` 的指标段抽成 `_attach_indicators`,
+    把 `print_status` 的计算段抽成 `compute_status`(返回结构化 dict),单票/扫描共用同一套算法。
+  - 扫描阶段**不画图、不取财报**(几百只联网太慢/会限速);财报双命留给单票 `--ticker` 复看。
+    命中条件 = `fresh_enough && alive`(即单票里的 ★ 行)。
+  - 实测:`--scan --universe ndx` → 101 只有效 / 命中 46,WDC(突破)、ROST/AMD/CRWD/CDNS(初吻)
+    浮到表头,PP 噪音沉底 —— 与"信息集中在少数K线"一致。`--plot-top 2` 正常出 PNG。
 ```
 ```

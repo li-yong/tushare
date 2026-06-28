@@ -4,7 +4,9 @@ US Key K-line Annotator  (关键K线标注脚本)
 
 Given a single US ticker, identify its "key K-lines" over the past N months,
 draw a candlestick chart (with a volume sub-panel), annotate each key bar with
-its type, and print a text legend.
+its type, and print a 现状 (now) summary + a text legend. The legend is HISTORY;
+the 现状 block answers the methodology's actual job — WHEN (am I at an entry
+now?) + WHERE (live stop / 1R risk if I buy at today's close).
 
 Philosophy (see docs/key_kline_methodology.md): a K-line's "key-ness" lives not
 in its SHAPE but in its SUBJECT — position (key level) + volume. So every
@@ -18,11 +20,25 @@ Data layer is reused from t_us_tech_swing.py (ADR-0001: yfinance is the only
 bar source, with stale-cache fallback). Earnings dates come from
 yfinance get_earnings_dates(); offline / failure degrades gracefully.
 
+Two modes:
+  • single name  — annotate one ticker (chart + 现状 + legend).
+  • --scan       — sweep a PRE-FILTERED universe (S&P 500 ∪ Nasdaq-100, index
+                   membership = a coarse quality gate) for names at a FRESH entry
+                   right now, ranked. This is NOT a free-market screener: 方法论
+                   §2.1 — on 微盘/垃圾股 the K-line's 主语 can be faked, which the
+                   三层 framework exists to filter; so we only scan quality pools.
+
 Usage:
   python t_us_key_kline.py --ticker NVDA                  # default period=1y
   python t_us_key_kline.py --ticker NVDA --period 2y
   python t_us_key_kline.py --ticker NVDA --output /tmp/nvda.png
   python t_us_key_kline.py --ticker NVDA --no-earnings    # skip earnings fetch (offline)
+  python t_us_key_kline.py --scan                         # sweep SP500∪NDX, ranked table
+  python t_us_key_kline.py --scan --universe ndx          # just Nasdaq-100
+  python t_us_key_kline.py --scan --plot-top 10           # also draw PNGs for top 10 hits
+  python t_us_key_kline.py --ticker MU --asof 2025-05-01  # 回测: 当时的现状/关键K线
+                          # --asof 只用 ≤该日的 bar, 锚"今天"到该日, 自动 --no-earnings;
+                          # --scan 同样支持; 不传则行为不变。
 
 CWD is assumed to be the repo root /home/ryan/tushare_ryan.
 
@@ -50,7 +66,20 @@ import tabulate as tab_mod
 # bars another way). Importing it triggers its module-level _load_watchlist(),
 # which only reads select.yml; Futu is imported lazily inside functions, so this
 # import does not touch the network or OpenD.
-from t_us_tech_swing import _fetch_daily
+import t_us_tech_swing as _sw
+from t_us_tech_swing import _fetch_daily, _gap_confirmation
+
+# Point-in-time backtest anchor (set via --asof). None = live (今天). Data
+# truncation rides on t_us_tech_swing's _fetch_daily (we set _sw._ASOF too);
+# this local copy anchors key_kline's own "today"-relative window + filenames.
+# None → behaviour is identical to the live path.
+_ASOF: 'pd.Timestamp | None' = None
+
+
+def _now() -> 'pd.Timestamp':
+    """Reference 'today' — _ASOF when backtesting, else the real today."""
+    return _ASOF if _ASOF is not None else pd.Timestamp.today().normalize()
+
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -88,7 +117,7 @@ RESULT_DIR   = '/home/ryan/DATA/result'
 
 PERIOD_DAYS  = {'3mo': 90, '6mo': 180, '1y': 365, '2y': 730}
 
-VOL_AVG_N    = 20      # window for the "average volume" baseline
+VOL_AVG_N    = 20      # window for the volume baseline (rolling median, shift(1))
 
 # 5.1 Breakout
 CONSOL_DAYS  = 60      # look-back window for the consolidation range high
@@ -119,6 +148,25 @@ FATE_POS_LO  = 0.33    # close-in-range <  0.33 → lower third (trap)
 CLIMAX_VOL_MULT = 2.5
 CLIMAX_RNG_MULT = 1.5  # day range >= 1.5 * ATR(14) approx
 
+# 5.7 Per-bar 隔夜跳空 confirmed/faded marker (信噪比, event-only).
+# The 现状 line's gap flag (t_us_tech_swing._gap_confirmation) reads only the LAST
+# bar at a 0.3% noise floor; this detector applies the SAME classification to every
+# historical bar so the gap/fade series is visible like 突破/初吻/PP. The threshold
+# is higher than 0.3% on purpose — a year of micro-gaps would bury the chart; we
+# only mark gaps worth eyeballing (tune for density in one place). And like every
+# other detector it carries a 放量 gate (方法论: never read shape naked) — a gap
+# without volume has no 主语 and is just noise; collect_key_bars also drops gaps
+# already explained by a structural signal (突破/初吻/PP/财报) on the same bar.
+GAP_MARK_MIN_PCT = 5.0  # |overnight gap| (%) required to mark a bar
+GAP_VOL_MULT     = 1.5  # 放量 gate: gap-day volume >= this * vol_avg20 (主语=真放量)
+
+# 5.6 现状 (now) summary — answers WHEN(am I at an entry?) + WHERE(live stop / 1R).
+# An entry-type key bar is "fresh / actionable" only if it printed within this many
+# trading bars of the last bar; older ones are history, not a current invitation
+# (方法论 §2.2: 进场要敏感). Entry types only — CLIMAX is event-only, never an entry.
+ACTIONABLE_RECENT = 15
+ENTRY_TYPES = ('BREAKOUT', 'FIRST_KISS', 'POCKET_PIVOT', 'EARNINGS_GAP')
+
 # Annotation colors per type
 TYPE_COLORS = {
     'BREAKOUT':     '#1a9850',  # green
@@ -126,29 +174,43 @@ TYPE_COLORS = {
     'POCKET_PIVOT': '#756bb1',  # purple
     'EARNINGS_GAP': '#d73027',  # red (overridden by fate below)
     'CLIMAX':       '#999999',  # grey
+    'GAP':          '#666666',  # grey (overridden by GAP_DIR_COLORS below)
 }
 FATE_COLORS = {
-    'CONTINUATION': '#d4af37',  # gold
-    'TRAP':         '#d73027',  # red
+    'CONTINUATION': '#d4af37',  # gold  (earnings 续涨命)
+    'TRAP':         '#d73027',  # red   (earnings 陷阱)
+}
+# GAP color is keyed ONLY on gap direction, with deliberately NON-valenced hues
+# (not candle green/red). A 5y / 4438-event backtest (docs/key_kline_methodology.md
+# §8.2) showed the close-vs-open "confirmed/faded" split does NOT predict forward
+# trend — faded up-gaps actually resume UP as much as confirmed ones. So coloring a
+# fade orange/red would imply a bearish read the data rejects; the marker is an
+# event tag, not a forecast. Intraday hold/give-back is shown factually in the
+# label's tail arrow, never in color.
+GAP_DIR_COLORS = {
+    True:  '#3b82f6',  # gap-up event   → blue   (neutral)
+    False: '#8b5cf6',  # gap-down event → violet (neutral)
 }
 
 
 # ── Data / indicators ──────────────────────────────────────────────────────────
-def prepare_frame(ticker: str, period: str) -> pd.DataFrame:
-    """Attach indicators on the FULL history, then slice to `period`.
+def _attach_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """Add ma20/50/150, vol_avg20, range_high, atr14 to an OHLCV frame in place.
 
-    Indicators (MA / vol-avg / ATR / range-high) are computed BEFORE slicing so
-    they are "warm" at the left edge of the displayed window — otherwise MA50/
-    MA150 and the 60-day breakout range would be NaN / truncated for the first
-    weeks of the chart, silently swallowing early signals (review #4 warmup)."""
-    df = _fetch_daily(ticker)
-    if df.empty:
-        return df
-
+    MUST be called on the FULL history before any period slicing (warmup): MA150
+    and the CONSOL_DAYS breakout range need ~150 / 60 prior bars, else the left
+    edge is NaN / truncated and early signals are silently swallowed (review #4).
+    Shared by prepare_frame (single-ticker) and the --scan path so both compute
+    indicators identically."""
     df['ma20']      = df['close'].rolling(20).mean()
     df['ma50']      = df['close'].rolling(50).mean()
     df['ma150']     = df['close'].rolling(150).mean()
-    df['vol_avg20'] = df['volume'].rolling(VOL_AVG_N).mean()
+    # Volume baseline: rolling MEDIAN, shifted to exclude today. Median (not mean)
+    # so a single mechanical-volume bar — quad-witching / index-rebalance day, e.g.
+    # MPWR 2025-12-19 printed vol×9 with +0.8% and closed at the low — doesn't
+    # poison the baseline for the next 20 bars and silently suppress real signals;
+    # shift(1) so a spike never dilutes its own ratio (审 2025-12-19 复盘).
+    df['vol_avg20'] = df['volume'].rolling(VOL_AVG_N).median().shift(1)
     # Consolidation-range high over the prior CONSOL_DAYS bars (shift(1) excludes
     # today); precomputed on full history so a breakout near the window's left
     # edge sees its real prior range, not a window-truncated one.
@@ -161,9 +223,17 @@ def prepare_frame(ticker: str, period: str) -> pd.DataFrame:
         (df['low'] - prev_close).abs(),
     ], axis=1).max(axis=1)
     df['atr14'] = tr.rolling(14).mean()
+    return df
 
+
+def prepare_frame(ticker: str, period: str) -> pd.DataFrame:
+    """Fetch full history, attach indicators, then slice to `period` (warmup)."""
+    df = _fetch_daily(ticker)
+    if df.empty:
+        return df
+    _attach_indicators(df)
     n_days = PERIOD_DAYS.get(period, 365)
-    cutoff = pd.Timestamp.today().normalize() - pd.Timedelta(days=n_days)
+    cutoff = _now() - pd.Timedelta(days=n_days)
     return df[df.index >= cutoff].copy()
 
 
@@ -301,7 +371,7 @@ def detect_earnings_gaps(df: pd.DataFrame, ticker: str, fetch: bool = True) -> l
 
     Degrades gracefully: any failure / empty result / --no-earnings → []."""
     if not fetch:
-        logging.info('Earnings fetch skipped (--no-earnings)')
+        logging.debug('Earnings fetch skipped (--no-earnings)')  # debug: --scan calls this per-ticker
         return []
     try:
         ed = yf.Ticker(ticker).get_earnings_dates(limit=EARN_LIMIT)
@@ -397,11 +467,62 @@ def detect_volume_climax(df: pd.DataFrame) -> list:
     return out
 
 
+def detect_gap_fade(df: pd.DataFrame) -> list:
+    """5.7 Per-bar 放量隔夜跳空 marker (event-only, no stop, NON-predictive).
+
+    Marks each bar that gapped (|open/prevclose| ≥ GAP_MARK_MIN_PCT) on volume
+    (≥ GAP_VOL_MULT × vol_avg20 — never read shape naked). It records two FACTS:
+    the overnight gap (direction + size) and the intraday 尾盘 (close vs open).
+
+    DELIBERATELY not a forecast: a 5y / 4438-event backtest (docs/key_kline_
+    methodology.md §8.2) showed the close-vs-open split does NOT predict forward
+    trend (faded up-gaps resume up as much as confirmed ones). So 'fate' is a
+    neutral 尾盘↗/↘ tag, color is by gap direction only, and the marker is
+    background context — not a buy/avoid signal and not used in any ranking."""
+    out = []
+    idx = df.index
+    open_ = df['open'].values
+    close = df['close'].values
+    high = df['high'].values
+    vol = df['volume'].values
+    vavg = df['vol_avg20'].values
+    prev_close = df['close'].shift(1).values
+    for i in range(1, len(df)):
+        pc, o, c = prev_close[i], open_[i], close[i]
+        if not (pc > 0 and o > 0):
+            continue
+        gap = (o / pc - 1) * 100
+        if abs(gap) < GAP_MARK_MIN_PCT:
+            continue
+        # 放量 gate: a gap with no volume has no 主语 (方法论). Skip 缩量 gaps.
+        if np.isnan(vavg[i]) or vavg[i] <= 0:
+            continue
+        vol_ratio = vol[i] / vavg[i]
+        if vol_ratio < GAP_VOL_MULT:
+            continue
+        up = gap > 0
+        intraday = (c / o - 1) * 100
+        arrow = '↑' if up else '↓'
+        # 'fate' here is a NEUTRAL factual tag (尾盘 close vs open), not a forecast.
+        # The old CONFIRMED/FADED ("高信噪比"/"假动作") framing implied the gap's
+        # intraday hold predicted forward trend; the backtest rejects that, so we
+        # only state what happened: did the close finish above or below the open.
+        tail = '尾盘↗' if c >= o else '尾盘↘'
+        out.append({
+            'date': idx[i], 'type': 'GAP', 'price': float(high[i]),
+            'note': f'放量跳空 gap{arrow}{gap:+.1f}% 日内{intraday:+.1f}% '
+                    f'vol×{vol_ratio:.1f} {tail}(收{"≥" if c >= o else "<"}开)',
+            'fate': tail,
+            'stop': None,  # event-only, no entry → no stop
+        })
+    return out
+
+
 # ── Aggregation ─────────────────────────────────────────────────────────────────
 # Priority for resolving same-day collisions / draw order (high → low).
 _TYPE_PRIORITY = {
     'EARNINGS_GAP': 0, 'BREAKOUT': 1, 'FIRST_KISS': 2,
-    'POCKET_PIVOT': 3, 'CLIMAX': 4,
+    'POCKET_PIVOT': 3, 'CLIMAX': 4, 'GAP': 5,
 }
 
 
@@ -415,6 +536,11 @@ def collect_key_bars(df: pd.DataFrame, ticker: str, fetch_earnings: bool = True)
     bars += detect_pocket_pivot(df)
     bars += detect_earnings_gaps(df, ticker, fetch=fetch_earnings)
     bars += detect_volume_climax(df)
+    # Gap/fade is the noisiest layer — keep it only where it adds NEW information:
+    # drop gaps already explained by a structural signal (突破/初吻/PP/财报) on the
+    # same bar, so 跳空 marks surface only the gap days those detectors missed.
+    structural_dates = {b['date'] for b in bars if b['type'] in ENTRY_TYPES}
+    bars += [g for g in detect_gap_fade(df) if g['date'] not in structural_dates]
     bars.sort(key=lambda b: (b['date'], _TYPE_PRIORITY.get(b['type'], 9)))
     return bars
 
@@ -423,6 +549,8 @@ def collect_key_bars(df: pd.DataFrame, ticker: str, fetch_earnings: bool = True)
 def _annotation_color(kb: dict) -> str:
     if kb['type'] == 'EARNINGS_GAP' and kb.get('fate') in FATE_COLORS:
         return FATE_COLORS[kb['fate']]
+    if kb['type'] == 'GAP':
+        return GAP_DIR_COLORS['gap↑' in kb['note']]  # color by gap direction only
     return TYPE_COLORS.get(kb['type'], '#000000')
 
 
@@ -440,6 +568,12 @@ def _annotation_label(kb: dict) -> str:
         return f'{arrow}·{tag}'
     if t == 'CLIMAX':
         return '量'
+    if t == 'GAP':
+        # Two factual arrows: overnight gap dir + intraday 尾盘 dir. No ✓/✗ — the
+        # close-vs-open outcome is not a buy/avoid verdict (see backtest).
+        gap_arrow = '↑' if 'gap↑' in kb['note'] else '↓'
+        tail_arrow = '↗' if '↗' in (kb.get('fate') or '') else '↘'
+        return f'跳空{gap_arrow}{tail_arrow}'
     return t
 
 
@@ -456,8 +590,19 @@ def plot_chart(df: pd.DataFrame, key_bars: list, ticker: str, out_png: str):
                                gridstyle=':', y_on_right=False)
 
     plot_df = df[['open', 'high', 'low', 'close', 'volume']]
+    # Draw the MA lines from OUR warm columns (computed on full history before the
+    # period slice), NOT mplfinance's mav=(20,50) which would RE-compute on the
+    # sliced window — that leaves MA20/MA50 NaN for the first ~20/50 bars and makes
+    # left-edge breakout/初吻 annotations appear to miss the (missing) MA line, even
+    # though detection used the correct warm value. addplot keeps chart == detector.
+    ma_plots = []
+    if df['ma20'].notna().any():
+        ma_plots.append(mpf.make_addplot(df['ma20'], color='#f59e0b', width=1.0))  # MA20 amber
+    if df['ma50'].notna().any():
+        ma_plots.append(mpf.make_addplot(df['ma50'], color='#3366cc', width=1.0))  # MA50 blue
     fig, axes = mpf.plot(
-        plot_df, type='candle', volume=True, mav=(20, 50),
+        plot_df, type='candle', volume=True,
+        addplot=ma_plots if ma_plots else None,
         style=style, figsize=(16, 9), returnfig=True,
         ylabel='Price', ylabel_lower='Volume',
         warn_too_much_data=10**6,
@@ -467,6 +612,11 @@ def plot_chart(df: pd.DataFrame, key_bars: list, ticker: str, out_png: str):
     # title path goes through styled rcParams that lack CJK glyphs).
     fig.suptitle(f'{ticker} 关键K线  {start}~{end}',
                  fontproperties=CJK_FONT, fontsize=14, fontweight='bold')
+    # Legend for the (custom-drawn) MA lines — mav=() would have auto-labelled them.
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[Line2D([], [], color='#f59e0b', label='MA20'),
+                       Line2D([], [], color='#3366cc', label='MA50')],
+              loc='upper left', fontsize=9, framealpha=0.6)
     span = df['high'].max() - df['low'].min()
     offset = span * 0.04 if span > 0 else 1.0
 
@@ -508,6 +658,105 @@ def plot_chart(df: pd.DataFrame, key_bars: list, ticker: str, out_png: str):
     logging.info(f'Chart saved: {out_png}')
 
 
+# ── 现状 (now) summary ─────────────────────────────────────────────────────────
+def compute_status(df: pd.DataFrame, key_bars: list) -> dict:
+    """Cross-section as of the LAST bar, as structured data (no printing).
+
+    Shared by print_status (single-ticker) and run_scan (the table). It answers
+    the methodology's actual job — WHEN (am I at an entry now?) + WHERE (live stop
+    / 1R if I buy at today's close). It treats the current close as the entry
+    reference (not the signal bar's price): that's what you'd actually pay, and it
+    dodges the FIRST_KISS case where price == stop makes 1R degenerate to zero
+    (方法论 §2.2 / §6.2).
+
+    Returns: {price, date, above, posture, ma{20,50,150}_ok, fresh (KeyBar|None),
+    bars_ago, stop, risk_pct, alive (px>stop), fresh_enough (within window)}."""
+    if df.empty:
+        return {}
+    last = df.iloc[-1]
+    px = float(last['close'])
+    st = {'price': px, 'date': df.index[-1].strftime('%Y-%m-%d'),
+          'fresh': None, 'bars_ago': None, 'stop': None, 'risk_pct': None,
+          'alive': False, 'fresh_enough': False,
+          # 信噪比 flag for today's bar: 隔夜跳空被尾盘确认了吗? (memory:
+          # overnight-vs-intraday-information). None when no meaningful gap.
+          'gap': _gap_confirmation(df)}
+
+    above = 0
+    for n in (20, 50, 150):
+        ma = last.get(f'ma{n}')
+        ok = (ma is not None) and (not pd.isna(ma)) and (px >= ma)
+        st[f'ma{n}_ok'] = bool(ok) if (ma is not None and not pd.isna(ma)) else None
+        above += 1 if ok else 0
+    st['above'] = above
+    st['posture'] = ('多头排列' if above == 3 else '偏多' if above == 2 else
+                     '偏弱' if above == 1 else '空头')
+
+    entries = [kb for kb in key_bars if kb['type'] in ENTRY_TYPES
+               and kb.get('stop') is not None]
+    if not entries:
+        return st
+    fresh = entries[-1]  # key_bars is date-sorted → last entry = most recent
+    try:
+        bars_ago = (len(df) - 1) - df.index.get_loc(fresh['date'])
+    except KeyError:
+        bars_ago = None
+    stop = fresh['stop']
+    st.update({
+        'fresh': fresh, 'bars_ago': bars_ago, 'stop': stop,
+        'risk_pct': (px - stop) / px if px else None,
+        'alive': px > stop,
+        'fresh_enough': bars_ago is not None and bars_ago <= ACTIONABLE_RECENT,
+    })
+    return st
+
+
+def print_status(df: pd.DataFrame, key_bars: list, ticker: str):
+    """Human-readable 现状 block for the single-ticker path (uses compute_status).
+
+    The legend below is HISTORY (where the key bars were); this block is the only
+    one that answers WHEN + WHERE."""
+    st = compute_status(df, key_bars)
+    if not st:
+        return
+    px = st['price']
+    ribbon = []
+    for n in (20, 50, 150):
+        ok = st.get(f'ma{n}_ok')
+        ribbon.append(f'MA{n} —' if ok is None else f'MA{n} {"✓" if ok else "✗"}')
+    print(f'\n{ticker} 现状  (截至 {st["date"]} 收 ${px:.2f})')
+    print(f'  趋势: {" · ".join(ribbon)}  → {st["posture"]}')
+
+    g = st.get('gap')
+    if g:
+        # Factual gloss only: state what the close did vs the open.回测 (4438 events)
+        # 显示 收盘守住/回吐 并不预示后续趋势 — 不下"可信/勿信"的判断。
+        gloss = ('尾盘守住开盘(收≥开)' if g['confirmed']
+                 else '尾盘回吐(收<开),日内方向≠隔夜跳空方向')
+        print(f'  今日K线: 跳空 {g["gap_pct"]:+.1f}% · 日内 {g["intraday_pct"]:+.1f}% '
+              f'→ {g["label"]} ({gloss})')
+
+    fresh = st['fresh']
+    if fresh is None:
+        print('  进场信号: 区间内无进场型关键K线。')
+        return
+    ago_str = f'{st["bars_ago"]} bar 前' if st['bars_ago'] is not None else '?'
+    print(f'  最近进场型关键K线: {fresh["date"].strftime("%Y-%m-%d")} '
+          f'{fresh["type"]}({_annotation_label(fresh)}, {ago_str})')
+
+    stop, risk_pct = st['stop'], st['risk_pct']
+    if not st['alive']:
+        # Current close already at/below the implied stop → premise broken.
+        print(f'  止损 ${stop:.2f} · 现价已跌破止损 → 信号失效,勿追。')
+    else:
+        print(f'  若现价上车: 买 ${px:.2f} / 止损 ${stop:.2f} / '
+              f'单笔风险 {risk_pct * 100:.1f}% (1R=${px - stop:.2f})')
+        if st['fresh_enough']:
+            print(f'  ★ {ACTIONABLE_RECENT} 日内新信号 — 进场敏感窗口,可结合基本面三层确认。')
+        else:
+            print('  信号偏旧(超出新鲜窗口),作为参考止损位,等下一根关键K线。')
+
+
 # ── Text legend ──────────────────────────────────────────────────────────────────
 def print_legend(key_bars: list, ticker: str):
     if not key_bars:
@@ -534,21 +783,160 @@ def print_legend(key_bars: list, ticker: str):
     print(f'\n统计: {summary}  (共 {len(key_bars)} 根)')
 
 
+# ── Universe scan (--scan) ──────────────────────────────────────────────────────
+# Philosophy: this is NOT a free-market screener. 方法论 §2.1 — on garbage/微盘股
+# the K-line's "主语" can be faked (庄家对倒), which is exactly what the 三层 framework
+# exists to filter out. So we scan a PRE-FILTERED universe (S&P 500 ∪ Nasdaq-100,
+# index membership = a coarse quality/liquidity gate), reusing t_us_undervalue's
+# loader. The scan only finds TIMING within that pool; it never adds names.
+SCAN_MIN_BARS = CONSOL_DAYS + 5   # need enough history for range_high to warm up
+
+
+def _bulk_ohlcv(tickers: list, period: str = '1y') -> dict:
+    """One batched yf.download → {ticker: OHLCV DataFrame} in _fetch_daily's schema
+    (lowercase open/high/low/close/volume, tz-naive DatetimeIndex). yfinance stays
+    the sole source (ADR-0001); this is the same bulk pattern as undervalue's
+    bulk_drops, just keeping full OHLCV instead of Close-only."""
+    import yfinance as yf
+    logging.info(f'批量下载 {len(tickers)} 只 {period} 日线 ...')
+    data = yf.download(tickers, period=period, auto_adjust=True, progress=False,
+                       group_by='ticker', threads=True)
+    out = {}
+    multi = len(tickers) > 1
+    for t in tickers:
+        try:
+            sub = data[t] if multi else data
+            df = sub.rename(columns=str.lower)[['open', 'high', 'low', 'close', 'volume']].dropna()
+        except Exception:
+            continue
+        if len(df) < SCAN_MIN_BARS:
+            continue
+        idx = pd.to_datetime(df.index)
+        if idx.tz is not None:
+            idx = idx.tz_convert(None)
+        df.index = idx
+        if _ASOF is not None:                 # point-in-time: 丢弃 asof 之后的 bar
+            df = df[df.index <= _ASOF]
+            if len(df) < SCAN_MIN_BARS:
+                continue
+        out[t] = df
+    logging.info(f'有效行情 {len(out)} 只 (其余上市不足/取数失败已跳过)')
+    return out
+
+
+def run_scan(universe: str, force: bool, plot_top: int):
+    """Scan a pre-filtered universe for names at a FRESH actionable entry now.
+
+    No plotting / no earnings during the sweep (too many network calls over
+    hundreds of names); detectors run in-process. Emits a ranked table; only the
+    top `plot_top` survivors get a PNG (reusing the single-ticker plot path)."""
+    from t_us_undervalue import load_universe
+
+    tickers = load_universe(universe, force)
+    if not tickers:
+        logging.error('股票池为空 — 无法扫描(检查网络/Wikipedia 或 --universe)。')
+        sys.exit(1)
+    frames = _bulk_ohlcv(tickers, period='1y')
+    if not frames:
+        logging.error('无有效行情 — 中止。')
+        sys.exit(1)
+
+    rows = []
+    for t, df in frames.items():
+        _attach_indicators(df)
+        # Earnings are skipped in scan (王中之王 still surfaces as a BREAKOUT/PP at
+        # the gap bar; full 财报双命 is a per-name --ticker follow-up).
+        key_bars = collect_key_bars(df, t, fetch_earnings=False)
+        st = compute_status(df, key_bars)
+        if not st or st['fresh'] is None:
+            continue
+        # "发现机会" = a fresh entry whose stop is still intact (the ★ condition).
+        if not (st['fresh_enough'] and st['alive']):
+            continue
+        rows.append({
+            'ticker': t, 'type': st['fresh']['type'], 'posture': st['posture'],
+            'above': st['above'], 'risk_pct': st['risk_pct'] * 100,
+            'bars_ago': st['bars_ago'], 'price': st['price'], 'stop': st['stop'],
+            'gap': (st.get('gap') or {}).get('label', ''),
+        })
+
+    # Rank: high-signal types first (财报/突破/初吻 > PP), then stronger trend
+    # (more MAs led), then tighter 1R. Floats the rare quality bars above PP noise.
+    rows.sort(key=lambda r: (_TYPE_PRIORITY.get(r['type'], 9), -r['above'], r['risk_pct']))
+
+    if not rows:
+        print(f'\n{universe}: 今日无"新鲜且未破止损"的进场型关键K线(观望)。')
+        return
+
+    table = [[r['ticker'], r['posture'], r['type'], f"{r['risk_pct']:.1f}",
+              r['bars_ago'], f"{r['price']:.2f}", f"{r['stop']:.2f}", r['gap'] or '—']
+             for r in rows]
+    print(f'\n关键K线扫描 · {universe.upper()}  ({len(frames)} 只有效 / 命中 {len(rows)})')
+    print(tab_mod.tabulate(
+        table, headers=['代码', '趋势', '类型', '风险%', '几bar前', '现价', '止损', '今日跳空'],
+        tablefmt='github'))
+    print('\n读法: 财报/BREAKOUT/FIRST_KISS 优先于孤立 POCKET_PIVOT;'
+          '再要 多头排列 + 合理 1R(约 2–8%);剔除 偏弱/空头 与 R 离谱者。'
+          '孤立 PP 在大盘上涨日会扎堆,当背景看。'
+          '今日跳空 gap↑/↓=隔夜跳空方向,✓收≥开 / ✗fade收<开(仅描述当日尾盘,'
+          '回测证实不预示后续趋势);空白=今日无显著跳空。纯背景信息,不改排序、勿当买卖信号。')
+
+    if plot_top > 0:
+        date_str = (_ASOF.strftime('%Y%m%d') if _ASOF is not None
+                    else datetime.datetime.now().strftime('%Y%m%d'))
+        base = RESULT_DIR if os.path.isdir(RESULT_DIR) else '.'
+        for r in rows[:plot_top]:
+            t = r['ticker']
+            try:
+                df = prepare_frame(t, '1y')      # full plot path (cache + earnings)
+                kb = collect_key_bars(df, t, fetch_earnings=True)
+                plot_chart(df, kb, t, f'{base}/key_kline_{t}_{date_str}.png')
+            except Exception as e:
+                logging.warning(f'{t}: plot failed ({e})')
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────────
 def main():
-    parser = OptionParser(usage='%prog --ticker SYM [options]')
+    parser = OptionParser(usage='%prog --ticker SYM [options]  |  %prog --scan [options]')
     parser.add_option('--ticker', dest='ticker', default=None,
-                      help='US ticker to analyze (required)')
+                      help='US ticker to analyze (single-name mode)')
     parser.add_option('--period', dest='period', default='1y',
                       help='look-back window: 3mo|6mo|1y|2y (default 1y)')
     parser.add_option('--output', dest='output', default=None,
                       help='PNG output path (default: result/key_kline_<ticker>_<date>.png)')
     parser.add_option('--no-earnings', dest='no_earnings', action='store_true',
                       default=False, help='Skip earnings fetch (offline mode)')
+    parser.add_option('--scan', dest='scan', action='store_true', default=False,
+                      help='Scan a pre-filtered universe for fresh entries (no --ticker)')
+    parser.add_option('--universe', dest='universe', default='both',
+                      help='--scan pool: sp500 | ndx | both (default both)')
+    parser.add_option('--plot-top', dest='plot_top', type='int', default=0,
+                      help='--scan: also draw PNGs for the top N ranked hits (default 0)')
+    parser.add_option('--force', dest='force', action='store_true', default=False,
+                      help='--scan: ignore the day-cached universe list and re-fetch')
+    parser.add_option('--asof', dest='asof', default=None,
+                      help='Backtest as-of YYYY-MM-DD: use only bars ≤ that day and '
+                           'anchor "today" there. Forces --no-earnings (the live '
+                           'calendar would leak future dates).')
     opts, _ = parser.parse_args()
 
+    global _ASOF
+    if opts.asof:
+        try:
+            _ASOF = pd.Timestamp(opts.asof).normalize()
+        except ValueError:
+            parser.error(f'--asof 无法解析: {opts.asof}')
+        _sw._ASOF = _ASOF            # data layer (_fetch_daily) truncates to ≤ asof
+        opts.no_earnings = True      # live earnings calendar would leak future dates
+        logging.info(f'AS-OF backtest mode: anchoring to {_ASOF.date()} (no-earnings forced)')
+
+    if opts.scan:
+        logging.info(f'Key K-line SCAN: universe={opts.universe} plot_top={opts.plot_top}')
+        run_scan(opts.universe, opts.force, opts.plot_top)
+        return
+
     if not opts.ticker:
-        parser.error('--ticker is required')
+        parser.error('give --ticker SYM (single name) or --scan (universe)')
     ticker = opts.ticker.upper()
     period = opts.period
 
@@ -569,11 +957,13 @@ def main():
 
     out_png = opts.output
     if out_png is None:
-        date_str = datetime.datetime.now().strftime('%Y%m%d')
+        date_str = (_ASOF.strftime('%Y%m%d') if _ASOF is not None
+                    else datetime.datetime.now().strftime('%Y%m%d'))
         base = RESULT_DIR if os.path.isdir(RESULT_DIR) else '.'
         out_png = f'{base}/key_kline_{ticker}_{date_str}.png'
 
     plot_chart(df, key_bars, ticker, out_png)
+    print_status(df, key_bars, ticker)
     print_legend(key_bars, ticker)
 
 

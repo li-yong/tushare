@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Perl5Settings">
+    <option name="libRootUrls">
+      <list>
+        <option value="file://$PROJECT_DIR$/env/lib/python3.5/site-packages" />
+      </list>
+    </option>
+  </component>
+</project>

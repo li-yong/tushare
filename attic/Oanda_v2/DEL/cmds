@@ -1,0 +1,2 @@
+cat oandabot.log  |egrep -v "Update tick|not enabled|not see enough|candle close\:" | egrep -i "Candle close|buy|strategy|bit|trailingstop|OpenB|OpenS|oanda_backtest|stoploss" | egrep -i "OpenB|OpenS|Close order|Bit|good|bad|meat"|grep bad
+

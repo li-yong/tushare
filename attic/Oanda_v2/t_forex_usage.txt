@@ -1,0 +1,8 @@
+Open two consoles (in tmux)
+
+
+C1: Run the indicator/stratey, filter by history performance, then update the DB tbl.
+python  ~/repo/trading/oandapybot-ubuntu/t_forex_live_check.py -s -0  |  tee -a DEL_check.log | grep -i NOTE
+
+C2: Monitor the DB table, place order on Oanda.
+python ~/repo/trading/oandapybot-ubuntu/t_ph_strategy.py 

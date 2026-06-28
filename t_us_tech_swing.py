@@ -6,7 +6,8 @@ US Tech Swing Trade Scanner  (session 81 framework)
   Layer 1 — Market state  : QQQ + SOXX vs 20-week MA → STRONG / MIXED / WEAK
   Layer 2 — Entry signal  : breakout (STRONG) or pullback to MA (MIXED/WEAK)
   Layer 3 — Pre-trade setup: entry / stop (technical) / target / R:R ≥ 2:1
-  Layer 4 — Position mgmt : move stop at +15%, trim at +25%, exit on MA breach
+  Layer 4 — Position mgmt : breakeven stop at +30%, trim only on weakness
+                            (≥+25% AND weekly close < 10-week MA), exit on 20wMA breach
 
 AI capex transmission chain (leading indicator for semis):
   Hyperscaler Capex ↑ → NVDA → AVGO → AMAT/LRCX/KLAC → TSM
@@ -15,6 +16,9 @@ Usage:
   python t_us_tech_swing.py                  # full scan + Futu positions
   python t_us_tech_swing.py --no-futu        # skip Futu (market closed / data only)
   python t_us_tech_swing.py --ticker NVDA    # single ticker
+  python t_us_tech_swing.py --ticker MU --asof 2025-05-01   # 回测: 当时的 report
+                                             # --asof 只用 ≤该日的 bar, 锚"今天"到该日,
+                                             # 自动 --no-futu, 不查财报; 不传则行为不变。
 """
 
 import sys
@@ -111,8 +115,15 @@ VOL_BREAKOUT_MULT = 1.5     # breakout volume must be ≥ 1.5× 5-week avg
 PULLBACK_TOL      = 0.015   # price within 1.5% of MA counts as "touching"
 PULLBACK_STOP_PCT = 0.03    # stop placed 3% below the support MA
 MIN_RR            = 2.0     # minimum acceptable risk:reward ratio
-BREAKEVEN_PCT     = 15.0    # move stop to breakeven at +15%
-TRIM_PCT          = 25.0    # trim 50% at +25%
+MA_WEEKLY_FAST    = 10      # 10-week MA: momentum line gating the partial trim
+BREAKEVEN_PCT     = 30.0    # lock stop to breakeven only after a real cushion.
+                            # +30% (was 15): a pullback to cost is then a ~23%
+                            # reversal, not normal chop — a normal pullback can't
+                            # shake a working winner out flat before it gaps.
+TRIM_PCT          = 25.0    # min gain before a WEAKNESS-triggered partial trim
+                            # (trim on momentum cracking, never at a price target —
+                            #  most return lives in rare explosive continuation; see
+                            #  return-structure finding / us_return_concentration)
 LAYOUT_DAYS_MIN   = 14      # earnings layout window: 2 weeks out
 LAYOUT_DAYS_MAX   = 28      # earnings layout window: 4 weeks out
 
@@ -124,6 +135,20 @@ KEY_CLUSTER_PCT   = 0.015   # swing lows within 1.5% collapse into one level
 KEY_STOP_MIN_PCT  = 0.02    # stop must sit ≥2% below entry (avoid whipsaw)
 KEY_STOP_MAX_PCT  = 0.15    # ignore support more than 15% below entry (too wide)
 
+# Gap-confirmation 信噪比 filter (see memory: overnight-vs-intraday-information).
+# QQQ 27y: overnight 段(昨收→今开) carries ~all the drift, the intraday 段
+# (今开→今收) carries 73% of the variance but negative drift = noise. So a fresh
+# gap only counts as信息 when the close holds the open (高开站稳 / 低开压住);
+# 高开低走 is gap-fill 噪声. Latest-bar flag only — annotates, never gates.
+GAP_MIN_PCT       = 0.3     # |overnight gap| below this (%) is noise, not a real gap
+# Gap-strength tiers, calibrated on SP500∪NDX 5y (us_return_concentration):
+# P(day is a top-1% move | gap in bucket) — 弱 +2% lift 7x · 确认 +3% lift 17x ·
+# 强 +5% lift 48x. <2% is the de-noise floor (≈base rate), not an action signal.
+# Tier ranks magnitude; it does NOT override the close-holds-open confirmation.
+GAP_WEAK_PCT      = 2.0
+GAP_CONFIRM_PCT   = 3.0
+GAP_STRONG_PCT    = 5.0
+
 # Position sizing (CONTEXT.md: R = 1% of equity; cap 25% of equity per name)
 RISK_PCT          = 0.01    # 1 R = 1% of account equity
 MAX_POSITION_PCT  = 0.25    # a single position's notional ≤ 25% of equity
@@ -133,6 +158,17 @@ STOP_NEAR_PCT     = 0.03    # holding "approaching stop" if within 3% above it
 BAR_CACHE_DIR     = '/home/ryan/DATA/DAY_Global/US_yf'  # one split/div-adjusted CSV per ticker
 BAR_FETCH_PERIOD  = '3y'    # generous window cached once; callers slice from it
 _DAILY_MEMO: dict = {}      # per-run memo: ticker -> daily df (avoids re-fetching)
+
+# Point-in-time backtest anchor. None = live (今天). When set (via --asof), the
+# data layer truncates every series to ≤ _ASOF and all "today"-relative windows
+# anchor here, so the scanner reproduces what it would have reported on that day.
+# None → behaviour is byte-for-byte the live path.
+_ASOF: 'pd.Timestamp | None' = None
+
+
+def _now() -> 'pd.Timestamp':
+    """The run's reference 'today' — _ASOF when backtesting, else the real today."""
+    return _ASOF if _ASOF is not None else pd.Timestamp.today().normalize()
 
 
 def _cache_path(ticker: str) -> str:
@@ -156,6 +192,18 @@ def _read_cache(ticker: str) -> pd.DataFrame:
 
 
 def _fetch_daily(ticker: str) -> pd.DataFrame:
+    """
+    Daily OHLCV (yfinance, cached). In live mode this is the full cached frame;
+    under --asof it is truncated to bars ≤ _ASOF so no future leaks into a
+    point-in-time run. The disk cache itself always holds the full history.
+    """
+    df = _fetch_daily_full(ticker)
+    if _ASOF is not None and not df.empty:
+        return df[df.index <= _ASOF]
+    return df
+
+
+def _fetch_daily_full(ticker: str) -> pd.DataFrame:
     """
     Daily OHLCV from yfinance, split/dividend-adjusted, cached per ticker.
 
@@ -219,7 +267,7 @@ def _history(ticker: str, period: str, interval: str) -> pd.DataFrame:
     if df.empty:
         return df
 
-    cutoff = pd.Timestamp.today().normalize() - pd.Timedelta(days=n_days)
+    cutoff = _now() - pd.Timedelta(days=n_days)
     df = df[df.index >= cutoff]
 
     if interval == '1wk':
@@ -241,6 +289,8 @@ def _sma(series: pd.Series, n: int) -> pd.Series:
 
 def _upcoming_earnings(ticker: str) -> int | None:
     """Return days until next earnings, or None if unavailable."""
+    if _ASOF is not None:
+        return None        # backtest: the live calendar is今天's — don't leak future
     try:
         t = yf.Ticker(ticker)
         cal = t.calendar
@@ -444,11 +494,70 @@ def _pullback_signal(daily: pd.DataFrame) -> dict | None:
     }
 
 
+def _gap_confirmation(daily: pd.DataFrame) -> dict | None:
+    """信噪比 flag for the latest bar: was the 隔夜跳空 confirmed by the close?
+
+    心法 (memory: overnight-vs-intraday-information): the overnight 段 (昨收→今开)
+    carries the directional information; the intraday 段 (今开→今收) is mostly
+    noise / mean-reversion. A gap is信息 only when the close holds the open —
+    高开站稳开盘价 (close ≥ open) or 低开压住开盘价 (close ≤ open). 高开低走 /
+    低开高走 is a faded gap (gap-fill), to be distrusted even if the day is green.
+
+    Returns None when the latest bar has no meaningful gap (|gap| < GAP_MIN_PCT).
+    """
+    if daily is None or len(daily) < 2:
+        return None
+    prev_close = float(daily['close'].iloc[-2])
+    o = float(daily['open'].iloc[-1])
+    c = float(daily['close'].iloc[-1])
+    if prev_close <= 0 or o <= 0:
+        return None
+    gap      = (o / prev_close - 1) * 100
+    intraday = (c / o - 1) * 100
+    if abs(gap) < GAP_MIN_PCT:
+        return None
+    up        = gap > 0
+    confirmed = (up and c >= o) or (not up and c <= o)
+    arrow     = '↑' if up else '↓'
+    # Magnitude tier (de-noise floor 2% / confirm 3% / strong 5%). Only a
+    # *confirmed* gap earns a tier badge — a faded gap is distrusted at any size.
+    mag = abs(gap)
+    if confirmed and mag >= GAP_STRONG_PCT:
+        tier = '强'
+    elif confirmed and mag >= GAP_CONFIRM_PCT:
+        tier = '确认'
+    elif confirmed and mag >= GAP_WEAK_PCT:
+        tier = '弱'
+    else:
+        tier = ''                       # <2% noise floor, or a faded gap
+    label = f"gap{arrow}{'✓' if confirmed else '✗fade'}"
+    if tier:
+        label += f"·{tier}"
+    return {
+        'gap_pct':      round(gap, 2),
+        'intraday_pct': round(intraday, 2),
+        'direction':    1 if up else -1,
+        'confirmed':    confirmed,
+        'tier':         tier or '—',
+        'label':        label,
+    }
+
+
 def _weekly_ma_breach(weekly: pd.DataFrame) -> bool:
     """True if latest weekly close is below 20-week MA (exit rule)."""
     if len(weekly) < MA_WEEKLY + 1:
         return False
     ma = float(_sma(weekly['close'], MA_WEEKLY).iloc[-1])
+    return float(weekly['close'].iloc[-1]) < ma
+
+
+def _weekly_below_fast_ma(weekly: pd.DataFrame) -> bool:
+    """True if latest weekly close is below the 10-week MA (momentum cooling).
+    Gates the partial trim: take profit when a winner's momentum cracks, not at a
+    fixed price target — so an explosive continuation keeps running."""
+    if len(weekly) < MA_WEEKLY_FAST + 1:
+        return False
+    ma = float(_sma(weekly['close'], MA_WEEKLY_FAST).iloc[-1])
     return float(weekly['close'].iloc[-1]) < ma
 
 
@@ -462,6 +571,7 @@ def scan_stock(ticker: str, market_state: str) -> dict:
         'signal':        None,
         'exit_signal':   False,
         'earnings_days': None,
+        'gap':           None,
         'error':         None,
     }
     try:
@@ -482,6 +592,7 @@ def scan_stock(ticker: str, market_state: str) -> dict:
 
         r['exit_signal']   = _weekly_ma_breach(weekly)
         r['earnings_days'] = _upcoming_earnings(ticker)
+        r['gap']           = _gap_confirmation(daily)
 
         if market_state == 'STRONG':
             r['signal'] = _breakout_signal(weekly, daily)
@@ -543,9 +654,16 @@ def position_alerts(positions: pd.DataFrame, weekly_cache: dict) -> list[dict]:
         pl_pct = (unreal / cost_total) * 100 if cost_total > 0 else 0.0
         cur_price = cost + unreal / qty
 
+        # Trim only on WEAKNESS: up ≥ TRIM_PCT *and* momentum cracking (weekly
+        # close below the 10-week MA). A fixed +25% target would sell half of the
+        # rare explosive continuation that carries most of the return — so we wait
+        # for the move to actually cool before taking partial profit.
+        weakening = (ticker in weekly_cache
+                     and _weekly_below_fast_ma(weekly_cache[ticker]))
+
         actions = []
-        if pl_pct >= TRIM_PCT:
-            actions.append(f'TRIM 50% — P/L +{pl_pct:.1f}%  (cur ~{cur_price:.2f})')
+        if pl_pct >= TRIM_PCT and weakening:
+            actions.append(f'TRIM 50% — P/L +{pl_pct:.1f}% 且周收跌破10周线·动量转弱 (cur ~{cur_price:.2f})')
         elif pl_pct >= BREAKEVEN_PCT:
             actions.append(f'MOVE STOP → breakeven {cost:.2f}  (P/L +{pl_pct:.1f}%)')
 
@@ -672,6 +790,7 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             watch_rows.append([ticker, close, '—', '—', '—', r['error']])
             continue
 
+        gap_note = r['gap']['label'] if r.get('gap') else ''
         s = r['signal']
         if s:
             vol_note = ''
@@ -688,7 +807,7 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             conf   = s['confidence']
             shares, _r, cap_bound = _position_size(s['entry'], s['stop'], equity)
             sh_str = (f'{shares}{"*" if cap_bound else ""}' if shares else '—')
-            notes  = f"{s['type']} [{conf}] {vol_note} {er}{layout}".strip()
+            notes  = f"{s['type']} [{conf}] {vol_note} {gap_note} {er}{layout}".strip()
             sig_rows.append([
                 ticker, close,
                 _fmt(s['entry']), _fmt(s['stop']), _fmt(s['target']),
@@ -696,7 +815,7 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             ])
         else:
             exit_flag = '⚠ EXIT (MA breach)' if r['exit_signal'] else ''
-            notes     = ' | '.join(filter(None, [exit_flag, er + layout]))
+            notes     = ' | '.join(filter(None, [exit_flag, gap_note, er + layout]))
             watch_rows.append([
                 ticker, close,
                 _fmt(r['ma20d']), _fmt(r['ma50d']), _fmt(r['ma20w']), notes,
@@ -798,12 +917,15 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
     p(f'    Shares 建议买入股数 (=账户{RISK_PCT:.0%}风险÷每股风险, 单票≤{MAX_POSITION_PCT:.0%}仓位); * = 被仓位上限压过')
     p('      ⚠ Shares 是"建议买入量", 不是你的持仓! 你的持仓在 HOLDINGS 区')
     p('    Notes: stop:key=止损在关键支撑位 / stop:rng=回退到区间低点; vol×N=量比; ER Nd=N天后财报')
+    p(f'    gap↑/↓=隔夜跳空方向; ✓=收盘站稳开盘(信息) / ✗fade=高开低走(噪声, 别信);')
+    p(f'      分档(实测 SP500∪NDX 5y, 仅✓时给): 弱≥{GAP_WEAK_PCT:.0f}%(lift7x) · 确认≥{GAP_CONFIRM_PCT:.0f}%(lift17x) · 强≥{GAP_STRONG_PCT:.0f}%(lift48x); <{GAP_WEAK_PCT:.0f}%是去噪地板,非信号')
+    p('      用法: gap·确认/强 出现在 ⟨已持有⟩→上移止损/加固; 出现在 ⟨未持有信号⟩→多数已晚, 别追开盘(大跳空日内段均值转负)')
     p('  HOLDINGS 持仓止损 (你的真实持仓, 需开富途 OpenD):')
     p(f'    Qty 持有股数 · Stop(20wMA)={MA_WEEKLY}周线止损位 · vs Stop 距止损%')
     p(f'    Status: OK / APPROACHING(距止损≤{STOP_NEAR_PCT:.0%}逼近) / BREACHED(跌破→今日离场)')
     p('  POSITION MANAGEMENT 持仓管理 (对已有仓位的操作):')
-    p(f'    MOVE STOP→breakeven: 浮盈≥{BREAKEVEN_PCT:.0f}% → 止损上移到成本价(锁不亏)')
-    p(f'    TRIM 50%: 浮盈≥{TRIM_PCT:.0f}% → 减半锁利 (只要仍达标会每天提示, 是状态非一次性)')
+    p(f'    MOVE STOP→breakeven: 浮盈≥{BREAKEVEN_PCT:.0f}% → 止损上移到成本价(锁不亏; 阈值高=留够缓冲, 正常回踩不被洗出)')
+    p(f'    TRIM 50%: 浮盈≥{TRIM_PCT:.0f}% 且周收跌破{MA_WEEKLY_FAST}周线(动量转弱) → 减半 (走弱才减, 不按价格目标砍, 给爆发续涨留右尾)')
     p(f'    EXIT: 周收盘跌破{MA_WEEKLY}周线 → 清仓 (优先于止盈)')
     p()
 
@@ -823,6 +945,7 @@ def write_signal_csv(results, path):
     rows = []
     for r in results:
         s = r.get('signal') or {}
+        g = r.get('gap') or {}
         rows.append({
             'ticker':        r['ticker'],
             'close':         r.get('close'),
@@ -835,6 +958,10 @@ def write_signal_csv(results, path):
             'rr_ok':         s.get('rr_ok'),
             'exit_signal':   r.get('exit_signal'),
             'earnings_days': r.get('earnings_days'),
+            'gap_pct':       g.get('gap_pct'),
+            'gap_dir':       g.get('direction'),
+            'gap_confirmed': g.get('confirmed'),
+            'gap_tier':      g.get('tier'),
         })
     pd.DataFrame(rows).to_csv(path, index=False)
     logging.info(f'Tech signal CSV → {path}')
@@ -851,7 +978,20 @@ def main():
                       help='Scan a single ticker instead of the full universe')
     parser.add_option('--output',   dest='output',  default=None,
                       help='Save report to this file path')
+    parser.add_option('--asof',     dest='asof',    default=None,
+                      help='Backtest as-of YYYY-MM-DD: use only bars ≤ that day and '
+                           'anchor "today" there (reproduces that day\'s report). '
+                           'Forces --no-futu; earnings countdown is suppressed.')
     opts, _ = parser.parse_args()
+
+    global _ASOF
+    if opts.asof:
+        try:
+            _ASOF = pd.Timestamp(opts.asof).normalize()
+        except ValueError:
+            parser.error(f'--asof 无法解析: {opts.asof}')
+        opts.no_futu = True          # 历史持仓无意义, 且避免查 live Futu
+        logging.info(f'AS-OF backtest mode: anchoring to {_ASOF.date()} (no-futu forced)')
 
     logging.info('US Tech Swing Scanner starting')
 
@@ -883,12 +1023,14 @@ def main():
         alerts = position_alerts(pos_df, weekly_cache)
         stop_status = position_stop_status(pos_df, weekly_cache)
 
-    # Default output path
+    # Default output path. Under --asof, tag with the as-of date so a backtest
+    # run never overwrites the live dated report.
+    date_str = (_ASOF.strftime('%Y%m%d') if _ASOF is not None
+                else datetime.datetime.now().strftime('%Y%m%d'))
     out_file = opts.output
     if out_file is None:
         out_dir = '/home/ryan/DATA/result'
         if os.path.isdir(out_dir):
-            date_str = datetime.datetime.now().strftime('%Y%m%d')
             out_file = f'{out_dir}/us_tech_swing_{date_str}.txt'
 
     print_report(market_state, baro_info, results, alerts, out_file,
@@ -897,7 +1039,6 @@ def main():
     # Machine-readable signal CSV (consumed by t_us_resonance.py)
     out_dir = '/home/ryan/DATA/result'
     if os.path.isdir(out_dir):
-        date_str = datetime.datetime.now().strftime('%Y%m%d')
         try:
             write_signal_csv(results, f'{out_dir}/us_tech_signal_{date_str}.csv')
         except Exception as e:
