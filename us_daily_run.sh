@@ -135,6 +135,13 @@ GAPA_TXT=/home/ryan/DATA/result/us_gap_activity_$(date +%Y%m%d).txt
 gapa_rc=${PIPESTATUS[0]}
 echo "----- gap activity done (rc=$gapa_rc) $(ts) -----" >> "$LOG"
 
+# Final: merge every sub-report above into one combined daily report
+# (/home/ryan/DATA/result/us_daily_report_<date>.md). Pulls the actionable
+# BUY/SELL/manage signals out of each sub-report — each annotated with its
+# reason and source — plus a multi-screen confluence tally, then appends every
+# sub-report verbatim. Runs last so all inputs exist. Non-fatal (run_step).
+run_step "daily-report" "$PY" us_daily_report.py
+
 if [ $rc -eq 0 ]; then
     echo "===== us_daily_run OK    $(ts) =====" >> "$LOG"
 else
