@@ -133,7 +133,9 @@ def main():
 
     if os.path.isdir(RESULT_DIR):
         date_str = datetime.datetime.now().strftime('%Y%m%d')
-        out = f'{RESULT_DIR}/us_searchlight_{date_str}.csv'
+        out_dir = os.path.join(RESULT_DIR, 'us_searchlight')
+        os.makedirs(out_dir, exist_ok=True)
+        out = f'{out_dir}/us_searchlight_{date_str}.csv'
         pd.DataFrame(rows).to_csv(out, index=False)
         logging.info(f'Searchlight CSV → {out}')
     print('\n  (纯侦察, 未改 watchlist)')

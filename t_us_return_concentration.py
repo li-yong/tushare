@@ -260,8 +260,10 @@ def main():
 
     # 落盘 (result/ 存在才写, 与系统其它脚本一致)
     if os.path.isdir(RESULT_DIR):
-        txt = os.path.join(RESULT_DIR, f'us_return_concentration_{TODAY}.txt')
-        csv = os.path.join(RESULT_DIR, f'us_return_concentration_{TODAY}.csv')
+        out_dir = os.path.join(RESULT_DIR, 'us_return_concentration')
+        os.makedirs(out_dir, exist_ok=True)
+        txt = os.path.join(out_dir, f'us_return_concentration_{TODAY}.txt')
+        csv = os.path.join(out_dir, f'us_return_concentration_{TODAY}.csv')
         try:
             with open(txt, 'w') as fh:
                 fh.write(report + '\n')

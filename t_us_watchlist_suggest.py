@@ -217,7 +217,9 @@ def main():
 
     if os.path.isdir(RESULT_DIR):
         date_str = datetime.datetime.now().strftime('%Y%m%d')
-        out = f'{RESULT_DIR}/us_watchlist_suggest_{date_str}.csv'
+        out_dir = os.path.join(RESULT_DIR, 'us_watchlist_suggest')
+        os.makedirs(out_dir, exist_ok=True)
+        out = f'{out_dir}/us_watchlist_suggest_{date_str}.csv'
         pd.DataFrame(rows).to_csv(out, index=False)
         logging.info(f'建议 CSV → {out}')
 

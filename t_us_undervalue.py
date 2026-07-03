@@ -12,6 +12,15 @@ US Undervalued-Quality Screener — 低估优质股扫描器
 §二核心三问复核: ①它为什么便宜?(暂时性 vs 结构性) ②三年后还在吗?
 ③同样的钱买 QQQ 哪个更好?
 
+实证补充(t_us_bottom_entry_backtest.py / docs §7.5-7.6, 2026-06): 本清单的
+"超跌+优质"正是好入场状态, 但用法有三条钉死的纪律 ——
+  · 质量(ROE门槛)的作用是【防归零/左尾保护】, 不是收益放大器: 优质组反弹
+    幅度甚至略输垃圾组, 但深跌>40%率约为其一半。别期待它抬高反弹, 指望它砍尾。
+  · alpha 靠右尾少数大复苏, 中位仅打平 QQQ → 这份清单要【分散持多只 + 拿得住】,
+    单押一只 ≈ 打平 QQQ。
+  · 入场越早越好(跌破20周线的底部就分批建), 别等"放量"或"站回均线"确认 ——
+    机械放量信号不贡献 EV, 站回入场反而更差(便宜段已走完)。
+
 数据源: yfinance only (与 ADR-0001 一致, 行情/基本面同源)。
   - 股票池 = S&P 500 ∪ Nasdaq-100 成分股 (Wikipedia, 当日缓存)。
     超跌的优质大中盘正是茅台/MU 式"好公司被杀估值"的猎场; 微盘超跌是噪音, 不在范围。
@@ -417,14 +426,18 @@ def main():
     rows = screen(tickers, params['min_cap'], params['min_drop'],
                   params['min_roe'], params['roe_years'], use_futu=not opts.no_futu)
 
+    out_dir = os.path.join(RESULT_DIR, 'us_undervalue')
+    if os.path.isdir(RESULT_DIR):
+        os.makedirs(out_dir, exist_ok=True)
+
     # CSV
     if rows and os.path.isdir(RESULT_DIR):
-        csv_path = os.path.join(RESULT_DIR, f'us_undervalue_{date_str}.csv')
+        csv_path = os.path.join(out_dir, f'us_undervalue_{date_str}.csv')
         pd.DataFrame(rows).to_csv(csv_path, index=False)
         log.info(f'候选清单 → {csv_path}')
 
     text = render(date_str, rows, params)
-    out_file = opts.output or (os.path.join(RESULT_DIR, f'us_undervalue_{date_str}.txt')
+    out_file = opts.output or (os.path.join(out_dir, f'us_undervalue_{date_str}.txt')
                                if os.path.isdir(RESULT_DIR) else None)
     if out_file:
         with open(out_file, 'w', encoding='utf-8') as f:

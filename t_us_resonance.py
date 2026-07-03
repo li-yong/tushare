@@ -21,6 +21,7 @@ Usage:
 
 import os
 import sys
+import glob
 import logging
 import datetime
 
@@ -42,10 +43,16 @@ TECH_REQUIRE_HIGH = False   # True = 仅 confidence=HIGH 的技术信号算点�
 
 
 def _load(date_str, name):
-    """Load result/<name>_<date>.csv → (DataFrame|None, status_note)."""
-    path = os.path.join(RESULT_DIR, f'{name}_{date_str}.csv')
-    if not os.path.exists(path):
-        return None, f'{name}: 缺失 ({os.path.basename(path)})'
+    """Load result/[<subdir>/]<name>_<date>.csv → (DataFrame|None, status_note).
+
+    Searches the result/ root and any per-script subfolder (recursive), so it
+    finds the CSV whether the producer wrote it flat or under result/<script>/.
+    """
+    matches = glob.glob(os.path.join(RESULT_DIR, '**', f'{name}_{date_str}.csv'),
+                        recursive=True)
+    if not matches:
+        return None, f'{name}: 缺失 ({name}_{date_str}.csv)'
+    path = max(matches, key=os.path.getmtime)
     try:
         df = pd.read_csv(path)
         age = (datetime.date.today()
@@ -181,7 +188,9 @@ def main():
 
     out_file = opts.output
     if out_file is None and os.path.isdir(RESULT_DIR):
-        out_file = f'{RESULT_DIR}/us_resonance_{date_str}.txt'
+        out_dir = os.path.join(RESULT_DIR, 'us_resonance')
+        os.makedirs(out_dir, exist_ok=True)
+        out_file = f'{out_dir}/us_resonance_{date_str}.txt'
     if out_file:
         with open(out_file, 'w', encoding='utf-8') as f:
             f.write(text + '\n')

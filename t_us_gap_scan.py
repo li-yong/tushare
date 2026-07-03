@@ -317,7 +317,9 @@ def run_scan(universe: str, lookback: int, top: int, asof: pd.Timestamp | None =
           " gap_lo=缺口下沿(天然止损) · stop%=现价距下沿缓冲 · reason=命中原因")
 
     tag = asof.strftime('%Y%m%d') if asof is not None else datetime.date.today().strftime('%Y%m%d')
-    csv = os.path.join(RESULT_DIR, f'us_gap_scan_{universe}_{tag}.csv')
+    out_dir = os.path.join(RESULT_DIR, 'us_gap_scan')
+    os.makedirs(out_dir, exist_ok=True)
+    csv = os.path.join(out_dir, f'us_gap_scan_{universe}_{tag}.csv')
     try:
         out.to_csv(csv, index=False, encoding='UTF-8')
         logging.info(f'saved {csv} ({len(out)} 行)')
@@ -390,7 +392,9 @@ def run_activity(universe: str, days: int, top: int, asof: pd.Timestamp | None =
           " avg/max_gap%=跳空幅度 · last=最近一次缺口日")
 
     tag = anchor.strftime('%Y%m%d') if asof is not None else datetime.date.today().strftime('%Y%m%d')
-    csv = os.path.join(RESULT_DIR, f'us_gap_activity_{universe}_{tag}.csv')
+    out_dir = os.path.join(RESULT_DIR, 'us_gap_scan')
+    os.makedirs(out_dir, exist_ok=True)
+    csv = os.path.join(out_dir, f'us_gap_activity_{universe}_{tag}.csv')
     try:
         out.to_csv(csv, index=False, encoding='UTF-8')
         logging.info(f'saved {csv} ({len(out)} 行)')

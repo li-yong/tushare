@@ -222,7 +222,9 @@ def main():
     out_file = opts.output
     if out_file is None and os.path.isdir(RESULT_DIR):
         date_str = datetime.datetime.now().strftime('%Y%m%d')
-        out_file = f'{RESULT_DIR}/us_delivery_{date_str}.csv'
+        out_dir = os.path.join(RESULT_DIR, 'us_delivery')
+        os.makedirs(out_dir, exist_ok=True)
+        out_file = f'{out_dir}/us_delivery_{date_str}.csv'
 
     print_and_write(results, out_file)
     us_fundamentals.close_futu()

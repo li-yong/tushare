@@ -336,10 +336,11 @@ def main():
 
     out_txt = out_csv = None
     if not o.no_file:
-        os.makedirs(RESULT_DIR, exist_ok=True)
+        out_dir = os.path.join(RESULT_DIR, 'us_steady_climb')
+        os.makedirs(out_dir, exist_ok=True)
         stamp = datetime.date.today().isoformat()
-        out_txt = os.path.join(RESULT_DIR, f'us_steady_climb_{stamp}.txt')
-        out_csv = os.path.join(RESULT_DIR, f'us_steady_climb_{stamp}.csv')
+        out_txt = os.path.join(out_dir, f'us_steady_climb_{stamp}.txt')
+        out_csv = os.path.join(out_dir, f'us_steady_climb_{stamp}.csv')
 
     print_report(top, o, scanned=len(universe), output_file=out_txt)
     if out_csv:

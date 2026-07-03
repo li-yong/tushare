@@ -31,6 +31,28 @@
 #     → us_gap_scan_<date>.{txt,csv}; --activity ranks names by valid-gap count
 #     over 30 days (最活跃/最常跳空) → us_gap_activity_<date>.{txt,csv}.
 #     yfinance-only, no Futu/OpenD.
+#   • Pullback-shock screen (t_us_pullback_shock.py) across S&P 500 ∪ Nasdaq-100:
+#     names in a strong uptrend (>200dma & 半年≥+20% & 距252日高≤15%) that just took
+#     a big single-day drop — the empirically positive "buy the dip in a strong
+#     name" TIMING (15y event study, 对 QQQ 超额为正、短期即翻正; 只做 A 侧, 不追
+#     弱势股大涨). Tiered by drop severity (A ≤-7% / B -5%~-7%); entry=last close,
+#     stop=急跌日低−0.5ATR, target=252日高 → us_pullback_shock_<date>.{txt,csv}.
+#     yfinance-only, no Futu/OpenD.
+#   • Bottom-entry screen (t_us_bottom_entry.py) across S&P 500 ∪ Nasdaq-100:
+#     names sitting at a "超跌(距252日高≤−30%)+ 跌破20周线" entry state NOW,
+#     tiered by SEC-EDGAR point-in-time ROE (PASS/FAIL/UNKNOWN — quality is a
+#     blow-up/left-tail filter, NOT a return ranker; FAIL = junk-bounce, check for
+#     structural impairment). The live sibling of t_us_bottom_entry_backtest.py;
+#     methodology + empirics in docs/twenty_week_trend_system.md §7 →
+#     us_bottom_entry_<date>.{md,csv}. yfinance + SEC EDGAR, no Futu/OpenD.
+#   • Market network structure (t_us_network_report.py --refresh): runs the 3-stage
+#     correlation-network pipeline over Nasdaq-100 — static MST/Louvain
+#     (t_us_network_structure.py), dynamic crowding-temperature
+#     (t_us_network_dynamics.py), unwind event-study (t_us_network_event_study.py),
+#     each writing its own dated txt/png/json — then synthesizes ONE ZH-CN report
+#     → us_network_report/us_network_report_<date>.md. Risk/timing ENVIRONMENT
+#     judgment (which themes are crowding vs unwinding), NOT buy/sell signals
+#     (spec docs/stock_market_network_structure.md §3). yfinance-only.
 # Fundamentals come from Futu F10 with yfinance fallback (us_fundamentals.py);
 # OpenD down → those stages degrade to yfinance / empty, never crash.
 #
@@ -87,7 +109,8 @@ run_step "resonance" "$PY" t_us_resonance.py
 # swing scan above. Its printed table is teed to a dated report; CSV is written
 # by the script itself.
 echo "----- breakout screen start $(ts) -----" >> "$LOG"
-BO_TXT=/home/ryan/DATA/result/us_breakout_screen_$(date +%Y%m%d).txt
+BO_TXT=/home/ryan/DATA/result/us_breakout_screen/us_breakout_screen_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$BO_TXT")"
 "$PY" t_us_breakout_screen.py 2>> "$LOG" | tee "$BO_TXT" >> "$LOG"
 bo_rc=${PIPESTATUS[0]}
 echo "----- breakout screen done (rc=$bo_rc) $(ts) -----" >> "$LOG"
@@ -102,7 +125,8 @@ run_step "steady-climb" "$PY" t_us_steady_climb.py --universe ndx
 # yet track. Writes its own CSV; we tee the human table to a dated report.
 # Non-fatal — its rc never flips the run's exit code.
 echo "----- searchlight start $(ts) -----" >> "$LOG"
-SL_TXT=/home/ryan/DATA/result/us_searchlight_$(date +%Y%m%d).txt
+SL_TXT=/home/ryan/DATA/result/us_searchlight/us_searchlight_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$SL_TXT")"
 "$PY" t_us_searchlight.py 2>> "$LOG" | tee "$SL_TXT" >> "$LOG"
 sl_rc=${PIPESTATUS[0]}
 echo "----- searchlight done (rc=$sl_rc) $(ts) -----" >> "$LOG"
@@ -113,7 +137,8 @@ echo "----- searchlight done (rc=$sl_rc) $(ts) -----" >> "$LOG"
 # PNGs in result/ — plot survivors by hand). yfinance-only; no Futu dependency.
 # Non-fatal — its rc never flips the run's exit code.
 echo "----- key-kline scan start $(ts) -----" >> "$LOG"
-KK_TXT=/home/ryan/DATA/result/us_key_kline_scan_$(date +%Y%m%d).txt
+KK_TXT=/home/ryan/DATA/result/us_key_kline/us_key_kline_scan_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$KK_TXT")"
 "$PY" t_us_key_kline.py --scan --universe both 2>> "$LOG" | tee "$KK_TXT" >> "$LOG"
 kk_rc=${PIPESTATUS[0]}
 echo "----- key-kline scan done (rc=$kk_rc) $(ts) -----" >> "$LOG"
@@ -124,16 +149,52 @@ echo "----- key-kline scan done (rc=$kk_rc) $(ts) -----" >> "$LOG"
 # 30 日有效缺口次数, 找最常跳空的高波动名)。yfinance-only; no Futu dependency.
 # Non-fatal — their rc never flips the run's exit code.
 echo "----- gap scan start $(ts) -----" >> "$LOG"
-GAP_TXT=/home/ryan/DATA/result/us_gap_scan_$(date +%Y%m%d).txt
+GAP_TXT=/home/ryan/DATA/result/us_gap_scan/us_gap_scan_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$GAP_TXT")"
 "$PY" t_us_gap_scan.py --scan --universe both 2>> "$LOG" | tee "$GAP_TXT" >> "$LOG"
 gap_rc=${PIPESTATUS[0]}
 echo "----- gap scan done (rc=$gap_rc) $(ts) -----" >> "$LOG"
 
 echo "----- gap activity start $(ts) -----" >> "$LOG"
-GAPA_TXT=/home/ryan/DATA/result/us_gap_activity_$(date +%Y%m%d).txt
+GAPA_TXT=/home/ryan/DATA/result/us_gap_scan/us_gap_activity_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$GAPA_TXT")"
 "$PY" t_us_gap_scan.py --activity --universe both --days 30 2>> "$LOG" | tee "$GAPA_TXT" >> "$LOG"
 gapa_rc=${PIPESTATUS[0]}
 echo "----- gap activity done (rc=$gapa_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: pullback-shock screen (强势股·单日急跌 回调买点) over S&P 500 ∪
+# Nasdaq-100. Surfaces names in a strong uptrend (>200dma & 半年≥+20% & 距252日高
+# ≤15%) that just had a big single-day drop — an empirically positive dip-buy/add
+# TIMING (15y event study: 单日≤-7% → 21日 alpha +2.5% / 63日 +6.1% vs QQQ, 短期即
+# 翻正). The A-side counterpart to NOT chasing downtrend pops (B side loses week 1).
+# Entry=last close, stop=急跌日低−0.5ATR, target=252日高. Tee'd to a dated report;
+# CSV written by the script. yfinance-only, no Futu/OpenD. Non-fatal.
+echo "----- pullback-shock start $(ts) -----" >> "$LOG"
+PS_TXT=/home/ryan/DATA/result/us_pullback_shock/us_pullback_shock_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$PS_TXT")"
+"$PY" t_us_pullback_shock.py --scan --universe both 2>> "$LOG" | tee "$PS_TXT" >> "$LOG"
+ps_rc=${PIPESTATUS[0]}
+echo "----- pullback-shock done (rc=$ps_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: bottom-entry screen (超跌底部入场) over S&P 500 ∪ Nasdaq-100.
+# Lists names at a "超跌 + 跌破20周线(线下)" entry state now, tiered by SEC-EDGAR
+# point-in-time ROE (PASS 防归零优先 / FAIL 高弹性需查结构性受损 / UNKNOWN). Writes
+# its own dated md+csv to result/us_bottom_entry/. Bound to the 20-week system §7;
+# quality is a left-tail filter not a ranker. yfinance + SEC EDGAR; no Futu/OpenD.
+# Note: PIT-ROE cache (backtest_cache/pit_quality.pkl) is built once and reused —
+# refresh it periodically (run with --force) to pick up new 10-K filings.
+# Non-fatal (run_step) — its rc never flips the run's exit code.
+run_step "bottom-entry" "$PY" t_us_bottom_entry.py --universe both
+
+# Supplementary: market network-structure analysis (相关性网络 抱团/瓦解 环境研判).
+# One command (--refresh) runs the 3-stage pipeline — static MST/Louvain → dynamic
+# crowding-temperature → unwind event-study, each writing its own dated txt/png/json
+# — then synthesizes a single ZH-CN report → us_network_report/us_network_report_
+# <date>.md. Environment/risk read (which themes are crowding vs unwinding), NOT a
+# buy/sell signal source, so it is NOT fed to the us_daily_report merger below.
+# yfinance-only; reuses the bar cache the swing scan just refreshed; no Futu/OpenD.
+# Non-fatal (run_step) — its rc never flips the run's exit code.
+run_step "network-structure" "$PY" t_us_network_report.py --refresh --no-plot --universe ndx --groups baskets
 
 # Final: merge every sub-report above into one combined daily report
 # (/home/ryan/DATA/result/us_daily_report_<date>.md). Pulls the actionable

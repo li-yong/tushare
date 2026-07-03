@@ -214,7 +214,10 @@ def main():
     print(f'\n── WATCH 待放量({len(watch)}, 显示前{opts.watch_top}) ── 已窄基底首破, 只差放量, 下周放量即确认')
     print(_tbl(watch[:opts.watch_top]) if watch else '  无。')
 
-    out_file = opts.output or (f'{RESULT_DIR}/us_breakout_screen_{datetime.datetime.now():%Y%m%d}.csv'
+    out_dir = os.path.join(RESULT_DIR, 'us_breakout_screen')
+    if os.path.isdir(RESULT_DIR):
+        os.makedirs(out_dir, exist_ok=True)
+    out_file = opts.output or (f'{out_dir}/us_breakout_screen_{datetime.datetime.now():%Y%m%d}.csv'
                                if os.path.isdir(RESULT_DIR) else None)
     if out_file and hits:
         pd.DataFrame(hits).to_csv(out_file, index=False)

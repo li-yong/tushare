@@ -16,7 +16,7 @@ _Avoid_: US_HOLD, portfolio file, position list
 An index ETF (QQQ, SOXX) used only to classify market state, never traded by the system.
 
 **Market State**:
-The regime classification (STRONG / MIXED / WEAK) derived from the barometers versus their 20-week MA. Decides which entry type the scanner looks for.
+The regime classification (STRONG / MIXED / WEAK) derived from the barometers versus their 20-week MA, judged with a ±3% hysteresis band: inside the band a barometer (and each general in the leadership-breadth gate) keeps its previous side; only a close beyond the band edge flips it. Replayed deterministically from the bars, so `--asof` reproduces it. Decides which entry type the scanner looks for.
 _Avoid_: market condition, regime (in code)
 
 **Setup**:
@@ -37,3 +37,19 @@ _Avoid_: signal list, candidates CSV
 **R (Risk Unit)**:
 1% of live account equity (queried from Futu). The amount lost if a Setup's stop is hit at planned size: `shares = R / (entry − stop)`, capped at 25% of equity per name and ~5 concurrent positions. Targets are expressed as R-multiples.
 _Avoid_: position size (when the risk amount is meant), bet
+
+**Effective Stop**:
+A holding's live stop = max(initial technical stop, breakeven line once P/L ≥ +30%, 20-week MA). The initial stop is the Setup's stop, hand-registered in `select.yml US_SWING_STOPS` on the day the trade is taken and deleted on exit; it and the breakeven line are judged at the daily close (Layer 1.5), the 20-week MA only at the weekly close. Keeps 1R real — without it a breakout entry far above the 20wMA has no stop between the fast crash layers and the slow weekly line.
+_Avoid_: trailing stop (this never ratchets daily), stop-loss order (nothing rests at the broker)
+
+**Open Heat**:
+The total loss if every holding's Effective Stop were hit on the same day, as % of equity. The watchlist is one highly-correlated theme, so this — not the per-name R count — is the real unit of portfolio risk. Budgeted at ≤6% of equity; the Morning Report prints it daily and blocks new entries when over.
+_Avoid_: exposure (notional is not risk), diversification count
+
+**Signal Episode**:
+One row in the signal ledger (`result/us_signal_log/us_signal_ledger.csv`, written via `signal_ledger.py`): the first day a scanner emits a Setup for a ticker opens an episode and freezes entry/stop/target at that day's values; re-emissions on following days refresh `last_seen`; ≥7 quiet days later, a new episode. Live runs only — an `--asof` row would be look-ahead. `t_us_signal_attrib.py` reads the ledger weekly and reports forward outcomes per source × signal type: the system's real track record, and the only honest answer to "which screen has edge".
+_Avoid_: trade log (no trade happened; these are virtual), backtest (rows are written before the outcome is knowable)
+
+**Earnings Blackout**:
+No new entry when a name reports within 5 days; each holding reporting within 5 days forces a written pre-earnings decision (hold full / halve / exit — no decision defaults to halve). Most Layer-1 single-day crushes are earnings.
+_Avoid_: earnings play, layout window (that is the 2–4 week pre-ER accumulation concept, a different thing)

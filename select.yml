@@ -40,4 +40,26 @@ US_SWING_BAROMETERS:     # market-state ETFs only; never traded
 # Account equity (USD) used for position sizing. Hand-maintained — keep roughly
 # current; a 10% stale value shifts share counts by 10%, not the decision.
 # Holdings themselves still come live from Futu (see CONTEXT.md).
-US_SWING_EQUITY: 100000
+US_SWING_EQUITY: 390000   # 2026-07-01 Futu total_assets $390,674 (市值 $325.5k + 现金 $41.7k)
+
+# Initial technical stops for live holdings (Layer 1.5, t_us_tech_swing.py).
+# 成交当天登记该笔 setup 的止损价; 离场后删除该行. Holdings 仍从 Futu 实时查,
+# 这里只存"止损价"这个交易者决策 (券商查不到). 扫描器让它一直生效, 直到
+# 保本线/20周线追上来 (有效止损 = 三者取最高). 未登记的持仓晨报会提醒.
+#
+# 2026-07-01 补登记: 老仓的原始 setup 止损无从考证, 以下按"入场论点证伪线"
+# 重建 = 成本下方最近的关键支撑 (扫描器 key-level 逻辑 / 摆动低点聚类);
+# 价格远离成本区的放宽到 1–2 年窗口. 浮盈≥+30% 的持仓 (VOO/QQQ/MU/AMD/
+# GOOG/INTC/KO) 不登记 — 保本线已 armed, init 必然被 max() 盖过, 登记无意义.
+US_SWING_STOPS:
+    TSM:  419.19      # key support < close (成本≈现价, 2026-07-01)
+    TQQQ: 70.84       # key support < cost 74.90
+    SNDK: 1514.36     # key support < cost 1628.99
+    PANW: 251.15      # 1y最高摆动低点 < cost 327.80 (成本区下方无更近位)
+    NVDA: 151.29      # 2y最高摆动低点 < cost 164.94 (20周线195+现为主导, 此为兜底)
+    MSFT: 341.43      # 2y最低摆动位 (价格未回过成本299区, 成本上方最近台阶)
+    MRVL: 162.85      # 1y最高摆动低点 < cost 216.82
+    META: 596.17      # key support < close (富途成本价为负, 锚现价)
+    LRCX: 361.41      # key support < close 391 (仓位浮亏, 成本413上方)
+    AMZN: 205.88      # key support < cost 220.33
+    AMAT: 569.49      # key support < close 651 (仓位浮亏, 成本705上方)

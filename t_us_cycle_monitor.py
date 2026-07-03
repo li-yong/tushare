@@ -335,7 +335,10 @@ def main():
 
     date_str = datetime.datetime.now().strftime('%Y%m%d')
     text = render(ticker, cik, rows, sig, opts.quarters)
-    out_file = opts.output or (os.path.join(RESULT_DIR, f'us_cycle_{ticker}_{date_str}.txt')
+    out_dir = os.path.join(RESULT_DIR, 'us_cycle_monitor')
+    if os.path.isdir(RESULT_DIR):
+        os.makedirs(out_dir, exist_ok=True)
+    out_file = opts.output or (os.path.join(out_dir, f'us_cycle_{ticker}_{date_str}.txt')
                                if os.path.isdir(RESULT_DIR) else None)
     if out_file:
         with open(out_file, 'w', encoding='utf-8') as f:

@@ -4,10 +4,23 @@ US Tech Swing Trade Scanner  (session 81 framework)
 
 4-layer medium-term trading system for Mag7 + Semiconductors:
   Layer 1 — Market state  : QQQ + SOXX vs 20-week MA → STRONG / MIXED / WEAK
+                            then demote one notch if ≥half the generals (MAG7)
+                            are below their own 20wMA (leadership-breadth gate)
   Layer 2 — Entry signal  : breakout (STRONG) or pullback to MA (MIXED/WEAK)
   Layer 3 — Pre-trade setup: entry / stop (technical) / target / R:R ≥ 2:1
-  Layer 4 — Position mgmt : breakeven stop at +30%, trim only on weakness
+  Layer 4 — Position mgmt : fast risk control on DAILY bars first — Layer 0
+                            hard-stop (crash) and Layer 1 event-driven drop take
+                            over and pre-empt the slow weekly rules; otherwise
+                            breakeven stop at +30%, trim only on weakness
                             (≥+25% AND weekly close < 10-week MA), exit on 20wMA breach
+
+20-week trend system (docs/twenty_week_trend_system.md) — layered stop discipline,
+priority high→low; a higher layer, once it fires, takes over and skips the rest:
+  Layer 0  熔断/硬止损   — collapse (peak→latest ≤ -30% in ≤5 sessions). Act now,
+                          never wait for the weekly close.
+  Layer 1  事件驱动      — abnormal drop (≤ -20% or > Nσ single day). Investigate now.
+  Layer 2  20-week MA    — normal trend reversal, evaluated only at the weekly close.
+  慢趋势用均线管, 快暴跌用硬止损管 (20周线管"温水", 硬止损管"开水").
 
 AI capex transmission chain (leading indicator for semis):
   Hyperscaler Capex ↑ → NVDA → AVGO → AMAT/LRCX/KLAC → TSM
@@ -54,6 +67,8 @@ AI_CHAIN = ['LITE', 'SNDK', 'STX', 'WDC', 'CSCO']  # AI datacenter buildout beyo
 HYPERSCALERS = ['MSFT', 'GOOGL', 'META', 'AMZN']
 BAROMETERS = ['QQQ', 'SOXX']                  # QQQ = Nasdaq, SOXX = semis ETF
 ACCOUNT_EQUITY = 0.0                          # hand-maintained, loaded from select.yml
+INIT_STOPS: dict = {}                         # ticker → initial technical stop, from
+                                              # select.yml US_SWING_STOPS (Layer 1.5)
 
 
 def _load_watchlist():
@@ -62,7 +77,7 @@ def _load_watchlist():
     YAML entries may be bare tickers or `TICKER: label` maps — we take the
     ticker either way, so the same loader works across select.yml's styles.
     """
-    global MAG7, SEMIS, AI_CHAIN, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY
+    global MAG7, SEMIS, AI_CHAIN, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY, INIT_STOPS
     try:
         import yaml
         with open(WATCHLIST_FILE) as fh:
@@ -83,6 +98,11 @@ def _load_watchlist():
         HYPERSCALERS = _tickers('US_SWING_HYPERSCALERS', HYPERSCALERS)
         BAROMETERS = _tickers('US_SWING_BAROMETERS', BAROMETERS)
         ACCOUNT_EQUITY = float(cfg.get('US_SWING_EQUITY', 0) or 0)
+        # Layer 1.5: the setup's technical stop, recorded by hand when the trade
+        # is taken (the broker can't tell us; a stop is a trader decision, not
+        # position state). It stays live until breakeven / the 20wMA overtake it.
+        raw_stops = cfg.get('US_SWING_STOPS') or {}
+        INIT_STOPS = {str(t).upper(): float(v) for t, v in raw_stops.items() if v}
     except Exception as e:
         logging.warning(f'watchlist load failed ({e}) — using built-in defaults')
 
@@ -110,6 +130,16 @@ UNIVERSE = list(dict.fromkeys(MAG7 + SEMIS + AI_CHAIN))  # deduplicated, order p
 
 # ── Parameters ────────────────────────────────────────────────────────────────
 MA_WEEKLY         = 20      # 20-week MA for market-state and exit rule
+LEADERSHIP_BREACH_FRAC = 0.5  # ≥this fraction of leaders (MAG7) below their 20wMA
+                              # → demote scan aggressiveness regardless of QQQ/SOXX
+STATE_BAND_PCT    = 0.03    # market-state hysteresis: a barometer/general within
+                            # ±3% of its 20wMA keeps its previous side — only a
+                            # close beyond the band edge flips it. QQQ and SOXX
+                            # chop across the raw line for weeks in a range market;
+                            # without the band the 3-state machine (and the entry
+                            # mode with it) whipsaws. Same idea as the exit rule's
+                            # buffer_pct (twenty_week_trend_system §2.2), applied
+                            # to Layer 1. Holdings' exit rule is NOT banded here.
 CONSOLIDATION_W   = 10      # look-back window for breakout range
 VOL_BREAKOUT_MULT = 1.5     # breakout volume must be ≥ 1.5× 5-week avg
 PULLBACK_TOL      = 0.015   # price within 1.5% of MA counts as "touching"
@@ -153,6 +183,29 @@ GAP_STRONG_PCT    = 5.0
 RISK_PCT          = 0.01    # 1 R = 1% of account equity
 MAX_POSITION_PCT  = 0.25    # a single position's notional ≤ 25% of equity
 STOP_NEAR_PCT     = 0.03    # holding "approaching stop" if within 3% above it
+
+# Portfolio open heat: the loss if every holding's effective stop is hit the
+# same day. The pool is one highly-correlated theme, so that is the realistic
+# unit of risk — 5 nominal positions ≈ 1 theme position; budget at theme level.
+HEAT_CAP_PCT      = 0.06    # total open risk ≤ 6% of equity
+
+# Earnings blackout: a weeks-to-months holding in semis eats ~4 reports a year,
+# and most Layer-1 (-20% day) events ARE earnings. No new entry into the event;
+# let the report confirm first (post-ER gap-confirmation is the better entry).
+ER_BLACKOUT_D     = 5       # no new entry when earnings are ≤ N days away
+
+# ── Layered fast risk control (20-week trend system · Layers 0 & 1) ────────────
+# The 20wMA exit (Layer 2) is evaluated at the weekly close and is deliberately
+# slow — it manages 温水. A collapse or a fundamental break is 开水: it is its own
+# conclusion and must NOT wait for Friday. These two layers run on DAILY bars for
+# live holdings and take priority over the weekly rule — once they fire they take
+# over and skip the slower checks. See docs/twenty_week_trend_system.md.
+HARD_STOP_PCT      = 30.0   # Layer 0 熔断: peak→latest decline (≤window) this deep
+                            # = collapse; act now, do not wait for the weekly close.
+EVENT_DROP_PCT     = 20.0   # Layer 1 事件: abnormal decline → go investigate the cause
+EVENT_VOL_MULT     = 3.0    # …or a single-day move worse than N× trailing daily σ
+CRASH_WINDOW_D     = 5      # "单日或数日内": measure the drop over the last N sessions
+EVENT_VOL_LOOKBACK = 60     # trailing window for the daily-return σ baseline
 
 # ── Data layer (ADR-0001: yfinance is the sole bar source) ─────────────────────
 BAR_CACHE_DIR     = '/home/ryan/DATA/DAY_Global/US_yf'  # one split/div-adjusted CSV per ticker
@@ -315,12 +368,45 @@ def _upcoming_earnings(ticker: str) -> int | None:
 
 
 # ── Layer 1: Market state ─────────────────────────────────────────────────────
+def _sticky_above(weekly: pd.DataFrame, ma_win: int = MA_WEEKLY,
+                  band: float = STATE_BAND_PCT) -> tuple[bool, bool]:
+    """Above/below the MA with a ±band hysteresis, replayed over the series.
+
+    Walks every weekly bar: a close beyond MA×(1±band) sets the side; a close
+    inside the band keeps the previous side. Deterministic from the bars alone —
+    no persisted state, so an --asof run (truncated series) reproduces exactly
+    what a live run would have said that week.
+
+    Returns (above, in_band); in_band flags that the latest close sits inside
+    the band and the side is therefore carried, not fresh. Falls back to a raw
+    compare if the whole window never left the band (practically impossible).
+    """
+    closes = weekly['close'].astype(float)
+    ma = _sma(closes, ma_win)
+    above = None
+    for c, m in zip(closes, ma):
+        if pd.isna(m) or m <= 0:
+            continue
+        if c > m * (1 + band):
+            above = True
+        elif c < m * (1 - band):
+            above = False
+    last_c, last_m = float(closes.iloc[-1]), float(ma.iloc[-1])
+    in_band = abs(last_c / last_m - 1) <= band
+    if above is None:
+        above = last_c >= last_m
+    return above, in_band
+
+
 def get_market_state() -> tuple[str, dict]:
     """
     Returns ('STRONG'|'MIXED'|'WEAK'|'ERROR', {ticker: {...}})
     STRONG  → both QQQ and SOXX weekly close above 20-week MA
     MIXED   → one above, one below
     WEAK    → both below
+    Above/below is judged with the ±STATE_BAND_PCT hysteresis (_sticky_above):
+    inside the band a barometer keeps its previous side, so the 3-state machine
+    doesn't flip scan mode on every wiggle across the raw line.
     """
     info = {}
     for ticker in BAROMETERS:
@@ -331,10 +417,12 @@ def get_market_state() -> tuple[str, dict]:
             continue
         ma = _sma(df['close'], MA_WEEKLY).iloc[-1]
         close = df['close'].iloc[-1]
+        above, in_band = _sticky_above(df)
         info[ticker] = {
             'close':      round(float(close), 2),
             'ma20w':      round(float(ma), 2),
-            'above':      bool(close > ma),
+            'above':      above,
+            'in_band':    in_band,
             'pct_vs_ma':  round((float(close) / float(ma) - 1) * 100, 1),
         }
 
@@ -344,6 +432,45 @@ def get_market_state() -> tuple[str, dict]:
     n_above = sum(1 for v in info.values() if v['above'])
     state = {2: 'STRONG', 1: 'MIXED', 0: 'WEAK'}[n_above]
     return state, info
+
+
+def get_leadership_breadth(leaders: list[str] | None = None) -> tuple[float, dict]:
+    """Fraction of leadership names whose weekly close is below their 20-week MA.
+
+    The generals (MAG7) lead the index in and out: when a majority roll under
+    their 20wMA the QQQ/SOXX barometers often still read STRONG (a slow top).
+    We use this to demote scan aggressiveness regardless of the barometer state
+    (see _gate_state). Below is judged with the same ±STATE_BAND_PCT hysteresis
+    as the barometers — a general hovering 1% under its line would otherwise
+    flip the gate week after week. Returns (frac_below, {ticker: bool_below});
+    falls back to (0.0, {}) when no leader has usable data so the gate simply
+    never triggers.
+    """
+    leaders = leaders or MAG7
+    detail = {}
+    for t in leaders:
+        try:
+            wk = _history(t, period='2y', interval='1wk')
+            if wk.empty or len(wk) < MA_WEEKLY + 1:
+                continue
+            above, _ = _sticky_above(wk)
+            detail[t] = not above
+        except Exception:
+            continue
+    if not detail:
+        return 0.0, {}
+    return round(sum(detail.values()) / len(detail), 2), detail
+
+
+def _gate_state(state: str, lead_frac: float) -> str:
+    """Demote the barometer state one notch when leadership breadth is broken.
+
+    STRONG→MIXED, MIXED→WEAK when ≥ LEADERSHIP_BREACH_FRAC of the generals are
+    below their 20wMA; WEAK and ERROR are left unchanged.
+    """
+    if lead_frac < LEADERSHIP_BREACH_FRAC:
+        return state
+    return {'STRONG': 'MIXED', 'MIXED': 'WEAK'}.get(state, state)
 
 
 # ── Layer 2 + 3: Entry signals ────────────────────────────────────────────────
@@ -610,6 +737,89 @@ def scan_stock(ticker: str, market_state: str) -> dict:
     return r
 
 
+# ── Layers 0 & 1: fast risk control (hard stop / event-driven) ─────────────────
+def _crash_event_check(daily: pd.DataFrame) -> tuple[int | None, dict]:
+    """Classify a holding's recent DAILY action into the fast-risk layers.
+
+    Returns (layer, detail):
+      0 — 熔断/硬止损: peak→latest decline over the last CRASH_WINDOW_D sessions
+          ≤ -HARD_STOP_PCT. A collapse is its own conclusion — act now.
+      1 — 事件驱动: an abnormal drop — the same window decline ≤ -EVENT_DROP_PCT,
+          OR a single-day return worse than -EVENT_VOL_MULT × trailing daily σ.
+          Go investigate the cause now (don't wait for the weekly close).
+      None — nothing abnormal; the slow 20wMA rule (Layer 2) governs.
+
+    Deliberately on daily bars: Layers 0/1 exist precisely to fire between weekly
+    closes, faster than the 20wMA exit they pre-empt (twenty_week_trend_system).
+    Layer 0 outranks Layer 1; the decline is measured from the local peak so a
+    single gap-down or a multi-session slide both register.
+    """
+    if daily is None or len(daily) < 3:
+        return None, {}
+    closes = daily['close']
+    latest = float(closes.iloc[-1])
+    if latest <= 0:
+        return None, {}
+
+    # 单日或数日内: decline from the local peak over the trailing window.
+    win  = closes.iloc[-(CRASH_WINDOW_D + 1):]
+    peak = float(win.max())
+    win_drop = (latest / peak - 1) * 100 if peak > 0 else 0.0
+
+    # Abnormal single-day move vs the stock's own recent volatility.
+    rets    = closes.pct_change(fill_method=None).dropna()
+    day_ret = float(rets.iloc[-1]) * 100 if len(rets) else 0.0
+    sigma   = float(rets.tail(EVENT_VOL_LOOKBACK).std()) * 100 if len(rets) >= 5 else 0.0
+    vol_mult = round(abs(day_ret) / sigma, 1) if sigma > 0 else None
+    vol_trigger = sigma > 0 and day_ret <= -EVENT_VOL_MULT * sigma
+
+    det = {
+        'win_drop': round(win_drop, 1),
+        'day_ret':  round(day_ret, 1),
+        'sigma':    round(sigma, 1),
+        'window':   CRASH_WINDOW_D,
+        'vol_mult': vol_mult,
+    }
+
+    if win_drop <= -HARD_STOP_PCT:
+        det['reason'] = f'近{CRASH_WINDOW_D}日 {win_drop:.0f}% 崩塌'
+        return 0, det
+    if win_drop <= -EVENT_DROP_PCT:
+        det['reason'] = f'近{CRASH_WINDOW_D}日 {win_drop:.0f}% 异常下跌'
+        return 1, det
+    if vol_trigger:
+        det['reason'] = f'单日 {day_ret:.0f}% = {vol_mult}×σ 异常波动'
+        return 1, det
+    return None, det
+
+
+def crash_event_scan(positions: pd.DataFrame | None) -> dict:
+    """Run the Layer 0/1 fast-risk check on every live US holding (daily bars).
+
+    Returns {ticker: (layer, detail)} only for holdings where a layer fired, so
+    both position_alerts and position_stop_status can let it take over the slower
+    weekly-close logic. Empty when there are no positions.
+    """
+    out: dict = {}
+    if positions is None or positions.empty:
+        return out
+    for _, pos in positions.iterrows():
+        code = pos.get('code', '')
+        if not code.startswith('US.'):
+            continue
+        ticker = code[3:]
+        if float(pos.get('qty', 0)) <= 0:
+            continue
+        try:
+            daily = _history(ticker, period='1y', interval='1d')
+        except Exception:
+            continue
+        layer, det = _crash_event_check(daily)
+        if layer is not None:
+            out[ticker] = (layer, det)
+    return out
+
+
 # ── Layer 4: Position management ──────────────────────────────────────────────
 def get_futu_positions(host: str, port: int) -> pd.DataFrame | None:
     """Live US positions from Futu OpenD.
@@ -633,10 +843,12 @@ def get_futu_positions(host: str, port: int) -> pd.DataFrame | None:
         return None
 
 
-def position_alerts(positions: pd.DataFrame, weekly_cache: dict) -> list[dict]:
+def position_alerts(positions: pd.DataFrame, weekly_cache: dict,
+                    risk_layers: dict | None = None) -> list[dict]:
     alerts = []
     if positions is None or positions.empty:
         return alerts
+    risk_layers = risk_layers or {}
 
     for _, pos in positions.iterrows():
         code = pos.get('code', '')
@@ -654,44 +866,82 @@ def position_alerts(positions: pd.DataFrame, weekly_cache: dict) -> list[dict]:
         pl_pct = (unreal / cost_total) * 100 if cost_total > 0 else 0.0
         cur_price = cost + unreal / qty
 
-        # Trim only on WEAKNESS: up ≥ TRIM_PCT *and* momentum cracking (weekly
-        # close below the 10-week MA). A fixed +25% target would sell half of the
-        # rare explosive continuation that carries most of the return — so we wait
-        # for the move to actually cool before taking partial profit.
-        weakening = (ticker in weekly_cache
-                     and _weekly_below_fast_ma(weekly_cache[ticker]))
+        actions  = []
+        priority = 2          # 0 = hard stop, 1 = event, 2 = normal weekly mgmt
 
-        actions = []
-        if pl_pct >= TRIM_PCT and weakening:
-            actions.append(f'TRIM 50% — P/L +{pl_pct:.1f}% 且周收跌破10周线·动量转弱 (cur ~{cur_price:.2f})')
-        elif pl_pct >= BREAKEVEN_PCT:
-            actions.append(f'MOVE STOP → breakeven {cost:.2f}  (P/L +{pl_pct:.1f}%)')
+        rl = risk_layers.get(ticker)
+        if rl:
+            # Layer 0/1 fired → take over and skip the slow weekly-close logic
+            # (慢趋势用均线管, 快暴跌用硬止损管 — high layer pre-empts the rest).
+            layer, det = rl
+            if layer == 0:
+                priority = 0
+                actions.append(
+                    f'🛑 HARD STOP (Layer0·熔断) — {det["reason"]} → 立即处理, '
+                    f'不等周五 (cur ~{cur_price:.2f}, P/L {pl_pct:+.1f}%)')
+            else:
+                priority = 1
+                actions.append(
+                    f'⚠ EVENT CHECK (Layer1·事件驱动) — {det["reason"]} → 立即查因: '
+                    f'不可逆(造假/退市/暴雷/行业塌方)直接清, 原因不明先减半 '
+                    f'(cur ~{cur_price:.2f}, P/L {pl_pct:+.1f}%)')
+        else:
+            # Layer 2/4: the slow 温水 rules, evaluated only off the weekly close.
+            # Trim only on WEAKNESS: up ≥ TRIM_PCT *and* momentum cracking (weekly
+            # close below the 10-week MA). A fixed +25% target would sell half of
+            # the rare explosive continuation that carries most of the return — so
+            # we wait for the move to actually cool before taking partial profit.
+            weakening = (ticker in weekly_cache
+                         and _weekly_below_fast_ma(weekly_cache[ticker]))
 
-        if ticker in weekly_cache and _weekly_ma_breach(weekly_cache[ticker]):
-            actions.append(f'EXIT — weekly close below 20-week MA')
+            if pl_pct >= TRIM_PCT and weakening:
+                actions.append(f'TRIM 50% — P/L +{pl_pct:.1f}% 且周收跌破10周线·动量转弱 (cur ~{cur_price:.2f})')
+            elif pl_pct >= BREAKEVEN_PCT:
+                actions.append(f'MOVE STOP → breakeven {cost:.2f}  (P/L +{pl_pct:.1f}%)')
+
+            if ticker in weekly_cache and _weekly_ma_breach(weekly_cache[ticker]):
+                actions.append(f'EXIT — weekly close below 20-week MA')
 
         if actions:
             alerts.append({
-                'ticker':  ticker,
-                'code':    code,
-                'cost':    cost,
-                'qty':     qty,
-                'pl_pct':  round(pl_pct, 1),
-                'actions': actions,
+                'ticker':   ticker,
+                'code':     code,
+                'cost':     cost,
+                'qty':      qty,
+                'pl_pct':   round(pl_pct, 1),
+                'priority': priority,
+                'actions':  actions,
             })
-    return alerts
+    # Surface the fast-risk layers first: hard stop, then event, then normal mgmt.
+    return sorted(alerts, key=lambda a: a['priority'])
 
 
-def position_stop_status(positions, weekly_cache):
-    """Per-holding stop status, evaluated at the latest weekly close (ADR-0002).
+def position_stop_status(positions, weekly_cache, risk_layers=None):
+    """Per-holding stop status under the layered stop discipline.
 
-    Stop level = 20-week MA (the thesis-invalidation line). A holding outside
-    the watchlist has its weekly bars fetched on demand. Returns one row per
-    live US holding.
+    Effective stop = max of three levels. The init/BE pair is Layer 1.5: it
+    closes the gap where a breakout entry sits far above its 20wMA and a slow
+    slide (too shallow for Layer 0/1) can cost several R with every layer
+    silent — the setup's own stop must stay live until a higher level takes over.
+      init — the setup's technical stop, recorded in select.yml US_SWING_STOPS
+             when the trade is taken. Evaluated at the DAILY close (ADR-0002).
+      BE   — breakeven (cost), armed once P/L ≥ +BREAKEVEN_PCT. Daily close.
+      20w  — the 20-week MA thesis-invalidation line (Layer 2), judged only at
+             the weekly close as before.
+    A fast-risk layer (risk_layers) overrides everything. Each row also carries
+    open_risk (qty × (close − eff_stop), the input to the portfolio heat line)
+    and er_days (next earnings) so the report can force the pre-ER decision.
     """
     rows = []
     if positions is None or positions.empty:
         return rows
+    risk_layers = risk_layers or {}
+
+    def _fast_override(ticker):
+        rl = risk_layers.get(ticker)
+        if not rl:
+            return None
+        return '🛑 HARD-STOP → ACT NOW' if rl[0] == 0 else '⚠ EVENT → INVESTIGATE NOW'
 
     for _, pos in positions.iterrows():
         code = pos.get('code', '')
@@ -703,27 +953,70 @@ def position_stop_status(positions, weekly_cache):
         if qty <= 0:
             continue
 
+        er_days = _upcoming_earnings(ticker)
+
         weekly = weekly_cache.get(ticker)
         if weekly is None or weekly.empty:
             weekly = _history(ticker, period='2y', interval='1wk')
-        if weekly.empty or len(weekly) < MA_WEEKLY + 1:
-            rows.append({'ticker': ticker, 'qty': qty, 'cost': cost,
-                         'close': None, 'stop': None, 'dist_pct': None,
-                         'status': 'NO DATA'})
+        try:
+            daily = _history(ticker, period='1y', interval='1d')
+        except Exception:
+            daily = pd.DataFrame()
+
+        close = None
+        if not daily.empty:
+            close = float(daily['close'].iloc[-1])
+        elif not weekly.empty:
+            close = float(weekly['close'].iloc[-1])
+
+        base = {'ticker': ticker, 'qty': qty, 'cost': cost, 'er_days': er_days,
+                'init_stop': INIT_STOPS.get(ticker), 'be_armed': False,
+                'open_risk': None}
+        if close is None:
+            rows.append({**base, 'close': None, 'stop': None, 'basis': None,
+                         'dist_pct': None,
+                         'status': _fast_override(ticker) or 'NO DATA'})
             continue
 
-        close = float(weekly['close'].iloc[-1])
-        stop  = float(_sma(weekly['close'], MA_WEEKLY).iloc[-1])
-        dist  = (close / stop - 1) * 100
-        if close < stop:
+        ma20w = None
+        if not weekly.empty and len(weekly) >= MA_WEEKLY + 1:
+            ma20w = float(_sma(weekly['close'], MA_WEEKLY).iloc[-1])
+        weekly_close = float(weekly['close'].iloc[-1]) if not weekly.empty else close
+
+        init_stop = INIT_STOPS.get(ticker)
+        pl_pct    = (close / cost - 1) * 100 if cost > 0 else None
+        be_stop   = cost if (pl_pct is not None and pl_pct >= BREAKEVEN_PCT) else None
+        base['be_armed'] = be_stop is not None
+
+        # Daily-evaluated protection (Layer 1.5) vs the weekly line (Layer 2).
+        hard_stop  = max((s for s in (init_stop, be_stop) if s is not None), default=None)
+        hard_basis = 'BE' if (be_stop is not None
+                              and (init_stop is None or be_stop >= init_stop)) else 'init'
+        candidates = [(v, n) for n, v in
+                      (('init', init_stop), ('BE', be_stop), ('20w', ma20w))
+                      if v is not None]
+        eff_stop, basis = max(candidates) if candidates else (None, None)
+
+        if _fast_override(ticker):
+            status = _fast_override(ticker)
+        elif hard_stop is not None and close < hard_stop:
+            # Fires any day of the week — this check must not wait for Friday.
+            status = f'STOP HIT ({hard_basis}) → EXIT TODAY'
+        elif ma20w is not None and weekly_close < ma20w:
             status = 'BREACHED → EXIT TODAY'
-        elif dist <= STOP_NEAR_PCT * 100:
+        elif eff_stop is None:
+            status = 'NO STOP'
+        elif (close / eff_stop - 1) <= STOP_NEAR_PCT:
             status = 'APPROACHING'
         else:
             status = 'OK'
-        rows.append({'ticker': ticker, 'qty': qty, 'cost': cost,
-                     'close': round(close, 2), 'stop': round(stop, 2),
-                     'dist_pct': round(dist, 1), 'status': status})
+
+        dist = round((close / eff_stop - 1) * 100, 1) if eff_stop else None
+        open_risk = round(qty * max(close - eff_stop, 0.0), 0) if eff_stop else None
+        rows.append({**base, 'close': round(close, 2),
+                     'stop': round(eff_stop, 2) if eff_stop else None,
+                     'basis': basis, 'dist_pct': dist, 'status': status,
+                     'open_risk': open_risk})
     return rows
 
 
@@ -735,7 +1028,8 @@ def _fmt(val, decimals=2):
 
 
 def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
-                 equity=0.0, stop_status=None, futu_ok=True):
+                 equity=0.0, stop_status=None, futu_ok=True,
+                 baro_state=None, lead_frac=0.0, lead_detail=None):
     lines = []
 
     def p(*args):
@@ -755,14 +1049,26 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
     baro_rows = []
     for t, d in baro_info.items():
         if d:
+            side = 'ABOVE ✓' if d['above'] else 'BELOW ✗'
+            if d.get('in_band'):
+                side += ' ·带内粘滞'
             baro_rows.append([
                 t, _fmt(d['close']), _fmt(d['ma20w']),
                 f"{d['pct_vs_ma']:+.1f}%",
-                'ABOVE ✓' if d['above'] else 'BELOW ✗',
+                side,
             ])
     p(tab_mod.tabulate(baro_rows,
                        headers=['ETF', 'Close', '20W-MA', 'vs MA', 'State'],
                        tablefmt='simple'))
+    # Leadership-breadth gate: the generals lead the index in and out, so a
+    # broken leadership demotes the scan mode even when QQQ/SOXX read STRONG.
+    if lead_detail:
+        below = sorted(t for t, b in lead_detail.items() if b)
+        p(f'  Leadership breadth (generals < 20wMA): {lead_frac:.0%}'
+          f"  [{', '.join(below) if below else 'none'}]")
+        if baro_state is not None and market_state != baro_state:
+            p(f'  ⚠ GATE: leadership broken (≥{LEADERSHIP_BREACH_FRAC:.0%}) '
+              f'→ scan demoted {baro_state} → {market_state}')
     mode_msg = {
         'STRONG': '  → Scan mode: BREAKOUT  (weekly close above 10-week range high + volume ≥1.5×)',
         'MIXED':  '  → Scan mode: PULLBACK   (price touching 20d/50d MA + declining vol + reversal)',
@@ -807,7 +1113,14 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             conf   = s['confidence']
             shares, _r, cap_bound = _position_size(s['entry'], s['stop'], equity)
             sh_str = (f'{shares}{"*" if cap_bound else ""}' if shares else '—')
-            notes  = f"{s['type']} [{conf}] {vol_note} {gap_note} {er}{layout}".strip()
+            # Earnings blackout: don't open a new position into the event —
+            # zero the share suggestion so the setup can't be acted on as-is.
+            blackout = (r['earnings_days'] is not None
+                        and 0 <= r['earnings_days'] <= ER_BLACKOUT_D)
+            if blackout:
+                sh_str = '—'
+            bo_note = f'⛔ER{r["earnings_days"]}d·静默期不进(财报后跳空确认再看) ' if blackout else ''
+            notes  = f"{bo_note}{s['type']} [{conf}] {vol_note} {gap_note} {er}{layout}".strip()
             sig_rows.append([
                 ticker, close,
                 _fmt(s['entry']), _fmt(s['stop']), _fmt(s['target']),
@@ -861,7 +1174,7 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
 
     # ── Holdings stop status ──────────────────────────────────────────────────
     p()
-    p('[ HOLDINGS — stop status (stop = 20-week MA, evaluated at weekly close) ]')
+    p('[ HOLDINGS — stop status (eff stop = max(init, BE, 20wMA); init/BE 按日收盘, 20wMA 按周收盘) ]')
     if not futu_ok:
         p('  Futu unavailable — holdings stop status skipped (start OpenD to include it).')
     elif not stop_status:
@@ -870,22 +1183,61 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         hold_rows = []
         for h in stop_status:
             dist = f"{h['dist_pct']:+.1f}%" if h['dist_pct'] is not None else '—'
+            er   = f"{h['er_days']}d" if h.get('er_days') is not None else '—'
             hold_rows.append([
                 h['ticker'], f"{h['qty']:.0f}", _fmt(h['close']),
-                _fmt(h['stop']), dist, h['status'],
+                _fmt(h['stop']), h.get('basis') or '—', dist, er, h['status'],
             ])
         p(tab_mod.tabulate(
             hold_rows,
-            headers=['Ticker', 'Qty', 'Close', 'Stop(20wMA)', 'vs Stop', 'Status'],
+            headers=['Ticker', 'Qty', 'Close', 'Stop', 'Basis', 'vs Stop', 'ER', 'Status'],
             tablefmt='simple',
         ))
+        if any('HARD-STOP' in h['status'] for h in stop_status):
+            p('  🛑 HARD-STOP (Layer0·熔断): 崩塌已接管 — 立即处理, 不等周线/周五.')
+        if any('EVENT' in h['status'] for h in stop_status):
+            p('  ⚠ EVENT (Layer1·事件驱动): 异常下跌 — 立即查因(不可逆清/原因不明先减半).')
+        if any('STOP HIT' in h['status'] for h in stop_status):
+            p('  ⛔ STOP HIT (Layer1.5): 日收盘跌破 初始止损/保本线 — 今日离场, 不等周五.')
         if any(h['status'].startswith('BREACHED') for h in stop_status):
             p('  ⚠ BREACHED holdings: exit today at the open per the swing exit rule.')
+
+        # Layer 1.5 depends on the init stop being registered — nag until it is.
+        # BE-armed holdings are exempt: breakeven (=cost) already sits at or
+        # above any entry-time stop, so an init stop would be inert there.
+        no_init = sorted(h['ticker'] for h in stop_status
+                         if h.get('init_stop') is None and not h.get('be_armed'))
+        if no_init:
+            p(f"  ⚠ 未登记初始止损: {', '.join(no_init)} — 在 select.yml US_SWING_STOPS 补一行, "
+              f'否则 Layer1.5 缺位、只剩 20 周线兜底 (突破买点离线远时缝隙可达数 R).')
+
+        # ── Portfolio open heat: the pool is one theme; risk it as one trade ──
+        known   = [h for h in stop_status if h.get('open_risk') is not None]
+        unknown = sorted(h['ticker'] for h in stop_status if h.get('open_risk') is None)
+        heat    = sum(h['open_risk'] for h in known)
+        if equity and equity > 0:
+            heat_pct = heat / equity * 100
+            p(f'  OPEN HEAT 组合开放风险: ${heat:,.0f} = {heat_pct:.1f}% of equity '
+              f'(cap {HEAT_CAP_PCT:.0%} — 池内高相关, 按全部止损同日打穿计)')
+            if heat > equity * HEAT_CAP_PCT:
+                p(f'  ⛔ OVER HEAT CAP: 超出主题风险预算 → 不进新仓; 上移最弱仓止损或减仓, '
+                  f'直到 heat ≤ {HEAT_CAP_PCT:.0%}.')
+        else:
+            p(f'  OPEN HEAT 组合开放风险: ${heat:,.0f} (set US_SWING_EQUITY for the % and cap check)')
+        if unknown:
+            p(f"  ⚠ heat 未计入 (无有效止损): {', '.join(unknown)} — 实际风险被低估.")
+
+        # ── Pre-earnings forced decision (weeks-long holds eat every report) ──
+        er_soon = [h for h in stop_status
+                   if h.get('er_days') is not None and 0 <= h['er_days'] <= ER_BLACKOUT_D]
+        for h in er_soon:
+            p(f"  📅 {h['ticker']} 财报 {h['er_days']}d 内 → 今天写下财报决策并留档: "
+              f'满仓扛 / 减半扛 / 出掉. 不决策 = 默认减半 (事后没判断力, 规则先行).')
 
     # ── Position management alerts ────────────────────────────────────────────
     if pos_alerts:
         p()
-        p('[ POSITION MANAGEMENT ALERTS ]')
+        p('[ POSITION MANAGEMENT ALERTS ]   (Layer0 熔断 / Layer1 事件 优先于周线规则)')
         for a in pos_alerts:
             p(f"  {a['ticker']:6s}  cost {a['cost']:.2f}  qty {a['qty']:.0f}  P/L {a['pl_pct']:+.1f}%")
             for action in a['actions']:
@@ -900,10 +1252,13 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         'Valuation not at historical extreme?',
         'Entry = last close (decided after market close, not intraday)',
         'Stop = technical level written (NOT a fixed %)  →  ______',
+        f'Stop registered in select.yml US_SWING_STOPS (Layer1.5 生效的前提)  →  ______',
         'Target written, R:R ≥ 2:1 confirmed  →  ______',
         'Exit condition defined (what would invalidate thesis)?',
         'Share count from table (risk 1R = 1% equity, cap 25%/name)?',
         'Concurrent positions ≤ 5?',
+        f'Earnings > {ER_BLACKOUT_D} days away?  (≤{ER_BLACKOUT_D}d = 静默期, 不进新仓)',
+        f'Portfolio OPEN HEAT after this entry still ≤ {HEAT_CAP_PCT:.0%} of equity?',
     ]:
         p(f'  □  {item}')
     p()
@@ -911,22 +1266,35 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
     # ── Legend / field explanations ───────────────────────────────────────────
     p('[ 字段说明 / LEGEND ]')
     p(f'  MARKET STATE 市场状态: STRONG=QQQ与SOXX均在{MA_WEEKLY}周线上方 / MIXED=一上一下 / WEAK=均在下方')
+    p(f'    粘滞带 hysteresis: 收盘在自身{MA_WEEKLY}周线±{STATE_BAND_PCT:.0%}带内 → 沿用前一次判定(表中标"带内粘滞"),')
+    p(f'      只有收盘越过带缘才换向 — 防震荡市里三态机在均线附近反复切换扫描模式(周中假信号的主因)')
+    p(f'    Leadership breadth 领导股广度: 将军(MAG7)中跌破各自{MA_WEEKLY}周线的比例(同样±{STATE_BAND_PCT:.0%}粘滞); ≥{LEADERSHIP_BREACH_FRAC:.0%}触发GATE')
+    p(f'      → 将军先于指数倒下=慢顶, 此时即便barometer为STRONG也降一档(STRONG→MIXED→WEAK), 退出BREAKOUT改保守扫描')
     p('  ENTRY SIGNALS 入场信号 (机会, 尚未持有):')
     p('    Entry 建议入场价 · Stop 建议止损价 · Target 目标价')
     p(f'    R:R 盈亏比=(目标-入场)/(入场-止损); ✓ = ≥{MIN_RR:.0f}:1 值得做, ✗ = 不值得')
     p(f'    Shares 建议买入股数 (=账户{RISK_PCT:.0%}风险÷每股风险, 单票≤{MAX_POSITION_PCT:.0%}仓位); * = 被仓位上限压过')
     p('      ⚠ Shares 是"建议买入量", 不是你的持仓! 你的持仓在 HOLDINGS 区')
     p('    Notes: stop:key=止损在关键支撑位 / stop:rng=回退到区间低点; vol×N=量比; ER Nd=N天后财报')
+    p(f'    ⛔ER·静默期: 距财报≤{ER_BLACKOUT_D}d 的 setup 不进 (Shares 清零) — 单日-20%事件多半就是财报; 财报后跳空确认是更好的入场')
     p(f'    gap↑/↓=隔夜跳空方向; ✓=收盘站稳开盘(信息) / ✗fade=高开低走(噪声, 别信);')
     p(f'      分档(实测 SP500∪NDX 5y, 仅✓时给): 弱≥{GAP_WEAK_PCT:.0f}%(lift7x) · 确认≥{GAP_CONFIRM_PCT:.0f}%(lift17x) · 强≥{GAP_STRONG_PCT:.0f}%(lift48x); <{GAP_WEAK_PCT:.0f}%是去噪地板,非信号')
     p('      用法: gap·确认/强 出现在 ⟨已持有⟩→上移止损/加固; 出现在 ⟨未持有信号⟩→多数已晚, 别追开盘(大跳空日内段均值转负)')
     p('  HOLDINGS 持仓止损 (你的真实持仓, 需开富途 OpenD):')
-    p(f'    Qty 持有股数 · Stop(20wMA)={MA_WEEKLY}周线止损位 · vs Stop 距止损%')
-    p(f'    Status: OK / APPROACHING(距止损≤{STOP_NEAR_PCT:.0%}逼近) / BREACHED(跌破→今日离场)')
+    p(f'    Stop=有效止损=max(init 初始技术止损, BE 保本线, 20wMA {MA_WEEKLY}周线) · Basis=当前哪条最高')
+    p(f'      init/BE 按【日收盘】判 (Layer1.5, 补突破买点远离周线的缝隙) · 20wMA 只按【周收盘】判')
+    p(f'      init 来源: select.yml US_SWING_STOPS — 成交当天登记 setup 止损价, 离场后删除该行')
+    p(f'    Status: OK / APPROACHING(距止损≤{STOP_NEAR_PCT:.0%}) / STOP HIT(日收破init/BE→今日离场) / BREACHED(周收破20周线→今日离场)')
+    p(f'    ER=距下次财报天数; ≤{ER_BLACKOUT_D}d 强制写财报决策(满仓扛/减半/出掉), 不写=默认减半')
+    p(f'    OPEN HEAT=全部持仓止损同日打穿的总损失; 池内高相关=一个主题仓, 预算上限 {HEAT_CAP_PCT:.0%} equity')
     p('  POSITION MANAGEMENT 持仓管理 (对已有仓位的操作):')
     p(f'    MOVE STOP→breakeven: 浮盈≥{BREAKEVEN_PCT:.0f}% → 止损上移到成本价(锁不亏; 阈值高=留够缓冲, 正常回踩不被洗出)')
     p(f'    TRIM 50%: 浮盈≥{TRIM_PCT:.0f}% 且周收跌破{MA_WEEKLY_FAST}周线(动量转弱) → 减半 (走弱才减, 不按价格目标砍, 给爆发续涨留右尾)')
     p(f'    EXIT: 周收盘跌破{MA_WEEKLY}周线 → 清仓 (优先于止盈)')
+    p('  ⚡ 快速风控 (Layer0/1, 对持仓按"日线"评估, 优先于周线规则; 触发即接管、跳过下面所有确认):')
+    p(f'    Layer0 🛑硬止损/熔断: 近{CRASH_WINDOW_D}日 峰→现 跌幅≤-{HARD_STOP_PCT:.0f}% = 崩塌 → 立即处理, 绝不等周五')
+    p(f'    Layer1 ⚠事件驱动: 跌幅≤-{EVENT_DROP_PCT:.0f}% 或 单日>{EVENT_VOL_MULT:.0f}×波动率(σ) → 立即查因(不可逆清仓/原因不明先减半)')
+    p('    一标的只用一套框架: 别涨时讲技术、该止损时改讲"基本面好不可能跌" (慢趋势用均线管, 快暴跌用硬止损管)')
     p()
 
     # Write to file
@@ -958,6 +1326,8 @@ def write_signal_csv(results, path):
             'rr_ok':         s.get('rr_ok'),
             'exit_signal':   r.get('exit_signal'),
             'earnings_days': r.get('earnings_days'),
+            'er_blackout':   (r.get('earnings_days') is not None
+                              and 0 <= r['earnings_days'] <= ER_BLACKOUT_D),
             'gap_pct':       g.get('gap_pct'),
             'gap_dir':       g.get('direction'),
             'gap_confirmed': g.get('confirmed'),
@@ -997,8 +1367,13 @@ def main():
 
     # Layer 1
     logging.info('Checking market state …')
-    market_state, baro_info = get_market_state()
-    logging.info(f'Market state: {market_state}')
+    baro_state, baro_info = get_market_state()
+    lead_frac, lead_detail = get_leadership_breadth()
+    market_state = _gate_state(baro_state, lead_frac)
+    if market_state != baro_state:
+        logging.info(f'Leadership breadth {lead_frac:.0%} of generals below 20wMA '
+                     f'→ demote {baro_state}→{market_state}')
+    logging.info(f'Market state: {market_state} (barometer {baro_state})')
 
     # Layer 2 + 3
     universe = [opts.ticker.upper()] if opts.ticker else UNIVERSE
@@ -1020,8 +1395,14 @@ def main():
         logging.info('Querying Futu positions …')
         pos_df = get_futu_positions(opts.host, opts.port)
         futu_ok = pos_df is not None
-        alerts = position_alerts(pos_df, weekly_cache)
-        stop_status = position_stop_status(pos_df, weekly_cache)
+        # Layers 0/1 first (daily-bar crash/event check), then the weekly mgmt that
+        # they pre-empt — both readers share the same risk_layers dict.
+        risk_layers = crash_event_scan(pos_df)
+        if risk_layers:
+            logging.warning('Fast risk-control triggered: '
+                            + ', '.join(f'{t}=L{l}' for t, (l, _) in risk_layers.items()))
+        alerts = position_alerts(pos_df, weekly_cache, risk_layers)
+        stop_status = position_stop_status(pos_df, weekly_cache, risk_layers)
 
     # Default output path. Under --asof, tag with the as-of date so a backtest
     # run never overwrites the live dated report.
@@ -1029,20 +1410,57 @@ def main():
                 else datetime.datetime.now().strftime('%Y%m%d'))
     out_file = opts.output
     if out_file is None:
-        out_dir = '/home/ryan/DATA/result'
-        if os.path.isdir(out_dir):
+        res_root = '/home/ryan/DATA/result'
+        if os.path.isdir(res_root):
+            out_dir = os.path.join(res_root, 'us_tech_swing')
+            os.makedirs(out_dir, exist_ok=True)
             out_file = f'{out_dir}/us_tech_swing_{date_str}.txt'
 
     print_report(market_state, baro_info, results, alerts, out_file,
-                 equity=ACCOUNT_EQUITY, stop_status=stop_status, futu_ok=futu_ok)
+                 equity=ACCOUNT_EQUITY, stop_status=stop_status, futu_ok=futu_ok,
+                 baro_state=baro_state, lead_frac=lead_frac, lead_detail=lead_detail)
 
     # Machine-readable signal CSV (consumed by t_us_resonance.py)
-    out_dir = '/home/ryan/DATA/result'
-    if os.path.isdir(out_dir):
+    res_root = '/home/ryan/DATA/result'
+    if os.path.isdir(res_root):
+        out_dir = os.path.join(res_root, 'us_tech_swing')
+        os.makedirs(out_dir, exist_ok=True)
         try:
             write_signal_csv(results, f'{out_dir}/us_tech_signal_{date_str}.csv')
         except Exception as e:
             logging.warning(f'tech signal CSV write failed: {e}')
+
+    # Signal attribution ledger (信号归因日志): freeze every emitted Setup as a
+    # virtual trade so t_us_signal_attrib.py can measure which signal type
+    # actually pays. Live runs only — an --asof row would be a look-ahead lie.
+    if _ASOF is None:
+        try:
+            from signal_ledger import log_signals
+            ledger_rows = []
+            for r in results:
+                s = r.get('signal')
+                if not s:
+                    continue
+                g = r.get('gap') or {}
+                ledger_rows.append({
+                    'ticker':       r['ticker'],
+                    'signal_type':  s.get('type'),
+                    'confidence':   s.get('confidence'),
+                    'market_state': market_state,
+                    'close':        r.get('close'),
+                    'entry':        s.get('entry'),
+                    'stop':         s.get('stop'),
+                    'target':       s.get('target'),
+                    'rr':           s.get('rr'),
+                    'rr_ok':        s.get('rr_ok'),
+                    'er_days':      r.get('earnings_days'),
+                    'er_blackout':  (r.get('earnings_days') is not None
+                                     and 0 <= r['earnings_days'] <= ER_BLACKOUT_D),
+                    'gap_tier':     g.get('tier'),
+                })
+            log_signals(ledger_rows, source='tech_swing')
+        except Exception as e:
+            logging.warning(f'signal ledger write failed: {e}')
 
 
 if __name__ == '__main__':

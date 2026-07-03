@@ -341,9 +341,10 @@ def run(asof, history):
     out = '\n'.join(lines)
     print(out)
     tag = anchor.strftime('%Y%m%d')
-    path = os.path.join(RESULT_DIR, f'us_regime_monitor_{tag}.txt')
+    out_dir = os.path.join(RESULT_DIR, 'us_regime_monitor')
+    path = os.path.join(out_dir, f'us_regime_monitor_{tag}.txt')
     try:
-        os.makedirs(RESULT_DIR, exist_ok=True)
+        os.makedirs(out_dir, exist_ok=True)
         with open(path, 'w', encoding='UTF-8') as f:
             f.write(out + '\n')
         logging.info(f'报告写入 {path}')

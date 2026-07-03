@@ -884,7 +884,8 @@ def run_scan(universe: str, force: bool, plot_top: int):
     if plot_top > 0:
         date_str = (_ASOF.strftime('%Y%m%d') if _ASOF is not None
                     else datetime.datetime.now().strftime('%Y%m%d'))
-        base = RESULT_DIR if os.path.isdir(RESULT_DIR) else '.'
+        base = os.path.join(RESULT_DIR, 'us_key_kline') if os.path.isdir(RESULT_DIR) else '.'
+        os.makedirs(base, exist_ok=True)
         for r in rows[:plot_top]:
             t = r['ticker']
             try:
@@ -959,7 +960,8 @@ def main():
     if out_png is None:
         date_str = (_ASOF.strftime('%Y%m%d') if _ASOF is not None
                     else datetime.datetime.now().strftime('%Y%m%d'))
-        base = RESULT_DIR if os.path.isdir(RESULT_DIR) else '.'
+        base = os.path.join(RESULT_DIR, 'us_key_kline') if os.path.isdir(RESULT_DIR) else '.'
+        os.makedirs(base, exist_ok=True)
         out_png = f'{base}/key_kline_{ticker}_{date_str}.png'
 
     plot_chart(df, key_bars, ticker, out_png)

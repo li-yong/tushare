@@ -222,7 +222,8 @@ def main() -> int:
     date_str = datetime.datetime.now().strftime('%Y%m%d')
     # --limit 是试跑,写独立文件且不参与同日缓存,避免污染正式全量结果
     suffix = f'_partial{args.limit}' if args.limit else ''
-    out_csv = f'{RESULT_DIR}/us_sentiment_{date_str}{suffix}.csv'
+    out_dir = os.path.join(RESULT_DIR, 'us_sentiment')
+    out_csv = f'{out_dir}/us_sentiment_{date_str}{suffix}.csv'
     if os.path.exists(out_csv) and not args.force_run and not args.limit:
         print(f'今日已扫,跳过 (--force_run 重扫): {out_csv}')
         print(pd.read_csv(out_csv).to_string(index=False))
@@ -278,6 +279,7 @@ def main() -> int:
     out_md = out_csv.rsplit('.', 1)[0] + '.md'
     df = pd.DataFrame(rows)
     if os.path.isdir(RESULT_DIR):
+        os.makedirs(out_dir, exist_ok=True)
         df.to_csv(out_csv, index=False)
         write_markdown_report(rows, out_md, total_cost,
                               len(hold), len(watch), args.model)
