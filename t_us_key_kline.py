@@ -148,6 +148,17 @@ FATE_POS_LO  = 0.33    # close-in-range <  0.33 → lower third (trap)
 CLIMAX_VOL_MULT = 2.5
 CLIMAX_RNG_MULT = 1.5  # day range >= 1.5 * ATR(14) approx
 
+# 5.6 Exhaustion-top bar (利好出尽 climax, news_top methodology §2.1): gap-up to
+# a fresh high that closes back below the open on heavy volume. Volume threshold
+# is softer than CLIMAX_VOL_MULT because the composite already carries four other
+# conditions — the reference case (MU 2026-06-25, terminal top 1255) printed only
+# ~1.5× the 20d median, which CLIMAX_VOL_MULT=2.5 would miss.
+EXH_VOL_MULT    = 1.4
+EXH_RNG_MULT    = 1.0  # range only needs to be a NORMAL day, not a wide one:
+                       # by the parabolic end-phase ATR is already inflated, so
+                       # 1.5× would veto the reference bar itself (MU 06-25: 1.08×)
+EXH_NEWHIGH_WIN = 250  # "new high" = highest high of the prior ~52 weeks
+
 # 5.7 Per-bar 隔夜跳空 confirmed/faded marker (信噪比, event-only).
 # The 现状 line's gap flag (t_us_tech_swing._gap_confirmation) reads only the LAST
 # bar at a 0.3% noise floor; this detector applies the SAME classification to every
@@ -463,6 +474,47 @@ def detect_volume_climax(df: pd.DataFrame) -> list:
                 'date': idx[i], 'type': 'CLIMAX', 'price': float(high[i]),
                 'note': f'高潮量 vol×{vol[i] / vavg[i]:.1f}', 'fate': None,
                 'stop': None,  # event-only, no entry → no stop
+            })
+    return out
+
+
+def detect_exhaustion_top(df: pd.DataFrame) -> list:
+    """5.6 利好出尽 climax (news_top 方法论 §2.1, price side only) — event-only.
+
+    Gap-up open above the prior close, high takes out the prior EXH_NEWHIGH_WIN
+    bar high, yet the close falls back below the open, on ≥EXH_VOL_MULT× volume
+    and ≥EXH_RNG_MULT× ATR range: the best-possible day that could not hold.
+    This is only the PRICE half of §2.1 ("二者缺一不可") — the caller must pair
+    it with a same-window super-beat news check before calling it a straw.
+    Requires _attach_indicators (vol_avg20, atr14). Not wired into
+    collect_key_bars/charts yet; consumed by t_us_news_top_detector.py.
+    """
+    out = []
+    idx = df.index
+    op = df['open'].values
+    high = df['high'].values
+    low = df['low'].values
+    close = df['close'].values
+    vol = df['volume'].values
+    vavg = df['vol_avg20'].values
+    atr = df['atr14'].values
+    prior_high = df['high'].rolling(EXH_NEWHIGH_WIN, min_periods=60).max().shift(1).values
+
+    for i in range(1, len(df)):
+        if (np.isnan(vavg[i]) or vavg[i] <= 0 or np.isnan(atr[i]) or atr[i] <= 0
+                or np.isnan(prior_high[i])):
+            continue
+        gap_up   = op[i] > close[i - 1]
+        new_high = high[i] >= prior_high[i]
+        fade     = close[i] < op[i]
+        big_vol  = vol[i] >= EXH_VOL_MULT * vavg[i]
+        big_rng  = (high[i] - low[i]) >= EXH_RNG_MULT * atr[i]
+        if gap_up and new_high and fade and big_vol and big_rng:
+            out.append({
+                'date': idx[i], 'type': 'EXHAUSTION_TOP', 'price': float(high[i]),
+                'note': (f'利好出尽候选: 跳空新高收回落 '
+                         f'vol×{vol[i] / vavg[i]:.1f}'),
+                'fate': None, 'stop': None,  # event-only, no entry → no stop
             })
     return out
 

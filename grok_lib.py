@@ -18,6 +18,13 @@ import re
 import json
 from typing import Any
 
+from constant import (STRAW_BEST_NEWS_CLIMAX, STRAW_REGULATORY,
+                      STRAW_CUSTOMER_CONFLICT, STRAW_DOWNSTREAM_EXCESS,
+                      STRAW_TYPES_ALL,
+                      SPARK_CATALYST_BREAKOUT, SPARK_SUPPLY_DESTRUCTION,
+                      SPARK_DEMAND_COMMITMENT, SPARK_SHORTAGE_ADMISSION,
+                      SPARK_TYPES_ALL)
+
 XAI_BASE_URL = "https://api.x.ai/v1"
 DEFAULT_MODEL = "grok-4.3"          # 最强且最快;支持 web_search/x_search
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -93,11 +100,11 @@ def _extract_citations(resp) -> list[str]:
     return urls
 
 
-def sentiment_scan(ticker: str, model: str = DEFAULT_MODEL,
-                   days_back: int = 7,
-                   x_handles: list[str] | None = None) -> dict:
-    """对单只股票做实时情绪/催化剂扫描,返回结构化 dict。
-    含 _meta:模型、引用来源 URL、token/工具用量、估算成本。"""
+def _structured_scan(sys_prompt: str, user_prompt: str, schema: dict,
+                     fallback: dict, model: str = DEFAULT_MODEL,
+                     x_handles: list[str] | None = None) -> dict:
+    """共享底座:带 web_search/x_search 的结构化(JSON-schema)单次调用。
+    解析失败返回 fallback(附 raw);永远附 _meta。"""
     client = get_client()
     x_tool: dict[str, Any] = {"type": "x_search"}
     if x_handles:
@@ -105,19 +112,18 @@ def sentiment_scan(ticker: str, model: str = DEFAULT_MODEL,
     resp = client.responses.create(
         model=model,
         input=[
-            {"role": "system", "content": _SYS_PROMPT},
-            {"role": "user", "content":
-                f"分析股票 {ticker} 最近 {days_back} 天的市场情绪与催化剂。"},
+            {"role": "system", "content": sys_prompt},
+            {"role": "user", "content": user_prompt},
         ],
         tools=[{"type": "web_search"}, x_tool],
-        text={"format": _SENTIMENT_SCHEMA},
+        text={"format": schema},
         temperature=0,
     )
     try:
         data = json.loads(resp.output_text)
     except (json.JSONDecodeError, TypeError, AttributeError):
-        data = {"ticker": ticker, "stance": "unclear",
-                "summary": "解析失败", "raw": getattr(resp, "output_text", None)}
+        data = dict(fallback)
+        data["raw"] = getattr(resp, "output_text", None)
     u = resp.usage
     ticks = getattr(u, "cost_in_usd_ticks", None)
     data["_meta"] = {
@@ -129,6 +135,189 @@ def sentiment_scan(ticker: str, model: str = DEFAULT_MODEL,
         "cost_usd_est": round(ticks * USD_PER_TICK, 4) if ticks else None,
     }
     return data
+
+
+def sentiment_scan(ticker: str, model: str = DEFAULT_MODEL,
+                   days_back: int = 7,
+                   x_handles: list[str] | None = None) -> dict:
+    """对单只股票做实时情绪/催化剂扫描,返回结构化 dict。
+    含 _meta:模型、引用来源 URL、token/工具用量、估算成本。"""
+    return _structured_scan(
+        _SYS_PROMPT,
+        f"分析股票 {ticker} 最近 {days_back} 天的市场情绪与催化剂。",
+        _SENTIMENT_SCHEMA,
+        {"ticker": ticker, "stance": "unclear", "summary": "解析失败"},
+        model=model, x_handles=x_handles,
+    )
+
+
+# ── 见顶新闻扫描 (docs/news_driven_top_detection.md) ─────────────────────────
+# 稻草类型字符串来自 constant.py(它们同时是 signal ledger 的 signal_type)。
+_TOP_SCHEMA = {
+    "type": "json_schema",
+    "name": "news_top_detection",
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "ticker": {"type": "string"},
+            "top_risk_level": {
+                "type": "string",
+                "enum": ["none", "low", "medium", "high", "confirmed_top"],
+                "description": "新闻侧的周期见顶风险(不含价格确认)"},
+            "straw_types": {
+                "type": "array",
+                "items": {"type": "string", "enum": STRAW_TYPES_ALL},
+                "description": ("窗口内实际命中的稻草类型。"
+                                f"{STRAW_BEST_NEWS_CLIMAX}=出现本周期级别的超预期利好"
+                                "(如财报大超+指引上修);"
+                                f"{STRAW_REGULATORY}=行业性反垄断/监管立案;"
+                                f"{STRAW_CUSTOMER_CONFLICT}=大客户公开抱怨/涨价转嫁/供需公开互撕;"
+                                f"{STRAW_DOWNSTREAM_EXCESS}=下游边际买家承认过剩/砍需求"
+                                "(攻击需求假设的新闻)。没有就留空,绝不凑数")},
+            "subject_migration": {
+                "type": "boolean",
+                "description": ("新闻主语是否已从公司自己(财报/产品/新高)"
+                                "迁移到生态(客户/监管/法院/下游买家)")},
+            "last_straw": {
+                "type": "string",
+                "description": "若命中 downstream_excess:一句话描述该新闻;否则空字符串"},
+            "demand_victim": {
+                "type": "string",
+                "description": ("按'谁的需求假设被击穿'归因(可以不是新闻主语,"
+                                "如 Meta 出售过剩算力击穿的是存储/算力供给链);无则空字符串")},
+            "confidence": {"type": "number", "description": "0.0-1.0"},
+            "summary": {"type": "string",
+                        "description": "一句话中文状态测量(GPS,不是方向预测)"},
+            "key_facts": {"type": "array", "items": {"type": "string"},
+                          "description": "3-6 条带日期的事实要点,中文"},
+            "as_of": {"type": "string", "description": "信息时间范围说明"},
+        },
+        "required": ["ticker", "top_risk_level", "straw_types",
+                     "subject_migration", "last_straw", "demand_victim",
+                     "confidence", "summary", "key_facts", "as_of"],
+    },
+}
+
+_TOP_SYS_PROMPT = (
+    "你是专注美股周期顶部识别的分析师,执行'新闻主语迁移'方法论:"
+    "见顶前新闻主语是公司自己(财报/产品/订单/新高),顶部区新闻主语迁移到生态"
+    "(客户/监管/法院/下游买家)。你只做状态测量(GPS),不做方向预测,不建议仓位动作。"
+    "四类'稻草'新闻各测一个状态,只在检索到确凿对应事实时才标记,绝不凑数;"
+    "归因按'谁的需求假设被击穿',不按新闻主语。"
+    "top_risk_level 标准: none=只有公司主语的常规新闻; low=个别生态新闻但无稻草; "
+    "medium=命中1类稻草或主语明显迁移; high=多类稻草共振或命中 downstream_excess; "
+    "confirmed_top 仅当稻草共振且检索到价格已明显破位的报道。"
+    "只依据检索到的事实,信息不足就说明,绝不编造。所有文本用中文。"
+)
+
+
+def top_scan(ticker: str, model: str = DEFAULT_MODEL, days_back: int = 14,
+             cutoff: str | None = None,
+             x_handles: list[str] | None = None) -> dict:
+    """对单只股票做见顶新闻扫描(四类稻草+主语迁移),返回结构化 dict。
+
+    cutoff='YYYY-MM-DD' 时要求模型只使用发表于该日及之前的新闻(prompt 级
+    约束,近似 point-in-time——web 检索无法硬截断,回测结果只能当 best-effort)。
+    """
+    if cutoff:
+        window = (f"只考虑发表于 {cutoff}(含)之前、且距该日 {days_back} 天内的新闻,"
+                  f"把 {cutoff} 当作'今天';之后发生的一切信息一律当作不存在。")
+    else:
+        window = f"分析最近 {days_back} 天的新闻。"
+    return _structured_scan(
+        _TOP_SYS_PROMPT,
+        f"检测股票 {ticker} 是否处于周期顶部区。{window}",
+        _TOP_SCHEMA,
+        {"ticker": ticker, "top_risk_level": "none", "straw_types": [],
+         "subject_migration": False, "last_straw": "", "demand_victim": "",
+         "confidence": 0.0, "summary": "解析失败", "key_facts": [], "as_of": ""},
+        model=model, x_handles=x_handles,
+    )
+
+
+# ── 启动新闻扫描 (docs/news_driven_top_detection.md §6, 见顶扫描的镜像) ────────
+# 火种类型字符串来自 constant.py(它们同时是 signal ledger 的 signal_type)。
+_LAUNCH_SCHEMA = {
+    "type": "json_schema",
+    "name": "news_launch_detection",
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "ticker": {"type": "string"},
+            "launch_level": {
+                "type": "string",
+                "enum": ["none", "low", "medium", "high", "confirmed_launch"],
+                "description": "新闻侧的周期启动信号强度(不含价格确认)"},
+            "spark_types": {
+                "type": "array",
+                "items": {"type": "string", "enum": SPARK_TYPES_ALL},
+                "description": ("窗口内实际命中的火种类型。"
+                                f"{SPARK_CATALYST_BREAKOUT}=出现本周期级别的催化剂落地"
+                                "(如财报大超+指引上修/重磅订单/design win);"
+                                f"{SPARK_SUPPLY_DESTRUCTION}=行业性减产/砍资本开支/产能退出/破产;"
+                                f"{SPARK_DEMAND_COMMITMENT}=大客户公开签约/长约/生态伙伴公开背书;"
+                                f"{SPARK_SHORTAGE_ADMISSION}=下游边际买家承认短缺/接受提价"
+                                "(确立需求假设的新闻)。没有就留空,绝不凑数")},
+            "subject_birth": {
+                "type": "boolean",
+                "description": ("新闻主语是否已从行业性阴霾/宏观(过剩/砍单/降价)"
+                                "迁移回公司自己(订单/产品/提价/新客户)")},
+            "first_spark": {
+                "type": "string",
+                "description": "若命中 shortage_admission:一句话描述该新闻;否则空字符串"},
+            "demand_builder": {
+                "type": "string",
+                "description": ("按'谁的需求假设正在建立'归因(可以不是新闻主语,"
+                                "如下游宣布扩产建立的是上游设备/材料链的需求);无则空字符串")},
+            "confidence": {"type": "number", "description": "0.0-1.0"},
+            "summary": {"type": "string",
+                        "description": "一句话中文状态测量(GPS,不是方向预测)"},
+            "key_facts": {"type": "array", "items": {"type": "string"},
+                          "description": "3-6 条带日期的事实要点,中文"},
+            "as_of": {"type": "string", "description": "信息时间范围说明"},
+        },
+        "required": ["ticker", "launch_level", "spark_types",
+                     "subject_birth", "first_spark", "demand_builder",
+                     "confidence", "summary", "key_facts", "as_of"],
+    },
+}
+
+_LAUNCH_SYS_PROMPT = (
+    "你是专注美股周期启动识别的分析师,执行'新闻主语回归'方法论(见顶'主语迁移'的镜像):"
+    "底部/启动前新闻主语是行业性阴霾(过剩/砍单/宏观),启动区新闻主语迁移回公司自己"
+    "(订单/产品/提价/新客户)。你只做状态测量(GPS),不做方向预测,不建议仓位动作。"
+    "四类'火种'新闻各测一个状态,只在检索到确凿对应事实时才标记,绝不凑数;"
+    "归因按'谁的需求假设正在建立',不按新闻主语。"
+    "launch_level 标准: none=仍是行业阴霾主语的常规新闻; low=个别公司主语新闻但无火种; "
+    "medium=命中1类火种或主语明显回归; high=多类火种共振或命中 shortage_admission; "
+    "confirmed_launch 仅当火种共振且检索到价格已放量突破的报道。"
+    "只依据检索到的事实,信息不足就说明,绝不编造。所有文本用中文。"
+)
+
+
+def launch_scan(ticker: str, model: str = DEFAULT_MODEL, days_back: int = 14,
+                cutoff: str | None = None,
+                x_handles: list[str] | None = None) -> dict:
+    """对单只股票做启动新闻扫描(四类火种+主语回归),返回结构化 dict。
+
+    cutoff 语义与 top_scan 相同(prompt 级近似 point-in-time,回测 best-effort)。
+    """
+    if cutoff:
+        window = (f"只考虑发表于 {cutoff}(含)之前、且距该日 {days_back} 天内的新闻,"
+                  f"把 {cutoff} 当作'今天';之后发生的一切信息一律当作不存在。")
+    else:
+        window = f"分析最近 {days_back} 天的新闻。"
+    return _structured_scan(
+        _LAUNCH_SYS_PROMPT,
+        f"检测股票 {ticker} 是否处于周期启动区。{window}",
+        _LAUNCH_SCHEMA,
+        {"ticker": ticker, "launch_level": "none", "spark_types": [],
+         "subject_birth": False, "first_spark": "", "demand_builder": "",
+         "confidence": 0.0, "summary": "解析失败", "key_facts": [], "as_of": ""},
+        model=model, x_handles=x_handles,
+    )
 
 
 def ping(model: str = DEFAULT_MODEL) -> str:

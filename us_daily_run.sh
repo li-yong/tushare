@@ -97,6 +97,15 @@ rc=$?
 # dated report us_regime_monitor_<date>.txt. Non-fatal — its rc never flips the run.
 run_step "regime-monitor" "$PY" t_us_regime_monitor.py
 
+# Supplementary: signal canary (信号金丝雀) — rolling 21-day losing rate of the
+# system's OWN ledger episodes (last 40 completed). NOT an early warning — the
+# 2021-22 validation falsified that (melt-up tops read LOWEST right before the
+# turn); it is a COINCIDENT pool-health confirmation: high = the recent signal
+# environment is already deteriorating. Runs right after tech_swing so today's
+# ledger appends are included; honestly reports 样本不足 while the ledger is
+# young. Verdict & calibration: t_us_signal_canary.py header + --validate.
+run_step "signal-canary" "$PY" t_us_signal_canary.py
+
 # Supplementary: three-layer chain (贵气 → 兑现 → 共振). premium fills the Futu
 # fundamentals cache; delivery reuses it; resonance joins the three CSVs. All
 # non-fatal (run_step), so they never flip the run's exit code.

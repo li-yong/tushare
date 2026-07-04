@@ -6,7 +6,9 @@ US Tech Swing Trade Scanner  (session 81 framework)
   Layer 1 — Market state  : QQQ + SOXX vs 20-week MA → STRONG / MIXED / WEAK
                             then demote one notch if ≥half the generals (MAG7)
                             are below their own 20wMA (leadership-breadth gate)
-  Layer 2 — Entry signal  : breakout (STRONG) or pullback to MA (MIXED/WEAK)
+  Layer 2 — Entry signal  : breakout (STRONG) or pullback to MA (WEAK);
+                            MIXED = no new entry (过渡期不开新仓, huice 回测唯一
+                            稳定负期望口袋 — setups shown as watch-only; --no-mixed-gate 可关)
   Layer 3 — Pre-trade setup: entry / stop (technical) / target / R:R ≥ 2:1
   Layer 4 — Position mgmt : fast risk control on DAILY bars first — Layer 0
                             hard-stop (crash) and Layer 1 event-driven drop take
@@ -140,6 +142,34 @@ STATE_BAND_PCT    = 0.03    # market-state hysteresis: a barometer/general withi
                             # mode with it) whipsaws. Same idea as the exit rule's
                             # buffer_pct (twenty_week_trend_system §2.2), applied
                             # to Layer 1. Holdings' exit rule is NOT banded here.
+# ── 体制联动 (两台状态机打通, 2026-07-04) ──────────────────────────────────────
+# t_us_regime_monitor (SPY 200日线 DEFEND + 领先共振 WATCH + 熊反免疫期) 每日 cron
+# 写机读快照; 本扫描器开扫前读它做入场侧门控:
+#   DEFEND        → 所有新仓 Setup 降级为观察行 (⛔体制DEFEND)
+#   WATCH / 免疫期 → 扫描模式降一档 (STRONG→MIXED→WEAK; 配合 MIXED 门控 = 不追高)
+# 依据: huice 2022 回测 — 熊反里 STRONG 标签胜率最低 (10-17%), 2022-08 熊反 SPY 从未
+# 连续站回 200 日线 (免疫期全程生效可挡)。快照缺失/过期 → 优雅降级不挡扫描;
+# --asof 回测不读 (live 快照对历史日期是未来函数); --no-regime-gate 可关。
+# 只动入场侧 — 退出信号/持仓管理与体制无关 (纪律层不受门控影响)。
+REGIME_STATE_FILE = '/home/ryan/DATA/result/us_regime_monitor/us_regime_state.json'
+REGIME_MAX_AGE_D  = 5       # 快照超过 N 个自然日视为过期 (容周末+假日)
+REGIME_GATE       = True    # --no-regime-gate 置 False
+_REGIME_SUPPRESS  = False   # 本次运行 DEFEND 抑制生效 (main 设置, scan_stock 读)
+REGIME_IMMUNITY_DEMOTE = False
+# ↑ 熊反免疫期是否硬降档。验证 (episode × 前日体制标签 join, 2022+2025-26 大池):
+#   DEFEND 抑制 ✓ (2022 挡掉均 -0.41R×6915 单, 2025 放弃 +2.60R×622 单, 净省 ~+1200R)
+#   WATCH 降档  ✓ (净省 ~+835R)
+#   免疫期硬降档 ✗ 净 -891R: 2022 熊反免疫窗的单均 -0.86R (挡对), 但 2025 V 复苏
+#   免疫窗的单均 +2.08R 且以追高型领涨 (挡错, 恰是全期最好的一批) — 没有任何类型
+#   切分能实时区分"熊反 vs 真复苏"。故免疫期默认只作报告 ⚠ 注记不动扫描, 想硬门控
+#   置 True。全文 docs/huice_backtest_findings.md §2.8。
+
+MIXED_NO_NEW_ENTRY = True   # MIXED (过渡期) 不开新仓。huice 指示级回测
+                            # (docs/huice_backtest_findings.md §2.4): MIXED 是两个池、
+                            # 两个体制下唯一稳定负期望的口袋 (SP500∪NDX meanR -0.70,
+                            # PULLBACK/FIRST_KISS MIXED 两池皆负)。只抑制新入场 Setup
+                            # (降级为观察行, ⛔ 注记); 退出信号/持仓管理不受影响。
+                            # --no-mixed-gate 恢复旧行为 (回测对照用)。
 CONSOLIDATION_W   = 10      # look-back window for breakout range
 VOL_BREAKOUT_MULT = 1.5     # breakout volume must be ≥ 1.5× 5-week avg
 PULLBACK_TOL      = 0.015   # price within 1.5% of MA counts as "touching"
@@ -462,6 +492,26 @@ def get_leadership_breadth(leaders: list[str] | None = None) -> tuple[float, dic
     return round(sum(detail.values()) / len(detail), 2), detail
 
 
+def _read_regime_state() -> dict | None:
+    """最近一次 live regime 快照 (us_regime_state.json)。缺失/损坏/超过
+    REGIME_MAX_AGE_D 天 → None (体制监控挂了只降级为无体制信息, 不挡扫描)。"""
+    try:
+        import json
+        with open(REGIME_STATE_FILE, encoding='UTF-8') as f:
+            st = json.load(f)
+        age = (datetime.date.today() - datetime.date.fromisoformat(st['date'])).days
+        if age > REGIME_MAX_AGE_D:
+            logging.warning(f'regime 快照过期 ({st["date"]}, {age}d) — 忽略体制门控')
+            return None
+        st['age_d'] = age
+        return st
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        logging.warning(f'regime 快照读取失败 ({e}) — 忽略体制门控')
+        return None
+
+
 def _gate_state(state: str, lead_frac: float) -> str:
     """Demote the barometer state one notch when leadership breadth is broken.
 
@@ -730,6 +780,18 @@ def scan_stock(ticker: str, market_state: str) -> dict:
                     r['signal'] = pb  # show the pullback in a STRONG market too
         else:
             r['signal'] = _pullback_signal(daily)
+
+        # Entry-side gates: the setup is demoted to an informational
+        # 'gated_signal' so every actionable consumer (entry table, signal CSV,
+        # ledger, resonance) sees no Setup, while the report still shows what
+        # was suppressed and why (_gate label). Priority: regime DEFEND first
+        # (systemwide), then the MIXED no-new-entry gate.
+        if r['signal'] is not None and _REGIME_SUPPRESS:
+            r['gated_signal'] = {**r['signal'], '_gate': '体制DEFEND'}
+            r['signal'] = None
+        elif r['signal'] is not None and market_state == 'MIXED' and MIXED_NO_NEW_ENTRY:
+            r['gated_signal'] = {**r['signal'], '_gate': 'MIXED'}
+            r['signal'] = None
 
     except Exception as e:
         r['error'] = str(e)
@@ -1029,7 +1091,8 @@ def _fmt(val, decimals=2):
 
 def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
                  equity=0.0, stop_status=None, futu_ok=True,
-                 baro_state=None, lead_frac=0.0, lead_detail=None):
+                 baro_state=None, lead_frac=0.0, lead_detail=None,
+                 regime=None, regime_action=None):
     lines = []
 
     def p(*args):
@@ -1069,13 +1132,25 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         if baro_state is not None and market_state != baro_state:
             p(f'  ⚠ GATE: leadership broken (≥{LEADERSHIP_BREACH_FRAC:.0%}) '
               f'→ scan demoted {baro_state} → {market_state}')
+    if regime:
+        imm_txt = ' · 熊反免疫期' if regime.get('immunity') else ''
+        p(f'  Regime (t_us_regime_monitor, {regime["date"]}): '
+          f'{regime["state"]} 共振{regime.get("confluence", "?")}/6{imm_txt}'
+          + (f'  →  ⚠ GATE: {regime_action}' if regime_action else '  → 不降档'))
+    elif regime_action:                      # 快照缺失/过期时说明一句
+        p(f'  Regime: {regime_action}')
     mode_msg = {
         'STRONG': '  → Scan mode: BREAKOUT  (weekly close above 10-week range high + volume ≥1.5×)',
-        'MIXED':  '  → Scan mode: PULLBACK   (price touching 20d/50d MA + declining vol + reversal)',
+        'MIXED':  ('  → Scan mode: NO NEW ENTRY  (MIXED 过渡期不开新仓 — huice 回测唯一稳定'
+                   '负期望口袋; setup 降级为观察行 ⛔)' if MIXED_NO_NEW_ENTRY else
+                   '  → Scan mode: PULLBACK   (price touching 20d/50d MA + declining vol + reversal)'),
         'WEAK':   '  → Scan mode: CAUTION    (pullback setups only; reduce exposure)',
         'ERROR':  '  → Scan mode: UNKNOWN    (market data error)',
     }
-    p(mode_msg.get(market_state, ''))
+    if _REGIME_SUPPRESS:
+        p('  → Scan mode: NO NEW ENTRY  (体制 DEFEND — Setup 全部降级为观察行 ⛔)')
+    else:
+        p(mode_msg.get(market_state, ''))
 
     # ── Entry signals ─────────────────────────────────────────────────────────
     p()
@@ -1128,7 +1203,10 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             ])
         else:
             exit_flag = '⚠ EXIT (MA breach)' if r['exit_signal'] else ''
-            notes     = ' | '.join(filter(None, [exit_flag, gap_note, er + layout]))
+            g = r.get('gated_signal')
+            gate_note = (f'⛔{g.get("_gate", "MIXED")}不开新仓 {g["type"]} '
+                         f'entry {_fmt(g["entry"])} / stop {_fmt(g["stop"])}' if g else '')
+            notes     = ' | '.join(filter(None, [exit_flag, gate_note, gap_note, er + layout]))
             watch_rows.append([
                 ticker, close,
                 _fmt(r['ma20d']), _fmt(r['ma50d']), _fmt(r['ma20w']), notes,
@@ -1143,7 +1221,13 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         if any(row[6].endswith('*') for row in sig_rows):
             p('  * share count limited by the 25%/name cap, not by 1R risk')
     else:
-        p('  No entry signals this week.')
+        gated = [r for r in results if r.get('gated_signal')]
+        if gated:
+            why = sorted({r['gated_signal'].get('_gate', 'MIXED') for r in gated})
+            p(f'  No actionable entry — {len(gated)} setup(s) suppressed by gate(s): '
+              f'{"、".join(why)} (见观察表 ⛔ 行; docs/huice_backtest_findings.md).')
+        else:
+            p('  No entry signals this week.')
 
     # ── Watch list ────────────────────────────────────────────────────────────
     if watch_rows:
@@ -1352,9 +1436,23 @@ def main():
                       help='Backtest as-of YYYY-MM-DD: use only bars ≤ that day and '
                            'anchor "today" there (reproduces that day\'s report). '
                            'Forces --no-futu; earnings countdown is suppressed.')
+    parser.add_option('--no-mixed-gate', dest='no_mixed_gate', action='store_true',
+                      default=False,
+                      help='恢复 MIXED 也出 PULLBACK Setup 的旧行为 (回测对照用; '
+                           'live 默认 MIXED 不开新仓)')
+    parser.add_option('--no-regime-gate', dest='no_regime_gate', action='store_true',
+                      default=False,
+                      help='关闭体制联动门控 (regime DEFEND 抑制新仓 / WATCH·熊反'
+                           '免疫期降档; live 默认开)')
     opts, _ = parser.parse_args()
 
-    global _ASOF
+    global _ASOF, MIXED_NO_NEW_ENTRY, REGIME_GATE, _REGIME_SUPPRESS
+    if opts.no_mixed_gate:
+        MIXED_NO_NEW_ENTRY = False
+        logging.info('MIXED no-new-entry gate DISABLED (--no-mixed-gate)')
+    if opts.no_regime_gate:
+        REGIME_GATE = False
+        logging.info('Regime gate DISABLED (--no-regime-gate)')
     if opts.asof:
         try:
             _ASOF = pd.Timestamp(opts.asof).normalize()
@@ -1373,6 +1471,34 @@ def main():
     if market_state != baro_state:
         logging.info(f'Leadership breadth {lead_frac:.0%} of generals below 20wMA '
                      f'→ demote {baro_state}→{market_state}')
+
+    # 体制联动 (regime DEFEND / WATCH / 熊反免疫期): 只动入场侧, 在领导股门之后叠加。
+    # --asof 不读快照 (live 状态对历史日期是未来函数), 回测行为不变。
+    regime, regime_action = None, None
+    if REGIME_GATE and _ASOF is None:
+        regime = _read_regime_state()
+        if regime is None:
+            regime_action = '无可用 regime 快照 (缺失/过期) — 本次不做体制门控'
+        elif regime['state'] == 'DEFEND':
+            _REGIME_SUPPRESS = True
+            regime_action = 'DEFEND → 不开新仓 (全部 Setup 降级为观察行)'
+        elif regime['state'] == 'WATCH' or (regime.get('immunity')
+                                            and REGIME_IMMUNITY_DEMOTE):
+            prev = market_state
+            market_state = {'STRONG': 'MIXED', 'MIXED': 'WEAK'}.get(market_state,
+                                                                    market_state)
+            why = ('WATCH 早减仓' if regime['state'] == 'WATCH'
+                   else f'熊反免疫期 (post-DEFEND, SPY 未连续站回200日线)')
+            regime_action = f'{why} → 扫描模式降档 {prev}→{market_state}'
+        elif regime.get('immunity'):
+            # 免疫期默认仅提示 (REGIME_IMMUNITY_DEMOTE 注释里有验证依据):
+            # 熊反与真 V 复苏实时不可分, 硬降档在 2025 V 复苏里净亏。
+            regime_action = ('⚠ 熊反免疫期生效 (仅提示, 不降档) — 若此后走的是'
+                             '熊反, 追高单将是最贵的假信号; 参 findings §2.8 自行裁量')
+        if regime_action and regime is not None:
+            logging.info(f'Regime gate: {regime["state"]}'
+                         f'{" +immunity" if regime.get("immunity") else ""}'
+                         f' ({regime["date"]}) — {regime_action}')
     logging.info(f'Market state: {market_state} (barometer {baro_state})')
 
     # Layer 2 + 3
@@ -1418,7 +1544,8 @@ def main():
 
     print_report(market_state, baro_info, results, alerts, out_file,
                  equity=ACCOUNT_EQUITY, stop_status=stop_status, futu_ok=futu_ok,
-                 baro_state=baro_state, lead_frac=lead_frac, lead_detail=lead_detail)
+                 baro_state=baro_state, lead_frac=lead_frac, lead_detail=lead_detail,
+                 regime=regime, regime_action=regime_action)
 
     # Machine-readable signal CSV (consumed by t_us_resonance.py)
     res_root = '/home/ryan/DATA/result'

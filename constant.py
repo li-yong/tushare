@@ -457,3 +457,22 @@ TRADINGVIEW_COLS = {
     "1-Month Low" : "xxxx",  #月低点
     "1-Month High" : "xxxx",  #月高点
 }
+
+# ── News-driven top detection (docs/news_driven_top_detection.md §2) ──────────
+# signal_type strings written to the signal ledger (episode key) and grouped by
+# t_us_signal_attrib.py — reuse these, never re-type the literals.
+STRAW_BEST_NEWS_CLIMAX  = 'best_news_climax'       # §2.1 利好出尽 + climax bar
+STRAW_REGULATORY        = 'regulatory_litigation'  # §2.2 监管/反垄断立案 (周期温度计)
+STRAW_CUSTOMER_CONFLICT = 'customer_conflict'      # §2.3 客户公开反目/成本转嫁
+STRAW_DOWNSTREAM_EXCESS = 'downstream_excess'      # §2.4 下游承认过剩 (最后一根稻草)
+STRAW_TYPES_ALL = [STRAW_BEST_NEWS_CLIMAX, STRAW_REGULATORY,
+                   STRAW_CUSTOMER_CONFLICT, STRAW_DOWNSTREAM_EXCESS]
+
+# ── News-driven launch detection (docs/news_driven_top_detection.md §6) ───────
+# 启动"火种" = 见顶"稻草"的镜像; ledger source=news_launch, signal_type=SPARK_*.
+SPARK_CATALYST_BREAKOUT  = 'catalyst_breakout'    # §6.1 催化剂 + 进场关键K线 (两半缺一不可)
+SPARK_SUPPLY_DESTRUCTION = 'supply_destruction'   # §6.2 行业减产/产能退出 (温度计冰点)
+SPARK_DEMAND_COMMITMENT  = 'demand_commitment'    # §6.3 大客户公开签约/生态背书
+SPARK_SHORTAGE_ADMISSION = 'shortage_admission'   # §6.4 下游承认短缺/接受提价 (第一根火种)
+SPARK_TYPES_ALL = [SPARK_CATALYST_BREAKOUT, SPARK_SUPPLY_DESTRUCTION,
+                   SPARK_DEMAND_COMMITMENT, SPARK_SHORTAGE_ADMISSION]

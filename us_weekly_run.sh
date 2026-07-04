@@ -10,6 +10,15 @@
 #     semiconductor sector, flags delisted/renamed dead tickers, and scores
 #     candidates on 贵气+兑现 → us_watchlist_suggest_<date>.csv. PRINT-ONLY
 #     (no --apply): it never edits select.yml here; promotion stays manual.
+#   • News-driven top + launch detector (t_us_news_top_detector.py): 见顶方向
+#     四类稻草 × 主语迁移 (Grok top_scan) × §2.1 exhaustion bar; 启动方向 (§6
+#     镜像) 价格先行漏斗 (SP500∪NDX 关键K线进场筛选, 免费) → 前 N 名 Grok
+#     launch_scan 四类火种 × 主语回归 → us_news_top_<date>.md. Weekly because
+#     straw/spark news develops on the scale of weeks; the 14-day window with
+#     the 7-day cadence overlaps by design (a persisting straw refreshes its
+#     ledger episode instead of opening a new one). Costs ~$4/run (top) +
+#     ~$1.2/run (launch topn=12) in Grok calls; degrades to price-only when
+#     xAI is unreachable.
 #   • Signal attribution (t_us_signal_attrib.py): forward outcomes for every
 #     signal episode in us_signal_ledger.csv → us_signal_attrib_<date>.txt.
 #     The weekly answer to "which signal type actually pays?"
@@ -50,6 +59,11 @@ rc=$?
 
 # Supplementary: watchlist suggestions (print-only, never --apply from cron).
 run_step "watchlist-suggest" "$PY" t_us_watchlist_suggest.py
+
+# Supplementary: news-driven top + launch detection (新闻见顶稻草 + 启动火种
+# 扫描) — runs BEFORE signal-attrib so this week's straw/spark episodes are
+# already in the ledger when attribution recomputes.
+run_step "news-top" "$PY" t_us_news_top_detector.py
 
 # Supplementary: signal attribution (信号归因) — recompute forward outcomes for
 # every signal episode the daily scan has logged (us_signal_ledger.csv). Weekly

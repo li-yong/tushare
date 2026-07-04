@@ -300,8 +300,8 @@ def parse_attrib(text):
 
 
 def parse_regime(text):
-    """体制监控：抓状态行 + SPY/VIX/宽度 概要。"""
-    out = {"state": None, "summary": None}
+    """体制监控：抓状态行 + SPY/VIX/宽度 概要 + HMM 第二意见层读数。"""
+    out = {"state": None, "summary": None, "hmm_prob": None, "hmm_tag": None}
     m = re.search(r"市场状态:\s*【([^】]+)】\s*(\S+)?", text)
     if m:
         out["state"] = (m.group(1) + (" " + m.group(2) if m.group(2) else "")).strip()
@@ -317,6 +317,10 @@ def parse_regime(text):
         parts.append(f"宽度 {bre.group(1)}")
     if parts:
         out["summary"] = " · ".join(parts)
+    hm = re.search(r"P\(高波态\)\s*=\s*(\d+)%\s*→\s*([^\s(]+)", text)
+    if hm:
+        out["hmm_prob"] = int(hm.group(1))
+        out["hmm_tag"] = hm.group(2)
     return out
 
 
@@ -365,6 +369,25 @@ def build_report(target, result_dir):
         A(f"- **体制监控**（数据日 {rd}）：状态 **{regime['state']}**"
           + (f"　{regime['summary']}" if regime.get("summary") else "")
           + "　[来源 us_regime_monitor]")
+    if regime.get("hmm_prob") is not None:
+        p = regime["hmm_prob"]
+        risk = p >= 50
+        edge = "（30~70% 临界区, 体制可能在切换）" if 30 < p < 70 else ""
+        # 与趋势层连读: 状态机温和(BULL/CAUTION)+高波 = 仪表打架; 防守中+高波 = 同向共振
+        st = regime.get("state") or ""
+        if risk and ("DEFEND" in st or "WATCH" in st):
+            cross = "与防守层同向共振 → 防守优先级升高"
+        elif risk:
+            cross = "与趋势层打架（趋势未破但波动率环境已进风险区）→ 收紧止损、缓加仓, 不是卖出指令"
+        else:
+            cross = "与趋势层无冲突"
+        A(f"- **HMM 第二意见**（QQQ 波动率体制）：P(高波态) **{p}%** → "
+          f"{regime.get('hmm_tag') or ('高波/风险态' if risk else '低波/平稳态')}{edge}。"
+          f"{cross}　[来源 us_regime_monitor]")
+        A("  - 解读方法：两态高斯 HMM 滤波概率, ≥50%=高波/风险态（QQQ 处在历史真熊离场信号"
+          "所在的波动率环境）, <50%=低波/平稳态。定位是**提示层**, 不进 DEFEND/WATCH 门控——"
+          "高波≠卖出, 平稳≠安全入场; 只在与 200 日线脊梁连读时改变防守姿态。"
+          "仅 QQQ walk-forward 验证通过（SPY 证伪, n=1 苗头）, 细节 research/hmm_regime_verify.py。")
     if swing.get("market_state"):
         sticky = swing.get("sticky") or []
         sticky_s = (f"；⚠ {'/'.join(sticky)} 在20周线±3%带内·沿用前判（震荡临界, 距换向一步）"
