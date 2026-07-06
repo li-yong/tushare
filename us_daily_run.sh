@@ -11,6 +11,11 @@
 #   • Regime monitor (t_us_regime_monitor.py): 牛转熊体制 backdrop — layered
 #     verdict (200dma break+slope all-weather defense + leading-confluence
 #     slow-top early-reduce), validated on 2018/2020/2022 → us_regime_monitor_<date>.txt
+#   • Chanlun holdings checkup (t_us_chanlun.py --hold): 三类买卖点 structure
+#     over current positions (select.yml US_SWING_STOPS), sell-side focused —
+#     走势/最近信号+确认日/失效位/背驰 per name → us_chanlun/us_chanlun_hold_
+#     <date>.txt. Exit REFERENCE only (二卖/三卖 vs the layered stops); exit
+#     policy stays with the swing scanner (ADR-0002). yfinance-only.
 #   • Three-layer chain: t_us_premium → t_us_delivery → t_us_resonance
 #     (贵气 × 兑现 × 技术觉醒 共振) → /home/ryan/DATA/result/us_{premium,delivery}_
 #     <date>.csv + us_resonance_<date>.txt
@@ -45,6 +50,10 @@
 #     structural impairment). The live sibling of t_us_bottom_entry_backtest.py;
 #     methodology + empirics in docs/twenty_week_trend_system.md §7 →
 #     us_bottom_entry_<date>.{md,csv}. yfinance + SEC EDGAR, no Futu/OpenD.
+#   • Breadth diffusion (t_us_breadth_diffusion.py): 板块广度扩散状态机 (点火/
+#     确立/成熟/衰竭预警) — semis watchlist vs SOXX + NDX-100 vs QQQ, RS percentile
+#     ranked in the SP500∪NDX pool → us_breadth_diffusion/us_breadth_diffusion_
+#     <sector>_<date>.txt + series csv. Environment read, not a signal source.
 #   • Market network structure (t_us_network_report.py --refresh): runs the 3-stage
 #     correlation-network pipeline over Nasdaq-100 — static MST/Louvain
 #     (t_us_network_structure.py), dynamic crowding-temperature
@@ -105,6 +114,21 @@ run_step "regime-monitor" "$PY" t_us_regime_monitor.py
 # ledger appends are included; honestly reports 样本不足 while the ledger is
 # young. Verdict & calibration: t_us_signal_canary.py header + --validate.
 run_step "signal-canary" "$PY" t_us_signal_canary.py
+
+# Supplementary: chanlun holdings checkup (缠论持仓体检, 卖点侧) — 三类买卖点
+# structure read over the hand-maintained live positions (select.yml
+# US_SWING_STOPS; no Futu/OpenD). Division runs on FULL history (append-only,
+# zero-repaint validated on MU/NVDA) and every signal carries its 实际确认日.
+# Reference layer for exits (二卖=最后逃命点 / 三卖=趋势展开) alongside the
+# layered stops — NOT a stop engine; exit policy stays with the swing scanner
+# (ADR-0002). Table tee'd to a dated report. Non-fatal — its rc never flips
+# the run's exit code.
+echo "----- chanlun hold start $(ts) -----" >> "$LOG"
+CH_TXT=/home/ryan/DATA/result/us_chanlun/us_chanlun_hold_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$CH_TXT")"
+"$PY" t_us_chanlun.py --hold 2>> "$LOG" | tee "$CH_TXT" >> "$LOG"
+ch_rc=${PIPESTATUS[0]}
+echo "----- chanlun hold done (rc=$ch_rc) $(ts) -----" >> "$LOG"
 
 # Supplementary: three-layer chain (贵气 → 兑现 → 共振). premium fills the Futu
 # fundamentals cache; delivery reuses it; resonance joins the three CSVs. All
@@ -194,6 +218,21 @@ echo "----- pullback-shock done (rc=$ps_rc) $(ts) -----" >> "$LOG"
 # refresh it periodically (run with --force) to pick up new 10-K filings.
 # Non-fatal (run_step) — its rc never flips the run's exit code.
 run_step "bottom-entry" "$PY" t_us_bottom_entry.py --universe both
+
+# Supplementary: breadth diffusion (板块广度扩散 — 风口启动/衰竭状态机, spec
+# docs/breadth_diffusion_framework.md). Four indicators (NH-NL accel / %>50MA
+# Zweig thrust / AD-line divergence / rs_breadth accel) → one state per day:
+# IGNITION→ESTABLISHED→MATURE→EXHAUSTION_WARN. Two passes: the semis watchlist
+# vs SOXX (the semis barometer tech_swing already refreshes daily, so its
+# cache is always warm) and NDX-100 vs QQQ (pool-level read).
+# RS percentile ranks inside the SP500∪NDX reference pool (--rs-ref both default;
+# the ref pool MUST be larger than the sector or rs_breadth degenerates to a
+# constant). Runs late so the both-pool bar cache is already warm from the scans
+# above. Writes its own dated txt+csv to result/us_breadth_diffusion/. State/
+# environment read, NOT a buy/sell signal source — not fed to the daily-report
+# merger. yfinance-only, no Futu/OpenD. Non-fatal (run_step).
+run_step "breadth-semis" "$PY" t_us_breadth_diffusion.py --watchlist US_SWING_SEMIS --benchmark SOXX
+run_step "breadth-ndx"   "$PY" t_us_breadth_diffusion.py --pool ndx --benchmark QQQ
 
 # Supplementary: market network-structure analysis (相关性网络 抱团/瓦解 环境研判).
 # One command (--refresh) runs the 3-stage pipeline — static MST/Louvain → dynamic

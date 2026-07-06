@@ -13,6 +13,10 @@ huice.py — 回测系统给出的指示 (backtest the system's directives)
                        回测: 无管理买入持有 max-hold 日, 只看 α (分散+拿得住)。
                        ROE 按年报期末+90天滞后做点位可得性过滤; $1B 市值门槛在
                        SP500∪NDX 池上恒过, 跳过。
+  · t_us_chanlun     — 缠论买点 (1B/2B/3B, 日线笔中枢简化版)。发出日 = 实际确认日
+                       (笔端点被后续 bar 提交的第一天), entry = 确认日收盘 (melt-up
+                       里比结构价高 12~21%, 用结构价即未来函数); 止损 = 失效位
+                       (3B→ZG, 1B/2B→转折低点)。只回测买点。
 
 本脚本做两件事:
   1. 点位重放 (point-in-time): 借 t_us_tech_swing 的 _ASOF 数据层, 只用 ≤当日 的 bar
@@ -34,7 +38,8 @@ Usage:
   python huice.py --start 2025-01-01 --universe ndx --jobs 4
   python huice.py --start 2025-01-01 --source gap_scan --universe ndx   # 缺口指示
   python huice.py --start 2025-01-01 --source undervalue --universe both # 超跌优质
-  python huice.py --start 2025-01-01 --source all --universe both       # 四源全测
+  python huice.py --start 2023-01-01 --source chanlun --universe ndx      # 缠论买点
+  python huice.py --start 2025-01-01 --source all --universe both       # 五源全测
 
 Output: stdout + result/us_huice/huice_<tag>_<date>.txt
 """
@@ -67,6 +72,7 @@ pd.set_option('mode.chained_assignment', None)
 import t_us_tech_swing as tsw
 import t_us_key_kline as kk
 import t_us_gap_scan as gs
+import t_us_chanlun as ch
 
 OUT_DIR      = '/home/ryan/DATA/result/us_huice'
 BENCH        = 'QQQ'
@@ -288,6 +294,49 @@ def gap_episodes(ticker: str, days: list) -> list:
                         'stop': round(floor, 2), 'target': None, 'rr': None,
                         'rr_ok': None,
                     })
+    return eps
+
+
+def chanlun_episodes(ticker: str, days: list) -> list:
+    """缠论买点指示重放 (t_us_chanlun 日线笔中枢简化版)。
+
+    结构在全历史上划分 (左缘固定; MU/NVDA 66 周快照零重绘 → append-only), 所以
+    一遍全量计算得到的信号 = 每个时点 live 会看到的信号; 发出日 = 实际确认日
+    (confirm_signals 截断重放: 笔端点分型被后续 bar 提交的第一天)。melt-up 里
+    确认价比结构标注价高 12~21% — entry 必须用确认日收盘, 否则高估收益。
+    指示 = 确认日收盘买入; stop = 信号失效位 (3B→中枢上沿ZG, 1B/2B→转折低点,
+    与图上"失效·关注位"同语义)。只回测买点; 卖点是持仓管理层, 不构成开仓指示。
+    """
+    tsw._ASOF = None
+    ch._ASOF = None
+    full = tsw._fetch_daily_full(ticker)
+    if full.empty or len(full) < 60:
+        return []
+    hist = ch.macd_hist(full['close']) / full['close']
+    *_, signals = ch._compute_signals(full, hist)
+    start, end = days[0], days[-1]
+    # 确认最多滞后 CONF_MAX_BARS 根 bar; 结构日在窗口前 ~60 天内的也可能确认在窗口内
+    cand = [s for s in signals if s['kind'].endswith('B')
+            and (start - pd.Timedelta(days=60)) <= full.index[s['pt']['i']] <= end]
+    ch.confirm_signals(full, hist, cand)
+    eps = []
+    for s in cand:
+        ci = s.get('conf_i')
+        if ci is None:
+            continue
+        d = full.index[ci]
+        if not (start <= d <= end):
+            continue
+        entry = float(full['close'].iloc[ci])
+        stop = float(s['ref'])
+        if entry <= stop:
+            continue                          # 确认日收盘已破失效位 → 指示当日即作废
+        eps.append({
+            'source': 'chanlun', 'ticker': ticker, 'date': d,
+            'signal_type': s['kind'], 'market_state': gate_state_on(d),
+            'confidence': None, 'entry': round(entry, 2), 'stop': round(stop, 2),
+            'target': None, 'rr': None, 'rr_ok': None,
+        })
     return eps
 
 
@@ -743,6 +792,14 @@ def run_single(ticker: str, asof: pd.Timestamp, source: str, min_n: int):
                         'confidence': None, 'entry': float(hist.iloc[-1]),
                         'stop': None, 'managed': False})
 
+    if source in ('chanlun', 'all'):
+        got = chanlun_episodes(ticker, [d])
+        print(f'\n[chanlun]  当日确认的缠论买点 {len(got)} 个')
+        for e in got:
+            print(f'  指示: {e["signal_type"]}  买 {e["entry"]:.2f}'
+                  f' / 止损(失效位) {e["stop"]:.2f}')
+        eps.extend(got)
+
     if not eps:
         print('\n当日系统没有给出可入场的指示 — 无可回测的开仓。')
         return
@@ -780,6 +837,8 @@ def _sweep_worker(ticker: str):
             eps += key_kline_episodes(ticker, _SWEEP_DAYS[0], _SWEEP_DAYS[-1])
         if _SWEEP_SOURCE in ('gap_scan', 'all'):
             eps += gap_episodes(ticker, _SWEEP_DAYS)
+        if _SWEEP_SOURCE in ('chanlun', 'all'):
+            eps += chanlun_episodes(ticker, _SWEEP_DAYS)
         return ticker, eps, None
     except Exception as e:
         return ticker, [], f'{type(e).__name__}: {e}'
@@ -861,8 +920,8 @@ def main():
                     help='区间模式终点 (默认今天)')
     ap.add_argument('--source', dest='source', default='both',
                     choices=['tech_swing', 'key_kline', 'gap_scan', 'undervalue',
-                             'both', 'all'],
-                    help='both = tech_swing+key_kline (兼容旧口径); all = 全部四源')
+                             'chanlun', 'both', 'all'],
+                    help='both = tech_swing+key_kline (兼容旧口径); all = 全部五源')
     ap.add_argument('--universe', dest='universe', default=None,
                     choices=['sp500', 'ndx', 'both'],
                     help='区间模式股票池: SP500/NDX/并集 (默认 watchlist); --ticker 优先')

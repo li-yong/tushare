@@ -40,6 +40,7 @@ SOURCES = [
     ("key_kline",   "us_key_kline_scan_",   "关键K线"),
     ("gap_scan",    "us_gap_scan_",         "向上缺口"),
     ("gap_activity","us_gap_activity_",     "缺口活跃度"),
+    ("chanlun_hold","us_chanlun_hold_",     "缠论持仓体检"),
     ("signal_attrib","us_signal_attrib_",   "信号归因(周)"),
 ]
 
@@ -289,6 +290,56 @@ def parse_key_kline(text):
     return {"rows": rows}
 
 
+def parse_chanlun_hold(text):
+    """缠论持仓体检：tabulate simple 表，走势/信号/背驰/失效位列都含空格，
+    所以用破折号分隔行推列边界再切片。只抽『值得看』的行：
+    最近信号是卖点(1S/2S/3S)、或 背驰状态 ≠ 无、或 走势含下跌趋势。"""
+    lines = text.splitlines()
+    sep_i = next((i for i, l in enumerate(lines)
+                  if l.startswith("---") and "  " in l), None)
+    if sep_i is None or sep_i < 1:
+        return {"rows": []}
+    sep = lines[sep_i]
+    spans, start = [], None
+    for j, c in enumerate(sep + " "):
+        if c == "-" and start is None:
+            start = j
+        elif c != "-" and start is not None:
+            spans.append((start, j))
+            start = None
+    # 每列宽度以下一列起点为右界，末列到行尾 (值可以比破折号长)
+    bounds = [(spans[k][0], spans[k + 1][0] if k + 1 < len(spans) else None)
+              for k in range(len(spans))]
+
+    def cut(line):
+        return [line[a:b].strip() if b else line[a:].strip() for a, b in bounds]
+
+    header = cut(lines[sep_i - 1])
+    rows = []
+    for l in lines[sep_i + 1:]:
+        if not l.strip() or l.startswith(("═", "  单票")):
+            break
+        cells = cut(l)
+        if len(cells) != len(header):
+            continue
+        r = dict(zip(header, cells))
+        sig = r.get("最近信号", "")
+        div = r.get("背驰状态", "")
+        trend = r.get("走势", "")
+        flags = []
+        if sig[:2] in ("1S", "2S", "3S"):
+            flags.append("卖点")
+        if div and div != "无":
+            flags.append("背驰")
+        if "下跌趋势" in trend:
+            flags.append("下跌结构")
+        if flags:
+            rows.append({"ticker": r.get("TICKER", ""), "trend": trend,
+                         "sig": sig, "div": div,
+                         "watch": r.get("失效·关注位", ""), "flags": flags})
+    return {"rows": rows}
+
+
 def parse_attrib(text):
     """信号归因(周)：抓 episode 概况行 —— 账本积累进度 + 成熟样本数。"""
     out = {"summary": None}
@@ -353,6 +404,7 @@ def build_report(target, result_dir):
     breakout = safe(parse_breakout, "breakout")
     gap = safe(parse_gap_scan, "gap_scan")
     kkl = safe(parse_key_kline, "key_kline")
+    chan = safe(parse_chanlun_hold, "chanlun_hold")
 
     L = []  # 输出行
     A = L.append
@@ -474,6 +526,24 @@ def build_report(target, result_dir):
     elif not risk_lines and not approaching:
         A("_无持仓管理动作。_")
     A("")
+
+    # ── 缠论持仓体检（退出参考层）──
+    # huice 回测(findings §2.5): 缠论买点无独立α, 但结构防守是五源最好 —— 所以
+    # 只进持仓管理段做卖点侧参考, 不进候选池计票。止损决定权仍在分层止损体系。
+    crows = chan.get("rows", [])
+    if crows:
+        A("### 缠论结构参考（卖点/背驰仅供对照，止损以分层止损为准）")
+        A("")
+        A("| 标的 | 提示 | 走势 | 最近信号 | 失效·关注位 |")
+        A("|------|------|------|------|------|")
+        for r in crows:
+            tips = "/".join(r["flags"])
+            extra = f"　背驰: {r['div']}" if "背驰" in r["flags"] else ""
+            A(f"| **{r['ticker']}** | {tips} | {r['trend']} | {r['sig']}{extra} | {r['watch']} |")
+        A("")
+        A("> 读法：**卖点**=1S(背驰候选,等2S确认)/2S(最后逃命点)/3S(下跌展开)；"
+          "**背驰**=动能GPS读数非指令；1S 后反抽创新高即作废。来源 t_us_chanlun · --hold。")
+        A("")
 
     # ── 买入 / 入场 ──
     A("## 四、🟢 买入 / 入场信号")
