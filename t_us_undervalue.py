@@ -25,7 +25,8 @@ US Undervalued-Quality Screener — 低估优质股扫描器
   - 股票池 = S&P 500 ∪ Nasdaq-100 成分股 (Wikipedia, 当日缓存)。
     超跌的优质大中盘正是茅台/MU 式"好公司被杀估值"的猎场; 微盘超跌是噪音, 不在范围。
   - 计算顺序按成本递增, 贵的那步只跑幸存者:
-      1) 一次 yf.download 批量取 1 年收盘 → 算跌幅 (全体, 便宜)
+      1) 收盘价优先复用 t_us_tech_swing 的共享缓存(每日 cron 已热身), 缺
+         的才批量 yf.download 补拉 → 算跌幅 (全体, 便宜, 见 bulk_drops)
       2) fast_info 市值 → 只对已跌>30% 的票 (较快)
       3) annual financials 算 3 年 ROE 均值 → 只对市值幸存者 (慢)
 
@@ -136,31 +137,56 @@ def load_universe(which: str, force: bool) -> list:
 
 # ── 计算层 ───────────────────────────────────────────────────────────────────
 def bulk_drops(tickers: list) -> dict:
-    """一次批量下载 1 年收盘, 返回 {ticker: {price, ret_1y, dist_low, dist_high}}。"""
-    import yfinance as yf
-    log.info(f'批量下载 {len(tickers)} 只 1 年收盘 ...')
-    data = yf.download(tickers, period='1y', auto_adjust=True,
-                       progress=False, group_by='ticker', threads=True)
+    """1 年收盘 → {ticker: {price, ret_1y, dist_low, dist_high}}。
+
+    Cache-first (t_us_tech_swing's shared per-ticker disk cache, ADR-0001): the
+    daily cron already warms this cache for the SP500∪NDX universe every weekday
+    (gap_scan/pullback_shock/bottom_entry/key_kline --scan), so by Sunday almost
+    every ticker is a cache hit and costs zero network calls. Only misses (new
+    listings, or a cold cache) fall back to one batched yf.download — this used
+    to be an unconditional full-universe download every single week regardless
+    of what the daily runs had already fetched."""
+    import t_us_tech_swing as sw
+
     out = {}
+    misses = []
     for t in tickers:
-        try:
-            close = data[t]['Close'].dropna() if len(tickers) > 1 else data['Close'].dropna()
-        except Exception:
-            continue
+        df = sw._fetch_daily(t)
+        if df.empty:
+            misses.append(t)
+        else:
+            out[t] = df['close'].tail(252)
+
+    if misses:
+        import yfinance as yf
+        log.info(f'{len(misses)}/{len(tickers)} 只无缓存 — 批量补拉 1 年收盘 ...')
+        data = yf.download(misses, period='1y', auto_adjust=True,
+                           progress=False, group_by='ticker', threads=True)
+        multi = len(misses) > 1
+        for t in misses:
+            try:
+                close = data[t]['Close'].dropna() if multi else data['Close'].dropna()
+            except Exception:
+                continue
+            if not close.empty:
+                out[t] = close
+
+    result = {}
+    for t, close in out.items():
         if len(close) < 60:                          # 上市不足/数据太少, 跳过
             continue
         first, last = float(close.iloc[0]), float(close.iloc[-1])
         hi, lo = float(close.max()), float(close.min())
         if first <= 0:
             continue
-        out[t] = {
+        result[t] = {
             'price':     last,
             'ret_1y':    (last / first - 1) * 100,           # 负=下跌
             'dist_low':  (last / lo - 1) * 100 if lo > 0 else None,   # 高于52周低点%
             'dist_high': (last / hi - 1) * 100 if hi > 0 else None,   # 距52周高点%(负)
         }
-    log.info(f'有效价格数据 {len(out)} 只')
-    return out
+    log.info(f'有效价格数据 {len(result)} 只')
+    return result
 
 
 def market_cap(ticker) -> float | None:

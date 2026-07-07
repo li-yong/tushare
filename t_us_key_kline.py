@@ -845,35 +845,70 @@ SCAN_MIN_BARS = CONSOL_DAYS + 5   # need enough history for range_high to warm u
 
 
 def _bulk_ohlcv(tickers: list, period: str = '1y') -> dict:
-    """One batched yf.download → {ticker: OHLCV DataFrame} in _fetch_daily's schema
-    (lowercase open/high/low/close/volume, tz-naive DatetimeIndex). yfinance stays
-    the sole source (ADR-0001); this is the same bulk pattern as undervalue's
-    bulk_drops, just keeping full OHLCV instead of Close-only."""
-    import yfinance as yf
-    logging.info(f'批量下载 {len(tickers)} 只 {period} 日线 ...')
-    data = yf.download(tickers, period=period, auto_adjust=True, progress=False,
-                       group_by='ticker', threads=True)
+    """Cache-first OHLCV for a universe: {ticker: OHLCV DataFrame} in _fetch_daily's
+    schema (lowercase open/high/low/close/volume, tz-naive DatetimeIndex, indicators
+    attached, sliced to `period`).
+
+    Reuses t_us_tech_swing's shared per-ticker disk cache (BAR_CACHE_DIR) before
+    touching the network, and writes any misses back into that same cache. This
+    used to be a flat, uncached yf.download over the whole S&P500∪NDX100 universe
+    on every --scan — the single biggest source of redundant Yahoo traffic in the
+    daily cron chain, since the other stages (gap_scan/pullback_shock/bottom_entry/
+    breakout_screen) already warm this cache per-ticker over the same universe.
+    Only cache misses (new listings, or a cold cache) still hit the network, and
+    those go through one batched yf.download rather than per-ticker calls.
+
+    Indicators are attached on each ticker's FULL cached history before slicing to
+    `period` (same invariant as prepare_frame/_attach_indicators — MA150/range_high
+    need their full warmup, not just the sliced window)."""
     out = {}
-    multi = len(tickers) > 1
+    misses = []
     for t in tickers:
-        try:
-            sub = data[t] if multi else data
-            df = sub.rename(columns=str.lower)[['open', 'high', 'low', 'close', 'volume']].dropna()
-        except Exception:
-            continue
-        if len(df) < SCAN_MIN_BARS:
-            continue
-        idx = pd.to_datetime(df.index)
-        if idx.tz is not None:
-            idx = idx.tz_convert(None)
-        df.index = idx
+        df = _fetch_daily(t)
+        if df.empty:
+            misses.append(t)
+        else:
+            out[t] = df
+
+    if misses:
+        import yfinance as yf
+        logging.info(f'{len(misses)}/{len(tickers)} 只无缓存 — 批量补拉 {_sw.BAR_FETCH_PERIOD} 日线 ...')
+        data = yf.download(misses, period=_sw.BAR_FETCH_PERIOD, auto_adjust=True,
+                           progress=False, group_by='ticker', threads=True)
+        multi = len(misses) > 1
+        os.makedirs(_sw.BAR_CACHE_DIR, exist_ok=True)
+        for t in misses:
+            try:
+                sub = data[t] if multi else data
+                df = sub.rename(columns=str.lower)[['open', 'high', 'low', 'close', 'volume']].dropna()
+            except Exception:
+                continue
+            if df.empty:
+                continue
+            idx = pd.to_datetime(df.index)
+            if idx.tz is not None:
+                idx = idx.tz_convert(None)
+            df.index = idx
+            df.index.name = 'date'
+            df.reset_index().to_csv(_sw._cache_path(t), index=False)   # warm the shared cache
+            _sw._DAILY_MEMO[t] = df
+            out[t] = df
+
+    n_days = {'1y': 365, '6mo': 180, '2y': 730, '3mo': 90}.get(period, 365)
+    cutoff = _now() - pd.Timedelta(days=n_days)
+    result = {}
+    for t, df in out.items():
         if _ASOF is not None:                 # point-in-time: 丢弃 asof 之后的 bar
             df = df[df.index <= _ASOF]
-            if len(df) < SCAN_MIN_BARS:
+            if df.empty:
                 continue
-        out[t] = df
-    logging.info(f'有效行情 {len(out)} 只 (其余上市不足/取数失败已跳过)')
-    return out
+        _attach_indicators(df)
+        sliced = df[df.index >= cutoff].copy()
+        if len(sliced) < SCAN_MIN_BARS:
+            continue
+        result[t] = sliced
+    logging.info(f'有效行情 {len(result)} 只 (其余上市不足/取数失败已跳过)')
+    return result
 
 
 def run_scan(universe: str, force: bool, plot_top: int):
@@ -895,7 +930,7 @@ def run_scan(universe: str, force: bool, plot_top: int):
 
     rows = []
     for t, df in frames.items():
-        _attach_indicators(df)
+        # indicators already attached in _bulk_ohlcv (on full history, pre-slice)
         # Earnings are skipped in scan (王中之王 still surfaces as a BREAKOUT/PP at
         # the gap bar; full 财报双命 is a per-name --ticker follow-up).
         key_bars = collect_key_bars(df, t, fetch_earnings=False)
