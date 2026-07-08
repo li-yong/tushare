@@ -234,6 +234,16 @@ run_step "bottom-entry" "$PY" t_us_bottom_entry.py --universe both
 run_step "breadth-semis" "$PY" t_us_breadth_diffusion.py --watchlist US_SWING_SEMIS --benchmark SOXX
 run_step "breadth-ndx"   "$PY" t_us_breadth_diffusion.py --pool ndx --benchmark QQQ
 
+# Supplementary: sector rotation (板块/主题轮动 发现层 — breadth diffusion 的配对
+# 发现器). Layer 1: ~20 sector/theme ETFs ranked by weighted relative-strength
+# vs SPY (skyte weights on the RS line) + state tag (领跑/转强/转弱/落后). Layer 2:
+# top-3 get a breadth-diffusion confirmation (members = SP500∪NDX pool filtered
+# by cached yfinance GICS metadata, 30-day TTL at pickle/us_sector_industry.json;
+# benchmark = the ETF itself) to separate real diffusion from single-megacap
+# fake leadership. Runs after breadth so the both-pool bar cache is warm.
+# Environment read, NOT a buy/sell signal source. Non-fatal (run_step).
+run_step "sector-rotation" "$PY" t_us_sector_rotation.py
+
 # Supplementary: market network-structure analysis (相关性网络 抱团/瓦解 环境研判).
 # One command (--refresh) runs the 3-stage pipeline — static MST/Louvain → dynamic
 # crowding-temperature → unwind event-study, each writing its own dated txt/png/json
