@@ -63,3 +63,8 @@ US_SWING_STOPS:
     LRCX: 361.41      # key support < close 391 (仓位浮亏, 成本413上方)
     AMZN: 205.88      # key support < cost 220.33
     AMAT: 569.49      # key support < close 651 (仓位浮亏, 成本705上方)
+
+# 浮盈≥+30%、未登记 init 止损的持仓 (上面注释里那批, 手工同步). 持仓级体检
+# 脚本 (t_us_intraday_internals.py 等) 与 US_SWING_STOPS keys 取并集当全持仓池.
+US_HOLD_EXTRA:
+    [VOO, QQQ, MU, AMD, GOOG, INTC, KO]

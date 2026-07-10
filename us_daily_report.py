@@ -40,7 +40,11 @@ SOURCES = [
     ("key_kline",   "us_key_kline_scan_",   "关键K线"),
     ("gap_scan",    "us_gap_scan_",         "向上缺口"),
     ("gap_activity","us_gap_activity_",     "缺口活跃度"),
+    ("pullback",    "us_pullback_shock_",   "强势急跌买点"),
+    ("trend_confirm","us_trend_confirm_",   "趋势确认(in_trend)"),
+    ("market_leaders","us_market_leaders_", "市场领跑股"),
     ("chanlun_hold","us_chanlun_hold_",     "缠论持仓体检"),
+    ("intraday",    "us_intraday_internals_","持仓分钟体检"),
     ("signal_attrib","us_signal_attrib_",   "信号归因(周)"),
 ]
 
@@ -267,6 +271,51 @@ def parse_gap_scan(text):
     return {"tierA": a, "tierB": b}
 
 
+def parse_pullback(text):
+    """强势急跌买点：github 表逐行抽 Tier A/B（急跌前处于强趋势的单日大跌名）。"""
+    rows = []
+    for cells in _md_table_rows(text):
+        if len(cells) < 14 or cells[0] == "ticker":
+            continue
+        rows.append({"ticker": cells[0], "tier": cells[1], "age": cells[3],
+                     "drop": cells[4], "rr": cells[12]})
+    return {"rows": rows}
+
+
+def parse_trend_confirm(text):
+    """in_trend 三条件翻转：CONFIRM 进候选计票（★持仓另标注）；
+    持仓(★)的 LOST 进持仓管理提示（质地降级, 非卖出——脊梁归20周线）。"""
+    confirms, lost_hold = [], []
+    for cells in _md_table_rows(text):
+        if len(cells) < 9 or cells[0] == "ticker":
+            continue
+        tk, kind, flip_dt, note = cells[0], cells[1], cells[2], cells[8]
+        hold = tk.startswith("★")
+        tk = tk.lstrip("★")
+        if kind == "CONFIRM":
+            confirms.append({"ticker": tk, "flip_dt": flip_dt, "hold": hold})
+        elif kind == "LOST" and hold:
+            lost_hold.append({"ticker": tk, "flip_dt": flip_dt, "note": note})
+    return {"confirms": confirms, "lost_hold": lost_hold}
+
+
+def parse_intraday(text):
+    """持仓分钟体检：psql 表抽有 flag 的行 + svr3 长期未修复(≥8日)的行。"""
+    rows = []
+    for cells in _md_table_rows(text):
+        if len(cells) < 14 or cells[0] == "ticker":
+            continue
+        tk, svr3, norep, belowv3, flags = cells[0], cells[6], cells[7], cells[8], cells[12]
+        try:
+            nr = int(float(norep))
+        except ValueError:
+            continue
+        if flags or nr >= 8:
+            rows.append({"ticker": tk, "svr3": svr3, "norepair": nr,
+                         "belowv3": belowv3, "flags": flags})
+    return {"rows": rows}
+
+
 def parse_key_kline(text):
     """关键K线：只取『新鲜入场』(几bar前<=2) 且 类型为 BREAKOUT/FIRST_KISS、
     趋势为 多头排列/偏多 的名 —— 孤立 POCKET_PIVOT 按方法论当背景，不计入。"""
@@ -405,6 +454,9 @@ def build_report(target, result_dir):
     gap = safe(parse_gap_scan, "gap_scan")
     kkl = safe(parse_key_kline, "key_kline")
     chan = safe(parse_chanlun_hold, "chanlun_hold")
+    pull = safe(parse_pullback, "pullback")
+    tconf = safe(parse_trend_confirm, "trend_confirm")
+    intr = safe(parse_intraday, "intraday")
 
     L = []  # 输出行
     A = L.append
@@ -545,6 +597,33 @@ def build_report(target, result_dir):
           "**背驰**=动能GPS读数非指令；1S 后反抽创新高即作废。来源 t_us_chanlun · --hold。")
         A("")
 
+    # ── 分钟线内部质地（持仓收盘读数）──
+    irows = intr.get("rows", [])
+    if irows:
+        A("### 分钟线内部质地（收盘读数，GPS 非指令）")
+        A("")
+        A("| 标的 | flag | svr3 | svr3未修复(日) | VWAP下方%(3日) |")
+        A("|------|------|------|------|------|")
+        for r in irows:
+            fl = r["flags"] or "—"
+            A(f"| **{r['ticker']}** | {fl} | {r['svr3']} | {r['norepair']} | {r['belowv3']} |")
+        A("")
+        A("> 读法：**EXHAUSTION**=放量跳空衰竭(双向波动事件, 当晚复核质地, 非卖出)；"
+          "**INTERNALS_WEAK**=资金流恶化(反弹不追)；**未修复≥8日**=svr3 持续低于修复线+5"
+          "（健康回调 1~5 天修回；MU 6/25 顶后 >10 天未修复即派发型）。"
+          "来源 t_us_intraday_internals，docs/mu_1m_decline_study.md。")
+        A("")
+
+    # ── in_trend 强趋势态失守（持仓）──
+    lost = tconf.get("lost_hold", [])
+    if lost:
+        A("### 持仓跌出强趋势态（in_trend 三条件失守 — 质地降级提示，非卖出）")
+        A("")
+        for r in lost:
+            A(f"- **{r['ticker']}**　{r['flip_dt']} 失守（{r['note']}）——"
+              "退出仍以分层止损/20周线脊梁为准 [来源 us_trend_confirm]")
+        A("")
+
     # ── 买入 / 入场 ──
     A("## 四、🟢 买入 / 入场信号")
     A("")
@@ -598,6 +677,11 @@ def build_report(target, result_dir):
         add(r["ticker"], "缺口B", r["reason"] + "(存活确认·偏晚)")
     for r in kkl.get("rows", []):
         add(r["ticker"], "关键K线", f"{r['type']}/{r['trend']} 风险{r['risk']}%")
+    for r in pull.get("rows", []):
+        add(r["ticker"], "强势急跌买点", f"Tier{r['tier']} 单日{r['drop']}% R:R{r['rr']}（强趋势回调, 短期即翻正基率）")
+    for r in tconf.get("confirms", []):
+        hold_s = "·持仓" if r.get("hold") else ""
+        add(r["ticker"], "趋势确认", f"in_trend 翻真({r['flip_dt']}) 回调修复确认{hold_s}")
 
     if conf:
         ranked = sorted(conf.items(), key=lambda kv: (-len(kv[1]), kv[0]))

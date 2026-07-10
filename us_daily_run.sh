@@ -16,6 +16,14 @@
 #     走势/最近信号+确认日/失效位/背驰 per name → us_chanlun/us_chanlun_hold_
 #     <date>.txt. Exit REFERENCE only (二卖/三卖 vs the layered stops); exit
 #     policy stays with the swing scanner (ADR-0002). yfinance-only.
+#   • Intraday internals checkup (t_us_intraday_internals.py): 持仓·分钟线派发
+#     体检 (收盘判) — Futu OpenD 1m 增量缓存 (US_yf_1m/; yfinance 1m 额度不够,
+#     2026-07-09 切换; OpenD down → 旧缓存降级), 每票算 SVR资金流/VWAP
+#     下方时间/早盘30min + EXHAUSTION(放量跳空衰竭, 双向波动事件·复核触发器,
+#     n=5 证伪其单独方向性) / INTERNALS_WEAK(资金流恶化) 两 flag → us_intraday_
+#     internals/us_intraday_internals_<date>.{txt,csv}。CSV 序列 = 内部指标假说
+#     (n=1, MU 6/25) 的前向样本库。不做盘中止损 (实证反对); 退出政策归 scanner
+#     (ADR-0002)。见 docs/mu_1m_decline_study.md。
 #   • Three-layer chain: t_us_premium → t_us_delivery → t_us_resonance
 #     (贵气 × 兑现 × 技术觉醒 共振) → /home/ryan/DATA/result/us_{premium,delivery}_
 #     <date>.csv + us_resonance_<date>.txt
@@ -43,6 +51,10 @@
 #     弱势股大涨). Tiered by drop severity (A ≤-7% / B -5%~-7%); entry=last close,
 #     stop=急跌日低−0.5ATR, target=252日高 → us_pullback_shock_<date>.{txt,csv}.
 #     yfinance-only, no Futu/OpenD.
+#   • Trend confirm (t_us_trend_confirm.py --scan): in_trend 三条件翻转扫描
+#     (>200d & 半年+20% & 距252高≤15%, 复用 pullback_shock.annotate)。CONFIRM=
+#     回调结束确认(进汇总计票) / LOST=跌出强趋势态(持仓★进持仓管理提示, 非卖出)
+#     → us_trend_confirm/us_trend_confirm_<date>.{txt,csv}。yfinance-only.
 #   • Bottom-entry screen (t_us_bottom_entry.py) across S&P 500 ∪ Nasdaq-100:
 #     names sitting at a "超跌(距252日高≤−30%)+ 跌破20周线" entry state NOW,
 #     tiered by SEC-EDGAR point-in-time ROE (PASS/FAIL/UNKNOWN — quality is a
@@ -54,6 +66,12 @@
 #     确立/成熟/衰竭预警) — semis watchlist vs SOXX + NDX-100 vs QQQ, RS percentile
 #     ranked in the SP500∪NDX pool → us_breadth_diffusion/us_breadth_diffusion_
 #     <sector>_<date>.txt + series csv. Environment read, not a signal source.
+#   • Market leaders (t_us_market_leaders.py): 个股层面持续领跑确认 — sector_rotation
+#     的个股配对。trailing 5日窗口, 在 SP500∪NDX 池按当日涨幅固定名次(top/bottom 20)
+#     排名, 触发 = top≥2 且 bottom≤1(允许1天噪声); 比单日涨幅榜抗噪(2025-11 MU/SNDK
+#     两边打脸期已知假阳性, 未加量能门槛)→ us_market_leaders/us_market_leaders_
+#     <universe>_<date>.{txt,csv}. Environment/confirmation read, NOT a buy/sell
+#     signal source. yfinance-only, no Futu/OpenD.
 #   • Market network structure (t_us_network_report.py --refresh): runs the 3-stage
 #     correlation-network pipeline over Nasdaq-100 — static MST/Louvain
 #     (t_us_network_structure.py), dynamic crowding-temperature
@@ -129,6 +147,21 @@ mkdir -p "$(dirname "$CH_TXT")"
 "$PY" t_us_chanlun.py --hold 2>> "$LOG" | tee "$CH_TXT" >> "$LOG"
 ch_rc=${PIPESTATUS[0]}
 echo "----- chanlun hold done (rc=$ch_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: intraday internals checkup (持仓·分钟线派发体检, 收盘判) —
+# 1m internals (SVR/VWAP-time/f30) + EXHAUSTION/INTERNALS_WEAK flags over the
+# full holdings pool (US_SWING_STOPS ∪ US_HOLD_EXTRA). Review trigger, NOT a
+# sell signal (n=5 falsified the daily pattern's direction); the dated CSVs
+# accumulate the forward sample for the n=1 internals hypothesis. Runs at
+# 17:00 ET so today's 1m session is complete. 1m bars from Futu OpenD
+# (yfinance quota exhausted); OpenD down → stale 1m cache, never hangs
+# (socket pre-check). Daily context stays on the yfinance cache. Non-fatal.
+echo "----- intraday internals start $(ts) -----" >> "$LOG"
+II_TXT=/home/ryan/DATA/result/us_intraday_internals/us_intraday_internals_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$II_TXT")"
+"$PY" t_us_intraday_internals.py 2>> "$LOG" | tee "$II_TXT" >> "$LOG"
+ii_rc=${PIPESTATUS[0]}
+echo "----- intraday internals done (rc=$ii_rc) $(ts) -----" >> "$LOG"
 
 # Supplementary: three-layer chain (贵气 → 兑现 → 共振). premium fills the Futu
 # fundamentals cache; delivery reuses it; resonance joins the three CSVs. All
@@ -209,6 +242,19 @@ mkdir -p "$(dirname "$PS_TXT")"
 ps_rc=${PIPESTATUS[0]}
 echo "----- pullback-shock done (rc=$ps_rc) $(ts) -----" >> "$LOG"
 
+# Supplementary: trend confirm (in_trend 三条件翻转) over S&P 500 ∪ Nasdaq-100
+# ∪ holdings. Reuses pullback_shock's annotate (>200d & 半年+20% & 距252高≤15%,
+# single source of truth). CONFIRM = 回调结束确认 (MU 2026-04-08 型, 确认日多为
+# 大阳=内生确认成本, 进 daily-report 候选计票); LOST = 跌出强趋势态 (持仓★进
+# 持仓管理提示; 质地降级非卖出, 脊梁归20周线/分层止损, ADR-0002). 状态读数
+# 非指令。yfinance-only, no Futu/OpenD. Non-fatal.
+echo "----- trend-confirm start $(ts) -----" >> "$LOG"
+TC_TXT=/home/ryan/DATA/result/us_trend_confirm/us_trend_confirm_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$TC_TXT")"
+"$PY" t_us_trend_confirm.py --scan --universe both 2>> "$LOG" | tee "$TC_TXT" >> "$LOG"
+tc_rc=${PIPESTATUS[0]}
+echo "----- trend-confirm done (rc=$tc_rc) $(ts) -----" >> "$LOG"
+
 # Supplementary: bottom-entry screen (超跌底部入场) over S&P 500 ∪ Nasdaq-100.
 # Lists names at a "超跌 + 跌破20周线(线下)" entry state now, tiered by SEC-EDGAR
 # point-in-time ROE (PASS 防归零优先 / FAIL 高弹性需查结构性受损 / UNKNOWN). Writes
@@ -243,6 +289,20 @@ run_step "breadth-ndx"   "$PY" t_us_breadth_diffusion.py --pool ndx --benchmark 
 # fake leadership. Runs after breadth so the both-pool bar cache is warm.
 # Environment read, NOT a buy/sell signal source. Non-fatal (run_step).
 run_step "sector-rotation" "$PY" t_us_sector_rotation.py
+
+# Supplementary: market leaders (个股层面持续领跑确认 — sector_rotation 的个股配对).
+# Trailing 5日窗口, 在 SP500∪NDX 池按当日涨幅固定名次(top/bottom 20)排名, 触发 =
+# top≥2 且 bottom≤1(允许1天噪声) — 比单日涨幅榜抗噪(2025-11 MU/SNDK 两边打脸期已知
+# 假阳性, 尚未加量能门槛)。Runs after sector-rotation so the both-pool bar cache is
+# warm. Environment/confirmation read, NOT a buy/sell signal source. yfinance-only,
+# no Futu/OpenD. Table tee'd to a dated report; CSV written by the script itself.
+# Non-fatal — its rc never flips the run's exit code.
+echo "----- market leaders start $(ts) -----" >> "$LOG"
+ML_TXT=/home/ryan/DATA/result/us_market_leaders/us_market_leaders_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$ML_TXT")"
+"$PY" t_us_market_leaders.py --scan --universe both 2>> "$LOG" | tee "$ML_TXT" >> "$LOG"
+ml_rc=${PIPESTATUS[0]}
+echo "----- market leaders done (rc=$ml_rc) $(ts) -----" >> "$LOG"
 
 # Supplementary: market network-structure analysis (相关性网络 抱团/瓦解 环境研判).
 # One command (--refresh) runs the 3-stage pipeline — static MST/Louvain → dynamic
