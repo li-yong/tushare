@@ -232,13 +232,19 @@ def _yf_revenue(ticker: str) -> list | None:
 
 
 def _yf_surprises(ticker: str) -> list | None:
-    """EPS Surprise% per earnings, newest→oldest (reported quarters only)."""
+    """EPS Surprise% per earnings, newest→oldest (reported quarters only).
+
+    走共享财报日历磁盘缓存 (t_us_tech_swing.fetch_earnings_calendar, 3日 TTL,
+    失败服务陈旧缓存) — 与 key_kline / earnings_react 同吃一份日历, 不再直打
+    yfinance get_earnings_dates。"""
     try:
-        ed = _yf_ticker(ticker).get_earnings_dates(limit=12)
-        if ed is None or ed.empty or 'Surprise(%)' not in ed.columns:
+        from t_us_tech_swing import fetch_earnings_calendar
+        cal = fetch_earnings_calendar(ticker)
+        if not cal:
             return None
-        s = ed['Surprise(%)'].dropna()
-        return [float(x) for x in s.tolist()]   # index 已是新→旧
+        # cal 升序、含未来排程日(surprise=None) → 反转成新→旧, 只留已公布的
+        out = [float(r['surprise']) for r in reversed(cal) if r['surprise'] is not None]
+        return out or None
     except Exception as e:
         logging.debug(f'{ticker}: yf surprises failed ({e})')
         return None

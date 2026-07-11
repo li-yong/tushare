@@ -65,7 +65,8 @@ FAST_ENTRY_TOP_N = 40             # 全市值进入现有成分股前40名 → F
 INDEX_TARGET_COUNT = 100
 
 NASDAQ_LISTED_URL = "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqlisted.txt"
-WIKI_NDX_URL = "https://en.wikipedia.org/wiki/Nasdaq-100"
+# 2026-07 起成分表从主条目挪到了独立列表页
+WIKI_NDX_URL = "https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies"
 
 CACHE_DIR = Path("ndx_cache")
 SNAPSHOT_FILE = CACHE_DIR / "snapshots.json"

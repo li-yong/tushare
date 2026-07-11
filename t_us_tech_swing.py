@@ -38,6 +38,7 @@ Usage:
 
 import sys
 import os
+import json
 import logging
 import datetime
 import traceback
@@ -335,6 +336,90 @@ def _fetch_daily_full(ticker: str) -> pd.DataFrame:
         )
         _DAILY_MEMO[ticker] = stale
         return stale
+
+
+# ── Earnings calendar (yfinance get_earnings_dates, cached per ticker) ────────
+EARN_CACHE_DIR   = '/home/ryan/DATA/DAY_Global/US_earnings'  # one JSON per ticker
+EARN_CACHE_TTL_D = 3    # past dates never change; upcoming ones occasionally get
+                        # rescheduled — a short TTL bounds that drift while still
+                        # deduping calls across scripts/reruns
+_EARN_MEMO: dict = {}   # per-run memo: ticker -> rows (avoids re-reading disk)
+
+
+def _earn_cache_path(ticker: str) -> str:
+    return os.path.join(EARN_CACHE_DIR, f'{ticker}.json')
+
+
+def _read_earn_cache(ticker: str) -> 'list | None':
+    path = _earn_cache_path(ticker)
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as fh:
+            payload = json.load(fh)
+        return [{'date': pd.Timestamp(r['date']), 'surprise': r['surprise']}
+                for r in payload['rows']]
+    except Exception as e:
+        logging.warning(f'{ticker}: earnings cache unreadable ({e})')
+        return None
+
+
+def fetch_earnings_calendar(ticker: str, limit: int = 12) -> 'list | None':
+    """
+    Earnings calendar rows [{'date': Timestamp, 'surprise': float|None}, ...]
+    ascending (past + scheduled upcoming), via yfinance get_earnings_dates,
+    cached per ticker for EARN_CACHE_TTL_D days. On a fetch failure the stale
+    cache is served with a warning (same contract as the bar cache, ADR-0001);
+    None when nothing is available.
+
+    The cache is "the calendar as fetched recently", NOT point-in-time — --asof
+    replays should treat it as an approximation. Cache files don't record
+    `limit`; every caller uses the default 12, so a hit always satisfies it.
+    """
+    if ticker in _EARN_MEMO:
+        return _EARN_MEMO[ticker]
+
+    path = _earn_cache_path(ticker)
+    if os.path.exists(path):
+        age_d = (datetime.date.today()
+                 - datetime.date.fromtimestamp(os.path.getmtime(path))).days
+        if age_d <= EARN_CACHE_TTL_D:
+            rows = _read_earn_cache(ticker)
+            if rows is not None:
+                _EARN_MEMO[ticker] = rows
+                return rows
+
+    try:
+        ed = yf.Ticker(ticker).get_earnings_dates(limit=limit)
+        if ed is None or ed.empty:
+            raise ValueError('empty earnings calendar from yfinance')
+        dates = pd.to_datetime(ed.index).tz_localize(None).normalize()
+        sp = (ed['Surprise(%)'].values if 'Surprise(%)' in ed.columns
+              else [np.nan] * len(ed))
+        by_date: dict = {}
+        for d, s in zip(dates, sp):                # dedupe, keep a non-null surprise
+            s = None if pd.isna(s) else float(s)
+            if d not in by_date or by_date[d] is None:
+                by_date[d] = s
+        rows = [{'date': d, 'surprise': by_date[d]} for d in sorted(by_date)]
+        os.makedirs(EARN_CACHE_DIR, exist_ok=True)
+        # tmp+rename 原子写: huice --jobs 多进程并发抓日历时不会写出半个 JSON
+        tmp = f'{path}.tmp.{os.getpid()}'
+        with open(tmp, 'w') as fh:
+            json.dump({'fetched': str(datetime.date.today()),
+                       'rows': [{'date': str(r['date'].date()),
+                                 'surprise': r['surprise']} for r in rows]}, fh)
+        os.replace(tmp, path)
+        _EARN_MEMO[ticker] = rows
+        return rows
+    except Exception as e:
+        rows = _read_earn_cache(ticker)
+        if rows is None:
+            logging.warning(f'{ticker}: earnings calendar failed ({e}) and no cache — skipping')
+        else:
+            logging.warning(f'{ticker}: earnings calendar failed ({e}) — SERVING STALE CACHE')
+        _EARN_MEMO[ticker] = rows
+        return rows
 
 
 def _history(ticker: str, period: str, interval: str) -> pd.DataFrame:

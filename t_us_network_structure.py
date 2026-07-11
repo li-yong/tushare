@@ -114,8 +114,16 @@ def load_universe(which: str, force: bool) -> list:
                 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies',
                 ['Symbol', 'Ticker symbol', 'Ticker'])
         if which in ('ndx', 'both'):
-            parts += _wiki_table('https://en.wikipedia.org/wiki/Nasdaq-100',
-                                 ['Ticker', 'Symbol'])
+            # 2026-07 起成分表挪到了独立列表页; 两个 URL 都试
+            for url in ('https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies',
+                        'https://en.wikipedia.org/wiki/Nasdaq-100'):
+                try:
+                    parts += _wiki_table(url, ['Ticker', 'Symbol'])
+                    break
+                except Exception:
+                    continue
+            else:
+                raise ValueError('NDX constituents table not found on Wikipedia')
     except Exception as e:
         log.error(f'股票池抓取失败 ({e})')
         if os.path.exists(path):

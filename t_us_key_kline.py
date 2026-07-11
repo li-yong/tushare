@@ -384,19 +384,12 @@ def detect_earnings_gaps(df: pd.DataFrame, ticker: str, fetch: bool = True) -> l
     if not fetch:
         logging.debug('Earnings fetch skipped (--no-earnings)')  # debug: --scan calls this per-ticker
         return []
-    try:
-        ed = yf.Ticker(ticker).get_earnings_dates(limit=EARN_LIMIT)
-    except Exception as e:
-        logging.warning(f'{ticker}: get_earnings_dates failed ({e}) — no earnings annotations')
+    cal = _sw.fetch_earnings_calendar(ticker, limit=EARN_LIMIT)  # cached (3d TTL)
+    if not cal:
+        logging.warning(f'{ticker}: no earnings calendar — no earnings annotations')
         return []
-    if ed is None or ed.empty:
-        logging.warning(f'{ticker}: no earnings dates returned — no earnings annotations')
-        return []
-
-    # tz-aware index (America/New_York) → naive dates for alignment
-    earn_dates = pd.to_datetime(ed.index).tz_localize(None)
-    surprise = (ed['Surprise(%)'].values
-                if 'Surprise(%)' in ed.columns else [np.nan] * len(ed))
+    earn_dates = [r['date'] for r in cal]
+    surprise = [np.nan if r['surprise'] is None else r['surprise'] for r in cal]
 
     idx = df.index
     open_ = df['open'].values
@@ -409,17 +402,22 @@ def detect_earnings_gaps(df: pd.DataFrame, ticker: str, fetch: bool = True) -> l
     out = []
     seen = set()
     for ed_ts, sp in zip(earn_dates, surprise):
-        # Reaction bar = first bar dated >= earnings date. Earnings print after
-        # the close (16:00 ET), so the reaction is usually the NEXT session.
+        # Reaction bar: for a pre-open reporter the gap is on the earnings-date
+        # bar itself; for an after-close reporter (the majority, ~16:00 ET) that
+        # bar is the PRE-announcement session and the gap shows on the next bar.
+        # Try the earnings-date bar first, then fall back to the bar after it —
+        # anchoring only on the first bar missed every after-close reporter.
         g = idx.searchsorted(ed_ts.normalize(), side='left')
         if g <= 0 or g >= len(df):
             continue  # earnings before our window starts, or in the future
+        if open_[g] <= close[g - 1] * (1 + GAP_PCT):
+            if g + 1 < len(df) and open_[g + 1] > close[g] * (1 + GAP_PCT):
+                g += 1  # after-close reporter: gap is on the next session
+            else:
+                continue  # no up-gap on either candidate bar
         if g in seen:
             continue
         seen.add(g)
-
-        if open_[g] <= close[g - 1] * (1 + GAP_PCT):
-            continue  # not an up-gap
 
         rng = high[g] - low[g]
         pos = (close[g] - low[g]) / rng if rng > 0 else 0.5

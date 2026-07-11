@@ -33,29 +33,65 @@
 #     low-vol uptrends that reclaim dips fast → us_steady_climb_<date>.{txt,csv}
 #   • Out-of-pool searchlight (t_us_searchlight.py): scores NDX-100 names outside
 #     the watchlist on 贵气×兑现 → us_searchlight_<date>.{txt,csv}
-#   • Key-K-line entry scan (t_us_key_kline.py --scan): across S&P 500 ∪ Nasdaq-100,
+#   NOTE 2026-07: the entry-candidate scans below (key_kline / gap_scan /
+#   pullback_shock / tr_surge / trend_confirm / bottom_entry) run on --universe
+#   all = SP500 ∪ NDX-100 ∪ Russell-2000 Health Care+Technology ∪ mid-cap
+#   $2B–$30B Health Care+Technology (~1290 names; R2000 slice = VTWO holdings ×
+#   Nasdaq screener sectors; midht slice = screener cap band, plugs the
+#   FROG-type gap between R2000's top and SP500's admission rules — see
+#   t_us_undervalue load_universe). Ranking/environment reads (market_leaders, breadth rs-ref,
+#   sector_rotation, network) stay on 'both' — small caps would distort their
+#   fixed-rank/percentile logic, and the huice α findings are on the both pool.
+#   • Key-K-line entry scan (t_us_key_kline.py --scan): across the all-pool,
 #     ranks names sitting at a FRESH entry now (突破/初吻/PP) with live stop / 1R →
 #     us_key_kline_scan_<date>.txt. The WHEN+WHERE timing pass over a quality pool
 #     (NOT a free-market screener — 方法论 §2.1). yfinance-only, no Futu/OpenD.
-#   • Gap scan (t_us_gap_scan.py) across S&P 500 ∪ Nasdaq-100, two passes: --scan
+#   • Gap scan (t_us_gap_scan.py) across the all-pool (SP500∪NDX∪R2000 HC+Tech), two passes: --scan
 #     lists UP-gap entry candidates in two tiers with a reason annotation — Tier A
 #     (fresh high-volume strong-close, tight stop) + Tier B (gap survived ≥5d
 #     unfilled = market-confirmed, even if vol/close were weak); gap floor = stop
 #     → us_gap_scan_<date>.{txt,csv}; --activity ranks names by valid-gap count
 #     over 30 days (最活跃/最常跳空) → us_gap_activity_<date>.{txt,csv}.
 #     yfinance-only, no Futu/OpenD.
-#   • Pullback-shock screen (t_us_pullback_shock.py) across S&P 500 ∪ Nasdaq-100:
+#   • Pullback-shock screen (t_us_pullback_shock.py) across the all-pool (SP500∪NDX∪R2000 HC+Tech):
 #     names in a strong uptrend (>200dma & 半年≥+20% & 距252日高≤15%) that just took
 #     a big single-day drop — the empirically positive "buy the dip in a strong
 #     name" TIMING (15y event study, 对 QQQ 超额为正、短期即翻正; 只做 A 侧, 不追
 #     弱势股大涨). Tiered by drop severity (A ≤-7% / B -5%~-7%); entry=last close,
 #     stop=急跌日低−0.5ATR, target=252日高 → us_pullback_shock_<date>.{txt,csv}.
 #     yfinance-only, no Futu/OpenD.
+#   • Low-bounce scan (t_us_low_bounce.py --scan): 250日新低·首日反弹 over the
+#     all-pool — 新低≤2日前 + 单日收盘≥+7%, 三道流动性门(价≥$3/额≥$5M/量≥1.2×)
+#     + 市值≥$300M(Nasdaq screener 当日缓存, 挂了则跳过该门)。pullback_shock 的
+#     光谱对端(弱势里的强一天); 候选发现层非验证信号源, 参考止损=刚砸出的250日低
+#     → us_low_bounce/us_low_bounce_<date>.{txt,csv}. yfinance-only, no Futu/OpenD.
+#   • Earnings-react scan (t_us_earnings_react.py --scan): 财报强反应·守住 over
+#     the all-pool — 财报bar≤5交易日前 + 财报日(E)或次日(E+1)收盘涨幅≥7% + 最新
+#     收盘仍≥close(财报日-1)。tech_swing 静默期规则里"财报后跳空确认是更好的入场"
+#     的那半句, 独立成扫描; 参考止损 = close(财报日-1), 收盘跌破=强反应被完全回吐。
+#     价格漏斗先行(只有近窗口≥7%大阳的名才打财报日历 API)。候选发现层, 无 huice
+#     检验(财报日历非点位数据) → us_earnings_react/us_earnings_react_<date>.
+#     {txt,csv}. yfinance-only, no Futu/OpenD.
+#   • TR-surge scan (t_us_tr_surge.py --scan): 近3日真实波幅(TR%)持续放大·高位区 —
+#     每日TR%≥3 且合计>15 且收盘距45日高≤15% (高位过滤排除深跌途中的下坡波动;
+#     TR度量 close-based 抓不到, 如 MU 2026-04-02 单日-0.44%但TR 7.5)。
+#     Volatility STATE read, not a
+#     buy/sell signal: report splits hits 上行/下行/拉锯 by net_chg% and points
+#     to gap_scan / pullback_shock / key_kline for the actual entry decision →
+#     us_tr_surge/us_tr_surge_<date>.{txt,csv}. yfinance-only, no Futu/OpenD.
+#   • Surge-stopline monitor (t_us_surge_stopline.py): 持仓·surge日收盘失守警报 —
+#     TR≥7% 阳线关键日的收盘为 stopline (新线永远替换旧线), 收盘跌破 = ALERT
+#     (最后一根响亮上攻的成果被全部回吐 = 假突破/顶部第一声裂响)。CSCO 2000 验证:
+#     顶后2日(-5%)即报警 (L2 20周线是-28.8%), 但牛市假警报密 (NVDA ~37次/3.5年)
+#     → 定位 = 复核/减仓评估触发器, NOT a stop engine (退出纪律归 ADR-0002 分层
+#     止损); 响亮的顶归它, 温水煮青蛙的安静顶归20周线。持仓池 = US_SWING_STOPS ∪
+#     US_HOLD_EXTRA → us_surge_stopline/us_surge_stopline_<date>.{txt,csv}.
+#     yfinance-only, no Futu/OpenD.
 #   • Trend confirm (t_us_trend_confirm.py --scan): in_trend 三条件翻转扫描
 #     (>200d & 半年+20% & 距252高≤15%, 复用 pullback_shock.annotate)。CONFIRM=
 #     回调结束确认(进汇总计票) / LOST=跌出强趋势态(持仓★进持仓管理提示, 非卖出)
 #     → us_trend_confirm/us_trend_confirm_<date>.{txt,csv}。yfinance-only.
-#   • Bottom-entry screen (t_us_bottom_entry.py) across S&P 500 ∪ Nasdaq-100:
+#   • Bottom-entry screen (t_us_bottom_entry.py) across the all-pool (SP500∪NDX∪R2000 HC+Tech):
 #     names sitting at a "超跌(距252日高≤−30%)+ 跌破20周线" entry state NOW,
 #     tiered by SEC-EDGAR point-in-time ROE (PASS/FAIL/UNKNOWN — quality is a
 #     blow-up/left-tail filter, NOT a return ranker; FAIL = junk-bounce, check for
@@ -197,7 +233,7 @@ mkdir -p "$(dirname "$SL_TXT")"
 sl_rc=${PIPESTATUS[0]}
 echo "----- searchlight done (rc=$sl_rc) $(ts) -----" >> "$LOG"
 
-# Supplementary: key-K-line entry scan (择时 + 止损) over S&P 500 ∪ Nasdaq-100.
+# Supplementary: key-K-line entry scan (择时 + 止损) over the all-pool (SP500∪NDX∪R2000 HC+Tech).
 # Ranks names at a fresh entry right now (突破/初吻/PP) with live stop / 1R; the
 # table is teed to a dated report. No --plot-top in cron (avoid a daily flood of
 # PNGs in result/ — plot survivors by hand). yfinance-only; no Futu dependency.
@@ -205,11 +241,11 @@ echo "----- searchlight done (rc=$sl_rc) $(ts) -----" >> "$LOG"
 echo "----- key-kline scan start $(ts) -----" >> "$LOG"
 KK_TXT=/home/ryan/DATA/result/us_key_kline/us_key_kline_scan_$(date +%Y%m%d).txt
 mkdir -p "$(dirname "$KK_TXT")"
-"$PY" t_us_key_kline.py --scan --universe both 2>> "$LOG" | tee "$KK_TXT" >> "$LOG"
+"$PY" t_us_key_kline.py --scan --universe all 2>> "$LOG" | tee "$KK_TXT" >> "$LOG"
 kk_rc=${PIPESTATUS[0]}
 echo "----- key-kline scan done (rc=$kk_rc) $(ts) -----" >> "$LOG"
 
-# Supplementary: gap scan (跳空缺口) over S&P 500 ∪ Nasdaq-100. Two passes, each
+# Supplementary: gap scan (跳空缺口) over the all-pool (SP500∪NDX∪R2000 HC+Tech). Two passes, each
 # tee'd to a dated report; both write their own CSV. --scan = 近期放量、收强、仍
 # 未回补的向上缺口(可操作, 缺口下沿做天然止损); --activity = 缺口活跃度排行(近
 # 30 日有效缺口次数, 找最常跳空的高波动名)。yfinance-only; no Futu dependency.
@@ -217,14 +253,14 @@ echo "----- key-kline scan done (rc=$kk_rc) $(ts) -----" >> "$LOG"
 echo "----- gap scan start $(ts) -----" >> "$LOG"
 GAP_TXT=/home/ryan/DATA/result/us_gap_scan/us_gap_scan_$(date +%Y%m%d).txt
 mkdir -p "$(dirname "$GAP_TXT")"
-"$PY" t_us_gap_scan.py --scan --universe both 2>> "$LOG" | tee "$GAP_TXT" >> "$LOG"
+"$PY" t_us_gap_scan.py --scan --universe all 2>> "$LOG" | tee "$GAP_TXT" >> "$LOG"
 gap_rc=${PIPESTATUS[0]}
 echo "----- gap scan done (rc=$gap_rc) $(ts) -----" >> "$LOG"
 
 echo "----- gap activity start $(ts) -----" >> "$LOG"
 GAPA_TXT=/home/ryan/DATA/result/us_gap_scan/us_gap_activity_$(date +%Y%m%d).txt
 mkdir -p "$(dirname "$GAPA_TXT")"
-"$PY" t_us_gap_scan.py --activity --universe both --days 30 2>> "$LOG" | tee "$GAPA_TXT" >> "$LOG"
+"$PY" t_us_gap_scan.py --activity --universe all --days 30 2>> "$LOG" | tee "$GAPA_TXT" >> "$LOG"
 gapa_rc=${PIPESTATUS[0]}
 echo "----- gap activity done (rc=$gapa_rc) $(ts) -----" >> "$LOG"
 
@@ -238,11 +274,82 @@ echo "----- gap activity done (rc=$gapa_rc) $(ts) -----" >> "$LOG"
 echo "----- pullback-shock start $(ts) -----" >> "$LOG"
 PS_TXT=/home/ryan/DATA/result/us_pullback_shock/us_pullback_shock_$(date +%Y%m%d).txt
 mkdir -p "$(dirname "$PS_TXT")"
-"$PY" t_us_pullback_shock.py --scan --universe both 2>> "$LOG" | tee "$PS_TXT" >> "$LOG"
+"$PY" t_us_pullback_shock.py --scan --universe all 2>> "$LOG" | tee "$PS_TXT" >> "$LOG"
 ps_rc=${PIPESTATUS[0]}
 echo "----- pullback-shock done (rc=$ps_rc) $(ts) -----" >> "$LOG"
 
-# Supplementary: trend confirm (in_trend 三条件翻转) over S&P 500 ∪ Nasdaq-100
+# Supplementary: low-bounce scan (250日新低·首日反弹) over the all-pool. The
+# spectrum-opposite of pullback_shock: a fresh 250d low (≤2d ago) followed by a
+# ≥7% up close — the first fighting-back bar after the last leg down. Gated by
+# price ≥$3 / 20d dollar-vol ≥$5M / vol ≥1.2×20d / mktcap ≥$300M (Nasdaq
+# screener, day-cached, degrades to no-cap-gate). Candidate DISCOVERY layer,
+# NOT a proven signal source (extreme win/loss dispersion; quality gates are
+# left-tail filters per docs §7.5-7.6); ref stop = the just-made 250d low.
+# Reports a trailing 5-day window (the pattern is sparse; today's hits are ★).
+# --grok: each new hit gets ONE Grok catalyst check (~$0.1, x_search+web_search;
+# deduped by ticker×signal-date in grok_catalyst.csv) — annotation-only forward
+# sample accumulation for the n=1 hypothesis "catalyst present = real reversal
+# (VSTM) vs no chatter = dead-cat (SSTK)"; NOT a gate. Degrades to no-annotation
+# without xAI key. yfinance + xAI, no Futu/OpenD. Non-fatal.
+echo "----- low-bounce start $(ts) -----" >> "$LOG"
+LB_TXT=/home/ryan/DATA/result/us_low_bounce/us_low_bounce_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$LB_TXT")"
+"$PY" t_us_low_bounce.py --scan --universe all --grok 2>> "$LOG" | tee "$LB_TXT" >> "$LOG"
+lb_rc=${PIPESTATUS[0]}
+echo "----- low-bounce done (rc=$lb_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: earnings-react scan (财报强反应·守住, PEAD confirmation
+# candidates) over the all-pool. Three gates: earnings bar ≤5 trading days ago;
+# E or E+1 close-to-close gain ≥7% (covers pre-open AND after-close reporters);
+# latest close still ≥ close(ER-1) — the "财报后跳空确认" entry the tech_swing
+# blackout rule points at but nothing scanned for. Reference stop = close(ER-1),
+# daily-close judged (ADR-0002). Price funnel first (only ≥7% movers hit the
+# yfinance earnings-calendar API, so the all-pool sweep stays cheap). Candidate
+# DISCOVERY layer, not a proven source; replayable via huice --source
+# earnings_react (past announcement dates are facts — the caveat is delisted
+# names lacking calendars, i.e. survivorship); dated CSVs accumulate the live
+# forward sample.
+# Table tee'd to a dated report. yfinance-only, no Futu/OpenD. Non-fatal.
+echo "----- earnings-react start $(ts) -----" >> "$LOG"
+ER_TXT=/home/ryan/DATA/result/us_earnings_react/us_earnings_react_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$ER_TXT")"
+"$PY" t_us_earnings_react.py --scan --universe all 2>> "$LOG" | tee "$ER_TXT" >> "$LOG"
+er_rc=${PIPESTATUS[0]}
+echo "----- earnings-react done (rc=$er_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: TR-surge scan (近3日真实波幅持续放大·高位区) over S&P 500 ∪
+# Nasdaq-100. Flags names whose True Range %(vs prev close) ran ≥3% EVERY day
+# for 3 days, summed >15%, AND closed within 15% of the 45-day high (filters
+# out downhill volatility deep in a decline) — continuous repricing/
+# distribution/tug-of-war, invisible to close-to-close measures.
+# Volatility STATE read, NOT a signal source; the report's 解读 section splits
+# hits by direction (net_chg%) and routes to gap_scan/pullback_shock/key_kline.
+# Table tee'd to a dated report; CSV written by the script. yfinance-only,
+# no Futu/OpenD. Non-fatal — its rc never flips the run's exit code.
+echo "----- tr-surge start $(ts) -----" >> "$LOG"
+TRS_TXT=/home/ryan/DATA/result/us_tr_surge/us_tr_surge_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$TRS_TXT")"
+"$PY" t_us_tr_surge.py --scan --universe all 2>> "$LOG" | tee "$TRS_TXT" >> "$LOG"
+trs_rc=${PIPESTATUS[0]}
+echo "----- tr-surge done (rc=$trs_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: surge-stopline monitor (持仓·surge日收盘失守警报). The sell-side
+# key-bar mirror: the close of the latest TR≥7% up surge bar is the stopline
+# (always replaced by a newer surge bar); a daily close below it = ALERT — the
+# last loud advance fully given back (failed breakout / first crack of a loud
+# top). CSCO-2000 validated (alert at -5% from top vs -28.8% for the 20w line);
+# whipsaw-prone in bulls, so it is a REVIEW/TRIM trigger for holdings, NOT a
+# stop engine (exit discipline stays with the layered stops, ADR-0002). Pool =
+# US_SWING_STOPS ∪ US_HOLD_EXTRA. Table tee'd to a dated report; CSV written by
+# the script. yfinance-only, no Futu/OpenD. Non-fatal.
+echo "----- surge-stopline start $(ts) -----" >> "$LOG"
+SS_TXT=/home/ryan/DATA/result/us_surge_stopline/us_surge_stopline_$(date +%Y%m%d).txt
+mkdir -p "$(dirname "$SS_TXT")"
+"$PY" t_us_surge_stopline.py 2>> "$LOG" | tee "$SS_TXT" >> "$LOG"
+ss_rc=${PIPESTATUS[0]}
+echo "----- surge-stopline done (rc=$ss_rc) $(ts) -----" >> "$LOG"
+
+# Supplementary: trend confirm (in_trend 三条件翻转) over the all-pool (SP500∪NDX∪R2000 HC+Tech)
 # ∪ holdings. Reuses pullback_shock's annotate (>200d & 半年+20% & 距252高≤15%,
 # single source of truth). CONFIRM = 回调结束确认 (MU 2026-04-08 型, 确认日多为
 # 大阳=内生确认成本, 进 daily-report 候选计票); LOST = 跌出强趋势态 (持仓★进
@@ -251,11 +358,11 @@ echo "----- pullback-shock done (rc=$ps_rc) $(ts) -----" >> "$LOG"
 echo "----- trend-confirm start $(ts) -----" >> "$LOG"
 TC_TXT=/home/ryan/DATA/result/us_trend_confirm/us_trend_confirm_$(date +%Y%m%d).txt
 mkdir -p "$(dirname "$TC_TXT")"
-"$PY" t_us_trend_confirm.py --scan --universe both 2>> "$LOG" | tee "$TC_TXT" >> "$LOG"
+"$PY" t_us_trend_confirm.py --scan --universe all 2>> "$LOG" | tee "$TC_TXT" >> "$LOG"
 tc_rc=${PIPESTATUS[0]}
 echo "----- trend-confirm done (rc=$tc_rc) $(ts) -----" >> "$LOG"
 
-# Supplementary: bottom-entry screen (超跌底部入场) over S&P 500 ∪ Nasdaq-100.
+# Supplementary: bottom-entry screen (超跌底部入场) over the all-pool (SP500∪NDX∪R2000 HC+Tech).
 # Lists names at a "超跌 + 跌破20周线(线下)" entry state now, tiered by SEC-EDGAR
 # point-in-time ROE (PASS 防归零优先 / FAIL 高弹性需查结构性受损 / UNKNOWN). Writes
 # its own dated md+csv to result/us_bottom_entry/. Bound to the 20-week system §7;
@@ -263,7 +370,7 @@ echo "----- trend-confirm done (rc=$tc_rc) $(ts) -----" >> "$LOG"
 # Note: PIT-ROE cache (backtest_cache/pit_quality.pkl) is built once and reused —
 # refresh it periodically (run with --force) to pick up new 10-K filings.
 # Non-fatal (run_step) — its rc never flips the run's exit code.
-run_step "bottom-entry" "$PY" t_us_bottom_entry.py --universe both
+run_step "bottom-entry" "$PY" t_us_bottom_entry.py --universe all
 
 # Supplementary: breadth diffusion (板块广度扩散 — 风口启动/衰竭状态机, spec
 # docs/breadth_diffusion_framework.md). Four indicators (NH-NL accel / %>50MA

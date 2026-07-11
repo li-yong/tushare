@@ -24,7 +24,7 @@ US Pullback-Shock Scanner — 强势股·单日急跌 回调买点
   不依赖 Futu/OpenD。
 
 两个模式(对齐 t_us_gap_scan / t_us_key_kline):
-  --scan [--universe both|ndx] [--lookback N] [--top N]
+  --scan [--universe both|ndx|all] [--lookback N] [--top N]
       全市场扫【当前处于强趋势 + 近 N 交易日内单日急跌】的名, 两档 + 原因标注:
         Tier A = 单日≤-7% (急跌更深, 前向 edge 更大);
         Tier B = 单日 -7%~-5%。A 在前, 各按 severity(跌幅)× 新鲜度排。
@@ -107,6 +107,9 @@ def _rr(entry, stop, target):
 # ── 模式一: 全市场扫强势股急跌 ────────────────────────────────────────────────
 def _load_universe(name: str) -> list:
     path = os.path.join(UNIVERSE_DIR, f'{name}.json')
+    if not os.path.exists(path):                       # 缓存缺失时现抓 (含当日缓存)
+        from t_us_undervalue import load_universe
+        return load_universe(name, force=False)
     with open(path) as f:
         return json.load(f)
 
@@ -301,8 +304,8 @@ def main():
     if opt.ticker:
         run_ticker(opt.ticker.upper(), asof)
     elif opt.scan:
-        if opt.universe not in ('both', 'ndx'):
-            print('--universe 仅支持 both|ndx'); sys.exit(1)
+        if opt.universe not in ('both', 'ndx', 'sp500', 'all', 'r2000ht'):
+            print('--universe 仅支持 both|ndx|sp500|all|r2000ht'); sys.exit(1)
         run_scan(opt.universe, opt.lookback, opt.top, asof)
     else:
         parser.print_help()

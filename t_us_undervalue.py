@@ -72,6 +72,10 @@ MIN_ROE_AVG  = 12.0    # ROE 近3年年报均值 > 12%
 ROE_YEARS    = 3
 INTERVAL_5Y  = 6       # get_valuation_detail interval_type: 6=近5年 (取整个周期的估值分位)
 
+# midht 中盘切片市值带: 下限接住 R2000 顶部, 上限盖过 SP500 准入线(~$18B)留余量
+MIDHT_CAP_LO = 2e9
+MIDHT_CAP_HI = 30e9
+
 
 # ── 股票池 (Wikipedia, 当日缓存) ─────────────────────────────────────────────
 def _wiki_table(url: str, symbol_col_candidates) -> list:
@@ -93,12 +97,87 @@ def _fetch_sp500() -> list:
 
 
 def _fetch_ndx() -> list:
-    return _wiki_table('https://en.wikipedia.org/wiki/Nasdaq-100',
-                       ['Ticker', 'Symbol'])
+    # 2026-07 起成分表从 Nasdaq-100 主条目挪到了独立列表页; 两个 URL 都试
+    for url in ('https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies',
+                'https://en.wikipedia.org/wiki/Nasdaq-100'):
+        try:
+            return _wiki_table(url, ['Ticker', 'Symbol'])
+        except Exception:
+            continue
+    raise ValueError('NDX constituents table not found on Wikipedia')
+
+
+def _fetch_r2000_healthtech() -> list:
+    """Russell 2000 中 Health Care + Technology 成分。
+
+    成分清单: Vanguard VTWO (Russell 2000 ETF) 持仓 API, 500/页分页 (~1940 只,
+    Wikipedia 没有 R2000 成分表; iShares IWM 的 CSV 下载端点 2026 改版后已失效)。
+    行业口径: 纳斯达克官方 screener API 一次请求全交易所 (与 ndx_predictor 同源),
+    sector ∈ {Health Care, Technology}。少数 VTWO 持仓在 screener 里查不到
+    (~25 只, 多为多股类别符号) — 直接丢弃, 不影响池子成色。
+    """
+    import urllib.request
+    hdr = dict(UA, Accept='application/json')
+    tickers, start = [], 1
+    while True:
+        url = ('https://investor.vanguard.com/investment-products/etfs/profile/api/'
+               f'VTWO/portfolio-holding/stock?start={start}&count=500')
+        req = urllib.request.Request(url, headers=hdr)
+        d = json.loads(urllib.request.urlopen(req, timeout=30).read())
+        ents = d.get('fund', {}).get('entity', [])
+        tickers += [(e.get('ticker') or '').strip().upper() for e in ents]
+        if len(ents) < 500:
+            break
+        start += 500
+    if not tickers:
+        raise ValueError('VTWO holdings API returned no tickers')
+    req = urllib.request.Request(
+        'https://api.nasdaq.com/api/screener/stocks?download=true', headers=hdr)
+    rows = json.loads(urllib.request.urlopen(req, timeout=60).read())['data']['rows']
+    sector = {r['symbol'].strip().upper(): r['sector'] for r in rows}
+    keep = {'Health Care', 'Technology'}
+    # BRK.B → BRK-B (yfinance 用连字符, 与 _wiki_table 同约定)
+    return [t.replace('.', '-') for t in tickers if sector.get(t) in keep]
+
+
+def _fetch_midcap_healthtech() -> list:
+    """中盘 Health Care + Technology 切片 — 补 SP500/NDX/R2000 三块拼图的缝。
+
+    SP500 有市值门槛+注册地规则, NDX 只收 Nasdaq-100, R2000 是小盘 — 市值落在
+    R2000 上限与 SP500 门槛之间的中盘科技/医疗名是三者共同的盲区 (2026-07 FROG
+    $11B 财报强反应缺席暴露)。S&P MidCap 400 也补不上: 同样的注册地规则,
+    FROG(以色列) 就不在其中。
+    口径: 纳斯达克官方 screener 一次请求全交易所 (与 r2000ht 的行业口径同源),
+    sector ∈ {Health Care, Technology} 且市值 $2B–$30B。与其他池的重叠在
+    load_universe 的 set-union 里自然去重。
+    """
+    import urllib.request
+    hdr = dict(UA, Accept='application/json')
+    req = urllib.request.Request(
+        'https://api.nasdaq.com/api/screener/stocks?download=true', headers=hdr)
+    rows = json.loads(urllib.request.urlopen(req, timeout=60).read())['data']['rows']
+    keep = {'Health Care', 'Technology'}
+    out = []
+    for r in rows:
+        try:
+            cap = float(r.get('marketCap') or 0)
+        except (TypeError, ValueError):
+            continue
+        if r.get('sector') in keep and MIDHT_CAP_LO <= cap <= MIDHT_CAP_HI:
+            out.append(r['symbol'].strip().upper().replace('.', '-'))
+    if not out:
+        raise ValueError('Nasdaq screener returned no mid-cap HC/Tech names')
+    return out
 
 
 def load_universe(which: str, force: bool) -> list:
-    """which ∈ {sp500, ndx, both}. 当日缓存到 CACHE_DIR/<which>.json。"""
+    """which ∈ {sp500, ndx, both, r2000ht, midht, all}. 当日缓存到 CACHE_DIR/<which>.json。
+
+    both = SP500 ∪ NDX-100 (质量池, huice 的 α 结论都在这个口径上);
+    r2000ht = Russell 2000 的 Health Care + Technology 切片 (~590 只小盘);
+    midht = 中盘 $2B–$30B 的 Health Care + Technology 切片 (screener, ~400 只);
+    all = both ∪ r2000ht ∪ midht。
+    """
     os.makedirs(CACHE_DIR, exist_ok=True)
     path = os.path.join(CACHE_DIR, f'{which}.json')
     if not force and os.path.exists(path):
@@ -113,10 +192,14 @@ def load_universe(which: str, force: bool) -> list:
                 pass
     parts = []
     try:
-        if which in ('sp500', 'both'):
+        if which in ('sp500', 'both', 'all'):
             parts += _fetch_sp500()
-        if which in ('ndx', 'both'):
+        if which in ('ndx', 'both', 'all'):
             parts += _fetch_ndx()
+        if which in ('r2000ht', 'all'):
+            parts += _fetch_r2000_healthtech()
+        if which in ('midht', 'all'):
+            parts += _fetch_midcap_healthtech()
     except Exception as e:
         log.error(f'股票池抓取失败 ({e})')
         if os.path.exists(path):                     # 陈旧缓存兜底 (ADR-0001 stale-cache 思路)

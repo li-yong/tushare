@@ -17,6 +17,14 @@ huice.py — 回测系统给出的指示 (backtest the system's directives)
                        (笔端点被后续 bar 提交的第一天), entry = 确认日收盘 (melt-up
                        里比结构价高 12~21%, 用结构价即未来函数); 止损 = 失效位
                        (3B→ZG, 1B/2B→转折低点)。只回测买点。
+  · t_us_tr_surge    — 近N日TR%持续放大 (波动状态读数, 无止损 Setup)。episode =
+                       静默>7天后的首个命中日, 按窗口净涨跌拆 TR_UP/TR_DOWN/TR_CHOP
+                       (±3%); managed=False 买入持有口径, 只看 fwd/α。
+  · t_us_earnings_react — 财报强反应·守住 (PEAD 确认入场)。episode = ticker×财报日,
+                       发出日 = 反应 bar (E/E+1 里 ≥7% 那根), entry = 反应日收盘,
+                       止损 = close(财报日-1) (回吐尽 = 证伪)。REACT_E=盘前公布 /
+                       REACT_E1=盘后公布。日历非严格点位 (退市票缺日历→幸存者偏差;
+                       limit=12 覆盖 ~2020+), 价格条件本身完全因果。
 
 本脚本做两件事:
   1. 点位重放 (point-in-time): 借 t_us_tech_swing 的 _ASOF 数据层, 只用 ≤当日 的 bar
@@ -39,7 +47,8 @@ Usage:
   python huice.py --start 2025-01-01 --source gap_scan --universe ndx   # 缺口指示
   python huice.py --start 2025-01-01 --source undervalue --universe both # 超跌优质
   python huice.py --start 2023-01-01 --source chanlun --universe ndx      # 缠论买点
-  python huice.py --start 2025-01-01 --source all --universe both       # 五源全测
+  python huice.py --start 2025-01-01 --source earnings_react --universe all # 财报反应
+  python huice.py --start 2025-01-01 --source all --universe both       # 七源全测
 
 Output: stdout + result/us_huice/huice_<tag>_<date>.txt
 """
@@ -73,6 +82,8 @@ import t_us_tech_swing as tsw
 import t_us_key_kline as kk
 import t_us_gap_scan as gs
 import t_us_chanlun as ch
+import t_us_tr_surge as trs
+import t_us_earnings_react as erx
 
 OUT_DIR      = '/home/ryan/DATA/result/us_huice'
 BENCH        = 'QQQ'
@@ -294,6 +305,107 @@ def gap_episodes(ticker: str, days: list) -> list:
                         'stop': round(floor, 2), 'target': None, 'rr': None,
                         'rr_ok': None,
                     })
+    return eps
+
+
+def tr_surge_episodes(ticker: str, days: list) -> list:
+    """t_us_tr_surge 指示重放 (近N日TR%持续放大, 波动状态读数)。检测因果 (TR 只用
+    ≤当日 bar), 整段单遍: 滚动窗口命中 → 静默 >EPISODE_GAP_D 天后的首个命中日 =
+    新 episode。信号本身不定义止损 (状态读数, 非带止损的 Setup), 按 undervalue
+    口径 managed=False 买入持有 max-hold 日, 只看 fwd/α。signal_type 按窗口净涨跌
+    拆 TR_UP / TR_DOWN / TR_CHOP (±3%), 对应 live 报告解读的三档。
+    高位过滤同 live 默认: 收盘距 HI_DAYS 日最高收盘 ≤ NEAR_HIGH_PCT。"""
+    tsw._ASOF = None
+    full = tsw._fetch_daily_full(ticker)
+    if full.empty or len(full) < trs.MIN_BARS + trs.DAYS:
+        return []
+    d = trs.annotate(full)
+    n = trs.DAYS
+    tot = d['tr_pct'].rolling(n).sum()
+    lo  = d['tr_pct'].rolling(n).min()
+    net = (d['close'] / d['close'].shift(n) - 1.0) * 100.0
+    hit = tot.notna() & (tot > trs.TOTAL_MIN) & (lo >= trs.DAILY_MIN) \
+          & (d['dfh'] >= -trs.NEAR_HIGH_PCT)
+    start, end = days[0], days[-1]
+    eps, prev = [], None
+    for dt in d.index[hit]:
+        if dt < start:
+            prev = dt                # 窗口前就已在放大态 → 起点附近不算新触发
+            continue
+        if dt > end:
+            break
+        if prev is not None and (dt - prev).days <= EPISODE_GAP_D:
+            prev = dt                # 同一波动事件的延续
+            continue
+        prev = dt
+        nc = float(net.loc[dt])
+        stype = 'TR_UP' if nc >= 3.0 else ('TR_DOWN' if nc <= -3.0 else 'TR_CHOP')
+        eps.append({
+            'source': 'tr_surge', 'ticker': ticker, 'date': dt,
+            'signal_type': stype, 'market_state': gate_state_on(dt),
+            'confidence': None, 'entry': round(float(d['close'].loc[dt]), 2),
+            'stop': None, 'target': None, 'rr': None, 'rr_ok': None,
+            'managed': False,
+        })
+    return eps
+
+
+def earnings_react_episodes(ticker: str, days: list) -> list:
+    """t_us_earnings_react 指示重放 (财报强反应·守住, PEAD 确认入场)。
+
+    episode = ticker × 财报日 (天然去重, 不需要 EPISODE_GAP_D)。发出日 = 反应 bar
+    (E 或 E+1 里收盘涨幅更大的那根; live 三条件在反应日收盘即全真 — 新鲜度 0/1 日,
+    收盘必 > ref)。entry = 反应日收盘, stop = close(财报日-1) (live 的 ref_stop 同
+    语义: 日收盘跌破 = 强反应被完全回吐), managed=True 走分层退出。signal_type 拆
+    REACT_E(盘前公布, 涨在财报日) / REACT_E1(盘后公布, 涨在次日)。
+
+    点位口径: 三个价格条件纯 bar 数据, 完全因果; 过去的财报公告日是历史事实,
+    今天抓的日历里的过去日期无前视。真正的 caveat: ① 退市票缺日历 → 幸存者偏差
+    (与 bar 缓存同源同 caveat); ② 默认 limit=12 日历覆盖 ~2020+, 更早区间的
+    episode 会静默缺失。日历走共享磁盘缓存 (tsw.fetch_earnings_calendar)。"""
+    tsw._ASOF = None
+    full = tsw._fetch_daily_full(ticker)
+    if full.empty or len(full) < erx.MIN_BARS:
+        return []
+    idx = full.index
+    close = full['close'].values
+    start, end = days[0], days[-1]
+    # 价格漏斗 (同 live scan): 区间±1bar 内没有 ≥CHG_MIN% 的单日大阳 → 必无 episode,
+    # 省一次日历请求
+    lo = max(0, idx.searchsorted(start) - 1)
+    hi = min(len(idx), idx.searchsorted(end, side='right') + 1)
+    r1d = pd.Series(close[lo:hi]).pct_change()
+    if not (r1d >= erx.CHG_MIN / 100.0).any():
+        return []
+    cal = tsw.fetch_earnings_calendar(ticker)
+    if not cal:
+        return []
+    eps = []
+    for r in cal:
+        g = int(idx.searchsorted(r['date'], side='left'))
+        if g <= 0 or g >= len(idx):
+            continue
+        chg_e = close[g] / close[g - 1] - 1.0
+        chg_e1 = close[g + 1] / close[g] - 1.0 if g + 1 < len(idx) else np.nan
+        if not np.isnan(chg_e1) and chg_e1 > chg_e:
+            react, ri, stype = chg_e1, g + 1, 'REACT_E1'
+        else:
+            react, ri, stype = chg_e, g, 'REACT_E'
+        if react < erx.CHG_MIN / 100.0:
+            continue
+        dt = idx[ri]
+        if not (start <= dt <= end):
+            continue
+        ref = float(close[g - 1])
+        entry = float(close[ri])
+        if entry <= ref:
+            continue                          # react≥7% 下理论不可能, 纯防御
+        eps.append({
+            'source': 'earnings_react', 'ticker': ticker, 'date': dt,
+            'signal_type': stype, 'market_state': gate_state_on(dt),
+            'confidence': None, 'entry': round(entry, 2), 'stop': round(ref, 2),
+            'target': None, 'rr': None, 'rr_ok': None,
+        })
     return eps
 
 
@@ -800,6 +912,22 @@ def run_single(ticker: str, asof: pd.Timestamp, source: str, min_n: int):
                   f' / 止损(失效位) {e["stop"]:.2f}')
         eps.extend(got)
 
+    if source in ('tr_surge', 'all'):
+        got = tr_surge_episodes(ticker, [d])
+        print(f'\n[tr_surge]  当日新触发的TR连续放大 {len(got)} 个')
+        for e in got:
+            print(f'  状态: {e["signal_type"]}  收 {e["entry"]:.2f}'
+                  f' (无止损, 买入持有口径)')
+        eps.extend(got)
+
+    if source in ('earnings_react', 'all'):
+        got = earnings_react_episodes(ticker, [d])
+        print(f'\n[earnings_react]  当日为财报反应日(E/E+1 ≥{erx.CHG_MIN:.0f}%) {len(got)} 个')
+        for e in got:
+            print(f'  指示: {e["signal_type"]}  买 {e["entry"]:.2f}'
+                  f' / 止损(财报日-1收) {e["stop"]:.2f}')
+        eps.extend(got)
+
     if not eps:
         print('\n当日系统没有给出可入场的指示 — 无可回测的开仓。')
         return
@@ -839,6 +967,10 @@ def _sweep_worker(ticker: str):
             eps += gap_episodes(ticker, _SWEEP_DAYS)
         if _SWEEP_SOURCE in ('chanlun', 'all'):
             eps += chanlun_episodes(ticker, _SWEEP_DAYS)
+        if _SWEEP_SOURCE in ('tr_surge', 'all'):
+            eps += tr_surge_episodes(ticker, _SWEEP_DAYS)
+        if _SWEEP_SOURCE in ('earnings_react', 'all'):
+            eps += earnings_react_episodes(ticker, _SWEEP_DAYS)
         return ticker, eps, None
     except Exception as e:
         return ticker, [], f'{type(e).__name__}: {e}'
@@ -920,11 +1052,12 @@ def main():
                     help='区间模式终点 (默认今天)')
     ap.add_argument('--source', dest='source', default='both',
                     choices=['tech_swing', 'key_kline', 'gap_scan', 'undervalue',
-                             'chanlun', 'both', 'all'],
-                    help='both = tech_swing+key_kline (兼容旧口径); all = 全部五源')
+                             'chanlun', 'tr_surge', 'earnings_react', 'both', 'all'],
+                    help='both = tech_swing+key_kline (兼容旧口径); all = 全部七源')
     ap.add_argument('--universe', dest='universe', default=None,
-                    choices=['sp500', 'ndx', 'both'],
-                    help='区间模式股票池: SP500/NDX/并集 (默认 watchlist); --ticker 优先')
+                    choices=['sp500', 'ndx', 'both', 'r2000ht', 'midht', 'all'],
+                    help='区间模式股票池: SP500/NDX/并集/R2000医疗+科技切片/全并集 '
+                         '(默认 watchlist); --ticker 优先')
     ap.add_argument('--jobs', dest='jobs', type=int, default=0,
                     help='并行进程数 (0=自动: 池>30 用全核, 否则单进程)')
     ap.add_argument('--underval-skip-roe', dest='underval_skip_roe',
