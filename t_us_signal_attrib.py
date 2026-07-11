@@ -55,6 +55,13 @@ HORIZONS  = [21, 63, 126]     # sessions ≈ 1m / 3m / 6m
 ALPHA_H   = 63                # horizon used for the QQQ-alpha and win-rate cols
 BENCH     = 'QQQ'
 OUT_DIR   = '/home/ryan/DATA/result/us_signal_log'
+# 止损尸检登记簿 (实践论: 吃一堑要收据). 每笔 stop-hit episode 一行, 周日复盘
+# 手工填 falsified_assumption — 入场时哪条假设被证伪, 四选一:
+#   pool(池子错) / regime(体制读错) / context(信号在此语境无效) / tail(运气尾部)
+# 积累后看认识偏差聚在哪一格; 已填的行永不被脚本改写.
+AUTOPSY_PATH = os.path.join(OUT_DIR, 'stopout_autopsy.csv')
+AUTOPSY_COLS = ['first_seen', 'source', 'ticker', 'signal_type', 'market_state',
+                'stop_hit_d', 'falsified_assumption', 'notes']
 
 
 def _bars(ticker: str) -> pd.DataFrame:
@@ -123,6 +130,45 @@ def evaluate(ledger: pd.DataFrame) -> pd.DataFrame:
             elif len(win) >= ALPHA_H:
                 rec['stop_hit'] = False
     return pd.DataFrame(out)
+
+
+def _update_autopsy(df: pd.DataFrame) -> pd.DataFrame:
+    """Append newly stop-hit episodes to the autopsy book; return the full book.
+
+    Append-only by episode key (source|ticker|first_seen) — hand-written
+    verdicts in existing rows are never touched.
+    """
+    if os.path.exists(AUTOPSY_PATH):
+        book = pd.read_csv(AUTOPSY_PATH, dtype=str).fillna('')
+    else:
+        book = pd.DataFrame(columns=AUTOPSY_COLS)
+
+    if 'stop_hit' in df.columns:
+        hits = df[df['stop_hit'].eq(True)]
+    else:
+        hits = pd.DataFrame()
+    if not len(hits):
+        return book
+
+    def _key(d):
+        return (d['source'].astype(str) + '|' + d['ticker'].astype(str)
+                + '|' + d['first_seen'].astype(str))
+
+    known = set(_key(book)) if len(book) else set()
+    new = hits[~_key(hits).isin(known)]
+    if len(new):
+        add = new[['first_seen', 'source', 'ticker', 'signal_type',
+                   'market_state', 'stop_hit_d']].astype(str)
+        # stop_hit_d 在混有非命中行的 df 里是 float 列 — 落盘成整数字符串
+        add['stop_hit_d'] = new['stop_hit_d'].map(
+            lambda v: str(int(v)) if pd.notna(v) else '')
+        add['falsified_assumption'] = ''
+        add['notes'] = ''
+        book = pd.concat([book, add[AUTOPSY_COLS]], ignore_index=True)
+        os.makedirs(OUT_DIR, exist_ok=True)
+        book.to_csv(AUTOPSY_PATH, index=False)
+        logging.info(f'{len(new)} new stop-hit episode(s) → {AUTOPSY_PATH}')
+    return book
 
 
 def _agg(df: pd.DataFrame, by: list[str]) -> list[list]:
@@ -201,6 +247,24 @@ def main():
         if r[2] < opts.min_n:
             r[1] = f'{r[1]} ⚠'
     p(tab_mod.tabulate(rows, headers=['type', 'state'] + hdr_tail, tablefmt='simple'))
+    p()
+
+    # ── 止损尸检 (实践论: 每次止损必须回答"入场时哪条假设被证伪") ──────────────
+    book = _update_autopsy(df)
+    p('[ STOP-OUT AUTOPSY 止损尸检 ]   (每笔 stop-hit 一行, 周日复盘手工填 falsified_assumption)')
+    if not len(book):
+        p('  尚无 stop-hit episode.')
+    else:
+        pending = book[book['falsified_assumption'].astype(str).str.strip() == '']
+        p(f'  登记簿: {AUTOPSY_PATH}')
+        p(f'  {len(book)} 笔已登记 · {len(pending)} 笔待尸检')
+        for _, r in pending.head(10).iterrows():
+            p(f"    ◻ {r['first_seen']}  {r['source']}/{r['ticker']}  {r['signal_type']}  "
+              f"state={r['market_state']}  D+{r['stop_hit_d']} 收盘破冻结止损")
+        if len(pending) > 10:
+            p(f'    … 还有 {len(pending) - 10} 笔, 见登记簿')
+        p('  填法四选一: pool(池子错) / regime(体制读错) / context(信号在此语境无效) / tail(运气尾部)')
+        p('  看的是认识偏差聚在哪一格, 不是单笔盈亏; 该列分组统计待样本 ≥5 后加进本报告')
     p()
 
     p('[ 读法 / LEGEND ]')

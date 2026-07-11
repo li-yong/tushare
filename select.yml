@@ -42,6 +42,40 @@ US_SWING_BAROMETERS:     # market-state ETFs only; never traded
 # Holdings themselves still come live from Futu (see CONTEXT.md).
 US_SWING_EQUITY: 390000   # 2026-07-01 Futu total_assets $390,674 (市值 $325.5k + 现金 $41.7k)
 
+# ── 主要矛盾 (矛盾论: 抓主要矛盾) ─────────────────────────────────────────────
+# 当前市场的主要矛盾, 一句话, 周日复盘时更新/复核. 晨报顶部原样打印; 缺失或
+# 超过 10 天未复核时晨报高亮 "说不出主要矛盾就不开新仓" — 只提示不门控 (同
+# HMM 第二意见定位). 它强迫区分: 主要矛盾未变的正常回调(忍) vs 矛盾切换(跑).
+US_PRINCIPAL_CONTRADICTION:
+    date: 2026-07-11
+    text: 'AI capex 可持续性之争 — 多头面: 四大hyperscaler全年capex $725B(+77%)+存储超级周期(MU毛利85%仍上行); 空头面: 7月初半导体抛售的兑现怀疑+鹰派新Fed(Warsh)/AI通胀. 体制BULL共振0/6=多头方面仍居支配, 当前回调按牛市兑现性回调处理(忍); 摊牌点=月底4家hyperscaler财报capex指引: 上修→半导体回调皆可买, ≥2家转弱或体制降档/存储链失守surge线→矛盾易位(跑)'
+
+# ── 易位判据 (矛盾论: 主要方面易位) — 每仓一句话, 开仓当天与止损一起登记 ──────
+# 写下"什么价格/事件出现 = 我承认这笔仓的主要方面已易位(多头逻辑不再居支配)".
+# 止损价是它的价格化身, 这里存价格之外的那半句(事件/条件); 晨报持仓块逐仓打印,
+# 让止损日执行的是"性质已变"的结论而不是和浮亏讨价还价. 离场后删除该行.
+US_SWING_FLIP:       # 2026-07-11 初次登记, 按各仓入场论点写 (非 AI 票不套 AI 矛盾)
+    # ── US_SWING_STOPS 持仓 ──
+    TSM:  "AI先进制程独占论点: 月营收同比增速跌破+10%, 或 NVDA/AMD 下修投片; 台海升级走L1事件层不在此列"
+    TQQQ: "纯体制仓, 无忍的资格: regime转DEFEND 或 QQQ失守20周线周收盘 → 当日减清, 杠杆票不等L2"
+    SNDK: "NAND涨价周期: 合约价环比转跌 或 毛利指引环比下行(存储链与MU共振); 失守surge线=第一声裂响"
+    PANW: "网安平台化论点: NGS ARR增速指引下修 或 连续两季billings减速; 与AI capex矛盾无关, 独立判"
+    NVDA: "AI GPU需求假设: ≥2家hyperscaler下修capex指引, 或 DC收入环比转负, 或 news_top稻草×衰竭bar共振"
+    MSFT: "Azure+Copilot兑现: Azure增速跌破30% 且 capex下修(投入兑现同时熄火); 已是唯一破20周线的将军, 从严"
+    MRVL: "AI定制芯片论点: 大客户(AWS/Google)ASIC项目砍单/转单, 或 AI收入指引环比下修"
+    META: "广告现金牛+AI: 广告增速失速(<10%)使capex ROI叙事证伪, 或 失守surge线"
+    LRCX: "存储WFE敞口: 存储厂capex下修(MU capex转降即先兆) 或 WFE全年指引下修; 浮亏仓, 不加仓摊薄"
+    AMZN: "AWS论点: AWS增速连续两季减速 或 capex指引下修; 零售弱不算易位主语"
+    AMAT: "半设龙头: WFE全年指引下修 或 对华新禁令实质砍收入; 与LRCX共用存储capex先兆, 浮亏仓同不摊薄"
+    # ── US_HOLD_EXTRA 持仓 (浮盈≥30%, 保本线已armed) ──
+    VOO:  "大盘底仓只认体制层: regime转DEFEND(SPY破200日线+斜率向下) 才动, 个股噪声一概不理"
+    QQQ:  "指数仓: 失守20周线周收盘 或 体制DEFEND; 领导股广度GATE连续触发=先减半"
+    MU:   "DRAM超级周期: HBM/DRAM合约价环比转跌 或 毛利指引下行(cycle三指标转红); 稻草已命中+扩产倒计时中, 失守surge线即减"
+    AMD:  "AI GPU第二供应商: MI大单(OpenAI/Oracle型)砍单/推迟, 或 DC GPU收入环比转负"
+    GOOG: "搜索+云+TPU: 搜索广告增速跌破8%(AI侵蚀实证) 或 云增速失速; TPU外供证伪只降权重不易位"
+    INTC: "foundry翻身仓, 论点=执行: 18A/14A外部大客户流失 或 foundry亏损指引扩大; 不是AI beta, 别拿板块beta当论点"
+    KO:   "防御底仓: 失守20周线 且 防御板块整体跑输(防御职能失效)才动; 其余一概不理"
+
 # Initial technical stops for live holdings (Layer 1.5, t_us_tech_swing.py).
 # 成交当天登记该笔 setup 的止损价; 离场后删除该行. Holdings 仍从 Futu 实时查,
 # 这里只存"止损价"这个交易者决策 (券商查不到). 扫描器让它一直生效, 直到

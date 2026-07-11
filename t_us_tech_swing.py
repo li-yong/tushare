@@ -72,6 +72,10 @@ BAROMETERS = ['QQQ', 'SOXX']                  # QQQ = Nasdaq, SOXX = semis ETF
 ACCOUNT_EQUITY = 0.0                          # hand-maintained, loaded from select.yml
 INIT_STOPS: dict = {}                         # ticker → initial technical stop, from
                                               # select.yml US_SWING_STOPS (Layer 1.5)
+PRINCIPAL: dict = {}                          # 主要矛盾一句话 {date, text}, from
+                                              # select.yml US_PRINCIPAL_CONTRADICTION
+FLIP_NOTES: dict = {}                         # ticker → 易位判据一句话, from
+                                              # select.yml US_SWING_FLIP
 
 
 def _load_watchlist():
@@ -81,6 +85,7 @@ def _load_watchlist():
     ticker either way, so the same loader works across select.yml's styles.
     """
     global MAG7, SEMIS, AI_CHAIN, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY, INIT_STOPS
+    global PRINCIPAL, FLIP_NOTES
     try:
         import yaml
         with open(WATCHLIST_FILE) as fh:
@@ -106,6 +111,9 @@ def _load_watchlist():
         # position state). It stays live until breakeven / the 20wMA overtake it.
         raw_stops = cfg.get('US_SWING_STOPS') or {}
         INIT_STOPS = {str(t).upper(): float(v) for t, v in raw_stops.items() if v}
+        PRINCIPAL = cfg.get('US_PRINCIPAL_CONTRADICTION') or {}
+        raw_flip = cfg.get('US_SWING_FLIP') or {}
+        FLIP_NOTES = {str(t).upper(): str(v).strip() for t, v in raw_flip.items() if v}
     except Exception as e:
         logging.warning(f'watchlist load failed ({e}) — using built-in defaults')
 
@@ -165,6 +173,9 @@ REGIME_IMMUNITY_DEMOTE = False
 #   切分能实时区分"熊反 vs 真复苏"。故免疫期默认只作报告 ⚠ 注记不动扫描, 想硬门控
 #   置 True。全文 docs/huice_backtest_findings.md §2.8。
 
+PRINCIPAL_STALE_D = 10      # 主要矛盾判断的保质期(天)。周日复盘更新, 周频+缓冲;
+                            # 超期 = 认识落后于实际的右倾风险, 晨报高亮但不门控
+                            # (与 HMM 第二意见同定位: 提示层, 手工判断不可程序化裁决)。
 MIXED_NO_NEW_ENTRY = True   # MIXED (过渡期) 不开新仓。huice 指示级回测
                             # (docs/huice_backtest_findings.md §2.4): MIXED 是两个池、
                             # 两个体制下唯一稳定负期望的口袋 (SP500∪NDX meanR -0.70,
@@ -1191,6 +1202,29 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
     p(f'  US TECH SWING SCANNER  —  {now_str}')
     p('=' * 72)
 
+    # ── 主要矛盾 (矛盾论: 说不出主要矛盾就不开新仓; 提示不门控) ────────────────
+    # 手写判断层, 机械止损覆盖不到的那一格: 区分"主要矛盾未变的正常回调(忍)"
+    # 和"主要矛盾切换(跑)"。周日复盘更新 select.yml US_PRINCIPAL_CONTRADICTION。
+    pc_text = str(PRINCIPAL.get('text') or '').strip()
+    pc_date = PRINCIPAL.get('date')
+    pc_age = None
+    if pc_date is not None:
+        try:
+            pc_age = (datetime.date.today() - pd.Timestamp(pc_date).date()).days
+        except Exception:
+            pc_age = None
+    p()
+    if pc_text and pc_age is not None and pc_age <= PRINCIPAL_STALE_D:
+        p(f'[ 主要矛盾 ({pc_date}) ]  {pc_text}')
+        p('  ↳ 回调不破此矛盾 = 忍; 此矛盾被证伪/切换 = 跑 — 与分层止损互补的判断层')
+    elif pc_text:
+        p(f'[ 主要矛盾 ⚠ 已 {pc_age} 天未复核 ({pc_date}) ]  {pc_text}')
+        p(f'  ↳ 超过 {PRINCIPAL_STALE_D} 天的判断按过期读 (认识落后于实际) — '
+          f'周日复盘更新 select.yml US_PRINCIPAL_CONTRADICTION')
+    else:
+        p('[ 主要矛盾 ⚠ 未填 ]  说不出当前市场的主要矛盾 = 不具备开新仓的认识条件')
+        p('  ↳ 在 select.yml US_PRINCIPAL_CONTRADICTION 用一句话写下, 周日复盘复核 (提示不门控)')
+
     # ── Market state ──────────────────────────────────────────────────────────
     p()
     p(f'[ MARKET STATE: {market_state} ]')
@@ -1380,6 +1414,18 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             p(f"  ⚠ 未登记初始止损: {', '.join(no_init)} — 在 select.yml US_SWING_STOPS 补一行, "
               f'否则 Layer1.5 缺位、只剩 20 周线兜底 (突破买点离线远时缝隙可达数 R).')
 
+        # ── 易位判据 (矛盾论: 主要方面易位) — 止损价之外的那半句条件 ─────────
+        # 止损价是"易位判据"的价格化身; 这里展示事件/条件那一半, 让止损日执行
+        # 的是"性质已变"的结论, 而不是和浮亏讨价还价。
+        held = [h['ticker'] for h in stop_status]
+        for t in held:
+            if t in FLIP_NOTES:
+                p(f'  ⚖ {t} 易位判据: {FLIP_NOTES[t]}')
+        no_flip = sorted(t for t in held if t not in FLIP_NOTES)
+        if no_flip:
+            p(f"  ⚠ 未写易位判据: {', '.join(no_flip)} — 在 select.yml US_SWING_FLIP 每仓一句话: "
+              f'什么价格/事件出现 = 承认这笔仓的主要方面已易位 (多头逻辑不再居支配).')
+
         # ── Portfolio open heat: the pool is one theme; risk it as one trade ──
         known   = [h for h in stop_status if h.get('open_risk') is not None]
         unknown = sorted(h['ticker'] for h in stop_status if h.get('open_risk') is None)
@@ -1422,6 +1468,8 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         'Entry = last close (decided after market close, not intraday)',
         'Stop = technical level written (NOT a fixed %)  →  ______',
         f'Stop registered in select.yml US_SWING_STOPS (Layer1.5 生效的前提)  →  ______',
+        '主要矛盾一句话说得出且未过期 (晨报顶部)?  说不出 = 不开新仓',
+        '易位判据写了吗: 什么条件出现=这笔仓主要方面易位 → select.yml US_SWING_FLIP  →  ______',
         'Target written, R:R ≥ 2:1 confirmed  →  ______',
         'Exit condition defined (what would invalidate thesis)?',
         'Share count from table (risk 1R = 1% equity, cap 25%/name)?',
