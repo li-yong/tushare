@@ -320,6 +320,134 @@ def launch_scan(ticker: str, model: str = DEFAULT_MODEL, days_back: int = 14,
     )
 
 
+# ── 无风有涌扫描 (t_us_swell.py: 涨了, 查是不是"没有名字") ─────────────────────
+# low_bounce --grok 的镜像: 那边是"跌了查有没有催化剂"(有=真反转), 这边是
+# "涨了查是不是没有催化剂"(没有=涌浪, 能量来自远方, 比有新闻的行情更可信)。
+_SWELL_SCHEMA = {
+    "type": "json_schema",
+    "name": "swell_check",
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "ticker": {"type": "string"},
+            "news_intensity": {
+                "type": "string",
+                "enum": ["none", "light", "heavy"],
+                "description": ("窗口内公司特定新闻的强度: none=检索不到公司"
+                                "特定新闻/催化剂(媒体无人问津); light=有零星"
+                                "报道/分析师提及但无实质催化剂; heavy=有明确"
+                                "催化剂(财报/订单/评级/并购/产品)")},
+            "has_catalyst": {"type": "boolean",
+                             "description": "是否找到能解释近期涨幅的实质催化剂"},
+            "catalysts": {"type": "array", "items": {"type": "string"},
+                          "description": "找到的催化剂, 简短中文带日期; 没有留空, 绝不凑数"},
+            "summary": {"type": "string",
+                        "description": "一句话中文状态测量(GPS, 不是方向预测)"},
+            "as_of": {"type": "string", "description": "信息时间范围说明"},
+        },
+        "required": ["ticker", "news_intensity", "has_catalyst",
+                     "catalysts", "summary", "as_of"],
+    },
+}
+
+_SWELL_SYS_PROMPT = (
+    "你是美股新闻检索员。给定一只近期明显跑赢大盘的股票, 你只回答一个问题: "
+    "这段涨幅在公开信息里有没有'名字'(能解释它的公司特定新闻/催化剂)。"
+    "你只做状态测量, 不做方向预测, 不建议仓位。"
+    "宁可报 none 也不要把行业性/大盘性新闻算作该公司的催化剂; "
+    "只依据检索到的事实, 绝不编造。所有文本用中文。"
+)
+
+
+def swell_scan(ticker: str, model: str = DEFAULT_MODEL,
+               days_back: int = 21) -> dict:
+    """查一只强势股近 days_back 天有无公司特定催化剂; 无 = 涌浪候选。"""
+    return _structured_scan(
+        _SWELL_SYS_PROMPT,
+        f"股票 {ticker} 最近 {days_back} 天明显跑赢大盘。检索这段时间内该公司"
+        f"的特定新闻与催化剂, 判断这段涨幅是否'有名有姓'。",
+        _SWELL_SCHEMA,
+        {"ticker": ticker, "news_intensity": "none", "has_catalyst": False,
+         "catalysts": [], "summary": "解析失败", "as_of": ""},
+        model=model,
+    )
+
+
+# ── 主导叙事扫描 (阵风/季风分类器 t_us_wind_class.py 的叙事端) ─────────────────
+# 潮浪风框架: 阵风(单日新闻)只值浪级响应, 季风(持续数季的叙事)才值仓位级。
+# 判断"这是第几周的同一场风"需要跨周的叙事身份 — slug 由模型给, 但把历史 slug
+# 清单喂回 prompt 强制复用, 匹配问题在生成端解决而不是事后做字符串相似度。
+_NARRATIVE_SCHEMA = {
+    "type": "json_schema",
+    "name": "market_narratives",
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "narratives": {
+                "type": "array",
+                "maxItems": 6,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "slug": {"type": "string",
+                                 "description": ("叙事的稳定标识, 小写英文-连字符 "
+                                                 "(如 ai-capex-cycle)。若与提供的"
+                                                 "历史 slug 是同一场叙事必须复用原 slug")},
+                        "title_cn": {"type": "string", "description": "叙事中文短标题"},
+                        "direction": {"type": "string",
+                                      "enum": ["risk_on", "risk_off", "sector_specific"],
+                                      "description": "对美股整体是顺风/逆风/仅板块级"},
+                        "sectors": {"type": "array", "items": {"type": "string"},
+                                    "description": "受影响板块(英文 GICS 名), 无则空"},
+                        "tickers": {"type": "array", "items": {"type": "string"},
+                                    "description": "代表性个股, 最多5个, 无则空"},
+                        "one_line": {"type": "string",
+                                     "description": "一句话中文: 本周该叙事的新进展(带事实)"},
+                    },
+                    "required": ["slug", "title_cn", "direction",
+                                 "sectors", "tickers", "one_line"],
+                },
+                "description": "本周主导美股的市场叙事, 按影响力降序, 最多6条, 绝不凑数",
+            },
+            "as_of": {"type": "string", "description": "信息时间范围说明"},
+        },
+        "required": ["narratives", "as_of"],
+    },
+}
+
+_NARRATIVE_SYS_PROMPT = (
+    "你是美股市场叙事的观察员。你只做状态测量(本周哪些叙事在主导市场), "
+    "不做方向预测, 不建议仓位。叙事=一个被反复引用来解释行情的故事"
+    "(如 AI资本开支周期/降息路径/关税), 不是单日新闻事件; "
+    "只列检索里确有多个来源反复引用的, 绝不凑数。"
+    "slug 是叙事的跨周身份: 与提供的历史清单里同一场叙事必须复用原 slug, "
+    "确属新叙事才造新 slug。所有文本用中文(slug 除外)。"
+)
+
+
+def narrative_scan(known_slugs: list[tuple[str, str]] | None = None,
+                   model: str = DEFAULT_MODEL, days_back: int = 7) -> dict:
+    """扫描本周主导叙事(最多6条), 返回结构化 dict。
+
+    known_slugs: [(slug, title_cn), ...] 历史叙事清单, 喂回 prompt 保证
+    同一场风跨周用同一个 slug(阵风/季风计数的身份基础)。
+    """
+    known = ''
+    if known_slugs:
+        known = ('历史 slug 清单(同一场叙事必须复用): '
+                 + '; '.join(f'{s}={t}' for s, t in known_slugs) + '。')
+    return _structured_scan(
+        _NARRATIVE_SYS_PROMPT,
+        f'列出最近 {days_back} 天主导美股的市场叙事(最多6条, 按影响力降序)。{known}',
+        _NARRATIVE_SCHEMA,
+        {"narratives": [], "as_of": ""},
+        model=model,
+    )
+
+
 def ping(model: str = DEFAULT_MODEL) -> str:
     """连通性自检:不触发 search 工具,最省钱。"""
     client = get_client()

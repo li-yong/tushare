@@ -38,8 +38,8 @@ EPISODE_GAP_D = 7   # calendar days of silence (≈5 sessions) → next emission
 # stay blank. first_seen/last_seen are managed here, never by the caller.
 COLUMNS = [
     'first_seen', 'last_seen', 'source', 'ticker', 'signal_type',
-    'confidence', 'market_state', 'close', 'entry', 'stop', 'target',
-    'rr', 'rr_ok', 'er_days', 'er_blackout', 'gap_tier',
+    'confidence', 'market_state', 'sea_state', 'close', 'entry', 'stop',
+    'target', 'rr', 'rr_ok', 'er_days', 'er_blackout', 'gap_tier',
 ]
 
 
@@ -69,6 +69,19 @@ def log_signals(rows: list[dict], source: str,
     today = today or datetime.date.today().isoformat()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df = _load(path)
+
+    # 海况 stamp (潮浪风框架, docs/tide_wave_wind.md): frozen at episode open so
+    # attribution can group by quadrant. Stamped centrally here so every writer
+    # gets it; callers are live-only (--asof runs never reach this function),
+    # which keeps the label point-in-time honest. Failure = blank, never fatal.
+    try:
+        import sea_state
+        _ss = sea_state.current_sea_state()['sea_state']
+    except Exception as e:
+        logging.info(f'sea_state unavailable ({e}) — ledger rows left blank')
+        _ss = None
+    for row in rows:
+        row.setdefault('sea_state', _ss)
 
     n_ref, new_recs = 0, []
     for row in rows:

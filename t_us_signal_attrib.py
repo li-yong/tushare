@@ -91,6 +91,7 @@ def evaluate(ledger: pd.DataFrame) -> pd.DataFrame:
         rec = {'source': ep['source'], 'ticker': ticker,
                'signal_type': ep['signal_type'],
                'market_state': ep.get('market_state'),
+               'sea_state': ep.get('sea_state'),
                'confidence': ep.get('confidence'),
                'rr_ok': ep.get('rr_ok'), 'er_blackout': ep.get('er_blackout'),
                'first_seen': ep['first_seen']}
@@ -247,6 +248,17 @@ def main():
         if r[2] < opts.min_n:
             r[1] = f'{r[1]} ⚠'
     p(tab_mod.tabulate(rows, headers=['type', 'state'] + hdr_tail, tablefmt='simple'))
+    p()
+
+    # 潮浪风框架的前向检验 (docs/tide_wave_wind.md, registry #21): 海况在 episode
+    # 开仓日由 signal_ledger 盖章冻结; 空值 = 该 episode 早于仪器上线, 只分组不回填。
+    p('[ BY SIGNAL TYPE × SEA STATE ]   (風潮同向是否真的集中正期望 — 每格 n≥10 才算第一次统计)')
+    rows = _agg(df, ['signal_type', 'sea_state'])
+    for r in rows:
+        if r[2] < opts.min_n:
+            r[1] = f'{r[1]} ⚠'
+    p(tab_mod.tabulate(rows, headers=['type', 'sea'] + hdr_tail, tablefmt='simple'))
+    p('  海况: ALIGNED=風潮同向 CHOP=風頂潮 EBB_RALLY=大風退潮 EBB=風潮同退; 空=2026-07-14 前的旧 episode')
     p()
 
     # ── 止损尸检 (实践论: 每次止损必须回答"入场时哪条假设被证伪") ──────────────

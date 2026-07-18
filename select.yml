@@ -58,15 +58,12 @@ US_SWING_FLIP:       # 2026-07-11 初次登记, 按各仓入场论点写 (非 AI
     # ── US_SWING_STOPS 持仓 ──
     TSM:  "AI先进制程独占论点: 月营收同比增速跌破+10%, 或 NVDA/AMD 下修投片; 台海升级走L1事件层不在此列"
     TQQQ: "纯体制仓, 无忍的资格: regime转DEFEND 或 QQQ失守20周线周收盘 → 当日减清, 杠杆票不等L2"
-    SNDK: "NAND涨价周期: 合约价环比转跌 或 毛利指引环比下行(存储链与MU共振); 失守surge线=第一声裂响"
     PANW: "网安平台化论点: NGS ARR增速指引下修 或 连续两季billings减速; 与AI capex矛盾无关, 独立判"
     NVDA: "AI GPU需求假设: ≥2家hyperscaler下修capex指引, 或 DC收入环比转负, 或 news_top稻草×衰竭bar共振"
     MSFT: "Azure+Copilot兑现: Azure增速跌破30% 且 capex下修(投入兑现同时熄火); 已是唯一破20周线的将军, 从严"
     MRVL: "AI定制芯片论点: 大客户(AWS/Google)ASIC项目砍单/转单, 或 AI收入指引环比下修"
     META: "广告现金牛+AI: 广告增速失速(<10%)使capex ROI叙事证伪, 或 失守surge线"
-    LRCX: "存储WFE敞口: 存储厂capex下修(MU capex转降即先兆) 或 WFE全年指引下修; 浮亏仓, 不加仓摊薄"
     AMZN: "AWS论点: AWS增速连续两季减速 或 capex指引下修; 零售弱不算易位主语"
-    AMAT: "半设龙头: WFE全年指引下修 或 对华新禁令实质砍收入; 与LRCX共用存储capex先兆, 浮亏仓同不摊薄"
     # ── US_HOLD_EXTRA 持仓 (浮盈≥30%, 保本线已armed) ──
     VOO:  "大盘底仓只认体制层: regime转DEFEND(SPY破200日线+斜率向下) 才动, 个股噪声一概不理"
     QQQ:  "指数仓: 失守20周线周收盘 或 体制DEFEND; 领导股广度GATE连续触发=先减半"
@@ -85,18 +82,52 @@ US_SWING_FLIP:       # 2026-07-11 初次登记, 按各仓入场论点写 (非 AI
 # 重建 = 成本下方最近的关键支撑 (扫描器 key-level 逻辑 / 摆动低点聚类);
 # 价格远离成本区的放宽到 1–2 年窗口. 浮盈≥+30% 的持仓 (VOO/QQQ/MU/AMD/
 # GOOG/INTC/KO) 不登记 — 保本线已 armed, init 必然被 max() 盖过, 登记无意义.
+# 2026-07-18 核对成交同步: SNDK/LRCX/AMAT 已清仓删行 (trade_log 07-18 核对节).
 US_SWING_STOPS:
-    TSM:  419.19      # key support < close (成本≈现价, 2026-07-01)
-    TQQQ: 70.84       # key support < cost 74.90
-    SNDK: 1514.36     # key support < cost 1628.99
+    TSM:  419.19      # key support < close (成本≈现价, 2026-07-01); 07-16止损触发, 卖单撤销未重挂, 仍持2股
+    TQQQ: 70.84       # key support < cost 74.90; 07-16日收已破, 人工否决保留, 下一道防线=20周线
     PANW: 251.15      # 1y最高摆动低点 < cost 327.80 (成本区下方无更近位)
     NVDA: 151.29      # 2y最高摆动低点 < cost 164.94 (20周线195+现为主导, 此为兜底)
     MSFT: 341.43      # 2y最低摆动位 (价格未回过成本299区, 成本上方最近台阶)
-    MRVL: 162.85      # 1y最高摆动低点 < cost 216.82
+    MRVL: 162.85      # 1y最高摆动低点 < cost 216.82; 07-16减半单撤销未重挂, 仍65股
     META: 596.17      # key support < close (富途成本价为负, 锚现价)
-    LRCX: 361.41      # key support < close 391 (仓位浮亏, 成本413上方)
     AMZN: 205.88      # key support < cost 220.33
-    AMAT: 569.49      # key support < close 651 (仓位浮亏, 成本705上方)
+
+# 时间预算入场日 (registry #26): 成交当天与 US_SWING_STOPS 一起登记, 离场后删行.
+# 晨报据此算 持仓第N交易日/距入场日收盘涨幅/α vs QQQ; 没动(≤+3%)超预算
+# (STRONG 20 / MIXED 10 / WEAK 5 交易日) → ⏳换仓候选, 提示不门控.
+# 2026-07-18 由富途历史成交回填: 当前连续持仓段(最近一次 0→正)的首笔买入,
+# ET 交易日口径 (OpenD 成交时间戳是北京时间, 已 -12h 换算).
+# legacy = 入场早于富途可查成交窗口 (2024-09-25), 时间预算不适用、不提醒补登;
+# 记得真实入场日可自行替换成日期. BE 已激活 (浮盈≥30%) 的仓也可不登.
+US_SWING_ENTRY:
+    # ── swing 仓 (US_SWING_STOPS 那批) ──
+    TSM:  2026-06-29
+    TQQQ: 2026-06-10
+    PANW: 2026-06-29
+    MRVL: 2026-05-13
+    AMZN: 2025-07-31
+    NVDA: legacy      # 持仓段跨出可查窗口 (2024-12 前已持有, 2025-06清过一批后余121股在窗口外)
+    MSFT: legacy      # 同上 (窗口内只有加仓 5+10+2, 底仓13股更早)
+    META: legacy      # 同上 (成本已负)
+    # ── 老仓 (US_HOLD_EXTRA 那批, BE 已激活的本可不登, legacy 仅作记录) ──
+    MU:   2025-04-02  # 当前持仓段起点 (窗口内 0→22 股)
+    INTC: 2025-08-11  # 2025-03-18 清仓过, 此为重建仓起点
+    VOO:  2025-02-24
+    GOOG: 2025-02-04
+    AMD:  legacy
+    KO:   legacy
+    QQQ:  legacy
+    # ── 小仓 / 观察仓 (不在 swing 系统但持仓体检会扫到) ──
+    AAPL: 2026-07-06  # 2025-06-23 清仓过, 重进
+    XBI:  2026-07-08
+    EOG:  2026-07-08
+    AVGO: 2026-07-09  # 2025-06-23 清仓过, 重进
+    DAL:  2026-07-09
+    GOOX: 2026-07-09
+    SKHY: 2026-07-09  # 买入时代码 SKHYV, 改名推断
+    NBIS: 2026-07-01
+    NVDX: 2026-07-10
 
 # 浮盈≥+30%、未登记 init 止损的持仓 (上面注释里那批, 手工同步). 持仓级体检
 # 脚本 (t_us_intraday_internals.py 等) 与 US_SWING_STOPS keys 取并集当全持仓池.

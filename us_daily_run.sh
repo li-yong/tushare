@@ -428,6 +428,12 @@ run_step "network-structure" "$PY" t_us_network_report.py --refresh --no-plot --
 # sub-report verbatim. Runs last so all inputs exist. Non-fatal (run_step).
 run_step "daily-report" "$PY" us_daily_report.py
 
+# 时间预算回填 (registry #26 复盘闭环): 对预算期满 (信号日体制 STRONG 20 /
+# MIXED 10 / WEAK 5 个交易日) 的旧 us_daily_report 追加 ⏳复核段 — 该日 ledger
+# 里每个触发 ticker 的 没动/温吞/已启动/破止损 判定。幂等 (标记注释), 未熟
+# 自动跳过下次补; 放 daily-report 之后保证当日报告先落盘。
+run_step "time-budget-annotate" "$PY" t_us_time_budget_annotate.py
+
 if [ $rc -eq 0 ]; then
     echo "===== us_daily_run OK    $(ts) =====" >> "$LOG"
 else

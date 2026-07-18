@@ -19,6 +19,9 @@ PROFIT_LT_ACT_RECEIV = "profit less than account_receive" #net_profit < 应收�
 N_CASHFLOW_ACT_LT_PROFIT = "cashflow less than 0.5*profit"
 NAG_CASHFLOW = "nagative cashflow"
 NAG_CASHFLOW_SUMALL_INV_FNC = "nagative cashflow plus inv plus fnc"
+# US cashflow-quality screen (t_us_cashflow_quality.py) 黑名单 reason
+NAG_FCF_MOST_YEARS = "nagative fcf most years"      # 近3财年 FCF ≥2 年为负
+OCF_TTM_TURNED_NEG = "ocf ttm turned negative"      # 年报 OCF 为正但 TTM 已转负 (刚恶化)
 
 ###############
 # Bar style

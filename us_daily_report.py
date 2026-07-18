@@ -50,6 +50,14 @@ SOURCES = [
 
 _DATE_RE = re.compile(r"(\d{4})-?(\d{2})-?(\d{2})\.txt$")
 
+# 近5日信号自证榜 (registry #26): ledger 触发名单 + yfinance bar 缓存 (只读 CSV,
+# 不 import 扫描器 — merger 保持轻量离线; 缓存由 cron 里先跑的 tech_swing 刷新)
+LEDGER_CSV    = "/home/ryan/DATA/result/us_signal_log/us_signal_ledger.csv"
+BAR_CACHE_DIR = "/home/ryan/DATA/DAY_Global/US_yf"
+SELFPROOF_D   = 5      # 回看最近 N 个交易日选出的信号
+BURST_PCT     = 10.0   # >10% = 已爆发 (huice: 第5天已涨>10% 是唯一正期望桶)
+FLAT_PCT      = 3.0    # ≤3%  = 没动 (与 tech_swing TIME_BUDGET_FLAT_PCT 同带)
+
 
 def find_report(prefix, target, result_dir):
     """返回 prefix 系列里日期 <= target 的最新一个 .txt 文件路径，找不到返回 None。
@@ -426,6 +434,54 @@ def parse_regime(text):
 
 # ── 组装总报告 ──────────────────────────────────────────────────────────────
 
+def selfproof_rows(target):
+    """近5日信号自证榜: 最近 SELFPROOF_D 个交易日 ledger 选出的 ticker, 信号日
+    收盘→最新收盘涨幅排名, 回答"选出的票有没有按预期爆发"。信号当日 (还没有
+    "以来") 不列 — 它们在买入区; 涨幅口径与 huice 自证分析一致 (复权收盘)。"""
+    import pandas as pd
+
+    def bars(t):
+        p = os.path.join(BAR_CACHE_DIR, f"{t}.csv")
+        if not os.path.exists(p):
+            return None
+        df = pd.read_csv(p, parse_dates=["date"]).set_index("date").sort_index()
+        return df[df.index <= pd.Timestamp(target)]   # --date 回填不看未来
+
+    qqq = bars("QQQ")
+    if qqq is None or len(qqq) <= SELFPROOF_D or not os.path.exists(LEDGER_CSV):
+        return []
+    recent = set(qqq.index[-SELFPROOF_D:])            # 最近5个交易日的 bar 日期
+    rows = []
+    for _, ep in pd.read_csv(LEDGER_CSV).iterrows():
+        b = bars(str(ep["ticker"]))
+        if b is None or b.empty:
+            continue
+        # 锚 = 信号日收盘 bar (first_seen 是上海时间戳, 比美东晚一天 → 取 ≤ 的最后一根)
+        upto = b[b.index <= pd.Timestamp(ep["first_seen"])]
+        if upto.empty or upto.index[-1] not in recent:
+            continue
+        a = len(upto) - 1
+        n = len(b) - 1 - a
+        if n <= 0:
+            continue
+        c0, c1 = float(b["close"].iloc[a]), float(b["close"].iloc[-1])
+        ret = (c1 / c0 - 1) * 100
+        alpha = None
+        q0 = qqq[qqq.index <= b.index[a]]
+        if not q0.empty:
+            alpha = ret - (float(qqq["close"].iloc[-1])
+                           / float(q0["close"].iloc[-1]) - 1) * 100
+        tag = ("✓ 已爆发" if ret > BURST_PCT
+               else "~ 温吞" if ret > FLAT_PCT
+               else "⏳ 没动" if ret >= -FLAT_PCT
+               else "✗ 走弱")           # 走弱归止损纪律管, 不归时间预算
+        rows.append(dict(ticker=ep["ticker"], source=ep["source"],
+                         typ=ep["signal_type"], day=str(upto.index[-1].date()),
+                         n=n, ret=ret, alpha=alpha, tag=tag))
+    rows.sort(key=lambda r: r["ret"], reverse=True)
+    return rows
+
+
 def build_report(target, result_dir):
     found = {}          # key -> (path, date)
     raw = {}            # key -> 原文
@@ -722,8 +778,43 @@ def build_report(target, result_dir):
         A("_主报告无 capex 链数据。_")
     A("")
 
+    # ── 近5日信号自证榜 ──
+    A("## 五、⏱ 近5日信号自证榜　（选出的票有没有按预期爆发）")
+    A("")
+    try:
+        sp = selfproof_rows(target)
+    except Exception as e:                             # 榜单失败不拖垮整份报告
+        sys.stderr.write(f"[warn] 自证榜生成失败: {e}\n")
+        sp = []
+    if sp:
+        A("huice 实证（registry #26）：对的票头一两周自我证明——第5天已涨>10% 是唯一"
+          f"正期望桶；仍 ≤+{FLAT_PCT:.0f}% 的到时间预算（STRONG 20 / MIXED 10 / WEAK 5 "
+          "交易日）即换仓候选（提示不门控）。")
+        A("")
+        A("| # | Ticker | 信号日 | 第N日 | 涨幅 | α vs QQQ | 来源 | 类型 | 判定 |")
+        A("|---|--------|--------|------|------|----------|------|------|------|")
+        for i, r in enumerate(sp, 1):
+            al = f"{r['alpha']:+.1f}%" if r["alpha"] is not None else "—"
+            A(f"| {i} | **{r['ticker']}** | {r['day']} | {r['n']} | {r['ret']:+.1f}% "
+              f"| {al} | {r['source']} | {r['typ']} | {r['tag']} |")
+        A("")
+        burst = [r["ticker"] for r in sp if r["tag"].startswith("✓")]
+        flat = [r["ticker"] for r in sp if r["tag"].startswith("⏳")]
+        weak = [r["ticker"] for r in sp if r["tag"].startswith("✗")]
+        if burst:
+            A(f"> ✓ 已爆发：{', '.join(burst)}——正期望桶，huice 里唯一后续期望为正的一批。")
+        if flat:
+            A(f"> ⏳ 没动：{', '.join(flat)}——若已按信号入场，达预算即换仓候选；"
+              "未入场的，没动本身就是答案。")
+        if weak:
+            A(f"> ✗ 走弱：{', '.join(weak)}——若已入场按止损纪律（init/L1.5）管，"
+              "不归时间预算；未入场的信号已自我否定。")
+    else:
+        A("_近5个交易日无 ledger 信号（或 bar 缓存缺失）。_")
+    A("")
+
     # ── 数据源清单 ──
-    A("## 五、数据源 / 子报告清单")
+    A("## 六、数据源 / 子报告清单")
     A("")
     A("| 子报告 | 标签 | 文件 |")
     A("|--------|------|------|")

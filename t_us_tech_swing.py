@@ -76,6 +76,11 @@ PRINCIPAL: dict = {}                          # 主要矛盾一句话 {date, tex
                                               # select.yml US_PRINCIPAL_CONTRADICTION
 FLIP_NOTES: dict = {}                         # ticker → 易位判据一句话, from
                                               # select.yml US_SWING_FLIP
+ENTRY_DATES: dict = {}                        # ticker → 入场日 Timestamp, from
+                                              # select.yml US_SWING_ENTRY (时间预算)
+ENTRY_LEGACY: set = set()                     # US_SWING_ENTRY 值为 legacy 的老仓:
+                                              # 入场早于券商可查成交窗口, 时间预算
+                                              # 不适用, 不提醒补登
 
 
 def _load_watchlist():
@@ -85,7 +90,7 @@ def _load_watchlist():
     ticker either way, so the same loader works across select.yml's styles.
     """
     global MAG7, SEMIS, AI_CHAIN, HYPERSCALERS, BAROMETERS, ACCOUNT_EQUITY, INIT_STOPS
-    global PRINCIPAL, FLIP_NOTES
+    global PRINCIPAL, FLIP_NOTES, ENTRY_DATES, ENTRY_LEGACY
     try:
         import yaml
         with open(WATCHLIST_FILE) as fh:
@@ -114,6 +119,17 @@ def _load_watchlist():
         PRINCIPAL = cfg.get('US_PRINCIPAL_CONTRADICTION') or {}
         raw_flip = cfg.get('US_SWING_FLIP') or {}
         FLIP_NOTES = {str(t).upper(): str(v).strip() for t, v in raw_flip.items() if v}
+        # 时间预算的入场日: 成交当天与 US_SWING_STOPS 一起手工登记 (broker 持仓
+        # 不带成交日期, 富途成本价在部分老仓上不可用/为负 — 锚用入场日收盘)。
+        ENTRY_DATES, ENTRY_LEGACY = {}, set()
+        for t, v in (cfg.get('US_SWING_ENTRY') or {}).items():
+            if str(v).strip().lower() == 'legacy':
+                ENTRY_LEGACY.add(str(t).upper())
+                continue
+            try:
+                ENTRY_DATES[str(t).upper()] = pd.Timestamp(str(v)).normalize()
+            except (ValueError, TypeError):
+                logging.warning(f'US_SWING_ENTRY: 无法解析 {t}: {v} — 跳过')
     except Exception as e:
         logging.warning(f'watchlist load failed ({e}) — using built-in defaults')
 
@@ -235,6 +251,24 @@ HEAT_CAP_PCT      = 0.06    # total open risk ≤ 6% of equity
 # and most Layer-1 (-20% day) events ARE earnings. No new entry into the event;
 # let the report confirm first (post-ER gap-confirmation is the better entry).
 ER_BLACKOUT_D     = 5       # no new entry when earnings are ≤ N days away
+
+# Pre-earnings warning for HOLDINGS: an earnings gap jumps over every
+# daily-close stop (IBM 2026-07-14: -22% premarket gap, prior-close stop dead
+# on arrival), so the only lever is position size, and it must be pulled BEFORE
+# the release. Warn earlier than the blackout so the decision isn't rushed.
+ER_WARN_D         = 14      # holdings: start the pre-ER warning this far out
+
+# ── 时间预算 (提示不门控, registry #26) ─────────────────────────────────────────
+# 横盘是 L0/L1.5/L2 的共同盲区: 一只不破位的票可以横 126 天不触发任何退出层。
+# huice 路径重放 (2025-01→2026-06, SP500∪NDX, 22616 episodes): 第 N 天仍存活且
+# 横盘 (≤+3%) 的票, 后续 63d α 从 N=5 起低于"换新信号"基线且随 N 单调恶化
+# (N20 -2.7pp → N40 -4.3pp); 唯一正期望桶 = 第 5 天已涨 >10% (+9.4%)。体制切片:
+# STRONG 横盘代价温和 (-1.3~-3.3) 给 20 天; WEAK 横盘 -10 级, 预算 5 天; MIXED
+# 连 movers 都负, 取中 10 天。huice 级假说 — 只标注 ⏳ 不门控不自动换仓, 前向
+# 样本 (含未超期对照组) 攒在 TIME_BUDGET_CSV, ledger 判决前不升级。
+TIME_BUDGET_N        = {'STRONG': 20, 'MIXED': 10, 'WEAK': 5}   # 交易日预算/体制
+TIME_BUDGET_FLAT_PCT = 3.0   # 距入场日收盘 ≤ +3% = "没动" (跌破位另有止损层管)
+TIME_BUDGET_CSV      = '/home/ryan/DATA/result/us_tech_swing/time_budget_watch.csv'
 
 # ── Layered fast risk control (20-week trend system · Layers 0 & 1) ────────────
 # The 20wMA exit (Layer 2) is evaluated at the weekly close and is deliberately
@@ -491,6 +525,42 @@ def _upcoming_earnings(ticker: str) -> int | None:
         return int((dt - pd.Timestamp.now(tz=dt.tzinfo)).days)
     except Exception:
         return None
+
+
+def _earnings_reaction_stats(ticker: str) -> 'dict | None':
+    """Historical earnings-day reaction sizes, for the pre-ER holdings warning.
+
+    For each past earnings date in the cached calendar, the reaction is the
+    larger-|move| single-day close-to-close return of day E and day E+1 —
+    covering both announcement timings (pre-market → E moves, post-close →
+    E+1 moves) without double counting. Returns {'n', 'med_abs_pct',
+    'worst_pct'} over the ~2y of daily bars, or None when unavailable.
+    """
+    rows = fetch_earnings_calendar(ticker)
+    if not rows:
+        return None
+    daily = _history(ticker, period='2y', interval='1d')
+    if daily.empty or len(daily) < 3:
+        return None
+    rets = daily['close'].pct_change()
+    idx  = daily.index.normalize()
+    reactions = []
+    for r in rows:
+        d = r['date']
+        if d < idx[0] or d > idx[-1]:      # outside the bar window → no reaction bar
+            continue
+        pos = idx.searchsorted(d)          # first bar on/after the earnings date
+        if pos >= len(idx) or (idx[pos] - d).days > 5:
+            continue                       # nearest bar too far — treat as missing
+        cands = [float(rets.iloc[k]) for k in (pos, pos + 1)
+                 if k < len(rets) and not pd.isna(rets.iloc[k])]
+        if cands:
+            reactions.append(max(cands, key=abs))
+    if not reactions:
+        return None
+    return {'n': len(reactions),
+            'med_abs_pct': float(np.median([abs(x) for x in reactions])) * 100,
+            'worst_pct': float(min(reactions)) * 100}
 
 
 # ── Layer 1: Market state ─────────────────────────────────────────────────────
@@ -1095,6 +1165,13 @@ def position_stop_status(positions, weekly_cache, risk_layers=None):
         return rows
     risk_layers = risk_layers or {}
 
+    # 时间预算的基准腿: α = 距入场涨幅 − QQQ 同窗涨幅 (huice 分析同口径)。
+    # 2y 与持仓 daily 同窗, 否则老仓算得出 ret 算不出 α。
+    try:
+        qqq_daily = _history('QQQ', period='2y', interval='1d')
+    except Exception:
+        qqq_daily = pd.DataFrame()
+
     def _fast_override(ticker):
         rl = risk_layers.get(ticker)
         if not rl:
@@ -1117,7 +1194,9 @@ def position_stop_status(positions, weekly_cache, risk_layers=None):
         if weekly is None or weekly.empty:
             weekly = _history(ticker, period='2y', interval='1wk')
         try:
-            daily = _history(ticker, period='1y', interval='1d')
+            # 2y 而非 1y: 时间预算的锚是入场日收盘, 老仓入场日常在 1y 窗外 (MU
+            # 2025-04 型); 同一份缓存切片, 无额外抓取成本。
+            daily = _history(ticker, period='2y', interval='1d')
         except Exception:
             daily = pd.DataFrame()
 
@@ -1127,9 +1206,27 @@ def position_stop_status(positions, weekly_cache, risk_layers=None):
         elif not weekly.empty:
             close = float(weekly['close'].iloc[-1])
 
+        # 时间预算 (registry #26): 锚 = 入场日收盘 (非富途成本 — 老仓成本可为负),
+        # N = 入场后的交易日数。入场日早于 1y 数据窗时算不出 → tb 留 None。
+        tb = None
+        ent = ENTRY_DATES.get(ticker)
+        if ent is not None and close is not None and not daily.empty:
+            anchor_rows = daily[daily.index <= ent]
+            if not anchor_rows.empty:
+                anchor = float(anchor_rows['close'].iloc[-1])
+                alpha = None
+                if not qqq_daily.empty:
+                    q_anchor = qqq_daily[qqq_daily.index <= ent]
+                    if not q_anchor.empty and anchor > 0:
+                        q_ret = (float(qqq_daily['close'].iloc[-1])
+                                 / float(q_anchor['close'].iloc[-1]) - 1) * 100
+                        alpha = (close / anchor - 1) * 100 - q_ret
+                tb = {'entry_date': ent, 'n': int((daily.index > ent).sum()),
+                      'ret_pct': (close / anchor - 1) * 100, 'alpha_pct': alpha}
+
         base = {'ticker': ticker, 'qty': qty, 'cost': cost, 'er_days': er_days,
                 'init_stop': INIT_STOPS.get(ticker), 'be_armed': False,
-                'open_risk': None}
+                'open_risk': None, 'tb': tb}
         if close is None:
             rows.append({**base, 'close': None, 'stop': None, 'basis': None,
                          'dist_pct': None,
@@ -1176,6 +1273,48 @@ def position_stop_status(positions, weekly_cache, risk_layers=None):
                      'basis': basis, 'dist_pct': dist, 'status': status,
                      'open_risk': open_risk})
     return rows
+
+
+def _time_budget_exceeded(tb, market_state: str) -> bool:
+    """⏳ 换仓候选? 持仓第 N 交易日仍"没动" (≤ +TIME_BUDGET_FLAT_PCT%) 且 N 已
+    超过当前体制的预算。提示不门控 (registry #26)。"""
+    if not tb or tb.get('ret_pct') is None:
+        return False
+    budget = TIME_BUDGET_N.get(market_state, TIME_BUDGET_N['MIXED'])
+    return tb['n'] >= budget and tb['ret_pct'] <= TIME_BUDGET_FLAT_PCT
+
+
+def append_time_budget_csv(stop_status, market_state: str, date_str: str):
+    """时间预算前向样本: 每个 live 运行日为每个登记了入场日的持仓写一行。
+    未超期的仓同样入表 — 判决要比较"被标⏳后的表现 vs 未标持仓", 只攒被标的
+    就没有对照组。同日重跑不重复写。live only (main 里 --asof 不调用)。"""
+    rows = [h for h in stop_status if h.get('tb')]
+    if not rows:
+        return
+    date_iso = f'{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}'
+    seen = set()
+    if os.path.exists(TIME_BUDGET_CSV):
+        old = pd.read_csv(TIME_BUDGET_CSV, usecols=['date', 'ticker'])
+        seen = set(zip(old['date'].astype(str), old['ticker'].astype(str)))
+    out = []
+    for h in rows:
+        if (date_iso, h['ticker']) in seen:
+            continue
+        tb = h['tb']
+        out.append({
+            'date': date_iso, 'ticker': h['ticker'],
+            'market_state': market_state,
+            'entry_date': str(tb['entry_date'].date()),
+            'n_days': tb['n'],
+            'ret_pct': round(tb['ret_pct'], 2),
+            'alpha_pct': round(tb['alpha_pct'], 2) if tb.get('alpha_pct') is not None else '',
+            'close': h.get('close'),
+            'flagged': _time_budget_exceeded(tb, market_state),
+        })
+    if out:
+        os.makedirs(os.path.dirname(TIME_BUDGET_CSV), exist_ok=True)
+        pd.DataFrame(out).to_csv(TIME_BUDGET_CSV, mode='a', index=False,
+                                 header=not os.path.exists(TIME_BUDGET_CSV))
 
 
 # ── Report ─────────────────────────────────────────────────────────────────────
@@ -1270,6 +1409,20 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         p('  → Scan mode: NO NEW ENTRY  (体制 DEFEND — Setup 全部降级为观察行 ⛔)')
     else:
         p(mode_msg.get(market_state, ''))
+
+    # ── 海况 (潮浪风框架 docs/tide_wave_wind.md; 提示不门控, registry #21) ──────
+    # Live only: 潮向读 live regime 快照, 对历史日期是未来函数 — 与体制门控同规。
+    if _ASOF is None:
+        try:
+            import sea_state as _sea
+            ss = _sea.current_sea_state()
+            sc = (f"{ss['wind_score']:+.1%}" if ss['wind_score'] is not None else '—')
+            p(f"  海况: {ss['label_cn']} [{ss['sea_state']}]  —  "
+              f"潮={ss['tide'] or '?'} (regime {ss['tide_state']}, {ss['tide_date']})"
+              f" × 风={ss['wind'] or '?'} (off−def rel21 {sc}, rotation {ss['wind_date']})")
+            p(f"  ↳ {ss['hint']}")
+        except Exception as e:
+            logging.warning(f'sea state banner failed: {e}')
 
     # ── Entry signals ─────────────────────────────────────────────────────────
     p()
@@ -1426,6 +1579,29 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
             p(f"  ⚠ 未写易位判据: {', '.join(no_flip)} — 在 select.yml US_SWING_FLIP 每仓一句话: "
               f'什么价格/事件出现 = 承认这笔仓的主要方面已易位 (多头逻辑不再居支配).')
 
+        # ── 时间预算 (提示不门控, registry #26): 横盘是止损分层的共同盲区 ────
+        # 对的票头一两周就自我证明 (huice: 唯一正期望桶 = 第5天已涨>10%);
+        # 第 N 天仍没动 → 后续期望已低于换一个新信号。
+        tb_budget = TIME_BUDGET_N.get(market_state, TIME_BUDGET_N['MIXED'])
+        for h in stop_status:
+            tb = h.get('tb')
+            if tb is None:
+                continue
+            if _time_budget_exceeded(tb, market_state):
+                al = (f", α vs QQQ {tb['alpha_pct']:+.1f}%"
+                      if tb.get('alpha_pct') is not None else '')
+                p(f"  ⏳ {h['ticker']} 时间预算超期: 入场 {tb['entry_date'].date()} "
+                  f"第{tb['n']}个交易日, 距入场收盘 {tb['ret_pct']:+.1f}%{al} — "
+                  f"没动(≤+{TIME_BUDGET_FLAT_PCT:.0f}%)已超 {market_state} 预算 "
+                  f"{tb_budget} 日 → 换仓候选 (提示不门控, 止损纪律照旧)")
+        no_entry = sorted(h['ticker'] for h in stop_status
+                          if h.get('tb') is None and not h.get('be_armed')
+                          and h['ticker'] not in ENTRY_LEGACY)
+        if no_entry:
+            p(f"  ⚠ 时间预算缺位: {', '.join(no_entry)} — 未登记入场日 (select.yml "
+              f"US_SWING_ENTRY 补 TICKER: YYYY-MM-DD; 老仓写 legacy) 或 bar 数据不覆盖"
+              f"入场日 (BE已激活的仓豁免).")
+
         # ── Portfolio open heat: the pool is one theme; risk it as one trade ──
         known   = [h for h in stop_status if h.get('open_risk') is not None]
         unknown = sorted(h['ticker'] for h in stop_status if h.get('open_risk') is None)
@@ -1442,12 +1618,35 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
         if unknown:
             p(f"  ⚠ heat 未计入 (无有效止损): {', '.join(unknown)} — 实际风险被低估.")
 
-        # ── Pre-earnings forced decision (weeks-long holds eat every report) ──
+        # ── Pre-earnings warning + forced decision ────────────────────────────
+        # A gap jumps over every daily-close stop, so the decision only exists
+        # BEFORE the release. ≤ER_WARN_D: warn with historical reaction size and
+        # worst-case dollar impact; ≤ER_BLACKOUT_D: force the decision on record.
+        # Each warning is ONE line starting with 📅 — us_daily_report.py lifts
+        # those lines verbatim into the merged report's 组合风险速览.
         er_soon = [h for h in stop_status
-                   if h.get('er_days') is not None and 0 <= h['er_days'] <= ER_BLACKOUT_D]
-        for h in er_soon:
-            p(f"  📅 {h['ticker']} 财报 {h['er_days']}d 内 → 今天写下财报决策并留档: "
-              f'满仓扛 / 减半扛 / 出掉. 不决策 = 默认减半 (事后没判断力, 规则先行).')
+                   if h.get('er_days') is not None and 0 <= h['er_days'] <= ER_WARN_D]
+        for h in sorted(er_soon, key=lambda x: x['er_days']):
+            mag = ''
+            try:
+                stats = _earnings_reaction_stats(h['ticker'])
+            except Exception:
+                stats = None
+            if stats:
+                mag = (f" | 过去{stats['n']}次财报日反应 中位±{stats['med_abs_pct']:.1f}%"
+                       f" 最差{stats['worst_pct']:+.1f}%")
+                if h.get('close') and h.get('qty') and stats['worst_pct'] < 0:
+                    dollars = h['qty'] * h['close'] * abs(stats['worst_pct']) / 100
+                    mag += f" → 按最差重演≈-${dollars:,.0f}"
+            cushion = ('有缓冲(BE已激活): 按最坏冲击反推可扛仓位' if h.get('be_armed')
+                       else '无缓冲(仍靠init止损): 静默期镜像 — 不带入财报, 减到归零也不心疼的量')
+            if h['er_days'] <= ER_BLACKOUT_D:
+                p(f"  📅 {h['ticker']} 财报 {h['er_days']}d 内{mag} | {cushion} "
+                  f'→ 今天写下财报决策并留档: 满仓扛 / 减半扛 / 出掉. 不决策 = 默认减半 '
+                  f'(事后没判断力, 规则先行).')
+            else:
+                p(f"  📅 {h['ticker']} 财报 {h['er_days']}d{mag} | {cushion} "
+                  f'(跳空越过一切日收盘止损, 事前仓位是唯一杠杆 — 提前想, 别拖到静默期).')
 
     # ── Position management alerts ────────────────────────────────────────────
     if pos_alerts:
@@ -1502,7 +1701,8 @@ def print_report(market_state, baro_info, results, pos_alerts, output_file=None,
     p(f'      init/BE 按【日收盘】判 (Layer1.5, 补突破买点远离周线的缝隙) · 20wMA 只按【周收盘】判')
     p(f'      init 来源: select.yml US_SWING_STOPS — 成交当天登记 setup 止损价, 离场后删除该行')
     p(f'    Status: OK / APPROACHING(距止损≤{STOP_NEAR_PCT:.0%}) / STOP HIT(日收破init/BE→今日离场) / BREACHED(周收破20周线→今日离场)')
-    p(f'    ER=距下次财报天数; ≤{ER_BLACKOUT_D}d 强制写财报决策(满仓扛/减半/出掉), 不写=默认减半')
+    p(f'    ER=距下次财报天数; ≤{ER_WARN_D}d 起给财报预警(历史财报日反应中位/最差+最坏冲击$) — '
+      f'缺口越过日收盘止损, 事前仓位是唯一杠杆; ≤{ER_BLACKOUT_D}d 强制写财报决策(满仓扛/减半/出掉), 不写=默认减半')
     p(f'    OPEN HEAT=全部持仓止损同日打穿的总损失; 池内高相关=一个主题仓, 预算上限 {HEAT_CAP_PCT:.0%} equity')
     p('  POSITION MANAGEMENT 持仓管理 (对已有仓位的操作):')
     p(f'    MOVE STOP→breakeven: 浮盈≥{BREAKEVEN_PCT:.0f}% → 止损上移到成本价(锁不亏; 阈值高=留够缓冲, 正常回踩不被洗出)')
@@ -1679,6 +1879,13 @@ def main():
                  equity=ACCOUNT_EQUITY, stop_status=stop_status, futu_ok=futu_ok,
                  baro_state=baro_state, lead_frac=lead_frac, lead_detail=lead_detail,
                  regime=regime, regime_action=regime_action)
+
+    # 时间预算前向样本 (registry #26): live only — --asof 下持仓无意义且会写脏账。
+    if _ASOF is None and stop_status:
+        try:
+            append_time_budget_csv(stop_status, market_state, date_str)
+        except Exception as e:
+            logging.warning(f'time budget CSV write failed: {e}')
 
     # Machine-readable signal CSV (consumed by t_us_resonance.py)
     res_root = '/home/ryan/DATA/result'

@@ -22,6 +22,10 @@
 #   • Signal attribution (t_us_signal_attrib.py): forward outcomes for every
 #     signal episode in us_signal_ledger.csv → us_signal_attrib_<date>.txt.
 #     The weekly answer to "which signal type actually pays?"
+#   • Tide gauge (t_us_tide_gauge.py): 潮位仪·真水量 — Fed H.4.1 净流动性
+#     (WALCL−TGA−RRP, 免key官方zip) + 全市场总市值 (screener) + ETF 创赎流向
+#     (前向积累快照) → us_tide_gauge_<date>.txt. 价值在水量潮向与价格潮位的
+#     背离 (2022H1 型); H.4.1 每周四发布, 周频正好. 提示不门控 (registry #22).
 #
 # Both are non-fatal and degrade gracefully when OpenD is down (yfinance / dead-
 # ticker validation only). The exit code tracks undervalue, the primary stage.
@@ -70,6 +74,19 @@ run_step "news-top" "$PY" t_us_news_top_detector.py
 # because it's a slow feedback loop: the answer to "which signal type pays?"
 # changes with sample size, not with days. Feeds the Sunday review.
 run_step "signal-attrib" "$PY" t_us_signal_attrib.py
+
+# Supplementary: tide gauge (潮位仪·真水量) — 净流动性/总市值/ETF创赎流向.
+# 周频匹配 H.4.1 的周四发布节奏; 背离读数进周日复盘.
+run_step "tide-gauge" "$PY" t_us_tide_gauge.py
+
+# Supplementary: wind class (阵风/季风分类) — 相对线持续性×新鲜度 (价格端)
+# + Grok 主导叙事前向日志 (~$0.1, 无 key 自动降级价格端 only). 季风以周为
+# 最小分辨率; 叙事日志无法回填, 每周必跑.
+run_step "wind-class" "$PY" t_us_wind_class.py
+
+# Supplementary: swell (无风有涌) — 碾磨式跑赢 + Grok 查无催化剂 = SWELL 标注
+# (~$0.8/run, 前 8 名; 无 key 降级纯价格候选). 标注不门控, 样本前向积累.
+run_step "swell" "$PY" t_us_swell.py
 
 if [ $rc -eq 0 ]; then
     echo "===== us_weekly_run OK    $(ts) =====" >> "$LOG"
