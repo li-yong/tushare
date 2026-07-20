@@ -26,6 +26,10 @@
 #     (WALCL−TGA−RRP, 免key官方zip) + 全市场总市值 (screener) + ETF 创赎流向
 #     (前向积累快照) → us_tide_gauge_<date>.txt. 价值在水量潮向与价格潮位的
 #     背离 (2022H1 型); H.4.1 每周四发布, 周频正好. 提示不门控 (registry #22).
+#   • Weekly report merger (us_weekly_report.py): 汇总以上全部子报告为一份
+#     us_weekly_report_<date>.md — 水文环境(潮/风)、稻草/火种、慢筛候选共振
+#     计票、信号账本审计、周日复盘清单, 末尾附原文. Runs last so all inputs
+#     exist. 日报管今天怎么动手, 周报管这周想什么.
 #
 # Both are non-fatal and degrade gracefully when OpenD is down (yfinance / dead-
 # ticker validation only). The exit code tracks undervalue, the primary stage.
@@ -87,6 +91,14 @@ run_step "wind-class" "$PY" t_us_wind_class.py
 # Supplementary: swell (无风有涌) — 碾磨式跑赢 + Grok 查无催化剂 = SWELL 标注
 # (~$0.8/run, 前 8 名; 无 key 降级纯价格候选). 标注不门控, 样本前向积累.
 run_step "swell" "$PY" t_us_swell.py
+
+# Final: merge every sub-report above into one combined weekly report
+# (/home/ryan/DATA/result/weekly_report/us_weekly_report_<date>.md) — same
+# pattern as us_daily_report.py in the daily runner. Extracts the actionable
+# 风险/候选/复盘 items from each sub-report — annotated with source — plus a
+# cross-screen confluence tally and the Sunday review checklist, then appends
+# every sub-report verbatim. Runs last so all inputs exist. Non-fatal.
+run_step "weekly-report" "$PY" us_weekly_report.py
 
 if [ $rc -eq 0 ]; then
     echo "===== us_weekly_run OK    $(ts) =====" >> "$LOG"
