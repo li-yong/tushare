@@ -51,7 +51,8 @@ def _report_path(date_iso: str) -> str | None:
     return hits[0] if hits else None
 
 
-def _annotate_group(date_iso: str, group: pd.DataFrame, dry_run: bool) -> str:
+def _annotate_group(date_iso: str, group: pd.DataFrame, dry_run: bool,
+                    budget_override: int | None = None) -> str:
     """一份报告一组 episodes; 返回状态串 (日志/汇总用)。"""
     path = _report_path(date_iso)
     if path is None:
@@ -64,10 +65,16 @@ def _annotate_group(date_iso: str, group: pd.DataFrame, dry_run: bool) -> str:
     # 预算按信号日体制 (market_state 是全局的, 同日各行一致; 空/未知按 MIXED)
     states = group['market_state'].dropna()
     state = states.mode().iloc[0] if not states.empty else 'MIXED'
-    budget = tsw.TIME_BUDGET_N.get(state, tsw.TIME_BUDGET_N['MIXED'])
+    # --budget N 手工缩短复核视界 (registry #26 的 STRONG20/MIXED10/WEAK5 是默认;
+    # 手工提前回填时 state 后附 * 标注非默认预算)
+    if budget_override is not None:
+        budget = budget_override
+        state = f'{state}*{budget_override}d'
+    else:
+        budget = tsw.TIME_BUDGET_N.get(state, tsw.TIME_BUDGET_N['MIXED'])
 
     d = pd.Timestamp(date_iso)
-    rows, immature = [], False
+    rows, immature, elapsed = [], False, 0
     for _, ep in group.iterrows():
         ticker = str(ep['ticker'])
         try:
@@ -83,6 +90,7 @@ def _annotate_group(date_iso: str, group: pd.DataFrame, dry_run: bool) -> str:
             continue
         if a + budget >= len(bars):
             immature = True                    # 第 B 交易日还没到 — 整份报告下次再来
+            elapsed = len(bars) - 1 - a        # 信号日之后已走的交易 bar 数
             break
         c0 = float(bars['close'].iloc[a])
         cb = float(bars['close'].iloc[a + budget])
@@ -115,7 +123,7 @@ def _annotate_group(date_iso: str, group: pd.DataFrame, dry_run: bool) -> str:
         rows.append((ep, dict(c0=c0, cb=cb, ret=ret, alpha=alpha, verdict=verdict,
                               asof=bars.index[a + budget].date())))
     if immature:
-        return f'immature (<{budget}d)'
+        return f'immature ({elapsed}/{budget} trading days, {state})'
 
     asof = next((r['asof'] for _, r in rows if r), '?')
     lines = [
@@ -155,6 +163,9 @@ def main():
     ap.add_argument('--dry-run', action='store_true', help='只打印, 不写报告文件')
     ap.add_argument('--lookback', type=int, default=LOOKBACK_D,
                     help=f'回看天数 (自然日, 默认 {LOOKBACK_D})')
+    ap.add_argument('--budget', type=int, default=None,
+                    help='手工覆盖复核视界 (交易日), 忽略信号日体制的 STRONG20/'
+                         'MIXED10/WEAK5; 手工提前回填用, cron 别传')
     args = ap.parse_args()
 
     if not os.path.exists(LEDGER_CSV):
@@ -165,7 +176,7 @@ def main():
     ledger = ledger[ledger['first_seen'] >= cutoff]
 
     for date_iso, group in sorted(ledger.groupby('first_seen'), reverse=True):
-        status = _annotate_group(date_iso, group, args.dry_run)
+        status = _annotate_group(date_iso, group, args.dry_run, args.budget)
         if status != 'done':      # 已标注过的日子太多, 只报有动作/待熟的
             logging.info(f'{date_iso}: {status}')
 

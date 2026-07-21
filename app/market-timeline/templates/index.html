@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>盘面时间轴</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+SC:wght@400;500;700&display=swap');
+
+:root{
+  --bg:#0F131A;
+  --panel:#171D27;
+  --panel-2:#1D2530;
+  --line:#293241;
+  --text:#E7E9EE;
+  --muted:#8B93A1;
+  --muted-2:#5C6472;
+  --cn:#D6544F;
+  --hk:#E0A339;
+  --jp:#4C7FB0;
+  --us:#4C9A8E;
+  --now:#FF6B5C;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans SC','IBM Plex Sans',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+#app{max-width:1180px;margin:0 auto;padding:28px 20px 60px;}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--muted-2);text-transform:uppercase;margin-bottom:6px;}
+h1{font-size:22px;font-weight:700;margin:0 0 20px;letter-spacing:-.01em;}
+
+.clocks{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.clock{background:var(--panel);padding:14px 16px;}
+.clock .mname{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.clock .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.clock .time{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;letter-spacing:.02em;}
+.clock .status{font-size:11.5px;margin-top:5px;font-family:'IBM Plex Mono',monospace;}
+.status.open{color:#7FD9A0;}
+.status.closed{color:var(--muted-2);}
+.status.pre{color:#E0A339;}
+
+.datenav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.datenav button{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px;font-family:'IBM Plex Mono',monospace;}
+.datenav button:hover{background:#242C39;}
+.datenav .dlabel{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--muted);min-width:150px;}
+.datenav input[type=date]{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.toolbtns{margin-left:auto;display:flex;gap:8px;}
+.toolbtns button,.toolbtns label{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:7px 12px;cursor:pointer;font-size:12px;font-family:'IBM Plex Sans SC',sans-serif;}
+.toolbtns button:hover,.toolbtns label:hover{color:var(--text);}
+.storagehint{font-size:11px;color:var(--muted-2);margin:-8px 0 16px;font-family:'IBM Plex Mono',monospace;word-break:break-all;}
+
+.tl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px 12px;position:relative;margin-bottom:26px;}
+.tl-hint{font-size:11.5px;color:var(--muted-2);margin-bottom:12px;}
+.axis{position:relative;height:18px;margin-left:74px;margin-bottom:4px;}
+.axis span{position:absolute;top:0;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted-2);transform:translateX(-50%);}
+.lanes{position:relative;margin-left:74px;}
+.lane{position:relative;height:46px;border-top:1px solid var(--line);cursor:crosshair;}
+.lane:last-child{border-bottom:1px solid var(--line);}
+.lane-label{position:absolute;left:-74px;top:0;width:64px;height:46px;display:flex;flex-direction:column;justify-content:center;gap:2px;}
+.lane-label .lname{font-size:12.5px;font-weight:600;}
+.lane-label .ltag{font-size:9.5px;color:var(--muted-2);font-family:'IBM Plex Mono',monospace;}
+.session{position:absolute;top:8px;bottom:8px;border-radius:4px;opacity:.28;pointer-events:none;}
+.session.main{opacity:.42;}
+.gridline{position:absolute;top:0;bottom:0;width:1px;background:var(--line);opacity:.6;pointer-events:none;}
+.nowline{position:absolute;top:-18px;bottom:0;width:1.5px;background:var(--now);z-index:5;pointer-events:none;}
+.nowline::before{content:'NOW';position:absolute;top:-2px;left:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--now);letter-spacing:.05em;}
+.marker{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--panel);cursor:pointer;z-index:3;}
+.marker:hover{transform:translate(-50%,-50%) scale(1.35);}
+
+.popup{position:absolute;z-index:20;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;width:260px;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+.popup .ptime{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+.popup textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:56px;}
+.popup .prow{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;}
+.popup button{border:none;border-radius:6px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-family:'IBM Plex Sans SC',sans-serif;}
+.popup .save{background:#3D6DE0;color:#fff;}
+.popup .save:hover{background:#345DC4;}
+.popup .del{background:transparent;color:#D6544F;margin-right:auto;}
+.popup .cancel{background:transparent;color:var(--muted);}
+
+.section-title{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 10px;letter-spacing:.02em;}
+.notes{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:26px;}
+.note{background:var(--panel);padding:12px 16px;display:flex;gap:14px;align-items:flex-start;}
+.note .ntime{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text);min-width:52px;padding-top:1px;}
+.note .ntag{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.note .nbody{flex:1;}
+.note .ntext{font-size:13.5px;line-height:1.5;margin-bottom:6px;}
+.note .nchips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:2px 8px;}
+.note .ndel{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;}
+.note .ndel:hover{color:#D6544F;}
+.empty{padding:22px;text-align:center;color:var(--muted-2);font-size:13px;background:var(--panel);border-radius:10px;border:1px solid var(--line);margin-bottom:26px;}
+
+.recent{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.rnote{background:var(--panel);padding:9px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;}
+.rnote:hover{background:var(--panel-2);}
+.rnote .rdate{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-2);min-width:110px;}
+.rnote .rtag{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rnote .rtext{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px;}
+.thumb{position:relative;width:52px;height:52px;border-radius:6px;overflow:hidden;border:1px solid var(--line);cursor:pointer;flex-shrink:0;}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb .tdel{position:absolute;top:0;right:0;background:rgba(0,0,0,.65);color:#fff;border:none;width:16px;height:16px;font-size:11px;line-height:1;cursor:pointer;border-radius:0 0 0 6px;padding:0;}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox img{max-width:92vw;max-height:92vh;border-radius:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="eyebrow">CROSS-MARKET SESSION LOG</div>
+  <h1>盘面时间轴</h1>
+
+  <div class="clocks" id="clocks"></div>
+
+  <div class="datenav">
+    <button id="prevDay">‹ 前一天</button>
+    <button id="todayBtn">今天</button>
+    <button id="nextDay">后一天 ›</button>
+    <span class="dlabel" id="dateLabel"></span>
+    <input type="date" id="datePick">
+    <div class="toolbtns">
+      <button id="exportBtn">导出备份</button>
+      <label for="importFile">导入</label>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+  </div>
+  <div class="storagehint">数据目录: {{ data_dir }} (由 Google Drive 桌面端自动同步)</div>
+
+  <div class="tl-wrap">
+    <div class="tl-hint">时间轴按 UTC 划分(点击任意车道空白处添加标注,输入框内可 Ctrl+V 粘贴截图)</div>
+    <div class="axis" id="axis"></div>
+    <div class="lanes" id="lanes"></div>
+  </div>
+
+  <div class="section-title" id="listTitle">当日标注</div>
+  <div id="noteList"></div>
+
+  <div class="section-title">最近标注(跨日期)</div>
+  <div class="recent" id="recentList"></div>
+</div>
+
+<script>
+const MARKETS = [
+  {id:'cn', name:'A股', tz:'Asia/Shanghai', hex:'#D6544F',
+   sessions:[{s:9*60+30,e:11*60+30,main:true},{s:13*60,e:15*60,main:true}]},
+  {id:'hk', name:'港股', tz:'Asia/Hong_Kong', hex:'#E0A339',
+   sessions:[{s:9*60+30,e:12*60,main:true},{s:13*60,e:16*60,main:true}]},
+  {id:'jp', name:'日股', tz:'Asia/Tokyo', hex:'#4C7FB0',
+   sessions:[{s:9*60,e:11*60+30,main:true},{s:12*60+30,e:15*60,main:true}]},
+  {id:'us', name:'美股', tz:'America/New_York', hex:'#4C9A8E',
+   sessions:[{s:4*60,e:9*60+30,main:false},{s:9*60+30,e:16*60,main:true},{s:16*60,e:20*60,main:false}]}
+];
+
+let annotations = [];
+let selectedDate = utcDateOnly(new Date());
+let activePopup = null;
+
+function utcDateOnly(d){ return {y:d.getUTCFullYear(), m:d.getUTCMonth(), d:d.getUTCDate()}; }
+function sameDate(a,b){ return a.y===b.y && a.m===b.m && a.d===b.d; }
+function dateKey(d){ return d.y+'-'+String(d.m+1).padStart(2,'0')+'-'+String(d.d).padStart(2,'0'); }
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function localMinutesOfDay(date, tz){
+  const dtf = new Intl.DateTimeFormat('en-US', {timeZone:tz, hour12:false, weekday:'short', hour:'2-digit', minute:'2-digit'});
+  const parts = dtf.formatToParts(date).reduce((a,p)=>{a[p.type]=p.value;return a;},{});
+  let hour = parts.hour==='24' ? 0 : Number(parts.hour);
+  return {minutes: hour*60+Number(parts.minute), weekday: parts.weekday};
+}
+
+function getOffsetMinutes(date, tz){
+  const dtf = new Intl.DateTimeFormat('en-US', {timeZone:tz, hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const parts = dtf.formatToParts(date).reduce((a,p)=>{a[p.type]=p.value;return a;},{});
+  let hour = parts.hour==='24' ? 0 : Number(parts.hour);
+  const asUTC = Date.UTC(Number(parts.year), Number(parts.month)-1, Number(parts.day), hour, Number(parts.minute), Number(parts.second));
+  return Math.round((asUTC - date.getTime())/60000);
+}
+
+function marketStatus(market, date){
+  const {minutes, weekday} = localMinutesOfDay(date, market.tz);
+  if(weekday==='Sat' || weekday==='Sun') return {text:'休市(周末)', cls:'closed'};
+  for(const s of market.sessions){
+    if(minutes>=s.s && minutes<s.e) return {text: s.main? '开盘中':'盘前/盘后', cls: s.main?'open':'pre'};
+  }
+  const mainSessions = market.sessions.filter(s=>s.main);
+  if(mainSessions.length===2 && minutes>=mainSessions[0].e && minutes<mainSessions[1].s) return {text:'午间休市', cls:'pre'};
+  return {text:'已收盘', cls:'closed'};
+}
+
+function localTimeStr(date, tz){
+  return new Intl.DateTimeFormat('zh-CN', {timeZone:tz, hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(date);
+}
+function localTimeShort(date, tz){
+  return new Intl.DateTimeFormat('zh-CN', {timeZone:tz, hour12:false, hour:'2-digit', minute:'2-digit'}).format(date);
+}
+
+// ---------- clocks ----------
+function renderClocks(){
+  const now = new Date();
+  document.getElementById('clocks').innerHTML = MARKETS.map(m=>{
+    const st = marketStatus(m, now);
+    return `<div class="clock">
+      <div class="mname"><span class="dot" style="background:${m.hex}"></span>${m.name} · ${m.tz.split('/')[1].replace('_',' ')}</div>
+      <div class="time mono">${localTimeStr(now, m.tz)}</div>
+      <div class="status ${st.cls}">${st.text}</div>
+    </div>`;
+  }).join('');
+}
+renderClocks();
+setInterval(renderClocks, 1000);
+
+// ---------- date nav ----------
+function refreshDateLabel(){
+  const d = new Date(Date.UTC(selectedDate.y, selectedDate.m, selectedDate.d));
+  document.getElementById('dateLabel').textContent = d.toLocaleDateString('zh-CN', {timeZone:'UTC', year:'numeric',month:'2-digit',day:'2-digit', weekday:'short'}) + ' (UTC)';
+  document.getElementById('datePick').value = dateKey(selectedDate);
+}
+document.getElementById('prevDay').onclick = ()=>shiftDate(-1);
+document.getElementById('nextDay').onclick = ()=>shiftDate(1);
+document.getElementById('todayBtn').onclick = ()=>{ selectedDate = utcDateOnly(new Date()); afterDateChange(); };
+document.getElementById('datePick').onchange = (e)=>{
+  const [y,m,d] = e.target.value.split('-').map(Number);
+  selectedDate = {y, m:m-1, d};
+  afterDateChange();
+};
+function shiftDate(delta){
+  const nd = new Date(Date.UTC(selectedDate.y, selectedDate.m, selectedDate.d + delta));
+  selectedDate = utcDateOnly(nd);
+  afterDateChange();
+}
+function afterDateChange(){ refreshDateLabel(); renderTimeline(); renderNoteList(); }
+
+// ---------- timeline ----------
+function renderAxis(){
+  let html='';
+  for(let h=0; h<=24; h+=2) html += `<span style="left:${(h/24)*100}%">${pad(h)}:00</span>`;
+  document.getElementById('axis').innerHTML = html;
+}
+renderAxis();
+
+function minutesToPct(min){ return (min/1440)*100; }
+
+function renderTimeline(){
+  const lanes = document.getElementById('lanes');
+  lanes.innerHTML = '';
+  closePopup();
+
+  const dayStartUTC = Date.UTC(selectedDate.y, selectedDate.m, selectedDate.d);
+  const isToday = sameDate(selectedDate, utcDateOnly(new Date()));
+
+  MARKETS.forEach(market=>{
+    const lane = document.createElement('div');
+    lane.className = 'lane';
+
+    const label = document.createElement('div');
+    label.className = 'lane-label';
+    label.innerHTML = `<div class="lname" style="color:${market.hex}">${market.name}</div><div class="ltag">${market.tz.split('/')[1].replace('_',' ')}</div>`;
+    lane.appendChild(label);
+
+    for(let h=0; h<=24; h+=2){
+      const gl = document.createElement('div');
+      gl.className='gridline';
+      gl.style.left = minutesToPct(h*60)+'%';
+      lane.appendChild(gl);
+    }
+
+    const approxDate = new Date(dayStartUTC + 12*3600*1000);
+    const offset = getOffsetMinutes(approxDate, market.tz);
+    market.sessions.forEach(s=>{
+      const a = s.s - offset, b = s.e - offset;
+      if(b<=0 || a>=1440) return;
+      const clA = Math.max(a,0), clB = Math.min(b,1440);
+      const band = document.createElement('div');
+      band.className = 'session' + (s.main?' main':'');
+      band.style.left = minutesToPct(clA)+'%';
+      band.style.width = minutesToPct(clB-clA)+'%';
+      band.style.background = market.hex;
+      lane.appendChild(band);
+    });
+
+    if(isToday){
+      const now = new Date();
+      const nl = document.createElement('div');
+      nl.className='nowline';
+      nl.style.left = minutesToPct(now.getUTCHours()*60+now.getUTCMinutes())+'%';
+      lane.appendChild(nl);
+    }
+
+    annotations.filter(a=> a.dateKey===dateKey(selectedDate) && a.market===market.id).forEach(a=>{
+      const d = new Date(a.ts);
+      const min = d.getUTCHours()*60 + d.getUTCMinutes();
+      const mk = document.createElement('div');
+      mk.className='marker';
+      mk.style.left = minutesToPct(min)+'%';
+      mk.style.background = market.hex;
+      mk.title = a.text;
+      mk.onclick = (e)=>{ e.stopPropagation(); openEditPopup(a, lane, mk.style.left); };
+      lane.appendChild(mk);
+    });
+
+    lane.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('marker') || e.target.closest('.popup')) return;
+      e.stopPropagation();
+      const rect = lane.getBoundingClientRect();
+      const fracX = (e.clientX - rect.left)/rect.width;
+      const min = Math.max(0, Math.min(1439, Math.round(fracX*1440/5)*5));
+      openAddPopup(market, min, lane, minutesToPct(min)+'%');
+    });
+
+    lanes.appendChild(lane);
+  });
+}
+
+function closePopup(){
+  if(activePopup){ activePopup.remove(); activePopup=null; }
+}
+
+function timePreviewHTML(ts){
+  return MARKETS.map(m=>`<span class="chip" style="border-color:${m.hex}55">${m.name} ${localTimeShort(new Date(ts), m.tz)}</span>`).join(' ');
+}
+
+function clampPopup(pop, leftPct){
+  const pct = parseFloat(leftPct);
+  pop.style.left = leftPct;
+  if(pct > 70) pop.style.transform = 'translateX(-100%)';
+  else if(pct > 35) pop.style.transform = 'translateX(-50%)';
+}
+
+// ---------- 图片 ----------
+function compressImage(file){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxSide = 1400;
+      const scale = Math.min(1, maxSide/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale);
+      c.height = Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function renderThumbs(container, imgs, editable){
+  container.innerHTML = imgs.map((src,i)=>`
+    <div class="thumb">
+      <img src="${src}">
+      ${editable?`<button class="tdel" data-i="${i}">×</button>`:''}
+    </div>`).join('');
+  container.querySelectorAll('.thumb img').forEach((imEl,idx)=>{
+    imEl.onclick = (e)=>{ e.stopPropagation(); openLightbox(imgs[idx]); };
+  });
+  if(editable){
+    container.querySelectorAll('.tdel').forEach(btn=>{
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        imgs.splice(Number(btn.dataset.i), 1);
+        renderThumbs(container, imgs, true);
+      };
+    });
+  }
+}
+
+function openLightbox(src){
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  lb.innerHTML = `<img src="${src}">`;
+  lb.onclick = ()=>lb.remove();
+  document.body.appendChild(lb);
+}
+
+function attachPaste(ta, imgs, previewEl){
+  ta.addEventListener('paste', (e)=>{
+    const items = e.clipboardData && e.clipboardData.items;
+    if(!items) return;
+    for(const it of items){
+      if(it.type && it.type.startsWith('image/')){
+        e.preventDefault();
+        const f = it.getAsFile();
+        if(f) compressImage(f).then(dataUrl=>{
+          imgs.push(dataUrl);
+          renderThumbs(previewEl, imgs, true);
+        });
+      }
+    }
+  });
+}
+
+// ---------- popups ----------
+function openAddPopup(market, minUTC, laneEl, leftPct){
+  closePopup();
+  const ts = Date.UTC(selectedDate.y, selectedDate.m, selectedDate.d) + minUTC*60000;
+  const pop = document.createElement('div');
+  pop.className='popup';
+  clampPopup(pop, leftPct);
+  pop.style.top = '52px';
+  pop.innerHTML = `
+    <div class="ptime mono">UTC ${pad(Math.floor(minUTC/60))}:${pad(minUTC%60)} · <span style="color:${market.hex}">${market.name}</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${timePreviewHTML(ts)}</div>
+    <textarea placeholder="记录盘面观察… (可直接 Ctrl+V 粘贴截图)" autofocus></textarea>
+    <div class="thumbs"></div>
+    <div class="prow">
+      <button class="cancel">取消</button>
+      <button class="save">保存</button>
+    </div>`;
+  laneEl.appendChild(pop);
+  activePopup = pop;
+  const ta = pop.querySelector('textarea');
+  const imgs = [];
+  attachPaste(ta, imgs, pop.querySelector('.thumbs'));
+  ta.focus();
+  pop.querySelector('.cancel').onclick=(e)=>{e.stopPropagation();closePopup();};
+  pop.querySelector('.save').onclick=async (e)=>{
+    e.stopPropagation();
+    const text = ta.value.trim();
+    if(!text && imgs.length===0) return;
+    await apiCreate(market.id, ts, text || '(截图)', imgs);
+    closePopup();
+  };
+  pop.addEventListener('click', e=>e.stopPropagation());
+  ta.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && (e.metaKey||e.ctrlKey)) pop.querySelector('.save').click();
+    if(e.key==='Escape') closePopup();
+  });
+}
+
+function openEditPopup(annotation, laneEl, leftPct){
+  closePopup();
+  const market = MARKETS.find(m=>m.id===annotation.market);
+  const d = new Date(annotation.ts);
+  const min = d.getUTCHours()*60 + d.getUTCMinutes();
+  const pop = document.createElement('div');
+  pop.className='popup';
+  clampPopup(pop, leftPct);
+  pop.style.top = '52px';
+  pop.innerHTML = `
+    <div class="ptime mono">UTC ${pad(Math.floor(min/60))}:${pad(min%60)} · <span style="color:${market.hex}">${market.name}</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${timePreviewHTML(annotation.ts)}</div>
+    <textarea>${annotation.text.replace(/</g,'&lt;')}</textarea>
+    <div class="thumbs"></div>
+    <div class="prow">
+      <button class="del">删除</button>
+      <button class="cancel">取消</button>
+      <button class="save">保存</button>
+    </div>`;
+  laneEl.appendChild(pop);
+  activePopup = pop;
+  const ta = pop.querySelector('textarea');
+  const imgs = (annotation.images||[]).slice();
+  const tEl = pop.querySelector('.thumbs');
+  renderThumbs(tEl, imgs, true);
+  attachPaste(ta, imgs, tEl);
+  ta.focus();
+  pop.querySelector('.cancel').onclick=(e)=>{e.stopPropagation();closePopup();};
+  pop.querySelector('.del').onclick=async (e)=>{e.stopPropagation(); await apiDelete(annotation.id); closePopup();};
+  pop.querySelector('.save').onclick=async (e)=>{
+    e.stopPropagation();
+    const text = ta.value.trim();
+    if(!text && imgs.length===0) return;
+    await apiUpdate(annotation.id, text || '(截图)', imgs);
+    closePopup();
+  };
+  pop.addEventListener('click', e=>e.stopPropagation());
+}
+
+document.addEventListener('click', ()=>closePopup());
+
+// ---------- API ----------
+async function loadData(){
+  try{
+    const res = await fetch('/api/annotations');
+    annotations = await res.json();
+  }catch(e){
+    annotations = [];
+    alert('无法连接后端服务, 请确认 app.py 正在运行');
+  }
+  afterDateChange();
+  renderRecent();
+}
+
+async function apiCreate(marketId, ts, text, images){
+  const dk = dateKey(utcDateOnly(new Date(ts)));
+  const res = await fetch('/api/annotations', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({market:marketId, ts, text, dateKey:dk, images})
+  });
+  const saved = await res.json();
+  annotations.push(saved);
+  renderTimeline(); renderNoteList(); renderRecent();
+}
+
+async function apiUpdate(id, text, images){
+  const res = await fetch('/api/annotations/'+id, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text, images})
+  });
+  const saved = await res.json();
+  const idx = annotations.findIndex(a=>a.id===id);
+  if(idx>=0) annotations[idx] = saved;
+  renderTimeline(); renderNoteList(); renderRecent();
+}
+
+async function apiDelete(id){
+  await fetch('/api/annotations/'+id, {method:'DELETE'});
+  annotations = annotations.filter(a=>a.id!==id);
+  renderTimeline(); renderNoteList(); renderRecent();
+}
+
+document.getElementById('exportBtn').onclick = ()=>{ window.location = '/api/export'; };
+document.getElementById('importFile').onchange = (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = async ()=>{
+    try{
+      const res = await fetch('/api/import', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: r.result
+      });
+      const out = await res.json();
+      if(out.error) throw new Error(out.error);
+      alert('导入完成, 合并 ' + out.added + ' 条新记录(重复的已跳过)');
+      loadData();
+    }catch(err){
+      alert('导入失败: ' + err.message);
+    }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+// ---------- lists ----------
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderNoteList(){
+  const wrap = document.getElementById('noteList');
+  document.getElementById('listTitle').textContent = `当日标注 · ${dateKey(selectedDate)} (UTC)`;
+  const items = annotations.filter(a=>a.dateKey===dateKey(selectedDate)).sort((a,b)=>a.ts-b.ts);
+  if(items.length===0){
+    wrap.innerHTML = `<div class="empty">这一天还没有标注 — 点击上方时间轴任意位置添加</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="notes">${items.map(a=>{
+    const market = MARKETS.find(m=>m.id===a.market);
+    const d = new Date(a.ts);
+    const utcTime = pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());
+    return `<div class="note">
+      <div class="ntime mono">${utcTime}</div>
+      <div class="ntag" style="background:${market.hex}"></div>
+      <div class="nbody">
+        <div class="ntext">${escapeHtml(a.text)}</div>
+        ${a.images && a.images.length ? `<div class="thumbs" data-aid="${a.id}"></div>` : ''}
+        <div class="nchips">${timePreviewHTML(a.ts)}</div>
+      </div>
+      <button class="ndel" data-id="${a.id}">×</button>
+    </div>`;
+  }).join('')}</div>`;
+  wrap.querySelectorAll('.ndel').forEach(btn=>{
+    btn.onclick = ()=>apiDelete(btn.dataset.id);
+  });
+  wrap.querySelectorAll('.thumbs[data-aid]').forEach(el=>{
+    const a = items.find(x=>x.id===el.dataset.aid);
+    if(a) renderThumbs(el, a.images, false);
+  });
+}
+
+function renderRecent(){
+  const wrap = document.getElementById('recentList');
+  const items = [...annotations].sort((a,b)=>b.ts-a.ts).slice(0,10);
+  if(items.length===0){
+    wrap.innerHTML = `<div class="empty">暂无历史标注</div>`;
+    return;
+  }
+  wrap.innerHTML = items.map(a=>{
+    const market = MARKETS.find(m=>m.id===a.market);
+    const d = new Date(a.ts);
+    const label = `${a.dateKey} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+    return `<div class="rnote" data-id="${a.id}">
+      <span class="rdate mono">${label}</span>
+      <span class="rtag" style="background:${market.hex}"></span>
+      <span class="rtext">${escapeHtml(a.text)}</span>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.rnote').forEach(el=>{
+    el.onclick = ()=>{
+      const a = annotations.find(x=>x.id===el.dataset.id);
+      if(!a) return;
+      const [y,m,d] = a.dateKey.split('-').map(Number);
+      selectedDate = {y, m:m-1, d};
+      afterDateChange();
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>

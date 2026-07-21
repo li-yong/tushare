@@ -434,6 +434,15 @@ run_step "daily-report" "$PY" us_daily_report.py
 # 自动跳过下次补; 放 daily-report 之后保证当日报告先落盘。
 run_step "time-budget-annotate" "$PY" t_us_time_budget_annotate.py
 
+# Futu 到价提醒同步 (t_us_futu_alert.py): 把当日报告里四类关注价位写成 Futu
+# price reminder。四源: 持仓有效止损 (holdings) / 就绪入场 setup 失效线 (entries)
+# / 共振≥3 关键K线止损 (resonance, 需合并日报同日 → 放在 daily-report 之后) /
+# 启动火种 live_stop (news, 读最新 weekly news_top)。全部 PRICE_DOWN·ONCE —— 已
+# 触发的信号只剩"失守"值得报。脚本只管理带 [auto] 标记的提醒 (手工设的不碰),
+# 每次全四源运行做一次 reconcile (补新/换价/离场清理)。写实盘账户故 --commit;
+# 依赖 OpenD, down 时脚本自报错退出。非致命 (run_step), 不翻整轮 run。
+run_step "futu-alert" "$PY" t_us_futu_alert.py --commit
+
 if [ $rc -eq 0 ]; then
     echo "===== us_daily_run OK    $(ts) =====" >> "$LOG"
 else

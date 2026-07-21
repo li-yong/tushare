@@ -100,6 +100,13 @@ run_step "swell" "$PY" t_us_swell.py
 # every sub-report verbatim. Runs last so all inputs exist. Non-fatal.
 run_step "weekly-report" "$PY" us_weekly_report.py
 
+# Futu 到价提醒同步 (t_us_futu_alert.py): 周日跑, 主要为了把当周新鲜的 news_top
+# 启动火种 live_stop 及时写进 Futu 提醒 (news_top 只在周日更新; 否则要等周一
+# daily 才反映)。全四源 reconcile —— 持仓/入场读周五最新 tech_swing (周日无新
+# 扫描, 与周五 daily 一致, 幂等), 火种读当日 news_top。同 daily: PRICE_DOWN·ONCE,
+# 只碰 [auto], --commit 写实盘, 依赖 OpenD, 非致命 (run_step)。
+run_step "futu-alert" "$PY" t_us_futu_alert.py --commit
+
 if [ $rc -eq 0 ]; then
     echo "===== us_weekly_run OK    $(ts) =====" >> "$LOG"
 else
